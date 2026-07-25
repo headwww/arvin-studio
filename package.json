@@ -1,0 +1,32 @@
+{
+  "name": "ArvinStudio",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.4",
+  "devDependencies": {
+    "@arvin-studio/commitlint-config": "workspace:*",
+    "@arvin-studio/eslint-config": "workspace:*",
+    "@arvin-studio/oxfmt-config": "workspace:*",
+    "@arvin-studio/oxlint-config": "workspace:*",
+    "@arvin-studio/stylelint-config": "workspace:*",
+    "@arvin-studio/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "is-ci": "catalog:",
+    "lefthook": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "xe-utils": "3.9.1"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@arvin-studio/tsconfig",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "type": "module"
+}
