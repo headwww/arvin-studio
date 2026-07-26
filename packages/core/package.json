@@ -11,5 +11,8 @@
   "license": "ISC",
   "devDependencies": {
     "vue": "catalog:"
+  },
+  "dependencies": {
+    "@arvin-studio/kit": "workspace:*"
   }
 }

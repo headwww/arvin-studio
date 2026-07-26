@@ -322,6 +322,10 @@ importers:
   infra/tsconfig: {}
 
   packages/core:
+    dependencies:
+      '@arvin-studio/kit':
+        specifier: workspace:*
+        version: link:../kit
     devDependencies:
       vue:
         specifier: 'catalog:'

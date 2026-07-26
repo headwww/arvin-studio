@@ -1,4 +1,6 @@
+import { get, toFormatString } from '@arvin-studio/kit';
 import { reactive } from 'vue';
+import { globalConfigStore } from './configStore';
 
 export type Locale =
   | ''
@@ -77,19 +79,14 @@ export function getI18n(key: string, args?: any) {
   }
   if (!checkInstall) {
     if (!langMaps[language]) {
-      console.error(
-        `[arivin core] 语言包未安装。Language not installed. https://${VxeCore.uiVersion ? 'vxeui.com' : 'vxetable.cn'}/#/start/i18n`,
-      );
+      console.error(`[arivin core] 语言包未安装。`);
     }
     checkInstall = true;
   }
   if (!args && cacheMaps[key]) {
     return cacheMaps[key];
   }
-  const i18nLabel = XEUtils.toFormatString(
-    XEUtils.get(langMaps[language], key, key),
-    args,
-  );
+  const i18nLabel = toFormatString(get(langMaps[language], key, key), args);
   if (!args) {
     cacheMaps[key] = i18nLabel;
   }
