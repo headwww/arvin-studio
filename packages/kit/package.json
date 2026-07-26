@@ -1,14 +1,35 @@
 {
   "name": "@arvin-studio/kit",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/index.ts",
-  "scripts": {
-    "build": "pnpm exec tsdown"
+  "description": "ArvinStudio 工具函数库",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
   },
-  "keywords": [],
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "pnpm exec tsdown",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "utils",
+    "tools",
+    "kit"
+  ],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.33.4",
-  "devDependencies": {}
+  "packageManager": "pnpm@10.33.4"
 }

@@ -2,7 +2,7 @@ import staticLocation from './staticLocation';
 import unserialize from './unserialize';
 import helperGetLocatOrigin from './helperGetLocatOrigin';
 
-export interface ASUrl {
+export interface AsUrl {
   /** 获取完整的地址 */
   href: string;
   /** 获取 #Hash 的完整字符串 */
@@ -41,16 +41,16 @@ function parseURLQuery(uri: string): any {
  * @param url - URL 字符串
  * @returns 解析后的 URL 对象
  */
-function parseUrl(url: string): ASUrl;
-function parseUrl(url: any): ASUrl;
-function parseUrl(url: any): ASUrl {
+function parseUrl(url: string): AsUrl;
+function parseUrl(url: any): AsUrl;
+function parseUrl(url: any): AsUrl {
   // oxlint-disable-next-line prefer-const
   let hashs: RegExpMatchArray | null;
   let portText: string;
   // oxlint-disable-next-line prefer-const
   let searchs: RegExpMatchArray | null;
   // oxlint-disable-next-line prefer-const
-  let parsed: ASUrl;
+  let parsed: AsUrl;
 
   let href = `${url}`;
 

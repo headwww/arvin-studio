@@ -1,5 +1,5 @@
 // 核心
-import ASKit from './ctor';
+import AsKit from './ctor';
 
 // 对象相关的方法
 import assign from './assign';
@@ -192,7 +192,7 @@ import locat from './locat';
 import cookie from './cookie';
 import browse from './browse';
 
-assign(ASKit, {
+assign(AsKit, {
   assign,
   objectEach,
   lastObjectEach,
@@ -377,7 +377,7 @@ assign(ASKit, {
   cookie,
 });
 
-export default ASKit;
+export default AsKit;
 
 export {
   assign,

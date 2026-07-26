@@ -10,7 +10,7 @@ import eqNull from './eqNull';
 import get from './get';
 import property from './property';
 
-const ORDER_PROP_ASC = 'asc';
+const ORDER_PROP_AsC = 'asc';
 const ORDER_PROP_DESC = 'desc';
 
 interface OrderBySortConfs<T, C> {
@@ -65,14 +65,14 @@ function getSortConfs(
   arrayEach(confsArray, function (handle: any) {
     if (handle) {
       let field = handle;
-      let order = ORDER_PROP_ASC;
+      let order = ORDER_PROP_AsC;
 
       if (isArray(handle)) {
         field = handle[0];
-        order = handle[1] || ORDER_PROP_ASC;
+        order = handle[1] || ORDER_PROP_AsC;
       } else if (isPlainObject(handle)) {
         field = (handle as any).field;
-        order = (handle as any).order || ORDER_PROP_ASC;
+        order = (handle as any).order || ORDER_PROP_AsC;
       }
 
       sortConfs.push({ field, order });

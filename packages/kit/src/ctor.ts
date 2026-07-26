@@ -6,7 +6,7 @@ import assign from './assign';
 /**
  * JavaScript 函数库、工具类
  */
-const ASKit: any = function (this: any) {};
+const AsKit: any = function (this: any) {};
 
 /**
  * 版本信息
@@ -19,16 +19,16 @@ const version = '@VERSION';
 export const VERSION: string = version;
 
 /**
- * 将您自己的实用函数扩展到 ASKit
+ * 将您自己的实用函数扩展到 AsKit
  * @param methods 函数集
  */
 export function mixin(...methods: { [key: string]: any }[]): void {
   arrayEach(methods, function (mod: any) {
     each(mod, function (fn: any, name: string) {
-      ASKit[name] = isFunction(fn)
+      AsKit[name] = isFunction(fn)
         ? function (this: any, ...args: any[]): any {
-            const result = fn.apply(ASKit.$context, args);
-            ASKit.$context = null;
+            const result = fn.apply(AsKit.$context, args);
+            AsKit.$context = null;
             return result;
           }
         : fn;
@@ -58,11 +58,11 @@ export function setup(options: any): any {
   return assign(setupDefaults, options);
 }
 
-ASKit.VERSION = version;
-ASKit.version = version;
-ASKit.mixin = mixin;
-ASKit.setup = setup;
-ASKit.setConfig = setConfig;
-ASKit.getConfig = getConfig;
+AsKit.VERSION = version;
+AsKit.version = version;
+AsKit.mixin = mixin;
+AsKit.setup = setup;
+AsKit.setConfig = setConfig;
+AsKit.getConfig = getConfig;
 
-export default ASKit;
+export default AsKit;

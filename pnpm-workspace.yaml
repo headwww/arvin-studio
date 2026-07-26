@@ -16,6 +16,7 @@ catalog:
   commitlint-plugin-function-rules: ^5.0.1
   cz-git: ^1.13.1
   czg: ^1.13.1
+  dom-zindex: ^1.0.7
   eslint: ^10.7.0
   eslint-plugin-better-tailwindcss: ^4.7.0
   eslint-plugin-command: ^3.5.3
