@@ -1,7 +1,7 @@
 import helperGetDateTime from './helperGetDateTime';
+import isDate from './isDate';
 import now from './now';
 import toStringDate from './toStringDate';
-import isDate from './isDate';
 
 /**
  * 将日期转为时间戳
@@ -11,10 +11,10 @@ import isDate from './isDate';
  * @returns 时间戳
  */
 function timestamp(
-  date: string | Date | number | null | undefined,
-  format?: string | null | undefined,
+  date: Date | null | number | string | undefined,
+  format?: null | string | undefined,
 ): number;
-function timestamp(date: any, format?: string | null | undefined): number;
+function timestamp(date: any, format?: null | string | undefined): number;
 function timestamp(date: any, format?: any): number {
   if (date) {
     const result = toStringDate(date, format);

@@ -1,3 +1,3 @@
-const staticDayTime: number = 86400000;
+const staticDayTime: number = 86_400_000;
 
 export default staticDayTime;

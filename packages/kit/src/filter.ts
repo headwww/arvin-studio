@@ -30,7 +30,7 @@ function filter(obj: any, iterate: any, context?: any): any {
     if (obj.filter) {
       return obj.filter(iterate, context);
     }
-    each(obj, function (val, key) {
+    each(obj, (val, key) => {
       if (iterate.call(context, val, key, obj)) {
         result.push(val);
       }

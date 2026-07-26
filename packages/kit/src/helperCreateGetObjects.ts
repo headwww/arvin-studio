@@ -14,10 +14,10 @@ function helperCreateGetObjects(
       each(
         obj,
         getIndex > 1
-          ? function (key: string, _unused: any, _obj: any, ..._: any[]) {
+          ? (key: string, _unused: any, _obj: any, ..._: any[]) => {
               result.push([`${key}`, obj[key]]);
             }
-          : function (...args: any[]) {
+          : (...args: any[]) => {
               result.push(args[getIndex]);
             },
       );

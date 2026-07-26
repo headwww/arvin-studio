@@ -1,5 +1,5 @@
-import map from './map';
 import isArray from './isArray';
+import map from './map';
 
 function deepGetObj(obj: any, path: string[]): any {
   let index: any = 0;
@@ -21,7 +21,7 @@ function deepGetObj(obj: any, path: string[]): any {
  */
 function invoke(
   list: any[] | undefined,
-  path: string[] | string | ((this: any, ...args: any[]) => any),
+  path: ((this: any, ...args: any[]) => any) | string | string[],
   ...args: any[]
 ): any[];
 function invoke(list: any, path: any, ...args: any[]): any[];
@@ -46,7 +46,7 @@ function invoke(list: any, path: any, ...args: any[]): any[] {
 
   return map(list, (context: any) => {
     let target = context;
-    if (paths.length) {
+    if (paths.length > 0) {
       target = deepGetObj(target, paths);
     }
     func = target[path] || path;

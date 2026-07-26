@@ -1,54 +1,10 @@
-import staticStrUndefined from './staticStrUndefined';
-import staticDocument from './staticDocument';
-import staticWindow from './staticWindow';
-import assign from './assign';
 import arrayEach from './arrayEach';
+import assign from './assign';
+import staticDocument from './staticDocument';
+import staticStrUndefined from './staticStrUndefined';
+import staticWindow from './staticWindow';
 
 export interface BrowseResult {
-  /**
-   * 判断是否 NodeJs 环境
-   */
-  isNode: boolean;
-  /**
-   * 判断是否有 document 元素
-   */
-  isDoc: boolean;
-  /**
-   * 判断是否 Edge 浏览器
-   */
-  edge?: boolean;
-  /**
-   * 判断是否 Firefox 浏览器
-   */
-  firefox?: boolean;
-  /**
-   * 判断是否 IE 浏览器
-   */
-  msie?: boolean;
-  /**
-   * 判断是否 Safari 浏览器
-   */
-  safari?: boolean;
-  /**
-   * 判断是否移动端
-   */
-  isMobile: boolean;
-  /**
-   * 判断是否 PC 端
-   */
-  isPC: boolean;
-  /**
-   * 判断浏览器是否支持 LocalStorage
-   */
-  isLocalStorage?: boolean;
-  /**
-   * 判断浏览器是否支持 SessionStorage
-   */
-  isSessionStorage?: boolean;
-  /**
-   * 判断浏览器是否 -webkit 内核
-   */
-  '-webkit'?: boolean;
   /**
    * 判断浏览器是否 -moz 内核
    */
@@ -61,6 +17,50 @@ export interface BrowseResult {
    * 判断浏览器是否 -o 内核
    */
   '-o'?: boolean;
+  /**
+   * 判断浏览器是否 -webkit 内核
+   */
+  '-webkit'?: boolean;
+  /**
+   * 判断是否 Edge 浏览器
+   */
+  edge?: boolean;
+  /**
+   * 判断是否 Firefox 浏览器
+   */
+  firefox?: boolean;
+  /**
+   * 判断是否有 document 元素
+   */
+  isDoc: boolean;
+  /**
+   * 判断浏览器是否支持 LocalStorage
+   */
+  isLocalStorage?: boolean;
+  /**
+   * 判断是否移动端
+   */
+  isMobile: boolean;
+  /**
+   * 判断是否 NodeJs 环境
+   */
+  isNode: boolean;
+  /**
+   * 判断是否 PC 端
+   */
+  isPC: boolean;
+  /**
+   * 判断浏览器是否支持 SessionStorage
+   */
+  isSessionStorage?: boolean;
+  /**
+   * 判断是否 IE 浏览器
+   */
+  msie?: boolean;
+  /**
+   * 判断是否 Safari 浏览器
+   */
+  safari?: boolean;
 }
 
 declare const process: any;
@@ -78,7 +78,7 @@ function isBrowseStorage(storage: Storage): boolean {
 }
 
 function isBrowseType(type: string): boolean {
-  return navigator.userAgent.indexOf(type) > -1;
+  return navigator.userAgent.includes(type);
 }
 
 /**
@@ -93,7 +93,7 @@ function browse(): BrowseResult {
   let isSessionStorage = false;
   const result: BrowseResult = {
     isNode: false,
-    isMobile: isMobile,
+    isMobile,
     isPC: false,
     isDoc: !!staticDocument,
   };
@@ -109,7 +109,7 @@ function browse(): BrowseResult {
       );
     if (result.isDoc && staticDocument) {
       $body = staticDocument.body || staticDocument.documentElement;
-      arrayEach(['webkit', 'khtml', 'moz', 'ms', 'o'], function (core: string) {
+      arrayEach(['webkit', 'khtml', 'moz', 'ms', 'o'], (core: string) => {
         (result as any)[`-${core}`] = !!($body as any)[
           `${core}MatchesSelector`
         ];
@@ -130,10 +130,10 @@ function browse(): BrowseResult {
       firefox: isBrowseType('Firefox'),
       msie: !isEdge && result['-ms'],
       safari: !isChrome && !isEdge && isBrowseType('Safari'),
-      isMobile: isMobile,
+      isMobile,
       isPC: !isMobile,
-      isLocalStorage: isLocalStorage,
-      isSessionStorage: isSessionStorage,
+      isLocalStorage,
+      isSessionStorage,
     });
   }
   return result;

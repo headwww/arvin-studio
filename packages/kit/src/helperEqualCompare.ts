@@ -1,12 +1,12 @@
-import isNumber from './isNumber';
+import every from './every';
 import isArray from './isArray';
-import isString from './isString';
-import isRegExp from './isRegExp';
-import isDate from './isDate';
 import isBoolean from './isBoolean';
+import isDate from './isDate';
+import isNumber from './isNumber';
+import isRegExp from './isRegExp';
+import isString from './isString';
 import isUndefined from './isUndefined';
 import keys from './keys';
-import every from './every';
 
 /**
  * 深度比较两个值是否相等
@@ -56,7 +56,7 @@ function helperEqualCompare(
         }
         if (val1Keys.length === val2Keys.length) {
           return isUndefined(result)
-            ? every(val1Keys, function (key: string, index: number) {
+            ? every(val1Keys, (key: string, index: number) => {
                 return (
                   key === val2Keys[index] &&
                   helperEqualCompare(

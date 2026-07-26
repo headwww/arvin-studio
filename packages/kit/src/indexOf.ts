@@ -1,5 +1,5 @@
-import helperCreateIndexOf from './helperCreateIndexOf';
 import arrayIndexOf from './arrayIndexOf';
+import helperCreateIndexOf from './helperCreateIndexOf';
 
 /**
  * 返回对象第一个索引值

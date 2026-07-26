@@ -1,7 +1,7 @@
 import getWhatYear from './getWhatYear';
-import toStringDate from './toStringDate';
-import isValidDate from './isValidDate';
 import isLeapYear from './isLeapYear';
+import isValidDate from './isValidDate';
+import toStringDate from './toStringDate';
 
 /**
  * 返回某个年份的天数，可以指定前几个年或后几个年，默认当前
@@ -9,12 +9,12 @@ import isLeapYear from './isLeapYear';
  * @param offsetNum 年偏移量(默认0)、前几个年、后几个年
  */
 function getDayOfYear(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offsetNum?: number,
 ): number {
   const d = toStringDate(date);
   if (isValidDate(d)) {
-    return isLeapYear(getWhatYear(d, offsetNum)) ? 366 : 365;
+    return isLeapYear(getWhatYear(d, offsetNum!)) ? 366 : 365;
   }
   return NaN;
 }

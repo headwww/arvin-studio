@@ -1,57 +1,59 @@
+import { reactive } from 'vue';
+
 /**
  * @file 国际化模块，提供 Vue 3 响应式多语言翻译能力。
  * 支持语言包动态注册、切换语言、模板插值翻译和查询缓存。
  * @packageDocumentation
  */
 import { get, toFormatString } from '@arvin-studio/kit';
-import { reactive } from 'vue';
+
 import { globalConfigStore } from './config';
 
 /** 支持的语言列表 */
 export type Locale =
   | ''
-  | 'zh-CN' // 中文(简体)
+  | 'ar-EG' // 阿拉伯语(埃及)
+  | 'de-DE' // 德语(德国)
+  | 'en-US' // 英语(美国)
+  | 'es-ES' // 西班牙语(国际)
+  | 'fr-FR' // 法语(法国)
+  | 'hu-HU' // 匈牙利语
+  | 'hy-AM' // 亚美尼亚语
+  | 'id-ID' // 印度尼西亚语
+  | 'it-IT' // 意大利语(意大利)
+  | 'ja-JP' // 日语
+  | 'ko-KR' // 朝鲜语
+  | 'ms-MY' // 马来语(马来西亚)
+  | 'nb-NO' // 挪威语(伯克梅尔)(挪威)
+  | 'pt-BR' // 葡萄牙语
+  | 'ru-RU' // 俄语
+  | 'th-TH' // 泰语
+  | 'ug-CN' // 维吾尔语
+  | 'uk-UA' // 乌克兰语
+  | 'uz-UZ' // 乌兹别克语(西里尔文)
+  | 'vi-VN' // 越南语
   | 'zh-CHT' // 中文(繁体)
+  | 'zh-CN' // 中文(简体)
   | 'zh-HK' // 中文(香港)
   | 'zh-MO' // 中文(澳门)
-  | 'zh-TW' // 中文(繁体)
-  | 'en-US' // 英语(美国)
-  | 'ja-JP' // 日语
-  | 'es-ES' // 西班牙语(国际)
-  | 'pt-BR' // 葡萄牙语
-  | 'vi-VN' // 越南语
-  | 'ru-RU' // 俄语
-  | 'ko-KR' // 朝鲜语
-  | 'hu-HU' // 匈牙利语
-  | 'ug-CN' // 维吾尔语
-  | 'uz-UZ' // 乌兹别克语(西里尔文)
-  | 'nb-NO' // 挪威语(伯克梅尔)(挪威)
-  | 'hy-AM' // 亚美尼亚语
-  | 'fr-FR' // 法语(法国)
-  | 'de-DE' // 德语(德国)
-  | 'ar-EG' // 阿拉伯语(埃及)
-  | 'uk-UA' // 乌克兰语
-  | 'th-TH' // 泰语
-  | 'it-IT' // 意大利语(意大利)
-  | 'id-ID' // 印度尼西亚语
-  | 'ms-MY'; // 马来语(马来西亚)
+  | 'zh-TW'; // 中文(繁体)
 
 /**
  * 国际化响应式配置存储。
  * 修改 `language` 或 `langMaps` 会自动触发依赖组件重新渲染。
  */
 export const i18nConfigStore: {
-  /** 当前语言 */
-  language: Locale;
   /** 已注册的语言包映射表，key 为语言标识，value 为文案对象 */
   langMaps: Partial<Record<Locale, any>>;
+  /** 当前语言 */
+  language: Locale;
 } = reactive({
   language: '',
   langMaps: {},
 });
 
 /** 是否已完成首次语言包安装检查 */
-let checkInstall = false;
+let isCheckInstall = false;
 
 /** 翻译结果缓存，避免同一 key 重复解析 */
 let cacheMaps: Record<string, string> = {};
@@ -130,11 +132,11 @@ export function getI18n(key: string, args?: any) {
     return `${i18n(key, args) || ''}`;
   }
   // 首次调用时检查语言包是否已安装
-  if (!checkInstall) {
+  if (!isCheckInstall) {
     if (!langMaps[language]) {
       console.error(`[arivin core] 语言包未安装。`);
     }
-    checkInstall = true;
+    isCheckInstall = true;
   }
   // 无参数时优先从缓存读取
   if (!args && cacheMaps[key]) {

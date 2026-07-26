@@ -1,8 +1,8 @@
-import helperNumberAdd from './helperNumberAdd';
-import isFunction from './isFunction';
-import isArray from './isArray';
 import each from './each';
 import get from './get';
+import helperNumberAdd from './helperNumberAdd';
+import isArray from './isArray';
+import isFunction from './isFunction';
 
 /**
  * 求和函数，将数值相加
@@ -15,9 +15,9 @@ import get from './get';
 function sum<T, C = any>(
   array: T[] | undefined,
   iterate?:
-    | string
+    | ((this: C, item: T, index: number, list: T[]) => number)
     | number
-    | ((this: C, item: T, index: number, list: T[]) => number),
+    | string,
   context?: C,
 ): number;
 function sum(array: any, iterate?: any, context?: any): number;
@@ -26,16 +26,19 @@ function sum(array: any, iterate?: any, context?: any): number {
 
   each(
     // oxlint-disable-next-line typescript/require-array-sort-compare
-    array && array.length > 2 && isArray(array) ? array.toSorted() : array,
+    array && array.length > 2 && isArray(array)
+      ? array.toSorted((a, b) => a - b)
+      : array,
     iterate
       ? isFunction(iterate)
-        ? function (this: any, ...args: any[]) {
+        ? // eslint-disable-next-line prefer-arrow-callback
+          function (this: any, ...args: any[]) {
             result = helperNumberAdd(result, iterate.apply(context, args));
           }
-        : function (val: any) {
+        : (val: any) => {
             result = helperNumberAdd(result, get(val, iterate));
           }
-      : function (val: any) {
+      : (val: any) => {
           result = helperNumberAdd(result, val);
         },
   );

@@ -20,11 +20,11 @@ function range(start: any, stop?: any, step?: any): number[] {
     start = 0;
   }
 
-  index = start >> 0;
-  len = stop >> 0;
+  index = Math.trunc(start);
+  len = Math.trunc(stop);
 
   if (index < len) {
-    const stepVal = step >> 0 || 1;
+    const stepVal = Math.trunc(step) || 1;
     for (; index < len; index += stepVal) {
       result.push(index);
     }

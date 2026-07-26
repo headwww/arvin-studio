@@ -1,6 +1,6 @@
 import getWhatMonth from './getWhatMonth';
-import toStringDate from './toStringDate';
 import isValidDate from './isValidDate';
+import toStringDate from './toStringDate';
 
 /**
  * 返回前几季度或后几季度的日期
@@ -8,7 +8,7 @@ import isValidDate from './isValidDate';
  * @param offset 季度偏移量(默认0)、前几个季度、后几个季度
  */
 function getWhatQuarter(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
 ): Date;
 /**
@@ -18,14 +18,14 @@ function getWhatQuarter(
  * @param day 获取哪天：月初(first)、月末(last)、指定天数(数值)
  */
 function getWhatQuarter(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  day: number | 'first' | 'last',
+  day: 'first' | 'last' | number,
 ): Date;
 function getWhatQuarter(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  day?: number | 'first' | 'last',
+  day?: 'first' | 'last' | number,
 ): Date {
   const monthOffset = offset && !isNaN(offset) ? offset * 3 : 0;
   const d = toStringDate(date);

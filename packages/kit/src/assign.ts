@@ -1,7 +1,7 @@
 import arrayEach from './arrayEach';
-import keys from './keys';
-import isArray from './isArray';
 import clone from './clone';
+import isArray from './isArray';
+import keys from './keys';
 
 const objectAssignFns = Object.assign;
 
@@ -12,10 +12,10 @@ function handleAssign(destination: any, args: any[], isClone?: boolean): any {
     arrayEach(
       keys(args[index]),
       isClone
-        ? function (key: string) {
+        ? (key: string) => {
             destination[key] = clone(source[key], isClone as any);
           }
-        : function (key: string) {
+        : (key: string) => {
             destination[key] = source[key];
           },
     );

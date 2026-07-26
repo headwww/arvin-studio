@@ -1,6 +1,6 @@
-import isFunction from './isFunction';
-import get from './get';
 import arrayEach from './arrayEach';
+import get from './get';
+import isFunction from './isFunction';
 
 /**
  * 集合统计，默认使用键值统计，如果有 iterate 则使用结果进行统计
@@ -8,18 +8,18 @@ import arrayEach from './arrayEach';
 function countBy<T, C = any>(
   list: T[] | undefined,
   iterate:
-    | string
+    | ((this: C, item: T, index: number, obj: T[]) => number | string)
     | number
-    | ((this: C, item: T, index: number, obj: T[]) => string | number),
+    | string,
   context?: C,
 ): Record<string, number>;
 
 function countBy<T, C = any>(
   obj: T,
   iterate:
-    | string
+    | ((this: C, item: any, key: string, obj: T) => number | string)
     | number
-    | ((this: C, item: any, key: string, obj: T) => string | number),
+    | string,
   context?: C,
 ): Record<string, number>;
 
@@ -29,7 +29,7 @@ function countBy(
   context?: any,
 ): Record<string, number> {
   const result: Record<string, number> = {};
-  arrayEach(arr, function (item: any) {
+  arrayEach(arr, (item: any) => {
     const key = isFunction(iterate)
       ? (iterate as Function).call(context, item)
       : get(item, iterate as string);

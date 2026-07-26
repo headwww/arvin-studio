@@ -1,5 +1,5 @@
-import helperCreateIndexOf from './helperCreateIndexOf';
 import arrayLastIndexOf from './arrayLastIndexOf';
+import helperCreateIndexOf from './helperCreateIndexOf';
 
 /**
  * 从最后开始的索引值,返回对象第一个索引值

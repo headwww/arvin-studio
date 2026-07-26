@@ -1,9 +1,9 @@
-import isSymbol from './isSymbol';
-import isDate from './isDate';
 import isArray from './isArray';
-import isRegExp from './isRegExp';
+import isDate from './isDate';
 import isError from './isError';
 import isNull from './isNull';
+import isRegExp from './isRegExp';
+import isSymbol from './isSymbol';
 
 /**
  * 获取对象类型

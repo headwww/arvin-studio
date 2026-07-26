@@ -1,10 +1,10 @@
+import helperGetDateTime from './helperGetDateTime';
+import isNumber from './isNumber';
+import isValidDate from './isValidDate';
 import setupDefaults from './setupDefaults';
 import staticDayTime from './staticDayTime';
 import staticWeekTime from './staticWeekTime';
-import helperGetDateTime from './helperGetDateTime';
 import toStringDate from './toStringDate';
-import isValidDate from './isValidDate';
-import isNumber from './isNumber';
 
 export type FirstDayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -14,7 +14,7 @@ export type FirstDayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
  * @param offsetWeek 周偏移量(默认当前周)、前几周、后几周
  */
 function getWhatWeek(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offsetWeek?: FirstDayOfWeek,
 ): Date;
 /**
@@ -25,15 +25,15 @@ function getWhatWeek(
  * @param firstDay 周视图的起始天，默认星期一
  */
 function getWhatWeek(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offsetWeek?: number,
-  offsetDay?: FirstDayOfWeek | 'first' | 'last',
+  offsetDay?: 'first' | 'last' | FirstDayOfWeek,
   firstDay?: FirstDayOfWeek,
 ): Date;
 function getWhatWeek(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offsetWeek?: number,
-  offsetDay?: FirstDayOfWeek | 'first' | 'last',
+  offsetDay?: 'first' | 'last' | FirstDayOfWeek,
   firstDay?: FirstDayOfWeek,
 ): Date {
   const d = toStringDate(date);
@@ -42,7 +42,7 @@ function getWhatWeek(
     let whatDayTime = helperGetDateTime(d);
     const viewStartDay: number = hasStartDay
       ? (firstDay as number)
-      : setupDefaults.firstDayOfWeek;
+      : setupDefaults.firstDayOfWeek!;
     const currentDay = d.getDay();
     let customDay: number;
 

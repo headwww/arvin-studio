@@ -3,10 +3,10 @@ import helperCreateTreeFunc from './helperCreateTreeFunc';
 export interface FindTreeResult<T = any> {
   index: number;
   item: T;
-  path: string[];
   items: T[];
-  parent: T;
   nodes: T[];
+  parent: T;
+  path: string[];
 }
 
 export interface FindTreeOptions {

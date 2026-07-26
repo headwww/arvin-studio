@@ -8,14 +8,11 @@ import helperCreateMinMax from './helperCreateMinMax';
 function max<T>(
   list: T[] | undefined,
   iterate?:
-    | string
+    | ((item: T, index: number, list: T[]) => number | string)
     | number
-    | ((item: T, index: number, list: T[]) => number | string),
-): T | null | undefined {
-  const fn = helperCreateMinMax(function (
-    rest: number,
-    itemVal: number,
-  ): boolean {
+    | string,
+): null | T | undefined {
+  const fn = helperCreateMinMax((rest: number, itemVal: number): boolean => {
     return rest < itemVal;
   });
   return fn(list as any, iterate as any);

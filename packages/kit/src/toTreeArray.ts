@@ -1,14 +1,14 @@
-import setupDefaults from './setupDefaults';
 import arrayEach from './arrayEach';
 import assign from './assign';
+import setupDefaults from './setupDefaults';
 
 export interface ToTreeArrayOptions {
+  children?: string;
+  clear?: boolean;
+  data?: string;
   key?: string;
   parentKey?: string;
-  children?: string;
-  data?: string;
   updated?: boolean;
-  clear?: boolean;
 }
 
 function unTreeList(
@@ -24,13 +24,9 @@ function unTreeList(
   const optUpdated = opts.updated;
   const optClear = opts.clear;
 
-  arrayEach(array, function (item: any) {
+  arrayEach(array, (item: any) => {
     const childList = item[optChildren as string];
-    let dataItem = item;
-
-    if (optData) {
-      dataItem = item[optData];
-    }
+    const dataItem = optData ? item[optData] : item;
 
     if (optUpdated !== false) {
       dataItem[optParentKey as string] = parentItem
@@ -40,7 +36,7 @@ function unTreeList(
 
     result.push(dataItem);
 
-    if (childList && childList.length) {
+    if (childList && childList.length > 0) {
       unTreeList(result, dataItem, childList, opts);
     }
 

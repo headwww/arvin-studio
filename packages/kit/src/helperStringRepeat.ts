@@ -7,7 +7,6 @@ function helperStringRepeat(str: string, count: number): string {
   if (str.repeat) {
     return str.repeat(count);
   }
-  // oxlint-disable-next-line unicorn/no-new-array
   const list = isNaN(count) ? [] : new Array(staticParseInt(count as any));
   return list.join(str) + (list.length > 0 ? str : '');
 }

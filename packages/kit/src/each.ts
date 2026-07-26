@@ -1,12 +1,12 @@
-import isArray from './isArray';
 import arrayEach from './arrayEach';
+import isArray from './isArray';
 import objectEach from './objectEach';
 
 /**
  * 通用迭代器，支持数组和对象
  */
 function each<T, C = any>(
-  list: T[] | ArrayLike<T> | undefined,
+  list: ArrayLike<T> | T[] | undefined,
   iterate: (this: C, item: T, index: number, list: T[]) => void,
   context?: C,
 ): void;

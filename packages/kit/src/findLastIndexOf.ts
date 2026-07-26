@@ -23,11 +23,7 @@ function findLastIndexOf<C = any>(
   context?: C,
 ): number;
 function findLastIndexOf(obj: any, iterate: any, context?: any): number {
-  return helperCreateiterateIndexOf(function (
-    obj: any,
-    iterate: any,
-    context: any,
-  ) {
+  return helperCreateiterateIndexOf((obj: any, iterate: any, context: any) => {
     for (let len = obj.length - 1; len >= 0; len--) {
       if (iterate.call(context, obj[len], len, obj)) {
         return len;

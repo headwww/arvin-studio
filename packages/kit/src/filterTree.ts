@@ -29,7 +29,7 @@ function filterTree(
   if (list && iterate) {
     eachTree(
       list,
-      function (item, index, items, path, parent, nodes) {
+      (item, index, items, path, parent, nodes) => {
         if (iterate.call(context, item, index, items, path, parent, nodes)) {
           result.push(item);
         }

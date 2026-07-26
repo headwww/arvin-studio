@@ -5,8 +5,8 @@
  */
 function arrayIndexOf<T>(arr: T[], val: T): number;
 function arrayIndexOf(arr: any[], val: any): number {
-  for (let index = 0, len = arr.length; index < len; index++) {
-    if (val === arr[index]) {
+  for (const [index, element] of arr.entries()) {
+    if (val === element) {
       return index;
     }
   }

@@ -3,7 +3,7 @@
  * @param obj 对象
  * @param key 键值
  */
-function hasOwnProp(obj: any, key: string | number): boolean {
+function hasOwnProp(obj: any, key: number | string): boolean {
   // oxlint-disable-next-line no-prototype-builtins
   return obj && obj.hasOwnProperty ? obj.hasOwnProperty(key) : false;
 }

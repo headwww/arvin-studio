@@ -1,5 +1,5 @@
-import staticParseInt from './staticParseInt';
 import helperCreateToNumber from './helperCreateToNumber';
+import staticParseInt from './staticParseInt';
 
 /**
  * 转整数
@@ -7,7 +7,7 @@ import helperCreateToNumber from './helperCreateToNumber';
  * @param num - 数值/字符串
  * @returns 整数
  */
-function toInteger(num: number | string | null | undefined): number;
+function toInteger(num: null | number | string | undefined): number;
 function toInteger(num: any): number;
 function toInteger(num: any): number {
   const helper = helperCreateToNumber(staticParseInt);

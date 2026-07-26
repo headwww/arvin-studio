@@ -2,7 +2,7 @@ import helperMultiply from './helperMultiply';
 import toNumber from './toNumber';
 import toNumberString from './toNumberString';
 
-type MathMethod = 'round' | 'ceil' | 'floor';
+type MathMethod = 'ceil' | 'floor' | 'round';
 /**
  * 创建数值运算函数
  */
@@ -18,7 +18,7 @@ function helperCreateMathNumber(
     const numRest = toNumber(num);
     let rest = numRest;
     if (numRest) {
-      decimalPlaces = decimalPlaces >> 0;
+      decimalPlaces = Math.trunc(decimalPlaces);
       const numStr = toNumberString(numRest);
       const nums = numStr.split('.');
       const intStr = nums[0];

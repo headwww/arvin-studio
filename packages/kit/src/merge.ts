@@ -1,16 +1,16 @@
-import isArray from './isArray';
-import isPlainObject from './isPlainObject';
-import isFunction from './isFunction';
-import each from './each';
 import clone from './clone';
+import each from './each';
 import helperCheckCopyKey from './helperCheckCopyKey';
+import isArray from './isArray';
+import isFunction from './isFunction';
+import isPlainObject from './isPlainObject';
 
 function handleMerge(target: any, source: any): any {
   if (
     (isPlainObject(target) && isPlainObject(source)) ||
     (isArray(target) && isArray(source))
   ) {
-    each(source, function (val: any, key: string) {
+    each(source, (val: any, key: string) => {
       if (helperCheckCopyKey(key)) {
         (target as any)[key] = isFunction(source)
           ? val
@@ -45,8 +45,7 @@ function merge(target: any, ...sources: any[]): any {
 
   const result = target;
 
-  for (let i = 0; i < sources.length; i++) {
-    const source = sources[i];
+  for (const source of sources) {
     if (source) {
       handleMerge(result, source);
     }

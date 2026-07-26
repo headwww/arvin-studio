@@ -3,7 +3,7 @@ import { AsCore } from './core';
 /**
  * 主题
  */
-export type Theme = null | '' | 'default' | 'light' | 'dark';
+export type Theme = '' | 'dark' | 'default' | 'light' | null;
 
 export const themeConfigStore: {
   theme: Theme;
@@ -17,7 +17,7 @@ export function setTheme(name?: Theme) {
   if (typeof document !== 'undefined') {
     const documentElement = document.documentElement;
     if (documentElement) {
-      documentElement.setAttribute('data-as-theme', theme);
+      documentElement.dataset.asTheme = theme;
     }
   }
   return AsCore;

@@ -10,12 +10,12 @@ import helperCreateMinMax from './helperCreateMinMax';
 function min<T>(
   list: T[] | undefined,
   iterate?:
-    | string
+    | ((item: T, index: number, list: T[]) => number | string)
     | number
-    | ((item: T, index: number, list: T[]) => number | string),
-): T | null | undefined;
+    | string,
+): null | T | undefined;
 function min(list: any, iterate?: any): any {
-  const helper = helperCreateMinMax(function (rest: any, itemVal: any) {
+  const helper = helperCreateMinMax((rest: any, itemVal: any) => {
     return rest > itemVal;
   });
   return helper(list, iterate);

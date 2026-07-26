@@ -1,12 +1,12 @@
-import staticParseInt from './staticParseInt';
-import helperGetUTCDateTime from './helperGetUTCDateTime';
 import helperGetDateTime from './helperGetDateTime';
-import isString from './isString';
-import isNumber from './isNumber';
+import helperGetUTCDateTime from './helperGetUTCDateTime';
 import isDate from './isDate';
+import isNumber from './isNumber';
+import isString from './isString';
+import staticParseInt from './staticParseInt';
 
 function getParseRule(txt: number | string): string {
-  return `(\\d{${txt}})`;
+  return String.raw`(\d{${txt}})`;
 }
 
 function toParseMs(num: number): number {
@@ -28,7 +28,7 @@ const d1or7 = getParseRule('1,7');
 const d3or4 = getParseRule('3,4');
 const place = '.{1}';
 const d1Or2RE = place + d1or2;
-const dzZ = '(([zZ])|([-+]\\d{2}:?\\d{2}))';
+const dzZ = String.raw`(([zZ])|([-+]\d{2}:?\d{2}))`;
 
 const defaulParseStrs = [
   d3or4,
@@ -51,13 +51,13 @@ for (let len = defaulParseStrs.length - 1; len >= 0; len--) {
 }
 
 interface ParseResult {
-  y?: string;
-  M?: string;
   d?: string;
   H?: string;
+  M?: string;
   m?: string;
   s?: string;
   S?: string;
+  y?: string;
   Z?: string;
 }
 
@@ -66,8 +66,8 @@ interface ParseResult {
  */
 function parseDefaultRules(str: string): ParseResult {
   const resMaps: ParseResult = {};
-  for (let i = 0, dfrLen = defaulParseREs.length; i < dfrLen; i++) {
-    const matchRest = str.match(defaulParseREs[i]!);
+  for (const defaulParseRE of defaulParseREs) {
+    const matchRest = str.match(defaulParseRE!);
     if (matchRest) {
       resMaps.y = matchRest[1];
       resMaps.M = matchRest[2];
@@ -102,10 +102,9 @@ const customParseStrs: [string, string][] = [
 ];
 
 const parseRuleMaps: Record<string, string> = {};
-const parseRuleKeys: string[] = ['\\[([^\\]]+)\\]'];
+const parseRuleKeys: string[] = [String.raw`\[([^\]]+)\]`];
 
-for (let i = 0; i < customParseStrs.length; i++) {
-  const itemRule = customParseStrs[i];
+for (const itemRule of customParseStrs) {
   parseRuleMaps[itemRule![0]] = `${itemRule![1]}?`;
   parseRuleKeys.push(itemRule![0]);
 }
@@ -127,7 +126,7 @@ function parseCustomRules(str: string, format: string): ParseResult {
   if (!cacheItem) {
     const posIndexs: string[] = [];
     const re = format
-      .replace(/([$(){}*+.?\\^|])/g, '\\$1')
+      .replaceAll(/([$(){}*+.?\\^|])/g, String.raw`\$1`)
       .replace(customParseRes, function (text: string, val: string) {
         const firstChar = text.charAt(0);
         // 如果为转义符号:[关键字]
@@ -155,13 +154,13 @@ function parseCustomRules(str: string, format: string): ParseResult {
 }
 
 export interface ParsedDateTime {
-  y?: string;
-  M?: number;
   d?: number;
   H?: number;
+  M?: number;
   m?: number;
   s?: number;
   S?: number;
+  y?: string;
   Z?: string;
 }
 
@@ -179,7 +178,8 @@ function parseTimeZone(resMaps: ParseResult): Date {
       m: resMaps.m ? toParseNum(parseInt(resMaps.m)) : 0,
       s: resMaps.s ? toParseNum(parseInt(resMaps.s)) : 0,
       S: resMaps.S
-        ? toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
+        ? // eslint-disable-next-line unicorn/max-nested-calls
+          toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
         : 0,
     };
     return new Date(helperGetUTCDateTime(utcMaps));
@@ -195,15 +195,16 @@ function parseTimeZone(resMaps: ParseResult): Date {
         m: resMaps.m ? toParseNum(parseInt(resMaps.m)) : 0,
         s: resMaps.s ? toParseNum(parseInt(resMaps.s)) : 0,
         S: resMaps.S
-          ? toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
+          ? // eslint-disable-next-line unicorn/max-nested-calls
+            toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
           : 0,
       };
       const utcTime = helperGetUTCDateTime(utcMaps);
       const offset =
         (matchRest[1] === '-' ? -1 : 1) *
           staticParseInt(matchRest[2]!) *
-          3600000 +
-        staticParseInt(matchRest[3]!) * 60000;
+          3_600_000 +
+        staticParseInt(matchRest[3]!) * 60_000;
       return new Date(utcTime - offset);
     }
   }
@@ -217,12 +218,12 @@ function parseTimeZone(resMaps: ParseResult): Date {
  * @param format - 解析格式 yyyy MM dd HH mm ss SSS
  * @returns 解析后的日期对象
  */
-function toStringDate(str: string | Date | number | null | undefined): Date;
+function toStringDate(str: Date | null | number | string | undefined): Date;
 function toStringDate(
-  str: string | Date | number | null | undefined,
-  format: string | null | undefined,
+  str: Date | null | number | string | undefined,
+  format: null | string | undefined,
 ): Date;
-function toStringDate(str: any, format?: string | null | undefined): Date;
+function toStringDate(str: any, format?: null | string | undefined): Date;
 function toStringDate(str: any, format?: any): Date {
   if (str) {
     const isDType = isDate(str);
@@ -238,21 +239,20 @@ function toStringDate(str: any, format?: any): Date {
           ? toParseNum(parseInt(resMaps.M)) - 1
           : 0;
         const S: number | undefined = resMaps.S
-          ? toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
+          ? // eslint-disable-next-line unicorn/max-nested-calls
+            toParseMs(toParseNum(parseInt(resMaps.S.substring(0, 3))))
           : 0;
-        if (resMaps.Z) {
-          return parseTimeZone(resMaps);
-        } else {
-          return new Date(
-            parseInt(resMaps.y),
-            M || 0,
-            resMaps.d ? toParseNum(parseInt(resMaps.d)) : 1,
-            resMaps.H ? toParseNum(parseInt(resMaps.H)) : 0,
-            resMaps.m ? toParseNum(parseInt(resMaps.m)) : 0,
-            resMaps.s ? toParseNum(parseInt(resMaps.s)) : 0,
-            S || 0,
-          );
-        }
+        return resMaps.Z
+          ? parseTimeZone(resMaps)
+          : new Date(
+              parseInt(resMaps.y),
+              M || 0,
+              resMaps.d ? toParseNum(parseInt(resMaps.d)) : 1,
+              resMaps.H ? toParseNum(parseInt(resMaps.H)) : 0,
+              resMaps.m ? toParseNum(parseInt(resMaps.m)) : 0,
+              resMaps.s ? toParseNum(parseInt(resMaps.s)) : 0,
+              S || 0,
+            );
       }
     }
   }

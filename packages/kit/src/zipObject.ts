@@ -1,5 +1,5 @@
-import values from './values';
 import each from './each';
+import values from './values';
 
 /**
  * 根据键数组、值数组对转换为对象
@@ -14,7 +14,7 @@ function zipObject(props: any, valuesArr: any): any {
   const result: Record<string, any> = {};
   const arr = valuesArr || [];
 
-  each(values(props), function (val: any, key: string) {
+  each(values(props), (val: any, key: string) => {
     result[val] = arr[key];
   });
 

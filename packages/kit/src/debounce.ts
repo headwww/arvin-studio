@@ -8,7 +8,7 @@ export interface DebounceOptions {
 }
 
 interface DebouncedFunction {
-  (this: any, ...args: any[]): void;
+  (...args: any[]): void;
   cancel: () => boolean;
 }
 
@@ -19,34 +19,32 @@ interface DebouncedFunction {
  * @param wait 毫秒
  * @param options 可选参数
  */
-function debounce<C = any>(
-  callback: (this: C, ...args: any[]) => any,
+function debounce(
+  callback: (...args: any[]) => any,
   wait: number,
   options?: DebounceOptions,
-): (this: C, ...args: any[]) => any {
+): (...args: any[]) => any {
   let args: any[] | null = null;
-  let context: any = null;
   const opts: DebounceOptions =
     typeof options === 'boolean'
       ? { leading: options, trailing: !options }
       : assign({ leading: false, trailing: true }, options);
   let runFlag = false;
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let timeout: null | ReturnType<typeof setTimeout> = null;
   const optLeading = opts.leading;
   const optTrailing = opts.trailing;
 
-  const gcFn = function (): void {
+  const gcFn = (): void => {
     args = null;
-    context = null;
   };
 
-  const runFn = function (): void {
+  const runFn = (): void => {
     runFlag = true;
-    callback.apply(context, args as any);
+    callback(...(args as any[]));
     gcFn();
   };
 
-  const endFn = function (): void {
+  const endFn = (): void => {
     if (optLeading === true) {
       timeout = null;
     }
@@ -61,7 +59,7 @@ function debounce<C = any>(
     gcFn();
   };
 
-  const cancelFn = function (): boolean {
+  const cancelFn = (): boolean => {
     const rest = timeout !== null;
     if (rest) {
       clearTimeout(timeout as ReturnType<typeof setTimeout>);
@@ -72,21 +70,21 @@ function debounce<C = any>(
     return rest;
   };
 
-  const debounced = function (this: any, ...innerArgs: any[]): void {
-    runFlag = false;
-    args = innerArgs;
-    context = this;
-    if (timeout === null) {
-      if (optLeading === true) {
-        runFn();
+  const debounced = Object.assign(
+    (...innerArgs: any[]): void => {
+      runFlag = false;
+      args = innerArgs;
+      if (timeout === null) {
+        if (optLeading === true) {
+          runFn();
+        }
+      } else {
+        clearTimeout(timeout as ReturnType<typeof setTimeout>);
       }
-    } else {
-      clearTimeout(timeout as ReturnType<typeof setTimeout>);
-    }
-    timeout = setTimeout(endFn, wait);
-  } as DebouncedFunction;
-
-  debounced.cancel = cancelFn;
+      timeout = setTimeout(endFn, wait);
+    },
+    { cancel: cancelFn },
+  ) as DebouncedFunction;
 
   return debounced;
 }

@@ -196,7 +196,6 @@
     "yaml"
   ],
 
-
   "github.copilot.enable": {
     "*": true,
     "markdown": true,

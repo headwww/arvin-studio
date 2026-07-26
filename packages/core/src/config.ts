@@ -1,20 +1,25 @@
 import { get, merge } from '@arvin-studio/kit';
+
 import DomZIndex from 'dom-zindex';
+
 import { AsCore } from './core';
 
 /**
  * 组件尺寸类型
  */
-export type SizeType = null | '' | 'large' | 'middle' | 'small';
+export type SizeType = '' | 'large' | 'middle' | 'small' | null;
 
 /**
  * 全局参数对象
  */
 export interface GlobalConfig {
   /**
-   * 全局默认 z-index
+   * 自定义方式对组件内置的语言进行翻译
+   * @param key
+   * @param args
+   * @returns string
    */
-  zIndex?: number;
+  i18n?: (key: string, args?: any) => number | string;
   /**
    * 全局组件尺寸
    */
@@ -27,12 +32,9 @@ export interface GlobalConfig {
    */
   translate?: (key: string, args?: any) => string;
   /**
-   * 自定义方式对组件内置的语言进行翻译
-   * @param key
-   * @param args
-   * @returns string
+   * 全局默认 z-index
    */
-  i18n?: (key: string, args?: any) => string | number;
+  zIndex?: number;
 }
 
 export const globalConfigStore: GlobalConfig = {
@@ -57,7 +59,7 @@ export function setConfig(options?: GlobalConfig) {
  * 获取全局参数
  */
 export function getConfig(key: keyof GlobalConfig, defaultValue?: any) {
-  return arguments.length
+  return arguments.length > 0
     ? get(globalConfigStore, key, defaultValue)
     : globalConfigStore;
 }

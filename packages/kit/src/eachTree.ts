@@ -1,5 +1,5 @@
-import helperCreateTreeFunc from './helperCreateTreeFunc';
 import each from './each';
+import helperCreateTreeFunc from './helperCreateTreeFunc';
 
 export interface EachTreeOptions {
   children?: string;
@@ -24,7 +24,7 @@ function eachTreeItem(
   // oxlint-disable-next-line oxc/only-used-in-recursion
   opts: any,
 ): void {
-  each(obj, function (item: any, index: any) {
+  each(obj, (item: any, index: any) => {
     const paths = path.concat([`${index}`]);
     const nodes = node.concat([item]);
     iterate.call(context, item, index, obj, paths, parent, nodes);

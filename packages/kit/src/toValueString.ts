@@ -8,7 +8,7 @@ import toNumberString from './toNumberString';
  * @param obj - 值
  * @returns 转换后的字符串
  */
-function toValueString(obj: number | string | any[] | null | undefined): string;
+function toValueString(obj: any[] | null | number | string | undefined): string;
 function toValueString(obj: any): string;
 function toValueString(obj: any): string {
   if (isNumber(obj)) {

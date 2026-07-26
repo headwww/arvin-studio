@@ -1,43 +1,43 @@
-import map from './map';
-import some from './some';
+import eachTree from './eachTree';
 import every from './every';
-import uniq from './uniq';
-import union from './union';
-import sortBy from './sortBy';
-import orderBy from './orderBy';
-import shuffle from './shuffle';
-import sample from './sample';
-import findKey from './findKey';
+import filterTree from './filterTree';
 import find from './find';
+import findKey from './findKey';
 import findLast from './findLast';
+import findTree from './findTree';
+import map from './map';
+import mapTree from './mapTree';
+import orderBy from './orderBy';
+import sample from './sample';
+import searchTree from './searchTree';
+import shuffle from './shuffle';
+import some from './some';
+import sortBy from './sortBy';
 import toArrayTree from './toArrayTree';
 import toTreeArray from './toTreeArray';
-import findTree from './findTree';
-import eachTree from './eachTree';
-import mapTree from './mapTree';
-import filterTree from './filterTree';
-import searchTree from './searchTree';
+import union from './union';
+import uniq from './uniq';
 
 export {
-  map,
-  some,
+  eachTree,
   every,
-  uniq,
-  union,
-  sortBy,
-  orderBy,
-  shuffle,
-  sample,
-  findKey,
+  filterTree,
   find,
+  findKey,
   findLast,
+  findTree,
+  map,
+  mapTree,
+  orderBy,
+  sample,
+  searchTree,
+  shuffle,
+  some,
+  sortBy,
   toArrayTree,
   toTreeArray,
-  findTree,
-  eachTree,
-  mapTree,
-  filterTree,
-  searchTree,
+  union,
+  uniq,
 };
 export default {
   map,

@@ -1,11 +1,11 @@
-import isEmpty from './isEmpty';
-import isObject from './isObject';
-import isFunction from './isFunction';
-import property from './property';
 import each from './each';
+import isEmpty from './isEmpty';
+import isFunction from './isFunction';
+import isObject from './isObject';
+import property from './property';
 
-type IterateFn<T> = (this: any, item: T, key: any, obj: any) => string | number;
-type Iterate<T> = string | number | IterateFn<T>;
+type IterateFn<T> = (this: any, item: T, key: any, obj: any) => number | string;
+type Iterate<T> = IterateFn<T> | number | string;
 
 function createiterateEmpty(iterate: any): () => boolean {
   return function () {
@@ -22,9 +22,9 @@ function createiterateEmpty(iterate: any): () => boolean {
 function groupBy<T, C = any>(
   list: T[] | undefined,
   iterate:
-    | string
+    | ((this: C, item: T, index: number, obj: T[]) => number | string)
     | number
-    | ((this: C, item: T, index: number, obj: T[]) => string | number),
+    | string,
   context?: C,
 ): { [key: string]: T[] };
 /**
@@ -36,9 +36,9 @@ function groupBy<T, C = any>(
 function groupBy<T, C = any>(
   obj: T,
   iterate:
-    | string
+    | ((this: C, item: any, key: string, obj: T) => number | string)
     | number
-    | ((this: C, item: any, key: string, obj: T) => string | number),
+    | string,
   context?: C,
 ): { [key: string]: any[] };
 function groupBy(
@@ -51,12 +51,12 @@ function groupBy(
     let iterateFn: any;
     if (iterate && isObject(iterate)) {
       iterateFn = createiterateEmpty(iterate);
-    } else if (!isFunction(iterate)) {
-      iterateFn = property(iterate as any);
-    } else {
+    } else if (isFunction(iterate)) {
       iterateFn = iterate;
+    } else {
+      iterateFn = property(iterate as any);
     }
-    each(obj, function (val: any, key: any) {
+    each(obj, (val: any, key: any) => {
       const groupKey = iterateFn ? iterateFn.call(context, val, key, obj) : val;
       if (result[groupKey]) {
         result[groupKey].push(val);

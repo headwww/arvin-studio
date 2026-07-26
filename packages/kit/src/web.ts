@@ -1,7 +1,7 @@
-import getBaseURL from './getBaseURL';
-import locat from './locat';
 import browse from './browse';
 import cookie from './cookie';
+import getBaseURL from './getBaseURL';
+import locat from './locat';
 
 const webMethods = {
   getBaseURL,

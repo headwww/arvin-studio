@@ -1,35 +1,36 @@
-import setupDefaults from './setupDefaults';
+import type { OrderByFieldConfs } from './orderBy';
+
+import assign from './assign';
+import clone from './clone';
+import each from './each';
+import eqNull from './eqNull';
 import helperLog from './helperLog';
 import orderBy from './orderBy';
-import type { OrderByFieldConfs } from './orderBy';
-import clone from './clone';
-import eqNull from './eqNull';
-import each from './each';
 import remove from './remove';
-import assign from './assign';
+import setupDefaults from './setupDefaults';
 
 export interface ToArrayTreeOptions<T> {
-  strict?: boolean;
+  children?: string;
+  data?: string;
   key?: string;
+  mapChildren?: string;
   parentKey?: string;
-  /** 支持指定根节点的值，优先级最高 */
-  rootValues?: (string | number)[];
+  /** 已废弃，被 sortKey: { field: 'name', order: 'desc' } 替换 @deprecated */
+  reverse?: boolean;
   /**
    * 支持指定根节点的值。
    * 默认情况下，如果 strict=false，则 parentKey 值不存节点内的算根节点，如果 strict=true，则 parentKey 值等于 null 的算根节点。
    */
-  rootParentValue?: string | number | null;
-  children?: string;
-  mapChildren?: string;
+  rootParentValue?: null | number | string;
+  /** 支持指定根节点的值，优先级最高 */
+  rootValues?: (number | string)[];
   sortKey?: OrderByFieldConfs<T, any>;
-  data?: string;
-  /** 已废弃，被 sortKey: { field: 'name', order: 'desc' } 替换 @deprecated */
-  reverse?: boolean;
+  strict?: boolean;
 }
 
 function strictTree(array: any[], optChildren: string): void {
-  each(array, function (item: any) {
-    if (item[optChildren] && !item[optChildren].length) {
+  each(array, (item: any) => {
+    if (item[optChildren] && item[optChildren].length === 0) {
       remove(item, optChildren);
     }
   });
@@ -75,13 +76,13 @@ function toArrayTree(list: any, options?: any): any[] {
     }
   }
 
-  if (optRootValues && optRootValues.length) {
-    each(optRootValues, function (v: string | number) {
+  if (optRootValues && optRootValues.length > 0) {
+    each(optRootValues, (v: number | string) => {
       rootIdMaps[v] = 1;
     });
   }
 
-  each(sortedList, function (item: any) {
+  each(sortedList, (item: any) => {
     const id = item[optKey];
     const idMaps = eqNull(id) ? idEmpMaps : idDefMaps;
     if (idMaps[id]) {
@@ -90,24 +91,19 @@ function toArrayTree(list: any, options?: any): any[] {
     idMaps[id] = true;
   });
 
-  each(sortedList, function (item: any) {
+  each(sortedList, (item: any) => {
     const id = item[optKey];
     const isIdNull = eqNull(id);
     let treeData: any;
 
-    if (optData) {
-      treeData = {};
-      treeData[optData] = item;
-    } else {
-      treeData = item;
-    }
+    treeData = optData ? { [optData]: item } : item;
 
     let parentId = item[optParentKey];
     const isPdNull = eqNull(parentId);
 
     const idTreeMaps = isIdNull ? empTreeMaps : defTreeMaps;
 
-    idTreeMaps[id] = idTreeMaps[id] || [];
+    idTreeMaps[id] ||= [];
     treeData[optKey] = id;
     treeData[optParentKey] = parentId;
 
@@ -119,22 +115,20 @@ function toArrayTree(list: any, options?: any): any[] {
     const pdTreeMaps = isPdNull ? empTreeMaps : defTreeMaps;
     const idMaps = isPdNull ? idEmpMaps : idDefMaps;
 
-    pdTreeMaps[parentId] = pdTreeMaps[parentId] || [];
+    pdTreeMaps[parentId] ||= [];
     pdTreeMaps[parentId]?.push(treeData);
     treeData[optChildren] = idTreeMaps[id];
     if (optMapChildren) {
       treeData[optMapChildren] = idTreeMaps[id];
     }
 
-    if (optRootValues && optRootValues.length) {
+    if (optRootValues && optRootValues.length > 0) {
       if (rootIdMaps[id]) {
         result.push(treeData);
       }
     } else if (isDefaultRootParentVal) {
-      if (!optStrict || (optStrict && isPdNull)) {
-        if (!idMaps[parentId]) {
-          result.push(treeData);
-        }
+      if ((!optStrict || (optStrict && isPdNull)) && !idMaps[parentId]) {
+        result.push(treeData);
       }
     } else {
       if (parentId === optRootParentVal) {

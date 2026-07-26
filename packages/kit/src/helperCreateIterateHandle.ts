@@ -23,26 +23,23 @@ function helperCreateIterateHandle(
     if (obj && iterate) {
       if (prop && (obj as any)[prop]) {
         return (obj as any)[prop](iterate, context);
-      } else {
-        if (useArray && isArray(obj)) {
-          for (let index = 0, len = (obj as any).length; index < len; index++) {
-            if (
-              !!iterate.call(context!, (obj as any)[index], index, obj) ===
-              matchValue
-            ) {
-              return [true, false, index, (obj as any)[index]][restIndex];
-            }
+      }
+      if (useArray && isArray(obj)) {
+        for (let index = 0, len = (obj as any).length; index < len; index++) {
+          if (
+            !!iterate.call(context!, (obj as any)[index], index, obj) ===
+            matchValue
+          ) {
+            return [true, false, index, (obj as any)[index]][restIndex];
           }
-        } else {
-          for (const key in obj) {
-            if (hasOwnProp(obj, key)) {
-              if (
-                !!iterate.call(context!, (obj as any)[key], key, obj) ===
-                matchValue
-              ) {
-                return [true, false, key, (obj as any)[key]][restIndex];
-              }
-            }
+        }
+      } else {
+        for (const key in obj) {
+          if (
+            hasOwnProp(obj, key) &&
+            !!iterate.call(context!, (obj as any)[key], key, obj) === matchValue
+          ) {
+            return [true, false, key, (obj as any)[key]][restIndex];
           }
         }
       }

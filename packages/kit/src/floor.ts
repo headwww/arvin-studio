@@ -6,7 +6,7 @@ import helperCreateMathNumber from './helperCreateMathNumber';
  * @param digits 小数保留位数
  */
 function floor(
-  num: string | number | null | undefined,
+  num: null | number | string | undefined,
   digits?: number,
 ): number {
   const fn = helperCreateMathNumber('floor');

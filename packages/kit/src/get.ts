@@ -1,10 +1,10 @@
-import staticHGKeyRE from './staticHGKeyRE';
-import helperGetHGSKeys from './helperGetHGSKeys';
-import hasOwnProp from './hasOwnProp';
-import isUndefined from './isUndefined';
 import eqNull from './eqNull';
+import hasOwnProp from './hasOwnProp';
+import helperGetHGSKeys from './helperGetHGSKeys';
+import isUndefined from './isUndefined';
+import staticHGKeyRE from './staticHGKeyRE';
 
-type PropertyPath = undefined | null | number | number[] | string | string[];
+type PropertyPath = null | number | number[] | string | string[] | undefined;
 
 function getDeepProps(obj: any, key: string): any {
   const matchs = key ? key.match(staticHGKeyRE) : '';
@@ -19,25 +19,27 @@ function getDeepProps(obj: any, key: string): any {
 
 // oxlint-disable-next-line typescript/consistent-return
 function getValueByPath(obj: any, property: PropertyPath): any {
-  if (obj) {
-    if (obj[property as any] || hasOwnProp(obj, property as any)) {
-      return obj[property as any];
-    }
-    const props = helperGetHGSKeys(property);
-    const len = props.length;
-    if (len) {
-      let rest = obj;
-      for (let index = 0; index < len; index++) {
-        rest = getDeepProps(rest, props[index] as any);
-        if (eqNull(rest)) {
-          if (index === len - 1) {
-            return rest;
-          }
-          return undefined;
+  if (!obj) {
+    return;
+  }
+
+  if (obj[property as any] || hasOwnProp(obj, property as any)) {
+    return obj[property as any];
+  }
+  const props = helperGetHGSKeys(property);
+  const len = props.length;
+  if (len) {
+    let rest = obj;
+    for (let index = 0; index < len; index++) {
+      rest = getDeepProps(rest, props[index] as any);
+      if (eqNull(rest)) {
+        if (index === len - 1) {
+          return rest;
         }
+        return undefined;
       }
-      return rest;
     }
+    return rest;
   }
 }
 

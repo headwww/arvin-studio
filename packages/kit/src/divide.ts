@@ -8,8 +8,8 @@ import toNumber from './toNumber';
  * @param num2 数值2
  */
 function divide(
-  num1: number | null | undefined,
-  num2: number | null | undefined,
+  num1: null | number | undefined,
+  num2: null | number | undefined,
 ): number {
   return helperNumberDivide(toNumber(num1), toNumber(num2));
 }

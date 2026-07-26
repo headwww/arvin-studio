@@ -6,7 +6,7 @@ function helperGetHGSKeys(property: any): string[] {
     ? (property as any).splice && (property as any).join
       ? property
       : `${property}`
-          .replace(/(\[\d+\])\.?/g, '$1.')
+          .replaceAll(/(\[\d+\])\.?/g, '$1.')
           .replace(/\.$/, '')
           .split('.')
     : [];

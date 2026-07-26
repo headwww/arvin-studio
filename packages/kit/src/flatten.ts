@@ -1,9 +1,9 @@
-import isArray from './isArray';
 import arrayEach from './arrayEach';
+import isArray from './isArray';
 
 function flattenDeep(arr: any[], deep?: boolean) {
   let result: any = [];
-  arrayEach(arr, function (vals) {
+  arrayEach(arr, (vals) => {
     result = result.concat(
       isArray(vals) ? (deep ? flattenDeep(vals, deep) : vals) : [vals],
     );

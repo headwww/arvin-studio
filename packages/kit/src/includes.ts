@@ -13,10 +13,8 @@ function includes(obj: any, val: any): boolean {
       return obj.includes(val);
     }
     for (const key in obj) {
-      if (hasOwnProp(obj, key)) {
-        if (val === obj[key]) {
-          return true;
-        }
+      if (hasOwnProp(obj, key) && val === obj[key]) {
+        return true;
       }
     }
   }

@@ -1,5 +1,5 @@
-import staticLocation from './staticLocation';
 import parseUrl from './parseUrl';
+import staticLocation from './staticLocation';
 
 /**
  * 获取地址栏信息

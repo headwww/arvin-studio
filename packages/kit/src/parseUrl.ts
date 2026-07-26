@@ -1,38 +1,38 @@
+import helperGetLocatOrigin from './helperGetLocatOrigin';
 import staticLocation from './staticLocation';
 import unserialize from './unserialize';
-import helperGetLocatOrigin from './helperGetLocatOrigin';
 
 export interface AsUrl {
-  /** 获取完整的地址 */
-  href: string;
   /** 获取 #Hash 的完整字符串 */
   hash: string;
-  /** 获取主机信息 */
-  host: string;
-  /** 主机主机名 */
-  hostname: string;
-  /** 获取地址的协议类型 */
-  protocol: string;
-  /** 获取端口信息 */
-  port: string;
-  /** 查询字符串 */
-  search: string;
-  /** 获取路径字符串 */
-  pathname: string;
-  /** 获取 #hash 键值 */
-  origin: string;
   /** 获取 #hash 键值，不包括参数 */
   hashKey: string;
   /** 获取 #hash 对象参数 */
   hashQuery: any;
-  /** 获取查询对象参数 */
-  searchQuery: any;
+  /** 获取主机信息 */
+  host: string;
+  /** 主机主机名 */
+  hostname: string;
+  /** 获取完整的地址 */
+  href: string;
+  /** 获取 #hash 键值 */
+  origin: string;
   /** 内部路径缓存 */
   path?: string;
+  /** 获取路径字符串 */
+  pathname: string;
+  /** 获取端口信息 */
+  port: string;
+  /** 获取地址的协议类型 */
+  protocol: string;
+  /** 查询字符串 */
+  search: string;
+  /** 获取查询对象参数 */
+  searchQuery: any;
 }
 
 function parseURLQuery(uri: string): any {
-  return unserialize(uri.split('?')[1] || '');
+  return unserialize(uri.split('?', 2)[1] || '');
 }
 
 /**
@@ -45,10 +45,10 @@ function parseUrl(url: string): AsUrl;
 function parseUrl(url: any): AsUrl;
 function parseUrl(url: any): AsUrl {
   // oxlint-disable-next-line prefer-const
-  let hashs: RegExpMatchArray | null;
+  let hashs: null | RegExpMatchArray;
   let portText: string;
   // oxlint-disable-next-line prefer-const
-  let searchs: RegExpMatchArray | null;
+  let searchs: null | RegExpMatchArray;
   // oxlint-disable-next-line prefer-const
   let parsed: AsUrl;
 
@@ -62,7 +62,7 @@ function parseUrl(url: any): AsUrl {
 
   searchs = href.replace(/#.*/, '').match(/(\?.*)/);
   parsed = {
-    href: href,
+    href,
     hash: '',
     host: '',
     hostname: '',
@@ -78,13 +78,13 @@ function parseUrl(url: any): AsUrl {
   };
 
   parsed.path = href
-    .replace(/^([a-z0-9.+-]*:)\/\//, function (_: string, protocol: string) {
+    .replace(/^([a-z0-9.+-]*:)\/\//, (_: string, protocol: string) => {
       parsed.protocol = protocol;
       return '';
     })
     .replace(
       /^([a-z0-9.+-]*)(:\d+)?\/?/,
-      function (_: string, hostname: string, port: string) {
+      (_: string, hostname: string, port: string) => {
         portText = port || '';
         parsed.port = portText.replace(':', '');
         parsed.hostname = hostname;
@@ -92,7 +92,7 @@ function parseUrl(url: any): AsUrl {
         return '/';
       },
     )
-    .replace(/(#.*)/, function (_: string, hash: string) {
+    .replace(/(#.*)/, (_: string, hash: string) => {
       parsed.hash = hash.length > 1 ? hash : '';
       return '';
     });

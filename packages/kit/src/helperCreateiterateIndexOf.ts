@@ -1,7 +1,7 @@
+import hasOwnProp from './hasOwnProp';
+import isArray from './isArray';
 import isFunction from './isFunction';
 import isString from './isString';
-import isArray from './isArray';
-import hasOwnProp from './hasOwnProp';
 
 /**
  * 创建 iterateIndexOf 迭代查找函数
@@ -23,10 +23,11 @@ function helperCreateiterateIndexOf(
         return callback(obj, iterate, context);
       }
       for (const key in obj) {
-        if (hasOwnProp(obj, key)) {
-          if (iterate.call(context!, (obj as any)[key], key, obj)) {
-            return key;
-          }
+        if (
+          hasOwnProp(obj, key) &&
+          iterate.call(context!, (obj as any)[key], key, obj)
+        ) {
+          return key;
         }
       }
     }

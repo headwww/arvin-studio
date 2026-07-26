@@ -1,6 +1,6 @@
-import objectToString from './staticObjectToString';
-import objectEach from './objectEach';
 import arrayEach from './arrayEach';
+import objectEach from './objectEach';
+import objectToString from './staticObjectToString';
 
 function getCativeCtor(val: any, args?: any): any {
   // oxlint-disable-next-line no-proto
@@ -15,40 +15,40 @@ function handleValueClone(item: any, isDeep?: boolean): any {
 function copyValue(val: any, isDeep?: boolean): any {
   if (val) {
     switch (objectToString.call(val)) {
-      case '[object Object]': {
-        const restObj: Record<string, any> = Object.create(
-          Object.getPrototypeOf(val),
-        );
-        objectEach(val, function (item: any, key: string) {
-          restObj[key] = handleValueClone(item, isDeep);
+      case '[object Arguments]':
+      case '[object Array]': {
+        const restArr: any[] = [];
+        arrayEach(val, (item: any) => {
+          restArr.push(handleValueClone(item, isDeep));
         });
-        return restObj;
+        return restArr;
       }
       case '[object Date]':
       case '[object RegExp]': {
         return getCativeCtor(val, val.valueOf());
       }
-      case '[object Array]':
-      case '[object Arguments]': {
-        const restArr: any[] = [];
-        arrayEach(val, function (item: any) {
-          restArr.push(handleValueClone(item, isDeep));
-        });
-        return restArr;
-      }
-      case '[object Set]': {
-        const restSet: Set<any> = getCativeCtor(val);
-        restSet.forEach(function (item: any) {
-          restSet.add(handleValueClone(item, isDeep));
-        });
-        return restSet;
-      }
       case '[object Map]': {
         const restMap: Map<any, any> = getCativeCtor(val);
-        restMap.forEach(function (item: any, key: any) {
+        restMap.forEach((item: any, key: any) => {
           restMap.set(key, handleValueClone(item, isDeep));
         });
         return restMap;
+      }
+      case '[object Object]': {
+        const restObj: Record<string, any> = Object.create(
+          Object.getPrototypeOf(val),
+        );
+        objectEach(val, (item: any, key: string) => {
+          restObj[key] = handleValueClone(item, isDeep);
+        });
+        return restObj;
+      }
+      case '[object Set]': {
+        const restSet: Set<any> = getCativeCtor(val);
+        restSet.forEach((item: any) => {
+          restSet.add(handleValueClone(item, isDeep));
+        });
+        return restSet;
       }
     }
   }

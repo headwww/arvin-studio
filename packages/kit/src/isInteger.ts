@@ -6,7 +6,9 @@ import isNull from './isNull';
  * @param val 值
  */
 function isInteger(val: any): val is number {
-  return !isNull(val) && !isNaN(val) && !isArray(val) && val % 1 === 0;
+  return (
+    !isNull(val) && !isNaN(val) && !isArray(val) && Number.isSafeInteger(val)
+  );
 }
 
 export default isInteger;

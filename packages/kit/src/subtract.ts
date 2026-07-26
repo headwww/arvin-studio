@@ -1,7 +1,7 @@
 import helperNumberDecimal from './helperNumberDecimal';
-import toNumberString from './toNumberString';
-import toNumber from './toNumber';
 import toFixed from './toFixed';
+import toNumber from './toNumber';
+import toNumberString from './toNumberString';
 
 /**
  * 减法运算
@@ -11,8 +11,8 @@ import toFixed from './toFixed';
  * @returns 差值
  */
 function subtract(
-  num1: number | null | undefined,
-  num2: number | null | undefined,
+  num1: null | number | undefined,
+  num2: null | number | undefined,
 ): number;
 function subtract(num1: any, num2: any): number;
 function subtract(num1: any, num2: any): number {
@@ -23,7 +23,7 @@ function subtract(num1: any, num2: any): number {
   const digit1 = helperNumberDecimal(str1);
   const digit2 = helperNumberDecimal(str2);
   const ratio = 10 ** Math.max(digit1, digit2);
-  const precision = digit1 >= digit2 ? digit1 : digit2;
+  const precision = Math.max(digit1, digit2);
   return parseFloat(
     toFixed((subtrahend * ratio - minuend * ratio) / ratio, precision),
   );

@@ -23,11 +23,7 @@ function findIndexOf<T, C = any>(
   context?: C,
 ): number;
 function findIndexOf(obj: any, iterate: any, context?: any): number {
-  return helperCreateiterateIndexOf(function (
-    obj: any,
-    iterate: any,
-    context: any,
-  ) {
+  return helperCreateiterateIndexOf((obj: any, iterate: any, context: any) => {
     for (let index = 0, len = obj.length; index < len; index++) {
       if (iterate.call(context, obj[index], index, obj)) {
         return index;

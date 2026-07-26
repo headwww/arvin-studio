@@ -15,33 +15,30 @@ export interface ThrottleOptions {
  * @param options - 可选参数 { leading: 是否在之前执行, trailing: 是否在之后执行 }
  * @returns 节流后的函数
  */
-function throttle<C = any>(
-  callback: (this: C, ...args: any[]) => any,
+function throttle(
+  callback: (...args: any[]) => any,
   wait: number,
   options?: ThrottleOptions,
-): (this: C, ...args: any[]) => any;
-function throttle(callback: any, wait: number, options?: any): any {
-  let args: IArguments | null | any = null;
-  let context: any = null;
+): (...args: any[]) => any {
+  let args: any[] | null = null;
   let runFlag = false;
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let timeout: null | ReturnType<typeof setTimeout> = null;
   const opts = assign({ leading: true, trailing: true }, options);
   const optLeading = opts.leading;
   const optTrailing = opts.trailing;
 
-  const gcFn = function () {
+  const gcFn = (): void => {
     args = null;
-    context = null;
   };
 
-  const runFn = function () {
+  const runFn = (): void => {
     runFlag = true;
-    callback.apply(context, args);
+    callback(...(args as any[]));
     timeout = setTimeout(endFn, wait);
     gcFn();
   };
 
-  const endFn = function () {
+  const endFn = (): void => {
     timeout = null;
     if (runFlag) {
       gcFn();
@@ -54,7 +51,7 @@ function throttle(callback: any, wait: number, options?: any): any {
     gcFn();
   };
 
-  const cancelFn = function () {
+  const cancelFn = (): boolean => {
     const rest = timeout !== null;
     if (rest) {
       clearTimeout(timeout!);
@@ -65,20 +62,20 @@ function throttle(callback: any, wait: number, options?: any): any {
     return rest;
   };
 
-  const throttled = function (this: any, ...callArgs: any[]) {
-    args = callArgs;
-    context = this;
-    runFlag = false;
-    if (timeout === null && optLeading === true) {
-      runFn();
-      return;
-    }
-    if (optTrailing === true) {
-      timeout = setTimeout(endFn, wait);
-    }
-  };
-
-  throttled.cancel = cancelFn;
+  const throttled = Object.assign(
+    (...callArgs: any[]): void => {
+      args = callArgs;
+      runFlag = false;
+      if (timeout === null && optLeading === true) {
+        runFn();
+        return;
+      }
+      if (optTrailing === true) {
+        timeout = setTimeout(endFn, wait);
+      }
+    },
+    { cancel: cancelFn },
+  );
 
   return throttled;
 }

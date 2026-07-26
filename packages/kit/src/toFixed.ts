@@ -1,7 +1,7 @@
+import helperNumberOffsetPoint from './helperNumberOffsetPoint';
+import helperStringRepeat from './helperStringRepeat';
 import round from './round';
 import toValueString from './toValueString';
-import helperStringRepeat from './helperStringRepeat';
-import helperNumberOffsetPoint from './helperNumberOffsetPoint';
 
 /**
  * 将数值四舍五入并格式化为固定小数位的字符串
@@ -13,7 +13,7 @@ import helperNumberOffsetPoint from './helperNumberOffsetPoint';
  */
 function toFixed(num: any, digits?: number, awayZero?: boolean): string;
 function toFixed(num: any, digits?: any, awayZero?: any): string {
-  const digitsNum = digits >> 0;
+  const digitsNum = Math.trunc(digits);
   const str = toValueString(round(num, digitsNum, awayZero));
   const nums = str.split('.');
   const intStr = nums[0];

@@ -1,6 +1,6 @@
+import each from './each';
 import isArray from './isArray';
 import isString from './isString';
-import each from './each';
 
 /**
  * 返回对象的长度
@@ -13,7 +13,7 @@ function getSize(obj: any): number {
   if (isString(obj) || isArray(obj)) {
     return obj.length;
   }
-  each(obj, function () {
+  each(obj, () => {
     len++;
   });
   return len;

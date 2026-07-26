@@ -1,5 +1,5 @@
-import isDate from './isDate';
 import helperGetDateTime from './helperGetDateTime';
+import isDate from './isDate';
 
 /**
  * 判断是否有效的Date对象

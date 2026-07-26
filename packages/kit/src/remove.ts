@@ -1,11 +1,11 @@
-import helperDeleteProperty from './helperDeleteProperty';
-import isFunction from './isFunction';
-import isArray from './isArray';
-import each from './each';
 import arrayEach from './arrayEach';
-import lastEach from './lastEach';
 import clear from './clear';
+import each from './each';
 import eqNull from './eqNull';
+import helperDeleteProperty from './helperDeleteProperty';
+import isArray from './isArray';
+import isFunction from './isFunction';
+import lastEach from './lastEach';
 
 function pluckProperty(name: string): (obj: any, key: string) => boolean {
   return function (_: any, key: string) {
@@ -24,17 +24,17 @@ function pluckProperty(name: string): (obj: any, key: string) => boolean {
 function remove<T, C>(
   list: T[] | undefined,
   iterate:
+    | ((this: C, item: T, index: number, list: T[]) => boolean)
     | number
-    | string
-    | ((this: C, item: T, index: number, list: T[]) => boolean),
+    | string,
   context?: C,
 ): T[];
 function remove<C>(
   obj: any,
   iterate:
+    | ((this: C, item: any, key: string, obj: any) => boolean)
     | number
-    | string
-    | ((this: C, item: any, key: string, obj: any) => boolean),
+    | string,
   context?: C,
 ): any;
 function remove(obj: any, iterate: any, context?: any): any {
@@ -45,6 +45,7 @@ function remove(obj: any, iterate: any, context?: any): any {
 
       const iterFn = isFunction(iterate) ? iterate : pluckProperty(iterate);
 
+      // eslint-disable-next-line prefer-arrow-callback
       each(obj, function (this: any, item: any, index: any) {
         if (iterFn.call(context, item, index, obj)) {
           removeKeys.push(index);
@@ -53,13 +54,13 @@ function remove(obj: any, iterate: any, context?: any): any {
 
       if (isArray(obj)) {
         rest = [];
-        lastEach(removeKeys, function (item: any) {
+        lastEach(removeKeys, (item: any) => {
           rest.push(obj[item]);
           obj.splice(item, 1);
         });
       } else {
         rest = {};
-        arrayEach(removeKeys, function (key: string) {
+        arrayEach(removeKeys, (key: string) => {
           rest[key] = obj[key];
           helperDeleteProperty(obj, key);
         });

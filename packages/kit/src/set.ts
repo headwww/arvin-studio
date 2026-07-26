@@ -1,7 +1,7 @@
-import staticParseInt from './staticParseInt';
-import helperGetHGSKeys from './helperGetHGSKeys';
-import helperCheckCopyKey from './helperCheckCopyKey';
 import hasOwnProp from './hasOwnProp';
+import helperCheckCopyKey from './helperCheckCopyKey';
+import helperGetHGSKeys from './helperGetHGSKeys';
+import staticParseInt from './staticParseInt';
 
 const sKeyRE = /(.+)?\[(\d+)\]$/;
 
@@ -10,6 +10,7 @@ const sKeyRE = /(.+)?\[(\d+)\]$/;
  * @param key - 要检查的键名
  */
 function isPrototypePolluted(key: string): boolean {
+  // eslint-disable-next-line unicorn/prefer-includes-over-repeated-comparisons
   return key === '__proto__' || key === 'constructor' || key === 'prototype';
 }
 
@@ -17,7 +18,7 @@ function setDeepProps(
   obj: any,
   key: string,
   isEnd: boolean,
-  nextKey: string | null,
+  nextKey: null | string,
   value: any,
 ): any {
   if (obj[key]) {
@@ -32,6 +33,7 @@ function setDeepProps(
       rest = value;
     } else {
       const nextMatchs = nextKey ? nextKey.match(sKeyRE) : null;
+      // eslint-disable-next-line unicorn/prefer-ternary
       if (nextMatchs && !nextMatchs[1]) {
         // 如果下一个属性为数组类型
         // oxlint-disable-next-line unicorn/no-new-array

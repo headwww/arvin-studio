@@ -1,30 +1,22 @@
-import setupDefaults from './setupDefaults';
-import helperStringUpperCase from './helperStringUpperCase';
-import helperGetDateFullYear from './helperGetDateFullYear';
-import helperGetDateMonth from './helperGetDateMonth';
-import toStringDate from './toStringDate';
-import getYearWeek from './getYearWeek';
-import getYearDay from './getYearDay';
-import assign from './assign';
-import isValidDate from './isValidDate';
-import isFunction from './isFunction';
-import eqNull from './eqNull';
-import padStart from './padStart';
 import type { FirstDayOfWeek } from './getWhatWeek';
 
+import assign from './assign';
+import eqNull from './eqNull';
+import getYearDay from './getYearDay';
+import getYearWeek from './getYearWeek';
+import helperGetDateFullYear from './helperGetDateFullYear';
+import helperGetDateMonth from './helperGetDateMonth';
+import helperStringUpperCase from './helperStringUpperCase';
+import isFunction from './isFunction';
+import isValidDate from './isValidDate';
+import padStart from './padStart';
+import setupDefaults from './setupDefaults';
+import toStringDate from './toStringDate';
+
 export type ToDateStringFormats = {
-  /** 用于格式化季度，例如：[null, '第一季度', '第二季度', '第三季度', '第四季度'] */
-  q?:
-    | string[]
-    | {
-        1: string;
-        2: string;
-        3: string;
-        4: string;
-      }
-    | ((value: string | number, match: string, date: Date) => string);
   /** 用于格式化周，例如：['日', '一', '二', '三', '四', '五', '六'] */
   E?:
+    | ((value: number | string, match: string, date: Date) => string)
     | string[]
     | {
         0: string;
@@ -34,8 +26,17 @@ export type ToDateStringFormats = {
         4: string;
         5: string;
         6: string;
-      }
-    | ((value: string | number, match: string, date: Date) => string);
+      };
+  /** 用于格式化季度，例如：[null, '第一季度', '第二季度', '第三季度', '第四季度'] */
+  q?:
+    | ((value: number | string, match: string, date: Date) => string)
+    | string[]
+    | {
+        1: string;
+        2: string;
+        3: string;
+        4: string;
+      };
 };
 
 export interface ToDateStringOptions {
@@ -58,6 +59,7 @@ function handleCustomTemplate(
       return format(value, match, date);
     } else if (Array.isArray(format)) {
       return format[value];
+      // eslint-disable-next-line unicorn/no-duplicate-if-branches
     } else if (typeof format === 'object' && format !== null) {
       return format[value];
     }
@@ -76,19 +78,19 @@ const dateFormatRE =
  * @param options - 可选参数
  * @returns 格式化后的日期字符串
  */
-function toDateString(date: string | Date | number | null | undefined): string;
+function toDateString(date: Date | null | number | string | undefined): string;
 function toDateString(
-  date: string | Date | number | null | undefined,
-  format: string | null | undefined,
+  date: Date | null | number | string | undefined,
+  format: null | string | undefined,
 ): string;
 function toDateString(
-  date: string | Date | number | null | undefined,
-  format: string | null | undefined,
+  date: Date | null | number | string | undefined,
+  format: null | string | undefined,
   options: ToDateStringOptions,
 ): string;
 function toDateString(
   date: any,
-  format?: string | null | undefined,
+  format?: null | string | undefined,
   options?: ToDateStringOptions,
 ): string;
 function toDateString(date: any, format?: any, options?: any): string {
@@ -106,32 +108,32 @@ function toDateString(date: any, format?: any, options?: any): string {
         opts.formats,
       );
 
-      const fy = function (match: string, length: number) {
+      const fy = function (_: string, length: number) {
         return `${helperGetDateFullYear(dateObj)}`.substring(4 - length);
       };
-      const fM = function (match: string, length: number) {
+      const fM = function (_: string, length: number) {
         return padStart(helperGetDateMonth(dateObj) + 1, length, '0');
       };
-      const fd = function (match: string, length: number) {
+      const fd = function (_: string, length: number) {
         return padStart(dateObj.getDate(), length, '0');
       };
-      const fH = function (match: string, length: number) {
+      const fH = function (_: string, length: number) {
         return padStart(hours, length, '0');
       };
-      const fh = function (match: string, length: number) {
+      const fh = function (_: string, length: number) {
         return padStart(hours <= 12 ? hours : hours - 12, length, '0');
       };
-      const fm = function (match: string, length: number) {
+      const fm = function (_: string, length: number) {
         return padStart(dateObj.getMinutes(), length, '0');
       };
-      const fs = function (match: string, length: number) {
+      const fs = function (_: string, length: number) {
         return padStart(dateObj.getSeconds(), length, '0');
       };
-      const fS = function (match: string, length: number) {
+      const fS = function (_: string, length: number) {
         return padStart(dateObj.getMilliseconds(), length, '0');
       };
       const fZ = function (match: string, length: number) {
-        const zoneHours = (dateObj.getTimezoneOffset() / 60) * -1;
+        const zoneHours = -(dateObj.getTimezoneOffset() / 60);
         return handleCustomTemplate(
           dateObj,
           formats,
@@ -151,6 +153,7 @@ function toDateString(date: any, format?: any, options?: any): string {
             match,
             getYearWeek(
               dateObj,
+              // eslint-disable-next-line unicorn/max-nested-calls
               eqNull(opts.firstDay)
                 ? setupDefaults.firstDayOfWeek
                 : opts.firstDay,
@@ -192,10 +195,10 @@ function toDateString(date: any, format?: any, options?: any): string {
           W: fW,
           DDD: fD,
           D: fD,
-          a: function (match: string) {
+          a(match: string) {
             return handleCustomTemplate(dateObj, formats, match, apm);
           },
-          A: function (match: string) {
+          A(match: string) {
             return handleCustomTemplate(
               dateObj,
               formats,
@@ -203,7 +206,7 @@ function toDateString(date: any, format?: any, options?: any): string {
               helperStringUpperCase(apm),
             );
           },
-          e: function (match: string) {
+          e(match: string) {
             return handleCustomTemplate(
               dateObj,
               formats,
@@ -211,7 +214,7 @@ function toDateString(date: any, format?: any, options?: any): string {
               dateObj.getDay(),
             );
           },
-          E: function (match: string) {
+          E(match: string) {
             return handleCustomTemplate(
               dateObj,
               formats,
@@ -219,7 +222,7 @@ function toDateString(date: any, format?: any, options?: any): string {
               dateObj.getDay(),
             );
           },
-          q: function (match: string) {
+          q(match: string) {
             return handleCustomTemplate(
               dateObj,
               formats,
@@ -229,9 +232,9 @@ function toDateString(date: any, format?: any, options?: any): string {
           },
         };
 
-      return resultFormat.replace(
+      return resultFormat.replaceAll(
         dateFormatRE,
-        function (match: string, skip: string) {
+        (match: string, skip: string) => {
           return (
             skip ||
             (parseDates[match] ? parseDates[match](match, match.length) : match)

@@ -1,6 +1,6 @@
-import toValueString from './toValueString';
-import helperStringSubstring from './helperStringSubstring';
 import helperStringLowerCase from './helperStringLowerCase';
+import helperStringSubstring from './helperStringSubstring';
+import toValueString from './toValueString';
 
 const kebabCacheMaps: Record<string, string> = {};
 
@@ -21,12 +21,7 @@ function kebabCase(str: any): string {
   let rest = val
     .replace(
       /^([a-z])([A-Z]+)([a-z]+)$/,
-      function (
-        _: string,
-        prevLower: string,
-        upper: string,
-        nextLower: string,
-      ) {
+      (_: string, prevLower: string, upper: string, nextLower: string) => {
         const upperLen = upper.length;
         if (upperLen > 1) {
           return `${prevLower}-${helperStringLowerCase(helperStringSubstring(upper, 0, upperLen - 1))}-${helperStringLowerCase(helperStringSubstring(upper, upperLen - 1, upperLen))}${nextLower}`;
@@ -36,22 +31,22 @@ function kebabCase(str: any): string {
     )
     .replace(
       /^([A-Z]+)([a-z]+)?$/,
-      function (_: string, upper: string, nextLower: string) {
+      (_: string, upper: string, nextLower: string) => {
         const upperLen = upper.length;
         return helperStringLowerCase(
           `${helperStringSubstring(upper, 0, upperLen - 1)}-${helperStringSubstring(upper, upperLen - 1, upperLen)}${nextLower || ''}`,
         );
       },
     )
-    .replace(
+    .replaceAll(
       /([a-z]?)([A-Z]+)([a-z]?)/g,
-      function (
+      (
         _: string,
         prevLower: string,
         upper: string,
         nextLower: string,
         index: number,
-      ) {
+      ) => {
         const upperLen = upper.length;
         if (upperLen > 1) {
           let prevStr = prevLower;
@@ -70,9 +65,9 @@ function kebabCase(str: any): string {
         );
       },
     );
-  rest = rest.replace(
+  rest = rest.replaceAll(
     /([-]+)/g,
-    function (_: string, flag: string, index: number) {
+    (_: string, flag: string, index: number) => {
       return index && index + flag.length < rest.length ? '-' : '';
     },
   );

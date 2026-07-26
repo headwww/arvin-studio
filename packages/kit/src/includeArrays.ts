@@ -1,5 +1,5 @@
-import isArray from './isArray';
 import includes from './includes';
+import isArray from './isArray';
 
 /**
  * 判断数组是否包含另一数组

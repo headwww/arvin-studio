@@ -1,5 +1,5 @@
-import toValueString from './toValueString';
 import helperStringRepeat from './helperStringRepeat';
+import toValueString from './toValueString';
 
 /**
  * 将字符串重复 n 次

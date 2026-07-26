@@ -1,5 +1,5 @@
-import uniq from './uniq';
 import toArray from './toArray';
+import uniq from './uniq';
 
 /**
  * 将多个数的值返回唯一的并集数组
@@ -11,8 +11,9 @@ function union(...arrays: any[]): any[];
 function union(...arrays: any[]): any[] {
   let result: any[] = [];
 
-  for (let index = 0; index < arrays.length; index++) {
-    result = result.concat(toArray(arrays[index]));
+  for (const array of arrays) {
+    // eslint-disable-next-line unicorn/no-array-concat-in-loop
+    result = result.concat(toArray(array));
   }
 
   return uniq(result);

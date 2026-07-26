@@ -7,8 +7,8 @@ import toNumber from './toNumber';
  * @param num2 数值2
  */
 function multiply(
-  num1: number | null | undefined,
-  num2: number | null | undefined,
+  num1: null | number | undefined,
+  num2: null | number | undefined,
 ): number;
 function multiply(num1: any, num2: any): number;
 function multiply(num1: any, num2: any): number {

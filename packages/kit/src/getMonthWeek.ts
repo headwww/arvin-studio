@@ -1,5 +1,6 @@
-import helperCreateGetDateWeek from './helperCreateGetDateWeek';
 import type { FirstDayOfWeek } from './getWhatWeek';
+
+import helperCreateGetDateWeek from './helperCreateGetDateWeek';
 
 /**
  * 返回某个月份的第几周
@@ -7,14 +8,14 @@ import type { FirstDayOfWeek } from './getWhatWeek';
  * @param firstDay 周视图的起始天，默认星期一
  */
 function getMonthWeek(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   firstDay?: FirstDayOfWeek,
 ): number {
   return helperCreateGetDateWeek(
-    function (targetDate: Date) {
+    (targetDate: Date) => {
       return new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
     },
-    function (date1: Date, date2: Date) {
+    (date1: Date, date2: Date) => {
       return date1.getMonth() !== date2.getMonth();
     },
   )(date, firstDay);

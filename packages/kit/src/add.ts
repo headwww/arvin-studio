@@ -8,8 +8,8 @@ import toNumber from './toNumber';
  * @param num2 数值2
  */
 function add(
-  num1: number | null | undefined,
-  num2: number | null | undefined,
+  num1: null | number | undefined,
+  num2: null | number | undefined,
 ): number {
   return helperNumberAdd(toNumber(num1), toNumber(num2));
 }

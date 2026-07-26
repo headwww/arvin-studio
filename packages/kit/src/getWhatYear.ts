@@ -1,9 +1,9 @@
+import getWhatMonth from './getWhatMonth';
+import helperGetDateFullYear from './helperGetDateFullYear';
+import isValidDate from './isValidDate';
 import staticStrFirst from './staticStrFirst';
 import staticStrLast from './staticStrLast';
-import helperGetDateFullYear from './helperGetDateFullYear';
-import getWhatMonth from './getWhatMonth';
 import toStringDate from './toStringDate';
-import isValidDate from './isValidDate';
 
 /**
  * 返回前几年或后几年的日期
@@ -11,7 +11,7 @@ import isValidDate from './isValidDate';
  * @param offset 年(默认当前年)、前几个年、后几个年
  */
 function getWhatYear(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
 ): Date;
 /**
@@ -21,14 +21,14 @@ function getWhatYear(
  * @param month 获取哪月：年初(first)、年末(last)、指定月份(0~11)
  */
 function getWhatYear(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  month: number | 'first' | 'last',
+  month: 'first' | 'last' | number,
 ): Date;
 function getWhatYear(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  month?: number | 'first' | 'last',
+  month?: 'first' | 'last' | number,
 ): Date {
   const d = toStringDate(date);
   if (isValidDate(d)) {
@@ -39,12 +39,12 @@ function getWhatYear(
     if (month !== undefined || !isNaN(month as any)) {
       if (month === staticStrFirst) {
         return new Date(helperGetDateFullYear(d), 0, 1);
-      } else if (month === staticStrLast) {
+      }
+      if (month === staticStrLast) {
         d.setMonth(11);
         return getWhatMonth(d, 0, staticStrLast);
-      } else {
-        d.setMonth(month as number);
       }
+      d.setMonth(month as number);
     }
   }
   return d;

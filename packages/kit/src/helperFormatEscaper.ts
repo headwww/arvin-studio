@@ -1,5 +1,5 @@
-import toValueString from './toValueString';
 import keys from './keys';
+import toValueString from './toValueString';
 
 /**
  * 创建转义字符替换函数
@@ -9,7 +9,7 @@ function helperFormatEscaper(
 ): (str: any) => string {
   const replaceRegexp = new RegExp(`(?:${keys(dataMap).join('|')})`, 'g');
   return function (str: any): string {
-    return toValueString(str).replace(replaceRegexp, function (match: string) {
+    return toValueString(str).replace(replaceRegexp, (match: string) => {
       return dataMap[match] as any;
     });
   };

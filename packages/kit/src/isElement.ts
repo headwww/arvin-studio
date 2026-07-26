@@ -1,5 +1,5 @@
-import isString from './isString';
 import isNumber from './isNumber';
+import isString from './isString';
 
 /**
  * 判断是否 Element 对象

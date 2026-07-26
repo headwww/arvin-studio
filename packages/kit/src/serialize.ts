@@ -1,9 +1,9 @@
-import staticEncodeURIComponent from './staticEncodeURIComponent';
 import each from './each';
 import isArray from './isArray';
 import isNull from './isNull';
-import isUndefined from './isUndefined';
 import isPlainObject from './isPlainObject';
+import isUndefined from './isUndefined';
+import staticEncodeURIComponent from './staticEncodeURIComponent';
 
 function stringifyParams(
   resultVal: any,
@@ -11,7 +11,7 @@ function stringifyParams(
   isArr: boolean,
 ): string[] {
   let result: string[] = [];
-  each(resultVal, function (item: any, key: string) {
+  each(resultVal, (item: any, key: string) => {
     const isArrayItem = isArray(item);
     if (isPlainObject(item) || isArrayItem) {
       result = result.concat(
@@ -37,21 +37,23 @@ function stringifyParams(
 function serialize(query: any): string;
 function serialize(query: any): string {
   let params: string[] = [];
-  each(query, function (item: any, key: string) {
-    if (!isUndefined(item)) {
-      const isArrayItem = isArray(item);
-      if (isPlainObject(item) || isArrayItem) {
-        params = params.concat(stringifyParams(item, key, isArrayItem));
-      } else {
-        params.push(
-          `${staticEncodeURIComponent(key)}=${staticEncodeURIComponent(
-            isNull(item) ? '' : item,
-          )}`,
-        );
-      }
+  each(query, (item: any, key: string) => {
+    if (isUndefined(item)) {
+      return;
+    }
+
+    const isArrayItem = isArray(item);
+    if (isPlainObject(item) || isArrayItem) {
+      params = params.concat(stringifyParams(item, key, isArrayItem));
+    } else {
+      params.push(
+        `${staticEncodeURIComponent(key)}=${staticEncodeURIComponent(
+          isNull(item) ? '' : item,
+        )}`,
+      );
     }
   });
-  return params.join('&').replace(/%20/g, '+');
+  return params.join('&').replaceAll('%20', '+');
 }
 
 export default serialize;

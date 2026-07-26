@@ -1,30 +1,30 @@
 import arrayEach from './arrayEach';
-import toArray from './toArray';
-import map from './map';
-import isArray from './isArray';
-import isFunction from './isFunction';
-import isPlainObject from './isPlainObject';
-import isUndefined from './isUndefined';
-import isNull from './isNull';
 import eqNull from './eqNull';
 import get from './get';
+import isArray from './isArray';
+import isFunction from './isFunction';
+import isNull from './isNull';
+import isPlainObject from './isPlainObject';
+import isUndefined from './isUndefined';
+import map from './map';
 import property from './property';
+import toArray from './toArray';
 
 const ORDER_PROP_AsC = 'asc';
 const ORDER_PROP_DESC = 'desc';
 
 interface OrderBySortConfs<T, C> {
-  field?: string | ((this: C, item: T, index: number, list: T[]) => any) | null;
+  field?: ((this: C, item: T, index: number, list: T[]) => any) | null | string;
   order?: 'asc' | 'desc' | null;
 }
 
 export type OrderByFieldConfs<T, C> =
-  | null
-  | string
+  | (OrderBySortConfs<T, C> | string)[]
+  | ((this: C, item: T, index: number, list: T[]) => any)
   | any[][]
+  | null
   | OrderBySortConfs<T, C>
-  | (string | OrderBySortConfs<T, C>)[]
-  | ((this: C, item: T, index: number, list: T[]) => any);
+  | string;
 
 function handleSort(v1: any, v2: any): number {
   if (isUndefined(v1)) {
@@ -62,39 +62,41 @@ function getSortConfs(
   const sortConfs: Array<{ field: any; order: string }> = [];
   const confsArray = isArray(fieldConfs) ? fieldConfs : [fieldConfs];
 
-  arrayEach(confsArray, function (handle: any) {
-    if (handle) {
-      let field = handle;
-      let order = ORDER_PROP_AsC;
-
-      if (isArray(handle)) {
-        field = handle[0];
-        order = handle[1] || ORDER_PROP_AsC;
-      } else if (isPlainObject(handle)) {
-        field = (handle as any).field;
-        order = (handle as any).order || ORDER_PROP_AsC;
-      }
-
-      sortConfs.push({ field, order });
-
-      arrayEach(
-        list,
-        isFunction(field)
-          ? function (item: any) {
-              item[sortConfs.length - 1] = field.call(
-                context,
-                item.data,
-                item.index,
-                arr,
-              );
-            }
-          : function (item: any) {
-              item[sortConfs.length - 1] = field
-                ? get(item.data, field)
-                : item.data;
-            },
-      );
+  arrayEach(confsArray, (handle: any) => {
+    if (!handle) {
+      return;
     }
+
+    let field = handle;
+    let order = ORDER_PROP_AsC;
+
+    if (isArray(handle)) {
+      field = handle[0];
+      order = handle[1] || ORDER_PROP_AsC;
+    } else if (isPlainObject(handle)) {
+      field = (handle as any).field;
+      order = (handle as any).order || ORDER_PROP_AsC;
+    }
+
+    sortConfs.push({ field, order });
+
+    arrayEach(
+      list,
+      isFunction(field)
+        ? (item: any) => {
+            item[sortConfs.length - 1] = field.call(
+              context,
+              item.data,
+              item.index,
+              arr,
+            );
+          }
+        : (item: any) => {
+            item[sortConfs.length - 1] = field
+              ? get(item.data, field)
+              : item.data;
+          },
+    );
   });
 
   return sortConfs;
@@ -121,7 +123,7 @@ function orderBy(array: any, fieldConfs: any, context?: any): any[] {
     }
 
     let compares: ((item1: any, item2: any) => number) | undefined;
-    const list = map(array, function (item: any) {
+    const list = map(array, (item: any) => {
       return { data: item };
     });
 

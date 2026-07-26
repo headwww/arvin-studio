@@ -1,24 +1,24 @@
-import getWhatYear from './getWhatYear'
-import getWhatQuarter from './getWhatQuarter'
-import getWhatMonth from './getWhatMonth'
-import getWhatWeek from './getWhatWeek'
-import getWhatDay from './getWhatDay'
-import getWhatHours from './getWhatHours'
-import getWhatMinutes from './getWhatMinutes'
-import getWhatSeconds from './getWhatSeconds'
-import toStringDate from './toStringDate'
-import toDateString from './toDateString'
-import now from './now'
-import timestamp from './timestamp'
-import isValidDate from './isValidDate'
-import isDateSame from './isDateSame'
-import getYearDay from './getYearDay'
-import getYearWeek from './getYearWeek'
-import getMonthWeek from './getMonthWeek'
-import getDayOfYear from './getDayOfYear'
-import getDayOfQuarter from './getDayOfQuarter'
-import getDayOfMonth from './getDayOfMonth'
-import getDateDiff from './getDateDiff'
+import getDateDiff from './getDateDiff';
+import getDayOfMonth from './getDayOfMonth';
+import getDayOfQuarter from './getDayOfQuarter';
+import getDayOfYear from './getDayOfYear';
+import getMonthWeek from './getMonthWeek';
+import getWhatDay from './getWhatDay';
+import getWhatHours from './getWhatHours';
+import getWhatMinutes from './getWhatMinutes';
+import getWhatMonth from './getWhatMonth';
+import getWhatQuarter from './getWhatQuarter';
+import getWhatSeconds from './getWhatSeconds';
+import getWhatWeek from './getWhatWeek';
+import getWhatYear from './getWhatYear';
+import getYearDay from './getYearDay';
+import getYearWeek from './getYearWeek';
+import isDateSame from './isDateSame';
+import isValidDate from './isValidDate';
+import now from './now';
+import timestamp from './timestamp';
+import toDateString from './toDateString';
+import toStringDate from './toStringDate';
 
 const dateExports = {
   now,
@@ -41,30 +41,30 @@ const dateExports = {
   getDayOfYear,
   getDayOfQuarter,
   getDayOfMonth,
-  getDateDiff
-}
+  getDateDiff,
+};
 
-export default dateExports
+export default dateExports;
 export {
-  now,
-  timestamp,
-  isValidDate,
-  isDateSame,
-  toStringDate,
-  toDateString,
-  getWhatYear,
-  getWhatQuarter,
-  getWhatMonth,
-  getWhatWeek,
+  getDateDiff,
+  getDayOfMonth,
+  getDayOfQuarter,
+  getDayOfYear,
+  getMonthWeek,
   getWhatDay,
   getWhatHours,
   getWhatMinutes,
+  getWhatMonth,
+  getWhatQuarter,
   getWhatSeconds,
+  getWhatWeek,
+  getWhatYear,
   getYearDay,
   getYearWeek,
-  getMonthWeek,
-  getDayOfYear,
-  getDayOfQuarter,
-  getDayOfMonth,
-  getDateDiff
-}
+  isDateSame,
+  isValidDate,
+  now,
+  timestamp,
+  toDateString,
+  toStringDate,
+};

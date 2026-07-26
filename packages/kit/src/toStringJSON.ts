@@ -7,7 +7,7 @@ import isString from './isString';
  * @param str - 字符串
  * @returns 转换后的对象，失败返回空对象
  */
-function toStringJSON(str: string | null | undefined): any;
+function toStringJSON(str: null | string | undefined): any;
 function toStringJSON(str: any): any;
 function toStringJSON(str: any): any {
   if (isPlainObject(str)) {

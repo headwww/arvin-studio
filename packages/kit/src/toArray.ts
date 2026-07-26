@@ -9,7 +9,7 @@ import map from './map';
 function toArray<T>(list: T[] | undefined): T[];
 function toArray(list: any): any[];
 function toArray(list: any): any[] {
-  return map(list, function (item: any) {
+  return map(list, (item: any) => {
     return item;
   });
 }

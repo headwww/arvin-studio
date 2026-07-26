@@ -1,8 +1,8 @@
-import staticHGKeyRE from './staticHGKeyRE';
-import helperGetHGSKeys from './helperGetHGSKeys';
 import hasOwnProp from './hasOwnProp';
+import helperGetHGSKeys from './helperGetHGSKeys';
+import staticHGKeyRE from './staticHGKeyRE';
 
-type PropertyPath = undefined | null | number | number[] | string | string[];
+type PropertyPath = null | number | number[] | string | string[] | undefined;
 
 /**
  * 检查键、路径是否是该对象的属性
@@ -11,7 +11,7 @@ type PropertyPath = undefined | null | number | number[] | string | string[];
  */
 function has(obj: any, property: PropertyPath): boolean {
   if (obj) {
-    if (hasOwnProp(obj, property as string | number)) {
+    if (hasOwnProp(obj, property as number | string)) {
       return true;
     }
     const props: string[] = helperGetHGSKeys(property);

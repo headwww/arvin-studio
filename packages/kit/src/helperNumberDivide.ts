@@ -1,6 +1,6 @@
 import helperNumberDecimal from './helperNumberDecimal';
-import toNumberString from './toNumberString';
 import multiply from './multiply';
+import toNumberString from './toNumberString';
 
 /**
  * 高精度除法

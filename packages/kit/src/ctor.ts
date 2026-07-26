@@ -1,8 +1,8 @@
-import setupDefaults from './setupDefaults';
 import arrayEach from './arrayEach';
+import assign from './assign';
 import each from './each';
 import isFunction from './isFunction';
-import assign from './assign';
+import setupDefaults from './setupDefaults';
 /**
  * JavaScript 函数库、工具类
  */
@@ -23,8 +23,8 @@ export const VERSION: string = version;
  * @param methods 函数集
  */
 export function mixin(...methods: { [key: string]: any }[]): void {
-  arrayEach(methods, function (mod: any) {
-    each(mod, function (fn: any, name: string) {
+  arrayEach(methods, (mod: any) => {
+    each(mod, (fn: any, name: string) => {
       AsKit[name] = isFunction(fn)
         ? function (this: any, ...args: any[]): any {
             const result = fn.apply(AsKit.$context, args);

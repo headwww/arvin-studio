@@ -29,6 +29,7 @@ function map(
     if (list.map) {
       return list.map(iterate, context);
     } else {
+      // eslint-disable-next-line prefer-arrow-callback
       each(list, function (this: any, ...args: any[]) {
         result.push(iterate.apply(context, args as any));
       });

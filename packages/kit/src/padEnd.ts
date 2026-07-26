@@ -1,6 +1,6 @@
-import toValueString from './toValueString';
-import isUndefined from './isUndefined';
 import helperStringRepeat from './helperStringRepeat';
+import isUndefined from './isUndefined';
+import toValueString from './toValueString';
 
 /**
  * 用指定字符从后面开始补全字符串
@@ -14,7 +14,7 @@ function padEnd(str: string, targetLength: number, padString?: string): string;
 function padEnd(str: any, targetLength: number, padString?: any): string;
 function padEnd(str: any, targetLength: number, padString?: any): string {
   const rest = toValueString(str);
-  targetLength = targetLength >> 0;
+  targetLength = Math.trunc(targetLength);
   let pad = isUndefined(padString) ? ' ' : `${padString}`;
 
   if (rest.padEnd) {

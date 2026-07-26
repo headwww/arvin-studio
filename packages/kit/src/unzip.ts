@@ -1,5 +1,5 @@
-import pluck from './pluck';
 import max from './max';
+import pluck from './pluck';
 
 /**
  * 与 zip 相反
@@ -12,8 +12,8 @@ function unzip(arrays: any): any[];
 function unzip(arrays: any): any[] {
   const result: any[] = [];
 
-  if (arrays && arrays.length) {
-    const maxItem = max(arrays, function (item: any) {
+  if (arrays && arrays.length > 0) {
+    const maxItem = max(arrays, (item: any) => {
       return item ? item.length : 0;
     });
     const len = maxItem ? maxItem.length : 0;

@@ -1,13 +1,13 @@
-import helperCreateTreeFunc from './helperCreateTreeFunc';
 import arrayEach from './arrayEach';
 import assign from './assign';
+import helperCreateTreeFunc from './helperCreateTreeFunc';
 
 export interface SearchTreeOptions {
-  isEvery?: boolean;
   children?: string;
+  data?: string;
+  isEvery?: boolean;
   mapChildren?: string;
   original?: boolean;
-  data?: string;
 }
 
 function searchTreeItem(
@@ -34,7 +34,7 @@ function searchTreeItem(
   const mapChildren = opts.mapChildren || parseChildren;
   const isEvery = opts.isEvery;
 
-  arrayEach(obj, function (item: any, index: number) {
+  arrayEach(obj, (item: any, index: number) => {
     const paths = path.concat([`${index}`]);
     const nodes = node.concat([item]);
     const isMatch =
@@ -64,7 +64,7 @@ function searchTreeItem(
         parseChildren,
         opts,
       );
-      if (isMatch || rest[mapChildren].length) {
+      if (isMatch || rest[mapChildren].length > 0) {
         rests.push(rest);
       }
     } else if (isMatch) {
@@ -136,28 +136,30 @@ function searchTree(
   options?: SearchTreeOptions,
   context?: any,
 ): any[] {
-  const helper = helperCreateTreeFunc(function (
-    parent: any,
-    obj: any[],
-    iterate: any,
-    context: any,
-    path: string[],
-    nodes: any[],
-    parseChildren: string,
-    opts: SearchTreeOptions,
-  ) {
-    return searchTreeItem(
-      false,
-      parent,
-      obj,
-      iterate,
-      context,
-      path,
-      nodes,
-      parseChildren,
-      opts,
-    );
-  });
+  const helper = helperCreateTreeFunc(
+    (
+      parent: any,
+      obj: any[],
+      iterate: any,
+      context: any,
+      path: string[],
+      nodes: any[],
+      parseChildren: string,
+      opts: SearchTreeOptions,
+    ) => {
+      return searchTreeItem(
+        false,
+        parent,
+        obj,
+        iterate,
+        context,
+        path,
+        nodes,
+        parseChildren,
+        opts,
+      );
+    },
+  );
   return helper(list, iterate, options, context);
 }
 

@@ -1,12 +1,12 @@
+import helperGetDateFullYear from './helperGetDateFullYear';
+import helperGetDateMonth from './helperGetDateMonth';
+import helperGetDateTime from './helperGetDateTime';
+import isNumber from './isNumber';
+import isValidDate from './isValidDate';
+import staticDayTime from './staticDayTime';
 import staticStrFirst from './staticStrFirst';
 import staticStrLast from './staticStrLast';
-import staticDayTime from './staticDayTime';
-import helperGetDateFullYear from './helperGetDateFullYear';
-import helperGetDateTime from './helperGetDateTime';
-import helperGetDateMonth from './helperGetDateMonth';
 import toStringDate from './toStringDate';
-import isValidDate from './isValidDate';
-import isNumber from './isNumber';
 
 /**
  * 返回前几月或后几月的日期
@@ -14,7 +14,7 @@ import isNumber from './isNumber';
  * @param offset 月偏移量(默认0)、前几个月、后几个月
  */
 function getWhatMonth(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
 ): Date;
 /**
@@ -24,14 +24,14 @@ function getWhatMonth(
  * @param day 获取哪天：月初(first)、月末(last)、指定天数(数值)
  */
 function getWhatMonth(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  day: number | 'first' | 'last',
+  day: 'first' | 'last' | number,
 ): Date;
 function getWhatMonth(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
-  day?: number | 'first' | 'last',
+  day?: 'first' | 'last' | number,
 ): Date {
   const monthNum = offset && !isNaN(offset) ? offset : 0;
   const d = toStringDate(date);
@@ -42,13 +42,15 @@ function getWhatMonth(
         helperGetDateMonth(d) + monthNum,
         1,
       );
-    } else if (day === staticStrLast) {
+    }
+    if (day === staticStrLast) {
       return new Date(
         helperGetDateTime(
           getWhatMonth(d, monthNum + 1, staticStrFirst as any),
         ) - 1,
       );
-    } else if (isNumber(day)) {
+    }
+    if (isNumber(day)) {
       d.setDate(day as number);
     }
     if (monthNum) {

@@ -1,9 +1,9 @@
+import assign from './assign';
 import helperDeleteProperty from './helperDeleteProperty';
-import isPlainObject from './isPlainObject';
-import isObject from './isObject';
 import isArray from './isArray';
 import isNull from './isNull';
-import assign from './assign';
+import isObject from './isObject';
+import isPlainObject from './isPlainObject';
 import objectEach from './objectEach';
 
 /**

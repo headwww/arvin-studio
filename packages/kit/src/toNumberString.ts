@@ -1,5 +1,5 @@
-import helperStringRepeat from './helperStringRepeat';
 import helperNumberOffsetPoint from './helperNumberOffsetPoint';
+import helperStringRepeat from './helperStringRepeat';
 
 /**
  * 数值转字符串，科学计数转字符串
@@ -7,7 +7,7 @@ import helperNumberOffsetPoint from './helperNumberOffsetPoint';
  * @param num - 数值
  * @returns 字符串
  */
-function toNumberString(num: number | string | null | undefined): string;
+function toNumberString(num: null | number | string | undefined): string;
 function toNumberString(num: any): string;
 function toNumberString(num: any): string {
   const rest = `${num}`;

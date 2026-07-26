@@ -1,11 +1,11 @@
-import staticStrFirst from './staticStrFirst';
-import staticStrLast from './staticStrLast';
-import staticParseInt from './staticParseInt';
 import helperGetDateFullYear from './helperGetDateFullYear';
 import helperGetDateMonth from './helperGetDateMonth';
 import helperGetDateTime from './helperGetDateTime';
-import toStringDate from './toStringDate';
 import isValidDate from './isValidDate';
+import staticParseInt from './staticParseInt';
+import staticStrFirst from './staticStrFirst';
+import staticStrLast from './staticStrLast';
+import toStringDate from './toStringDate';
 
 /**
  * 返回前几秒或后几秒的日期
@@ -13,7 +13,7 @@ import isValidDate from './isValidDate';
  * @param offset 秒偏移量(默认0)、前几秒、后几秒
  */
 function getWhatSeconds(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
 ): Date;
 /**
@@ -23,12 +23,12 @@ function getWhatSeconds(
  * @param mode 指定毫秒(null默认当前毫秒)、0毫秒(first)、999毫秒(last)
  */
 function getWhatSeconds(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
   mode: 'first' | 'last',
 ): Date;
 function getWhatSeconds(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
   mode?: 'first' | 'last',
 ): Date {
@@ -44,7 +44,8 @@ function getWhatSeconds(
         d.getMinutes(),
         d.getSeconds(),
       );
-    } else if (mode === staticStrLast) {
+    }
+    if (mode === staticStrLast) {
       return new Date(
         helperGetDateTime(getWhatSeconds(d, 1, staticStrFirst as any)) - 1,
       );

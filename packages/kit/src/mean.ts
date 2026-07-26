@@ -1,7 +1,5 @@
-import helperNumberDivide from './helperNumberDivide';
-
 import getSize from './getSize';
-
+import helperNumberDivide from './helperNumberDivide';
 import sum from './sum';
 
 /**
@@ -12,7 +10,7 @@ import sum from './sum';
  */
 function mean<T>(
   obj: T[] | undefined,
-  iterate?: string | number | ((item: T, index: number, list: T[]) => any),
+  iterate?: ((item: T, index: number, list: T[]) => any) | number | string,
   context?: any,
 ): number {
   return helperNumberDivide(sum(obj, iterate, context), getSize(obj));

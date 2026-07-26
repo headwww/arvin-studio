@@ -1,11 +1,11 @@
-import staticStrFirst from './staticStrFirst';
-import staticStrLast from './staticStrLast';
-import staticParseInt from './staticParseInt';
 import helperGetDateFullYear from './helperGetDateFullYear';
 import helperGetDateMonth from './helperGetDateMonth';
 import helperGetDateTime from './helperGetDateTime';
-import toStringDate from './toStringDate';
 import isValidDate from './isValidDate';
+import staticParseInt from './staticParseInt';
+import staticStrFirst from './staticStrFirst';
+import staticStrLast from './staticStrLast';
+import toStringDate from './toStringDate';
 
 /**
  * 返回前几分钟或后几分钟的日期
@@ -13,7 +13,7 @@ import isValidDate from './isValidDate';
  * @param offset 分钟偏移量(默认0)、前几分钟、后几分钟
  */
 function getWhatMinutes(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
 ): Date;
 /**
@@ -23,12 +23,12 @@ function getWhatMinutes(
  * @param mode 指定秒(null默认当前秒)、0秒(first)、59秒(last)
  */
 function getWhatMinutes(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
   mode: 'first' | 'last',
 ): Date;
 function getWhatMinutes(
-  date: string | Date | number | null | undefined,
+  date: Date | null | number | string | undefined,
   offset: number,
   mode?: 'first' | 'last',
 ): Date {
@@ -43,7 +43,8 @@ function getWhatMinutes(
         d.getHours(),
         d.getMinutes(),
       );
-    } else if (mode === staticStrLast) {
+    }
+    if (mode === staticStrLast) {
       return new Date(
         helperGetDateTime(getWhatMinutes(d, 1, staticStrFirst as any)) - 1,
       );

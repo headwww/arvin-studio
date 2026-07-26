@@ -6,7 +6,7 @@ function helperCreateToNumber(
 ): (str: any) => number {
   return function (str: any): number {
     if (str) {
-      const num = handle(str && str.replace ? str.replace(/,/g, '') : str);
+      const num = handle(str && str.replace ? str.replaceAll(',', '') : str);
       if (!isNaN(num)) {
         return num;
       }

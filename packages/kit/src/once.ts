@@ -10,7 +10,7 @@ function once<S, C = any>(
   callback: (this: S, ...args: any[]) => any,
   context?: C,
   ...params: any[]
-): (this: S | C, ...args: any[]) => any;
+): (this: C | S, ...args: any[]) => any;
 function once(callback: any, context?: any, ...params: any[]): any {
   let done = false;
   let rest: any = null;

@@ -22,7 +22,7 @@ function reduce(array: any, callback?: any, initialValue?: any): any {
     const hasInitialValue = initialValue !== undefined;
     const keyList = keys(array);
 
-    if (array.length && array.reduce) {
+    if (array.length > 0 && array.reduce) {
       const reduceMethod = function (this: any, ...args: any[]) {
         return callback.apply(context, args);
       };

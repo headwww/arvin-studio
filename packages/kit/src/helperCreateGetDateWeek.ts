@@ -1,16 +1,16 @@
+import getWhatWeek from './getWhatWeek';
+import helperGetDateTime from './helperGetDateTime';
+import includes from './includes';
+import isNumber from './isNumber';
+import isValidDate from './isValidDate';
+import map from './map';
+import range from './range';
 import setupDefaults from './setupDefaults';
 import staticDayTime from './staticDayTime';
 import staticWeekTime from './staticWeekTime';
-import isNumber from './isNumber';
-import includes from './includes';
 import toStringDate from './toStringDate';
-import isValidDate from './isValidDate';
-import getWhatWeek from './getWhatWeek';
-import range from './range';
-import map from './map';
-import helperGetDateTime from './helperGetDateTime';
 
-const nextStartMaps = map(range(0, 7), function (day: number) {
+const nextStartMaps = map(range(0, 7), (day: number) => {
   return [(day + 1) % 7, (day + 2) % 7, (day + 3) % 7];
 });
 
@@ -29,7 +29,7 @@ function helperCreateGetDateWeek(
   return function (date: any, firstDay?: any): number {
     const viewStartDay: number = isNumber(firstDay)
       ? firstDay
-      : setupDefaults.firstDayOfWeek;
+      : setupDefaults.firstDayOfWeek!;
     const targetDate = toStringDate(date);
     if (isValidDate(targetDate)) {
       const targetWeekStartDate = getWhatWeek(

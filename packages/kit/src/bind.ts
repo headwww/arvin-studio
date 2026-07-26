@@ -10,10 +10,10 @@ function bind<C = any>(
   context: C,
   ...extraArgs: any[]
 ): (this: C, ...args: any[]) => any {
-  const args = extraArgs
+  const args = extraArgs;
   return function (this: any, ...innerArgs: any[]): any {
-    return callback.apply(context, innerArgs.concat(args))
-  }
+    return callback.apply(context, innerArgs.concat(args));
+  };
 }
 
-export default bind
+export default bind;

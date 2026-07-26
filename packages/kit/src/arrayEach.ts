@@ -7,7 +7,7 @@
  * @param context 回调函数的上下文（this 指向）
  */
 function arrayEach<T, C = any>(
-  list: T[] | ArrayLike<T> | undefined,
+  list: ArrayLike<T> | T[] | undefined,
   iterate: (this: C, item: T, index: number, list: T[]) => void,
   context?: C,
 ): void;

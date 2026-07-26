@@ -1,5 +1,5 @@
-import lastArrayEach from './lastArrayEach';
 import keys from './keys';
+import lastArrayEach from './lastArrayEach';
 
 /**
  * 对象迭代器，从最后开始迭代
@@ -23,6 +23,7 @@ function lastObjectEach(
   iterate: (this: any, item: any, key: string, obj: any) => void,
   context?: any,
 ): void {
+  // eslint-disable-next-line prefer-arrow-callback
   lastArrayEach(keys(obj), function (this: any, key: string) {
     iterate.call(context, obj[key], key, obj);
   });

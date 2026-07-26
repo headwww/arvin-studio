@@ -26,6 +26,7 @@ function mapTreeItem(
 ): any[] {
   const mapChildren = opts.mapChildren || parseChildren;
 
+  // eslint-disable-next-line prefer-arrow-callback
   return map(obj, function (this: any, item: any, index: number) {
     const paths = path.concat([`${index}`]);
     const nodes = node.concat([item]);

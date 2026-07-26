@@ -1,6 +1,6 @@
-import staticLocation from './staticLocation';
 import helperGetLocatOrigin from './helperGetLocatOrigin';
 import lastIndexOf from './lastIndexOf';
+import staticLocation from './staticLocation';
 
 /**
  * 获取上下文路径

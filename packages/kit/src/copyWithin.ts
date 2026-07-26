@@ -7,7 +7,7 @@ function copyWithin<T>(
   return arr.copyWithin(
     target,
     start || 0,
-    end !== undefined ? end : arr.length,
+    end === undefined ? arr.length : end,
   );
 }
 

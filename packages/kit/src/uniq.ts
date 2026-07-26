@@ -14,37 +14,37 @@ import property from './property';
 function uniq<T, C = any>(
   list: T[] | undefined,
   iterate?:
-    | string
+    | ((this: C, item: T, index: number, obj: T[]) => number | string)
     | number
-    | ((this: C, item: T, index: number, obj: T[]) => string | number),
+    | string,
   context?: C,
 ): T[];
 function uniq<C = any>(
   list: any,
   iterate?:
-    | string
+    | ((this: C, item: any, index: number, obj: any) => number | string)
     | number
-    | ((this: C, item: any, index: number, obj: any) => string | number),
+    | string,
   context?: C,
 ): any[];
 function uniq(list: any, iterate?: any, context?: any): any[] {
   const result: any[] = [];
 
-  if (iterate !== undefined) {
+  if (iterate === undefined) {
+    each(list, (value: any) => {
+      if (!includes(result, value)) {
+        result.push(value);
+      }
+    });
+  } else {
     const iterFn = isFunction(iterate) ? iterate : property(iterate);
     const valMap: Record<string, number> = {};
 
-    each(list, function (item: any, key: any) {
+    each(list, (item: any, key: any) => {
       const val = iterFn.call(context, item, key, list);
       if (!valMap[val]) {
         valMap[val] = 1;
         result.push(item);
-      }
-    });
-  } else {
-    each(list, function (value: any) {
-      if (!includes(result, value)) {
-        result.push(value);
       }
     });
   }

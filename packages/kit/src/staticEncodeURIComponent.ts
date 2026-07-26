@@ -1,5 +1,5 @@
 const staticEncodeURIComponent: (
-  uriComponent: string | boolean | number,
+  uriComponent: boolean | number | string,
 ) => string = encodeURIComponent;
 
 export default staticEncodeURIComponent;

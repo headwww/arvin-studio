@@ -1,49 +1,49 @@
 import helperGetDateTime from './helperGetDateTime';
 import helperNewDate from './helperNewDate';
-import toStringDate from './toStringDate';
 import isValidDate from './isValidDate';
+import toStringDate from './toStringDate';
 
-type DateInput = string | Date | number | null | undefined;
+type DateInput = Date | null | number | string | undefined;
 
 export interface DateDiffResult {
-  /**
-   * 是否计算完成（如果结束日期小于开始日期 status 为 false）
-   */
-  status: boolean;
+  /** 日 */
+  dd: number;
   /**
    * 已废弃，请使用 status
    * @deprecated
    */
   done: boolean;
+  /** 时 */
+  HH: number;
+  /** 月 */
+  MM: number;
+  /** 分 */
+  mm: number;
+  /** 毫秒 */
+  S: number;
+  /** 秒 */
+  ss: number;
+  /**
+   * 是否计算完成（如果结束日期小于开始日期 status 为 false）
+   */
+  status: boolean;
   /**
    * 相差多少毫秒
    */
   time: number;
   /** 年 */
   yyyy: number;
-  /** 月 */
-  MM: number;
-  /** 日 */
-  dd: number;
-  /** 时 */
-  HH: number;
-  /** 分 */
-  mm: number;
-  /** 秒 */
-  ss: number;
-  /** 毫秒 */
-  S: number;
 }
 
-type DateDiffNumericKey = 'yyyy' | 'MM' | 'dd' | 'HH' | 'mm' | 'ss' | 'S';
+type DateDiffNumericKey = 'dd' | 'HH' | 'MM' | 'mm' | 'S' | 'ss' | 'yyyy';
 type DateDiffRule = [DateDiffNumericKey, number];
 
 const dateDiffRules: DateDiffRule[] = [
-  ['yyyy', 31536000000],
-  ['MM', 2592000000],
-  ['dd', 86400000],
-  ['HH', 3600000],
-  ['mm', 60000],
+  ['yyyy', 31_536_000_000],
+  ['MM', 2_592_000_000],
+  ['dd', 86_400_000],
+  ['HH', 3_600_000],
+  ['mm', 60_000],
   ['ss', 1000],
   ['S', 0],
 ];

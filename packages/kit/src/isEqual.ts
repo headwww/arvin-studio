@@ -1,5 +1,5 @@
-import helperEqualCompare from './helperEqualCompare';
 import helperDefaultCompare from './helperDefaultCompare';
+import helperEqualCompare from './helperEqualCompare';
 
 /**
  * 深度比较两个对象之间的值是否相等

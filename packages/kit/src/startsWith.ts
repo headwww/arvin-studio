@@ -9,7 +9,7 @@ import toValueString from './toValueString';
  * @returns 是否以指定字符串开头
  */
 function startsWith(
-  str: number | string | null,
+  str: null | number | string,
   val: string,
   startIndex?: number,
 ): boolean;
@@ -22,7 +22,7 @@ function startsWith(str: any, val: any, startIndex?: any): boolean {
   if (val === undefined) {
     return rest.indexOf(str) === 0;
   }
-  const target = startIndex !== undefined ? rest.substring(startIndex) : rest;
+  const target = startIndex === undefined ? rest : rest.substring(startIndex);
   return target.indexOf(val) === 0;
 }
 

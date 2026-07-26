@@ -1,5 +1,5 @@
-import helperEqualCompare from './helperEqualCompare';
 import helperDefaultCompare from './helperDefaultCompare';
+import helperEqualCompare from './helperEqualCompare';
 import isFunction from './isFunction';
 import isUndefined from './isUndefined';
 

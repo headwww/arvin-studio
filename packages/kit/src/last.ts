@@ -5,7 +5,7 @@ import values from './values';
  * @param {Object} obj 对象/数组
  * @return {Object}
  */
-function last<T>(list: T[] | ArrayLike<T> | undefined): T;
+function last<T>(list: ArrayLike<T> | T[] | undefined): T;
 function last(obj: any): any {
   const list = values(obj);
   return list[list.length - 1];

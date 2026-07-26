@@ -8,7 +8,7 @@ import property from './property';
  * @param key - 键值
  * @returns 属性值组成的数组
  */
-function pluck(array: any[], key: string | number): any[];
+function pluck(array: any[], key: number | string): any[];
 function pluck(array: any, key: any): any[];
 function pluck(array: any, key: any): any[] {
   return map(array, property(key));

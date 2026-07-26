@@ -24,13 +24,14 @@ function objectMap(obj: any, iterate?: any, context?: any): any {
   const result: any = {};
 
   if (obj) {
-    if (iterate !== undefined) {
+    if (iterate === undefined) {
+      return obj;
+    } else {
       const iterFn = isFunction(iterate) ? iterate : property(iterate);
+      // eslint-disable-next-line prefer-arrow-callback
       each(obj, function (this: any, val: any, index: any) {
         result[index] = iterFn.call(context, val, index, obj);
       });
-    } else {
-      return obj;
     }
   }
 

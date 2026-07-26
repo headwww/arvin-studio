@@ -6,12 +6,12 @@ import toValueString from './toValueString';
  * @param str - 字符串
  * @returns 去除左边空格后的字符串
  */
-function trimLeft(str: string | null | undefined): string;
+function trimLeft(str: null | string | undefined): string;
 function trimLeft(str: any): string;
 function trimLeft(str: any): string {
   return str && str.trimLeft
-    ? str.trimLeft()
-    : toValueString(str).replace(/^[\s\uFEFF\xA0]+/g, '');
+    ? str.trimStart()
+    : toValueString(str).replaceAll(/^[\s\u{FEFF}\u{A0}]+/gu, '');
 }
 
 export default trimLeft;

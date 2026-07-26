@@ -1,11 +1,11 @@
 interface ResMaps {
-  y: number;
-  M?: number;
   d?: number;
   H?: number;
+  M?: number;
   m?: number;
   s?: number;
   S?: number;
+  y: number;
 }
 
 /**
