@@ -2,5 +2,6 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@arvin-studio/tsconfig/web.json",
   "include": ["src"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "files": ["./vue.d.ts"]
 }

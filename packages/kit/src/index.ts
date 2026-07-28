@@ -13,6 +13,8 @@ import ceil from './ceil';
 import chunk from './chunk';
 import clear from './clear';
 import clone from './clone';
+// class辅助处理
+import clsx from './clsx';
 import commafy from './commafy';
 import cookie from './cookie';
 import copyWithin from './copyWithin';
@@ -366,6 +368,7 @@ assign(AsKit, {
   locat,
   browse,
   cookie,
+  clsx,
 });
 
 export default AsKit;
@@ -385,6 +388,7 @@ export {
   chunk,
   clear,
   clone,
+  clsx,
   commafy,
   cookie,
   copyWithin,

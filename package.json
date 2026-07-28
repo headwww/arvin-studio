@@ -26,8 +26,5 @@
     "oxlint-tsgolint": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:"
-  },
-  "dependencies": {
-    "xe-utils": "3.9.1"
   }
 }

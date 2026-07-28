@@ -1,0 +1,126 @@
+@use './base.scss';
+
+[data-as-theme="dark"] {
+  color-scheme: dark;
+
+  /*font color*/
+  /* 暗色基础文字色阶：Ant Design Dark 模式用 rgba(255,255,255,0.85) 正文，向下递减透明度 */
+  --as-font-color: rgba(255, 255, 255, 0.85);   /* 正文主色，Ant colorText dark */
+  --as-font-tinge-color: #303030;                /* 极深色，分割线 / 边框底色 */
+  --as-font-lighten-color: #595959;              /* 辅助文字 */
+  --as-font-darken-color: #d9d9d9;               /* 强调文字，接近白 */
+  --as-font-disabled-color: #434343;             /* 禁用态文字，Ant colorTextDisabled dark */
+
+  /*font status color*/
+  /* Primary 蓝：暗色模式下 Ant 用 #1668dc（blue-6 dark），hover 背景用极深蓝 */
+  --as-font-primary-color: #1668dc;              /* 主色 dark，Ant blue-6 dark */
+  --as-font-primary-hover-color: #111d2c;        /* hover 背景底色，Ant blue-1 dark */
+  --as-font-primary-tinge-color: #112545;        /* 极浅蓝底，选中行背景 dark */
+  --as-font-primary-lighten-color: #3c89e8;      /* 浅蓝，图标 / 次级强调 dark */
+  --as-font-primary-darken-color: #0f52ba;       /* 深蓝，按下态 dark */
+  --as-font-primary-disabled-color: #1c3d6e;     /* 禁用态主色 dark */
+
+  /* 状态色 — 主色：暗色模式下整体亮度略降，保持可读性 */
+  --as-status-success-color: #49aa19;            /* Ant green-6 dark */
+  --as-status-info-color: #595959;               /* Ant colorTextSecondary dark */
+  --as-status-warning-color: #d89614;            /* Ant gold-6 dark */
+  --as-status-danger-color: #dc4446;             /* Ant red-6 dark */
+  --as-status-error-color: #dc4446;
+
+  /* 状态色 — Tinge（极深底色，暗色下用深色调替代浅色调） */
+  --as-status-success-tinge-color: #162312;      /* Ant green-1 dark */
+  --as-status-info-tinge-color: #1f1f1f;         /* Ant colorFillQuaternary dark */
+  --as-status-warning-tinge-color: #2b2111;      /* Ant gold-1 dark */
+  --as-status-error-tinge-color: #2a1215;        /* Ant red-1 dark */
+  --as-status-danger-tinge-color: var(--as-status-error-tinge-color);
+
+  /* 状态色 — Lighten（暗色下偏亮，用于图标 / hover 文字） */
+  --as-status-success-lighten-color: #6abe39;    /* Ant green-5 dark */
+  --as-status-info-lighten-color: #8c8c8c;
+  --as-status-warning-lighten-color: #e8b339;    /* Ant gold-5 dark */
+  --as-status-error-lighten-color: #e84749;      /* Ant red-5 dark */
+  --as-status-danger-lighten-color: var(--as-status-error-lighten-color);
+
+  /* 状态色 — Darken（暗色下更深一档，按下态） */
+  --as-status-success-darken-color: #306317;     /* Ant green-7 dark */
+  --as-status-info-darken-color: #434343;
+  --as-status-warning-darken-color: #7c5914;     /* Ant gold-7 dark */
+  --as-status-error-darken-color: #791a1f;       /* Ant red-8 dark */
+  --as-status-danger-darken-color: var(--as-status-error-darken-color);
+
+  /* 状态色 — Disabled（暗色禁用，整体压暗） */
+  --as-status-success-disabled-color: #274916;   /* Ant green-2 dark */
+  --as-status-info-disabled-color: #303030;
+  --as-status-warning-disabled-color: #594214;   /* Ant gold-2 dark */
+  --as-status-error-disabled-color: #58181c;     /* Ant red-2 dark */
+  --as-status-danger-disabled-color: var(--as-status-error-disabled-color);
+
+  /*base*/
+  /* 弹出层：暗色边框更深，阴影扩散更大，拖拽 / 激活背景用深蓝调 */
+  --as-base-popup-border-color: #424242;
+  --as-base-popup-box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.48), 0 3px 6px -4px rgba(0, 0, 0, 0.64), 0 9px 28px 8px rgba(0, 0, 0, 0.36);
+  --as-base-drag-background-color: #111d2c;      /* 拖拽中高亮，Ant blue-1 dark */
+  --as-base-active-background-color: #112545;    /* 选中行背景 */
+  --as-base-hover-background-color: rgba(255, 255, 255, 0.08); /* 通用 hover，Ant dark hover */
+
+  /*layout*/
+  /* 暗色页面背景：Ant Design Dark 标准背景 #141414 */
+  --as-layout-background-color: #141414;
+
+  /*input*/
+  /* 输入框：暗色边框、占位符、禁用背景 */
+  --as-input-border-color: #424242;              /* Ant colorBorder dark */
+  --as-input-placeholder-color: #595959;         /* Ant colorTextPlaceholder dark */
+  --as-input-disabled-background-color: rgba(255, 255, 255, 0.08); /* Ant colorBgContainerDisabled dark */
+
+  /*number-input*/
+  --as-number-input-control-button-color: #1f1f1f;
+
+  /*modal*/
+  /* 弹窗头部与页面背景一致，暗色下无分层感 */
+  --as-modal-header-background-color: var(--as-layout-background-color);
+
+  /*tabs*/
+  /* 标签页：卡片背景、关闭 hover、滚动阴影 */
+  --as-tabs-card-header-background-color: #1f1f1f;
+  --as-tabs-close-hover-background-color: rgba(255, 255, 255, 0.12);
+  --as-tabs-bar-scrolling-box-shadow-color: rgba(0, 0, 0, 0.72);
+
+  /*menu*/
+  /* 折叠浮层阴影跟随全局弹出层 */
+  --as-menu-collapse-wrapper-box-shadow: var(--as-base-popup-box-shadow);
+
+  /*loading*/
+  /* 遮罩：暗色下白色半透明 */
+  --as-loading-background-color: rgba(255, 255, 255, 0.08);
+
+  /*form*/
+  /* 表单：标题背景比页面略浅一层，边框用深灰 */
+  --as-form-title-background-color: #1f1f1f;
+  --as-form-border-color: #303030;
+
+  /*form-design*/
+  /* 组件 hover 背景复用全局 hover；子级再压暗一层 */
+  --as-form-design-widget-hover-background-color: var(--as-base-hover-background-color);
+  --as-form-design-sub-widget-hover-background-color: rgba(255, 255, 255, 0.04);
+
+  /*list-design*/
+  /* 表格边框 / 表头背景与 form 一致 */
+  --as-list-design-table-border-color: #303030;
+  --as-list-design-table-header-background-color: #1f1f1f;
+
+  /*switch*/
+  /* 关闭态背景：Ant Switch dark 用 rgba(255,255,255,0.25) */
+  --as-switch-close-background-color: rgba(255, 255, 255, 0.25);
+
+  /*select*/
+  /* 下拉选项 hover：与全局 hover 对齐 */
+  --as-select-option-hover-background-color: rgba(255, 255, 255, 0.08);
+
+  /*upload*/
+  /* 上传拖拽悬停：暗色下用深蓝调 */
+  --as-upload-drag-over-background-color: rgba(17, 29, 44, 0.8);
+
+  /*tree*/
+  /* 树节点：hover / radio选中 / checkbox选中 / 当前节点 的背景（含 hover 叠加），以及拖拽悬停背景 */
+  --as-tree-node-hover-background-colo
