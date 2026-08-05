@@ -9,5 +9,6 @@ export default defineConfig({
     'typescript/consistent-return': 'off',
     'prefer-spread': 'off',
     'unicorn/no-new-array': 'off',
+    'typescript/no-useless-default-assignment': 'off',
   },
 });

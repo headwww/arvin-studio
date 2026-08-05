@@ -1,0 +1,26 @@
+{
+  "name": "@arvin-studio/cssinjs",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "@arvin-studio/headless": "workspace:*",
+    "@arvin-studio/kit": "workspace:*",
+    "@emotion/hash": "catalog:",
+    "@emotion/unitless": "catalog:",
+    "csstype": "catalog:",
+    "stylis": "catalog:"
+  },
+  "devDependencies": {
+    "@types/stylis": "catalog:",
+    "vue": "catalog:"
+  }
+}

@@ -1,0 +1,150 @@
+import type { Ref } from 'vue';
+
+import type { Nonce } from '../util';
+import type { TokenWithCSSVar } from '../util/css-variables';
+import type { ExtractStyle } from './useGlobalCache';
+
+import { computed } from 'vue';
+
+import { canUseDom, removeCSS, updateCSS } from '@arvin-studio/headless';
+
+import { collectStyleText } from '../ssr/styleCollector';
+import {
+  ATTR_MARK,
+  ATTR_TOKEN,
+  CSS_IN_JS_INSTANCE,
+  useStyleContext,
+} from '../StyleContext';
+import { injectCSPNonce, isClientSide, toStyleStr } from '../util';
+import { transformToken } from '../util/css-variables';
+import { useGlobalCache } from './useGlobalCache';
+import { uniqueHash } from './useStyleRegister';
+
+export const CSS_VAR_PREFIX = 'cssVar';
+
+export type CSSVarCacheValue<
+  V,
+  T extends Record<string, V> = Record<string, V>,
+> = [
+  cssVarToken: TokenWithCSSVar<V, T>,
+  cssVarStr: string,
+  styleId: string,
+  cssVarKey: string,
+];
+
+export interface CSSVarRegisterConfig {
+  hashId?: string;
+  ignore?: Record<string, boolean>;
+  key: string;
+  nonce?: Nonce;
+  path: string[];
+  prefix?: string;
+  scope?: string | string[];
+  token: any;
+  unitless?: Record<string, boolean>;
+}
+
+export const extract: ExtractStyle<CSSVarCacheValue<any>> = (
+  cache,
+  _effectStyles,
+  options,
+) => {
+  const [, styleStr, styleId, cssVarKey] = cache;
+  const { plain } = options || {};
+
+  if (!styleStr) {
+    return null;
+  }
+
+  const order = -999;
+
+  // ====================== Style ======================
+  // Used for rc-util
+  const sharedAttrs = {
+    'data-vc-order': 'prependQueue',
+    'data-vc-priority': `${order}`,
+  };
+
+  const styleText = toStyleStr(
+    styleStr,
+    cssVarKey,
+    styleId,
+    sharedAttrs,
+    plain,
+  );
+
+  return [order, styleId, styleText];
+};
+
+export default function useCSSVarRegister<V, T extends Record<string, V>>(
+  config: Ref<CSSVarRegisterConfig>,
+  fn: () => T,
+) {
+  const styleContext = useStyleContext();
+
+  const stylePath = computed<any[]>(() => {
+    const { key, scope, token } = config.value;
+    const tokenKey = token?._tokenKey;
+    const scopeKey = Array.isArray(scope) ? scope.join('@@') : scope;
+    return [...config.value.path, key, scopeKey, tokenKey];
+  });
+
+  return useGlobalCache<CSSVarCacheValue<V, T>>(
+    computed(() => CSS_VAR_PREFIX),
+    stylePath,
+    () => {
+      const originToken = fn();
+      const { key, prefix, unitless, ignore, hashId, scope } = config.value;
+      const hashPriority = styleContext.value.hashPriority!;
+      const [mergedToken, cssVarsStr] = transformToken<V, T>(originToken, key, {
+        prefix,
+        unitless,
+        ignore,
+        scope,
+        hashPriority,
+        hashCls: hashId,
+      });
+      const styleId = uniqueHash(stylePath.value, cssVarsStr);
+      return [mergedToken, cssVarsStr, styleId, key];
+    },
+    // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
+    ([, , styleId]) => {
+      if (isClientSide) {
+        removeCSS(styleId, {
+          mark: ATTR_MARK,
+          attachTo: styleContext.value.container,
+        });
+      }
+    },
+    (cacheValue) => {
+      const [, cssVarsStr, styleId] = cacheValue;
+      if (!canUseDom()) {
+        const extracted = extract(cacheValue, {}, { plain: false });
+        if (extracted) {
+          const styleText = extracted[2];
+          collectStyleText(styleText);
+        }
+        return;
+      }
+      if (!cssVarsStr) {
+        return;
+      }
+
+      const context = styleContext.value;
+      let mergedCSSConfig: Parameters<typeof updateCSS>[2] = {
+        mark: ATTR_MARK,
+        prepend: 'queue',
+        attachTo: context.container,
+        priority: -999,
+      };
+
+      mergedCSSConfig = injectCSPNonce(mergedCSSConfig, config.value.nonce);
+
+      const style = updateCSS(cssVarsStr, styleId, mergedCSSConfig);
+
+      (style as any)[CSS_IN_JS_INSTANCE] = context.cache.instanceId;
+      // Used for `useCacheToken` to remove on batch when token removed
+      style.setAttribute(ATTR_TOKEN, config.value.key);
+    },
+  );
+}
