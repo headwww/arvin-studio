@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@arvin-studio/kit": "workspace:*",
-    "@arvin-studio/cssinjs": "workspace:*"
+    "@arvin-studio/cssinjs": "workspace:*",
+    "@arvin-studio/headless": "workspace:*"
   }
 }

@@ -234,11 +234,17 @@ function injectSelectorHash(
 
 /** parseStyle 的配置参数 */
 export interface ParseConfig {
+  /** 样式隔离的 hash 类名（如 "css-abc123"），通过 `injectSelectorHash` 注入到每个根级选择器中 */
   hashId?: string;
+  /** 优先级策略：'low' → :where(.hashId) 降低特异性，方便用户覆盖；'high' → .hashId 普通优先级 */
   hashPriority?: HashPriority;
+  /** @layer 配置：name 为层名，dependencies 为依赖的其他层，用于控制样式层级顺序 */
   layer?: LayerConfig;
+  /** 开发环境的 CSS 代码检查器数组，在 `appendStyle` 中对每个 CSS 属性值执行检查 */
   linters?: Linter[];
+  /** 缓存路径字符串（如 "Button-as-btn-asicon"），传给 linter 用于错误定位 */
   path?: string;
+  /** CSS 对象预处理器数组（如 px2rem、legacyLogicalProperties），在遍历 key 之前对 CSSObject 执行 `visit()` */
   transformers?: Transformer[];
 }
 

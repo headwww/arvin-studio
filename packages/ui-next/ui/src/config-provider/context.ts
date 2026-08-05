@@ -36,8 +36,14 @@ export interface ConfigComponentProps {
   button?: ButtonConfig;
 }
 
+export interface CSPConfig {
+  nonce?: string;
+}
+
 export interface ConfigConsumerProps extends ConfigComponentProps {
+  csp?: CSPConfig;
   direction?: DirectionType;
+  getPrefixCls: (suffixCls?: string, customizePrefixCls?: string) => string;
   iconPrefixCls: string;
   locale?: Locale;
   renderEmpty?: RenderEmptyHandler;

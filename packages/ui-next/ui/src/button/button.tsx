@@ -6,6 +6,8 @@ import { defineComponent, shallowRef } from 'vue';
 
 import { clsx, omit } from '@arvin-studio/kit';
 
+import useToken from '../theme/useToken';
+
 export interface ButtonProps {
   htmlType?: ButtonHTMLType;
 }
@@ -15,6 +17,7 @@ const AsButton = defineComponent<ButtonProps>(
     const buttonRef = shallowRef<HTMLAnchorElement | HTMLButtonElement>();
     const htmlType = props.htmlType ?? 'button';
 
+    useToken();
     const cls = clsx('as-btn', attrs.class);
 
     return () => {

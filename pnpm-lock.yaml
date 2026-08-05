@@ -385,6 +385,9 @@ importers:
       '@arvin-studio/cssinjs':
         specifier: workspace:*
         version: link:../cssinjs
+      '@arvin-studio/headless':
+        specifier: workspace:*
+        version: link:../headless
       '@arvin-studio/kit':
         specifier: workspace:*
         version: link:../../kit

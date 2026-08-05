@@ -11,5 +11,11 @@ export type {
   TokenMap,
   TokenMapKey,
 } from './interface';
-export type { FullToken, GenStyleFn, GetDefaultToken } from './util/genStyleUtils';
+export type {
+  FullToken,
+  GenStyleFn,
+  GetDefaultToken,
+} from './util/genStyleUtils';
 export { default as genStyleUtils } from './util/genStyleUtils';
+
+export type { CSSUtil } from './util/genStyleUtils';
