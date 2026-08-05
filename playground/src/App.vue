@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Button } from '@arvin-studio/ui';
+import { Button, ConfigProvider } from '@arvin-studio/ui';
 </script>
 
 <template>
-  <Button />
+  <ConfigProvider direction="ltr">
+    <Button>按钮</Button>
+  </ConfigProvider>
 </template>

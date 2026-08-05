@@ -13,7 +13,7 @@ import { where } from '../util';
  *
  * @example
  * token2CSSVar('colorPrimary')           // '--color-primary'
- * token2CSSVar('colorPrimary', 'ant')    // '--ant-color-primary'
+ * token2CSSVar('colorPrimary', 'as')    // '--as-color-primary'
  * token2CSSVar('fontSize')               // '--font-size'
  */
 export function token2CSSVar(token: string, prefix = '') {
@@ -98,7 +98,7 @@ export type TokenWithCSSVar<
  * @param token     原始 token 对象
  * @param themeKey  主题唯一标识（hashId），用于生成 CSS 选择器
  * @param config    转换配置项
- *   - prefix      CSS 变量名前缀，如 'ant' → '--ant-color-primary'
+ *   - prefix      CSS 变量名前缀，如 'as' → '--as-color-primary'
  *   - ignore      跳过指定 key，不生成 CSS 变量
  *   - unitless    指定哪些数字类型的 key 不自动补 px（如 zIndex: 10 → '10' 而非 '10px'）
  *   - preserve    指定哪些 key 保留原始值，不替换为 var() 引用
@@ -111,18 +111,18 @@ export type TokenWithCSSVar<
  * const [result, css] = transformToken(
  *   { colorPrimary: '#1677ff', fontSize: 14, zIndex: 100 },
  *   'abc123',
- *   { prefix: 'ant', unitless: { zIndex: true } }
+ *   { prefix: 'as', unitless: { zIndex: true } }
  * )
  *
  * result
  * // {
- * //   colorPrimary: 'var(--ant-color-primary)',
- * //   fontSize:     'var(--ant-font-size)',
- * //   zIndex:       'var(--ant-z-index)',
+ * //   colorPrimary: 'var(--as-color-primary)',
+ * //   fontSize:     'var(--as-font-size)',
+ * //   zIndex:       'var(--as-z-index)',
  * // }
  *
  * css
- * // '.abc123{ --ant-color-primary:#1677ff; --ant-font-size:14px; --ant-z-index:100; }'
+ * // '.abc123{ --as-color-primary:#1677ff; --as-font-size:14px; --as-z-index:100; }'
  */
 export function transformToken<
   V,

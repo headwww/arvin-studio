@@ -87,3 +87,6 @@ declare module 'vue' {
     },
   ): DefineSetupFnComponent<Props, EmitsOptions, S> & WithTypedEmits<Props, E>;
 }
+
+// oxlint-disable-next-line unicorn/require-module-specifiers
+export {};

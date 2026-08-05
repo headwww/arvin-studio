@@ -11,12 +11,15 @@
   "dependencies": {
     "@arvin-studio/kit": "workspace:*",
     "@arvin-studio/ui": "workspace:*",
+    "@arvin-studio/cssinjs": "workspace:*",
     "vue": "catalog:"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "sass-embedded": "^1.100.0",
     "typescript": "catalog:",
-    "vite": "^7.2.7"
+    "vite": "^7.2.7",
+    "vite-plugin-tsx-resolve-types": "^1.0.1"
   }
 }

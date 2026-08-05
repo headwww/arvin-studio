@@ -58,7 +58,7 @@ export interface UseTokenReturn<
   components?: Ref<TokenMapWithTheme<CompTokenMap, DesignToken, AliasToken>>;
   /**
    * CSS 变量配置。
-   * prefix: CSS 变量名前缀（如 "ant" → --ant-color-primary）
+   * prefix: CSS 变量名前缀（如 "ant" → --as-color-primary）
    * key: CSS 变量作用域的 key（如 "css-var-root"）
    */
   cssVar?: Ref<{
@@ -83,7 +83,7 @@ export interface UseTokenReturn<
   theme?: Ref<Theme<DesignToken, AliasToken>>;
   /**
    * 合并了 CSS 变量引用的 token。
-   * 例如 { colorPrimary: 'var(--ant-color-primary)' }。
+   * 例如 { colorPrimary: 'var(--as-color-primary)' }。
    * 组件 styleFn 使用这个 token，值已经是 var() 引用。
    */
   token: Ref<GlobalToken<CompTokenMap, AliasToken>>;

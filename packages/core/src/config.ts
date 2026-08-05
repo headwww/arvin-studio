@@ -43,7 +43,7 @@ export const globalConfigStore: GlobalConfig = {
 };
 
 /**
- * 全局参数设置
+ * TODO 准备废弃 用 ConfigProvider全局参数设置
  */
 export function setConfig(options?: GlobalConfig) {
   if (options) {

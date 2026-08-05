@@ -4,23 +4,29 @@ import type { ButtonHTMLType } from './button-helper';
 
 import { defineComponent, shallowRef } from 'vue';
 
-import { omit } from '@arvin-studio/kit';
+import { clsx, omit } from '@arvin-studio/kit';
 
 export interface ButtonProps {
   htmlType?: ButtonHTMLType;
 }
 
 const AsButton = defineComponent<ButtonProps>(
-  (props, { attrs }) => {
+  (props, { attrs, slots }) => {
     const buttonRef = shallowRef<HTMLAnchorElement | HTMLButtonElement>();
     const htmlType = props.htmlType ?? 'button';
+
+    const cls = clsx('as-btn', attrs.class);
+
     return () => {
       return (
         <button
           {...omit(attrs, ['class', 'style'])}
+          class={cls}
           ref={buttonRef}
           type={htmlType}
-        ></button>
+        >
+          {slots.default()}
+        </button>
       );
     };
   },

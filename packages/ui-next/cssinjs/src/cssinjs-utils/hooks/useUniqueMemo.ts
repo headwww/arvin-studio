@@ -83,7 +83,7 @@ class ArrayKeyMap<T> {
    * 将 deps 数组转换为唯一的字符串 key。
    *
    * @example
-   *   ['css', 'Button', 'ant'] → "string_css|string_Button|string_ant"
+   *   ['css', 'Button', 'as'] → "string_css|string_Button|string_ant"
    *   [{}]                     → "obj_0"
    */
   private getCompositeKey(keys: unknown[]) {
