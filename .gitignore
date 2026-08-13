@@ -1,5 +1,11 @@
 node_modules
 .DS_Store
+
+# icons-svg 生成产物（由 gulp 构建脚本生成，不纳入版本管理）
+packages/icons/icons-svg/es
+packages/icons/icons-svg/inline-namespaced-svg
+packages/icons/icons-svg/inline-svg
+
 dist
 dist-ssr
 dist.zip

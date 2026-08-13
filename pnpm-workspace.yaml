@@ -3,6 +3,7 @@ packages:
   - infra/lint-configs/*
   - packages/*
   - packages/engine/*
+  - packages/icons/*
   - packages/ui-next/*
   - playground
 catalog:

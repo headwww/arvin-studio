@@ -4,11 +4,11 @@ import { defineConfig as defineOxlintConfig } from 'oxlint';
 
 import { mergeOxlintConfigs, oxlintConfig } from './configs';
 
-type LangtongOxlintConfig = Omit<OxlintConfig, 'extends'> & {
+type AsOxlintConfig = Omit<OxlintConfig, 'extends'> & {
   extends?: OxlintConfig[];
 };
 
-function defineConfig(config: LangtongOxlintConfig = {}) {
+function defineConfig(config: AsOxlintConfig = {}) {
   const { extends: extendedConfigs = [], ...restConfig } = config;
 
   return defineOxlintConfig(
@@ -18,4 +18,4 @@ function defineConfig(config: LangtongOxlintConfig = {}) {
 
 export { defineConfig, oxlintConfig };
 export * from './configs';
-export type { LangtongOxlintConfig, OxlintConfig };
+export type { AsOxlintConfig, OxlintConfig };

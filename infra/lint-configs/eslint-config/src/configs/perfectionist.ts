@@ -24,7 +24,7 @@ export async function perfectionist(): Promise<Linter.Config[]> {
             customGroups: [
               {
                 selector: 'type',
-                groupName: 'langtong-type',
+                groupName: 'as-type',
                 elementNamePattern: '^@arvin-studio/.+',
               },
               {
@@ -33,7 +33,7 @@ export async function perfectionist(): Promise<Linter.Config[]> {
                 elementNamePattern: ['^vue$', '^vue-.+', '^@vue/.+'],
               },
               {
-                groupName: 'langtong',
+                groupName: 'as',
                 elementNamePattern: '^@arvin-studio/.+',
               },
               {
@@ -45,12 +45,12 @@ export async function perfectionist(): Promise<Linter.Config[]> {
             groups: [
               ['type-external', 'type-builtin', 'type-import'],
               'vue-type',
-              'langtong-type',
+              'as-type',
               ['type-parent', 'type-sibling', 'type-index'],
               ['type-internal'],
               'value-builtin',
               'vue',
-              'langtong',
+              'as',
               'value-external',
               'value-internal',
               ['value-parent', 'value-sibling', 'value-index'],

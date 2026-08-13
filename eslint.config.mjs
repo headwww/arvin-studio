@@ -31,6 +31,10 @@ export default defineConfig([
       'unicorn/no-useless-else': 'off',
       'unicorn/no-uncalled-method': 'off',
       'unicorn/no-new-array': 'off',
+      'unicorn/prefer-object-from-entries': 'off',
     },
+  },
+  {
+    ignores: ['packages/icons/**'],
   },
 ]);

@@ -11,4 +11,5 @@ export default defineConfig({
     'unicorn/no-new-array': 'off',
     'typescript/no-useless-default-assignment': 'off',
   },
+  ignorePatterns: ['packages/icons/**'],
 });
