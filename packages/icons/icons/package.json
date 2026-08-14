@@ -3,17 +3,37 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "gen": "run-s gen:icons gen:custom-icons",
+    "gen:icons": "esno ./scripts/gen-icons.ts",
+    "gen:custom-icons": "esno ./scripts/gen-custom-icons.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "@arvin-studio/icons-svg": "workspace:*",
+    "@arvin-studio/headless": "workspace:*",
+    "@arvin-studio/kit": "workspace:*"
+  },
   "devDependencies": {
-    "vue": "catalog:"
+    "@types/node": "^25.9.4",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "@vue/tsconfig": "^0.8.1",
+    "bumpp": "^10.4.1",
+    "es-toolkit": "1.49.0",
+    "esno": "4.8.0",
+    "jiti": "^2.7.0",
+    "jsdom": "^28.1.0",
+    "npm-run-all": "^4.1.5",
+    "pkg-types": "^2.3.1",
+    "tsdown": "catalog:",
+    "vite": "^8.1.0",
+    "vite-plugin-tsx-resolve-types": "^1.0.1",
+    "vue": "catalog:",
+    "vitest": "^4.1.9"
   }
 }
