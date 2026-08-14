@@ -149,8 +149,8 @@ export function initSlideMotion(
   token: TokenWithCommonCls<AliasToken>,
   motionName: SlideMotionTypes,
 ): CSSInterpolation {
-  const { antCls } = token;
-  const motionCls = `${antCls}-${motionName}`;
+  const { asCls } = token;
+  const motionCls = `${asCls}-${motionName}`;
   const { inKeyframes, outKeyframes } = slideMotion[motionName];
 
   return [

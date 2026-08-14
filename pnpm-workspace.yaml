@@ -18,6 +18,7 @@ catalog:
   '@types/stylis': ^4.2.7
   '@typescript-eslint/eslint-plugin': ^8.65.0
   '@typescript-eslint/parser': ^8.65.0
+  '@vueuse/core': ^14.4.0
   commitlint-plugin-function-rules: ^5.0.1
   csstype: ^3.2.3
   cz-git: ^1.13.1

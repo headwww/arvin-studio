@@ -57,10 +57,10 @@ function getArrowStyle<
     boxShadowPopoverArrow,
     arrowOffsetVertical,
     arrowOffsetHorizontal,
-    antCls,
+    asCls,
   } = token;
 
-  const [varName] = genCssVar(antCls, 'tooltip');
+  const [varName] = genCssVar(asCls, 'tooltip');
 
   const {
     arrowDistance = 0,

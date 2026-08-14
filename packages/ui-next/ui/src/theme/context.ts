@@ -40,8 +40,8 @@ export interface DesignTokenProviderProps {
   /**
    * @descCN 开启零运行时模式，不会在运行时产生样式，需要手动引入 CSS 文件。
    * ```tsx
-   * import { ConfigProvider } from 'antd';
-   * import 'antd/dist/antd.css';
+   * import { ConfigProvider } from 'as';
+   * import 'as/dist/as.css';
    *
    * const Demo = () => (
    *   <ConfigProvider theme={{ zeroRuntime: true }}>

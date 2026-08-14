@@ -3,7 +3,6 @@ import { includes } from 'ramda';
 import { TransformFactory } from '../..';
 import { assignAttrsAtTag as assignAttributesAtTag } from '../creator';
 
-// version < antd@3.9
 const OLD_ICON_NAMES = [
   'step-backward',
   'step-forward',

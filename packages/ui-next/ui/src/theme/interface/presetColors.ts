@@ -41,7 +41,7 @@ export type PresetColorType = Record<PresetColorKey, string>;
 
 /**
  * 色阶索引，每种颜色有 10 个色阶，从 1（最浅）到 10（最深）。
- * 对应 Ant Design 色板体系：1-2 为浅色背景，5-6 为主色，8-10 为深色。
+ * 对应 As 色板体系：1-2 为浅色背景，5-6 为主色，8-10 为深色。
  */
 type ColorPaletteKeyIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 

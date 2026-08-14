@@ -53,8 +53,8 @@ export function initFadeMotion(
   token: TokenWithCommonCls<AliasToken>,
   sameLevel = false,
 ): CSSInterpolation {
-  const { antCls } = token;
-  const motionCls = `${antCls}-fade`;
+  const { asCls } = token;
+  const motionCls = `${asCls}-fade`;
   const sameLevelPrefix = sameLevel ? '&' : '';
 
   return [

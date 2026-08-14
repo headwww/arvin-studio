@@ -43,7 +43,7 @@ export const ATTR_CACHE_PATH = 'data-cache-path';
 
 /**
  * CSS-in-JS 实例 ID，挂在每个 style 元素上。
- * 一个应用可能有多个 cssinjs 实例（多个版本的 antd），用这个区分归属。
+ * 一个应用可能有多个 cssinjs 实例（多个版本的），用这个区分归属。
  */
 export const CSS_IN_JS_INSTANCE = '__cssinjs_instance__';
 

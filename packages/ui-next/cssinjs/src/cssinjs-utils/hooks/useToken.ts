@@ -6,7 +6,6 @@
  * 这个文件只定义类型，不包含实现。它规定了注入到 genStyleUtils 的
  * useToken 依赖应该返回什么样的数据结构。
  *
- * 实际的 useToken 实现在 antdv-next 项目中（theme/useToken.ts），
  * 内部调用 useCacheToken，返回 token、hashId、cssVar 等 7 项数据。
  *
  * ───────────────────────────────────────────────────────────────────────────

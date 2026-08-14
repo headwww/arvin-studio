@@ -1,9 +1,16 @@
 import type { Locale } from '../locale';
-import type { DirectionType } from './context';
+import type {
+  ButtonConfig,
+  DirectionType,
+  ThemeConfig,
+  Variant,
+} from './context';
 import type { RenderEmptyHandler } from './default-render-empty';
 import type { SizeType } from './size-context';
 
 export interface ConfigProviderProps {
+  button?: ButtonConfig;
+
   /** 是否禁用整个组件树下的所有表单类组件 */
   componentDisabled?: boolean;
   /** 尺寸 */
@@ -19,6 +26,9 @@ export interface ConfigProviderProps {
 
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
+  theme?: ThemeConfig;
+
+  variant?: Variant;
 }
 
 export interface ConfigProviderEmits {

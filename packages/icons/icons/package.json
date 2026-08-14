@@ -3,11 +3,63 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asv-next/icons.git"
+  },
+  "sideEffects": [
+    "./dist/as-icons.js",
+    "./dist/as-icons.esm.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./all": {
+      "types": "./dist/all.d.ts",
+      "import": "./dist/all.js",
+      "default": "./dist/all.js"
+    },
+    "./icons/*": {
+      "types": "./dist/icons/*.d.ts",
+      "import": "./dist/icons/*.js",
+      "default": "./dist/icons/*.js"
+    },
+    "./extra-icons": {
+      "types": "./dist/extra-icons/index.d.ts",
+      "import": "./dist/extra-icons/index.js",
+      "default": "./dist/extra-icons/index.js"
+    },
+    "./extra-icons/*": {
+      "types": "./dist/extra-icons/*.d.ts",
+      "import": "./dist/extra-icons/*.js",
+      "default": "./dist/extra-icons/*.js"
+    },
+    "./dist/as-icons.esm.js": "./dist/as-icons.esm.js",
+    "./dist/as-icons.js": "./dist/as-icons.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "unpkg": "dist/as-icons.js",
+  "jsdelivr": "dist/as-icons.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "package.json"
+  ],
   "scripts": {
     "gen": "run-s gen:icons gen:custom-icons",
     "gen:icons": "esno ./scripts/gen-icons.ts",
-    "gen:custom-icons": "esno ./scripts/gen-custom-icons.ts"
+    "gen:custom-icons": "esno ./scripts/gen-custom-icons.ts",
+    "build": "run-s build:icons build:parallel",
+    "build:icons": "tsdown",
+    "build:es": "vite build --config ./vite.esm.config.ts",
+    "build:umd": "vite build --config ./vite.umd.config.ts",
+    "build:parallel": "run-p build:es build:umd",
+    "prepublish": "pnpm build"
   },
   "keywords": [],
   "author": "",

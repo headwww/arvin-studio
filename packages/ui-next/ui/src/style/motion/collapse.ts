@@ -10,11 +10,11 @@ const genCollapseMotion: GenerateStyle<
   TokenWithCommonCls<AliasToken>,
   CSSObject
 > = (token) => {
-  const { componentCls, antCls, motionDurationMid, motionEaseInOut } = token;
+  const { componentCls, asCls, motionDurationMid, motionEaseInOut } = token;
   return {
     [componentCls]: {
       // For common/openAnimation
-      [`${antCls}-motion-collapse-legacy`]: {
+      [`${asCls}-motion-collapse-legacy`]: {
         overflow: 'hidden',
         '&-active': {
           transition: `${['height', 'opacity']
@@ -22,7 +22,7 @@ const genCollapseMotion: GenerateStyle<
             .join(', ')} !important`,
         },
       },
-      [`${antCls}-motion-collapse`]: {
+      [`${asCls}-motion-collapse`]: {
         overflow: 'hidden',
         transition: `${['height', 'opacity']
           .map((prop) => `${prop} ${motionDurationMid} ${motionEaseInOut}`)

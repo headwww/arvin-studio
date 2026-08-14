@@ -18,4 +18,6 @@ export type {
 } from './util/genStyleUtils';
 export { default as genStyleUtils } from './util/genStyleUtils';
 
-export type { CSSUtil } from './util/genStyleUtils';
+export type { CSSUtil, TokenWithCommonCls } from './util/genStyleUtils';
+export { merge as mergeToken, statistic } from './util/statistic';
+export { default as statisticToken } from './util/statistic';

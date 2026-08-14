@@ -1,3 +1,2 @@
-export * from './colors';
-export * from './Dom';
-export * from './FastColor';
+export * from './color-picker';
+export * from './util';

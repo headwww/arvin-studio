@@ -203,8 +203,8 @@ export function initZoomMotion(
   token: TokenWithCommonCls<AliasToken>,
   motionName: ZoomMotionTypes,
 ): CSSInterpolation {
-  const { antCls } = token;
-  const motionCls = `${antCls}-${motionName}`;
+  const { asCls } = token;
+  const motionCls = `${asCls}-${motionName}`;
   const { inKeyframes, outKeyframes } = zoomMotion[motionName];
 
   return [

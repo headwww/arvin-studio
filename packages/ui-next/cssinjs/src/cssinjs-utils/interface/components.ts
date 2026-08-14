@@ -29,7 +29,6 @@ import type { TokenType } from '../../theme';
 /**
  * Token 映射表：组件名 → 组件 token 类型。
  *
- * 使用方（antdv-next）这样定义：
  * ```
  * interface ComponentTokenMap {
  *   Button?: { fontWeight?: number; iconGap?: number; ... }
