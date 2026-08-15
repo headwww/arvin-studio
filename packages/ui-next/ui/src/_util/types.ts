@@ -23,6 +23,7 @@ export type EmitsArrToEvent<T extends Record<string, any>> = {
 
 export type EmitsType<T extends Record<string, any>> = EmitsArrToEvent<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type EmptyEmit = {};
 export type SlotsDefineType<
   T extends Record<string, any> = Record<string, any>,

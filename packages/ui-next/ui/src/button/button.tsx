@@ -40,6 +40,7 @@ import Wave from '../_util/wave';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useDisabledContext } from '../config-provider/disabled-context';
 import { useSize } from '../config-provider/hooks/useSize';
+import { useCompactItemContext } from '../space/Compact';
 import {
   isTwoCNChar,
   isUnBorderedButtonVariant,
@@ -48,6 +49,7 @@ import {
 import DefaultLoadingIcon from './default-loading-icon';
 import IconWrapper from './icon-wrapper';
 import useStyle from './style';
+import CompactStyle from './style/compact';
 
 export interface ButtonSemanticClassNames {
   content?: string;
@@ -366,16 +368,19 @@ const AsButton = defineComponent<
     };
 
     // ========================== Size ==========================
-    // TODO 未考虑包裹上下文（Space.Compact）的情况
+    // 尺寸优先级：props.size > compact 上下文（Space.Compact） > ConfigProvider size
+    const { compactSize, compactItemClassnames } = useCompactItemContext(
+      prefixCls,
+      direction,
+    );
     const sizeClassNameMap = {
       large: 'lg',
       small: 'sm',
       middle: undefined,
       medium: undefined,
     };
-    // TODO compactSize.value
     const sizeFullName = useSize<SizeType>(
-      (ctxSize) => (props?.size ?? ctxSize) as SizeType,
+      (ctxSize) => (props?.size ?? compactSize.value ?? ctxSize) as SizeType,
     );
     const mergedIconPlacement = computed(() => props?.iconPlacement ?? 'start');
 
@@ -481,6 +486,7 @@ const AsButton = defineComponent<
           // ── 图标位置在文字结尾 ──
           [`${prefixCls.value}-icon-end`]: mergedIconPlacement.value === 'end',
         },
+        compactItemClassnames.value,
         (attrs as any).class,
         props.rootClass,
         contextClassName.value,
@@ -581,9 +587,9 @@ const AsButton = defineComponent<
         >
           {iconNode}
           {kids}
-          {/* TODO {compactItemClassnames.value ? (
+          {compactItemClassnames.value ? (
             <CompactStyle prefixCls={prefixCls.value} />
-          ) : null} */}
+          ) : null}
         </button>
       );
       // 非无边框变体 → 包裹 Wave 水波纹效果

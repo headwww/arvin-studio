@@ -4,6 +4,7 @@ import type { VueNode } from '../_util';
 import type { ShowWaveEffect } from '../_util/wave/interface';
 import type { ButtonProps } from '../button';
 import type { Locale } from '../locale';
+import type { SpaceProps } from '../space';
 import type {
   AliasToken,
   MappingAlgorithm,
@@ -134,8 +135,13 @@ export type ButtonConfig = ComponentStyleConfig &
     loadingIcon?: VueNode;
   };
 
+export type SpaceConfig = ComponentStyleConfig &
+  Pick<SpaceProps, 'classes' | 'size' | 'styles'>;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
+  space?: SpaceConfig;
+  theme?: ThemeConfig;
 }
 
 export interface CSPConfig {
@@ -182,7 +188,7 @@ export interface ConfigConsumerProps extends ConfigComponentProps {
   popupOverflow?: PopupOverflow;
   renderEmpty?: RenderEmptyHandler;
   rootPrefixCls?: string;
-  theme?: ThemeConfig;
+  space?: SpaceConfig;
   variant?: Variant;
   virtual?: boolean;
   wave?: WaveConfig;
@@ -211,6 +217,29 @@ export function useConfig() {
       iconPrefixCls: defaultIconPrefixCls,
     }) as Ref<ConfigConsumerProps>,
   );
+}
+
+export function useBaseConfig<K extends string>(
+  suffixCls?: K,
+  props?: ComponentBaseProps,
+) {
+  const config = useConfig();
+  return {
+    // TODO
+    // result: computed(() => config.value?.result),
+    // modal: computed(() => config.value?.modal),
+    // timeline: computed(() => config.value?.timeline),
+    // notification: computed(() => config.value?.notification),
+    getPrefixCls: (suffixCls?: string, prefixCls?: string) =>
+      config.value?.getPrefixCls(suffixCls, prefixCls),
+    prefixCls: computed(() => {
+      return config.value?.getPrefixCls(suffixCls, props?.prefixCls);
+    }),
+    direction: computed(() => {
+      return config.value?.direction;
+    }),
+    getPopupContainer: config?.value.getPopupContainer,
+  };
 }
 
 /**
