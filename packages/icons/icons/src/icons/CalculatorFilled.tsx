@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import CalculatorFilledSvg from '@arvin-studio/icons-svg/es/asn/CalculatorFilled.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![calculator](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg4MCAxMTJIMTQ0Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnY3MzZjMCAxNy43IDE0LjMgMzIgMzIgMzJoNzM2YzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE0NGMwLTE3LjctMTQuMy0zMi0zMi0zMk00NDAuMiA3NjVoLTUwLjhjLTIuMiAwLTQuNS0xLjEtNS45LTIuOUwzNDggNzE4LjZsLTM1LjUgNDMuNWE3LjQgNy40IDAgMCAxLTUuOSAyLjloLTUwLjhjLTYuNiAwLTEwLjItNy45LTUuOC0xMy4xbDYyLjctNzYuOC02MS4yLTc0LjljLTQuMy01LjItLjctMTMuMSA1LjktMTMuMWg1MC45YzIuMiAwIDQuNSAxLjEgNS45IDIuOWwzNCA0MS42IDM0LTQxLjZjMS41LTEuOSAzLjYtMi45IDUuOS0yLjloNTAuOGM2LjYgMCAxMC4yIDcuOSA1LjkgMTMuMUwzODMuNSA2NzVsNjIuNyA3Ni44YzQuMiA1LjMuNiAxMy4yLTYgMTMuMm03LjgtMzgyYzAgMi4yLTEuNCA0LTMuMiA0SDM3NnY2OC43YzAgMS45LTEuOCAzLjMtNCAzLjNoLTQ4Yy0yLjIgMC00LTEuNC00LTMuMlYzODdoLTY4LjhjLTEuOCAwLTMuMi0xLjgtMy4yLTR2LTQ4YzAtMi4yIDEuNC00IDMuMi00SDMyMHYtNjguOGMwLTEuOCAxLjgtMy4yIDQtMy4yaDQ4YzIuMiAwIDQgMS40IDQgMy4yVjMzMWg2OC43YzEuOSAwIDMuMyAxLjggMy4zIDR6bTMyOCAzNjljMCAyLjItMS40IDQtMy4yIDRINTc5LjJjLTEuOCAwLTMuMi0xLjgtMy4yLTR2LTQ4YzAtMi4yIDEuNC00IDMuMi00aDE5My41YzEuOSAwIDMuMyAxLjggMy4zIDR6bTAtMTA0YzAgMi4yLTEuNCA0LTMuMiA0SDU3OS4yYy0xLjggMC0zLjItMS44LTMuMi00di00OGMwLTIuMiAxLjQtNCAzLjItNGgxOTMuNWMxLjkgMCAzLjMgMS44IDMuMyA0em0wLTI2NWMwIDIuMi0xLjQgNC0zLjIgNEg1NzkuMmMtMS44IDAtMy4yLTEuOC0zLjItNHYtNDhjMC0yLjIgMS40LTQgMy4yLTRoMTkzLjVjMS45IDAgMy4zIDEuOCAzLjMgNHoiIC8+PC9zdmc+) */ 
+const CalculatorFilled = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={CalculatorFilledSvg} />
+    }
+  },
+  {
+    name: 'CalculatorFilled',
+  },
+)
+
+export default CalculatorFilled

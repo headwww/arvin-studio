@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import GroupOutlinedSvg from '@arvin-studio/icons-svg/es/asn/GroupOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![group](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTkxMiA4MjAuMVYyMDMuOWMyOC05LjkgNDgtMzYuNiA0OC02Ny45IDAtMzkuOC0zMi4yLTcyLTcyLTcyLTMxLjMgMC01OCAyMC02Ny45IDQ4SDIwMy45QzE5NCA4NCAxNjcuMyA2NCAxMzYgNjRjLTM5LjggMC03MiAzMi4yLTcyIDcyIDAgMzEuMyAyMCA1OCA0OCA2Ny45djYxNi4yQzg0IDgzMCA2NCA4NTYuNyA2NCA4ODhjMCAzOS44IDMyLjIgNzIgNzIgNzIgMzEuMyAwIDU4LTIwIDY3LjktNDhoNjE2LjJjOS45IDI4IDM2LjYgNDggNjcuOSA0OCAzOS44IDAgNzItMzIuMiA3Mi03MiAwLTMxLjMtMjAtNTgtNDgtNjcuOU04ODggMTEyYzEzLjMgMCAyNCAxMC43IDI0IDI0cy0xMC43IDI0LTI0IDI0LTI0LTEwLjctMjQtMjQgMTAuNy0yNCAyNC0yNE0xMzYgOTEyYy0xMy4zIDAtMjQtMTAuNy0yNC0yNHMxMC43LTI0IDI0LTI0IDI0IDEwLjcgMjQgMjQtMTAuNyAyNC0yNCAyNG0wLTc1MmMtMTMuMyAwLTI0LTEwLjctMjQtMjRzMTAuNy0yNCAyNC0yNCAyNCAxMC43IDI0IDI0LTEwLjcgMjQtMjQgMjRtNzA0IDY4MEgxODRWMTg0aDY1NnptNDggNzJjLTEzLjMgMC0yNC0xMC43LTI0LTI0czEwLjctMjQgMjQtMjQgMjQgMTAuNyAyNCAyNC0xMC43IDI0LTI0IDI0IiAvPjxwYXRoIGQ9Ik0yODggNDc0aDQ0OGM4LjggMCAxNi03LjIgMTYtMTZWMjgyYzAtOC44LTcuMi0xNi0xNi0xNkgyODhjLTguOCAwLTE2IDcuMi0xNiAxNnYxNzZjMCA4LjggNy4yIDE2IDE2IDE2bTU2LTEzNmgzMzZ2NjRIMzQ0em0tNTYgNDIwaDQ0OGM4LjggMCAxNi03LjIgMTYtMTZWNTY2YzAtOC44LTcuMi0xNi0xNi0xNkgyODhjLTguOCAwLTE2IDcuMi0xNiAxNnYxNzZjMCA4LjggNy4yIDE2IDE2IDE2bTU2LTEzNmgzMzZ2NjRIMzQ0eiIgLz48L3N2Zz4=) */ 
+const GroupOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={GroupOutlinedSvg} />
+    }
+  },
+  {
+    name: 'GroupOutlined',
+  },
+)
+
+export default GroupOutlined

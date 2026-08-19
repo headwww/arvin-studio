@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import PaperClipOutlinedSvg from '@arvin-studio/icons-svg/es/asn/PaperClipOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![paper-clip](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTc3OS4zIDE5Ni42Yy05NC4yLTk0LjItMjQ3LjYtOTQuMi0zNDEuNyAwbC0yNjEgMjYwLjhjLTEuNyAxLjctMi42IDQtMi42IDYuNHMuOSA0LjcgMi42IDYuNGwzNi45IDM2LjlhOSA5IDAgMCAwIDEyLjcgMGwyNjEtMjYwLjhjMzIuNC0zMi40IDc1LjUtNTAuMiAxMjEuMy01MC4yczg4LjkgMTcuOCAxMjEuMiA1MC4yYzMyLjQgMzIuNCA1MC4yIDc1LjUgNTAuMiAxMjEuMiAwIDQ1LjgtMTcuOCA4OC44LTUwLjIgMTIxLjJsLTI2NiAyNjUuOS00My4xIDQzLjFjLTQwLjMgNDAuMy0xMDUuOCA0MC4zLTE0Ni4xIDAtMTkuNS0xOS41LTMwLjItNDUuNC0zMC4yLTczczEwLjctNTMuNSAzMC4yLTczbDI2My45LTI2My44YzYuNy02LjYgMTUuNS0xMC4zIDI0LjktMTAuM2guMWM5LjQgMCAxOC4xIDMuNyAyNC43IDEwLjMgNi43IDYuNyAxMC4zIDE1LjUgMTAuMyAyNC45IDAgOS4zLTMuNyAxOC4xLTEwLjMgMjQuN0wzNzIuNCA2NTNjLTEuNyAxLjctMi42IDQtMi42IDYuNHMuOSA0LjcgMi42IDYuNGwzNi45IDM2LjlhOSA5IDAgMCAwIDEyLjcgMGwyMTUuNi0yMTUuNmMxOS45LTE5LjkgMzAuOC00Ni4zIDMwLjgtNzQuNHMtMTEtNTQuNi0zMC44LTc0LjRjLTQxLjEtNDEuMS0xMDcuOS00MS0xNDkgMEw0NjMgMzY0IDIyNC44IDYwMi4xQTE3Mi4yIDE3Mi4yIDAgMCAwIDE3NCA3MjQuOGMwIDQ2LjMgMTguMSA4OS44IDUwLjggMTIyLjUgMzMuOSAzMy44IDc4LjMgNTAuNyAxMjIuNyA1MC43czg4LjgtMTYuOSAxMjIuNi01MC43bDMwOS4yLTMwOUM4MjQuOCA0OTIuNyA4NTAgNDMyIDg1MCAzNjcuNWMuMS02NC42LTI1LjEtMTI1LjMtNzAuNy0xNzAuOSIgLz48L3N2Zz4=) */ 
+const PaperClipOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={PaperClipOutlinedSvg} />
+    }
+  },
+  {
+    name: 'PaperClipOutlined',
+  },
+)
+
+export default PaperClipOutlined

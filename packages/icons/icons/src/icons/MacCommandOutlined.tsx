@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import MacCommandOutlinedSvg from '@arvin-studio/icons-svg/es/asn/MacCommandOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![mac-command](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg4MCAxMTJIMTQ0Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnY3MzZjMCAxNy43IDE0LjMgMzIgMzIgMzJoNzM2YzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE0NGMwLTE3LjctMTQuMy0zMi0zMi0zMm0tNDAgNzI4SDE4NFYxODRoNjU2eiIgLz48cGF0aCBkPSJNMzcwLjggNTU0LjRjLTU0LjYgMC05OC44IDQ0LjItOTguOCA5OC44czQ0LjIgOTguOCA5OC44IDk4LjggOTguOC00NC4yIDk4LjgtOTguOHYtNDIuNGg4NC43djQyLjRjMCA1NC42IDQ0LjIgOTguOCA5OC44IDk4LjhzOTguOC00NC4yIDk4LjgtOTguOC00NC4yLTk4LjgtOTguOC05OC44aC00Mi40di04NC43aDQyLjRjNTQuNiAwIDk4LjgtNDQuMiA5OC44LTk4LjhzLTQ0LjItOTguOC05OC44LTk4LjgtOTguOCA0NC4yLTk4LjggOTguOHY0Mi40aC04NC43di00Mi40YzAtNTQuNi00NC4yLTk4LjgtOTguOC05OC44UzI3MiAzMTYuMiAyNzIgMzcwLjhzNDQuMiA5OC44IDk4LjggOTguOGg0Mi40djg0LjdoLTQyLjR6bTQyLjQgOTguOGMwIDIzLjQtMTkgNDIuNC00Mi40IDQyLjRzLTQyLjQtMTktNDIuNC00Mi40IDE5LTQyLjQgNDIuNC00Mi40aDQyLjR6bTE5Ny42LTI4Mi40YzAtMjMuNCAxOS00Mi40IDQyLjQtNDIuNHM0Mi40IDE5IDQyLjQgNDIuNC0xOSA0Mi40LTQyLjQgNDIuNGgtNDIuNHptMCAyNDBoNDIuNGMyMy40IDAgNDIuNCAxOSA0Mi40IDQyLjRzLTE5IDQyLjQtNDIuNCA0Mi40LTQyLjQtMTktNDIuNC00Mi40ek00NjkuNiA0NjkuNmg4NC43djg0LjdoLTg0Ljd6bS05OC44LTU2LjRjLTIzLjQgMC00Mi40LTE5LTQyLjQtNDIuNHMxOS00Mi40IDQyLjQtNDIuNCA0Mi40IDE5IDQyLjQgNDIuNHY0Mi40eiIgLz48L3N2Zz4=) */ 
+const MacCommandOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={MacCommandOutlinedSvg} />
+    }
+  },
+  {
+    name: 'MacCommandOutlined',
+  },
+)
+
+export default MacCommandOutlined

@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import ShoppingCartOutlinedSvg from '@arvin-studio/icons-svg/es/asn/ShoppingCartOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![shopping-cart](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTkyMi45IDcwMS45SDMyNy40bDI5LjktNjAuOSA0OTYuOC0uOWMxNi44IDAgMzEuMi0xMiAzNC4yLTI4LjZsNjguOC0zODUuMWMxLjgtMTAuMS0uOS0yMC41LTcuNS0yOC40YTM1IDM1IDAgMCAwLTI2LjYtMTIuNWwtNjMyLTIuMS01LjQtMjUuNGMtMy40LTE2LjItMTgtMjgtMzQuNi0yOEg5Ni41YTM1LjMgMzUuMyAwIDEgMCAwIDcwLjZoMTI1LjlMMjQ2IDMxMi44bDU4LjEgMjgxLjMtNzQuOCAxMjIuMWEzNSAzNSAwIDAgMC0zIDM2LjhjNiAxMS45IDE4LjEgMTkuNCAzMS41IDE5LjRoNjIuOGExMDIuNCAxMDIuNCAwIDAgMC0yMC42IDYxLjdjMCA1Ni42IDQ2IDEwMi42IDEwMi42IDEwMi42czEwMi42LTQ2IDEwMi42LTEwMi42YzAtMjIuMy03LjQtNDQtMjAuNi02MS43aDE2MS4xYTEwMi40IDEwMi40IDAgMCAwLTIwLjYgNjEuN2MwIDU2LjYgNDYgMTAyLjYgMTAyLjYgMTAyLjZzMTAyLjYtNDYgMTAyLjYtMTAyLjZjMC0yMi4zLTcuNC00NC0yMC42LTYxLjdIOTIzYzE5LjQgMCAzNS4zLTE1LjggMzUuMy0zNS4zYTM1LjQgMzUuNCAwIDAgMC0zNS40LTM1LjJNMzA1LjcgMjUzbDU3NS44IDEuOS01Ni40IDMxNS44LTQ1Mi4zLjh6bTk2LjkgNjEyLjdjLTE3LjQgMC0zMS42LTE0LjItMzEuNi0zMS42czE0LjItMzEuNiAzMS42LTMxLjYgMzEuNiAxNC4yIDMxLjYgMzEuNmEzMS42IDMxLjYgMCAwIDEtMzEuNiAzMS42bTMyNS4xIDBjLTE3LjQgMC0zMS42LTE0LjItMzEuNi0zMS42czE0LjItMzEuNiAzMS42LTMxLjYgMzEuNiAxNC4yIDMxLjYgMzEuNmEzMS42IDMxLjYgMCAwIDEtMzEuNiAzMS42IiAvPjwvc3ZnPg==) */ 
+const ShoppingCartOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={ShoppingCartOutlinedSvg} />
+    }
+  },
+  {
+    name: 'ShoppingCartOutlined',
+  },
+)
+
+export default ShoppingCartOutlined

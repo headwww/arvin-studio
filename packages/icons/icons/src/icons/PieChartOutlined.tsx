@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import PieChartOutlinedSvg from '@arvin-studio/icons-svg/es/asn/PieChartOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![pie-chart](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg2NCA1MThINTA2VjE2MGMwLTQuNC0zLjYtOC04LThoLTI2YTM5OC41IDM5OC41IDAgMCAwLTI4Mi44IDExNy4xIDM5OCAzOTggMCAwIDAtODUuNyAxMjcuMUEzOTggMzk4IDAgMCAwIDcyIDU1MmEzOTguNSAzOTguNSAwIDAgMCAxMTcuMSAyODIuOGMzNi43IDM2LjcgNzkuNSA2NS42IDEyNy4xIDg1LjdBMzk4IDM5OCAwIDAgMCA0NzIgOTUyYTM5OC41IDM5OC41IDAgMCAwIDI4Mi44LTExNy4xYzM2LjctMzYuNyA2NS42LTc5LjUgODUuNy0xMjcuMUEzOTggMzk4IDAgMCAwIDg3MiA1NTJ2LTI2YzAtNC40LTMuNi04LTgtOE03MDUuNyA3ODcuOEEzMzEuNiAzMzEuNiAwIDAgMSA0NzAuNCA4ODRjLTg4LjEtLjQtMTcwLjktMzQuOS0yMzMuMi05Ny4yQzE3NC41IDcyNC4xIDE0MCA2NDAuNyAxNDAgNTUyczM0LjUtMTcyLjEgOTcuMi0yMzQuOGM1NC42LTU0LjYgMTI0LjktODcuOSAyMDAuOC05NS41VjU4NmgzNjQuM2MtNy43IDc2LjMtNDEuMyAxNDctOTYuNiAyMDEuOE05NTIgNDYyLjRsLTIuNi0yOC4yYy04LjUtOTIuMS00OS40LTE3OS0xMTUuMi0yNDQuNkEzOTkuNCAzOTkuNCAwIDAgMCA1ODkgNzQuNkw1NjAuNyA3MmMtNC43LS40LTguNyAzLjItOC43IDcuOVY0NjRjMCA0LjQgMy42IDggOCA4bDM4NC0xYzQuNyAwIDguNC00IDgtOC42bS0zMzIuMi01OC4yVjE0Ny42YTMzMi4yIDMzMi4yIDAgMCAxIDE2Ni40IDg5LjhjNDUuNyA0NS42IDc3IDEwMy42IDkwIDE2Ni4xeiIgLz48L3N2Zz4=) */ 
+const PieChartOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={PieChartOutlinedSvg} />
+    }
+  },
+  {
+    name: 'PieChartOutlined',
+  },
+)
+
+export default PieChartOutlined

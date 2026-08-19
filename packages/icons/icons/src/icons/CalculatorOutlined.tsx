@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import CalculatorOutlinedSvg from '@arvin-studio/icons-svg/es/asn/CalculatorOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![calculator](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTI1MS4yIDM4N0gzMjB2NjguOGMwIDEuOCAxLjggMy4yIDQgMy4yaDQ4YzIuMiAwIDQtMS40IDQtMy4zVjM4N2g2OC44YzEuOCAwIDMuMi0xLjggMy4yLTR2LTQ4YzAtMi4yLTEuNC00LTMuMy00SDM3NnYtNjguOGMwLTEuOC0xLjgtMy4yLTQtMy4yaC00OGMtMi4yIDAtNCAxLjQtNCAzLjJWMzMxaC02OC44Yy0xLjggMC0zLjIgMS44LTMuMiA0djQ4YzAgMi4yIDEuNCA0IDMuMiA0bTMyOCAwaDE5My42YzEuOCAwIDMuMi0xLjggMy4yLTR2LTQ4YzAtMi4yLTEuNC00LTMuMy00SDU3OS4yYy0xLjggMC0zLjIgMS44LTMuMiA0djQ4YzAgMi4yIDEuNCA0IDMuMiA0bTAgMjY1aDE5My42YzEuOCAwIDMuMi0xLjggMy4yLTR2LTQ4YzAtMi4yLTEuNC00LTMuMy00SDU3OS4yYy0xLjggMC0zLjIgMS44LTMuMiA0djQ4YzAgMi4yIDEuNCA0IDMuMiA0bTAgMTA0aDE5My42YzEuOCAwIDMuMi0xLjggMy4yLTR2LTQ4YzAtMi4yLTEuNC00LTMuMy00SDU3OS4yYy0xLjggMC0zLjIgMS44LTMuMiA0djQ4YzAgMi4yIDEuNCA0IDMuMiA0bS0xOTUuNy04MSA2MS4yLTc0LjljNC4zLTUuMi43LTEzLjEtNS45LTEzLjFIMzg4Yy0yLjMgMC00LjUgMS01LjkgMi45bC0zNCA0MS42LTM0LTQxLjZhNy45IDcuOSAwIDAgMC01LjktMi45aC01MC45Yy02LjYgMC0xMC4yIDcuOS01LjkgMTMuMWw2MS4yIDc0LjktNjIuNyA3Ni44Yy00LjQgNS4yLS44IDEzLjEgNS44IDEzLjFoNTAuOGMyLjMgMCA0LjUtMSA1LjktMi45bDM1LjUtNDMuNSAzNS41IDQzLjVjMS41IDEuOCAzLjcgMi45IDUuOSAyLjloNTAuOGM2LjYgMCAxMC4yLTcuOSA1LjktMTMuMXpNODgwIDExMkgxNDRjLTE3LjcgMC0zMiAxNC4zLTMyIDMydjczNmMwIDE3LjcgMTQuMyAzMiAzMiAzMmg3MzZjMTcuNyAwIDMyLTE0LjMgMzItMzJWMTQ0YzAtMTcuNy0xNC4zLTMyLTMyLTMybS0zNiA3MzJIMTgwVjE4MGg2NjR6IiAvPjwvc3ZnPg==) */ 
+const CalculatorOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={CalculatorOutlinedSvg} />
+    }
+  },
+  {
+    name: 'CalculatorOutlined',
+  },
+)
+
+export default CalculatorOutlined

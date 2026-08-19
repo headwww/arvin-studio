@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import ReadFilledSvg from '@arvin-studio/icons-svg/es/asn/ReadFilled.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![read](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTkyOCAxNjFINjk5LjJjLTQ5LjEgMC05Ny4xIDE0LjEtMTM4LjQgNDAuN0w1MTIgMjMzbC00OC44LTMxLjNBMjU1IDI1NSAwIDAgMCAzMjQuOCAxNjFIOTZjLTE3LjcgMC0zMiAxNC4zLTMyIDMydjU2OGMwIDE3LjcgMTQuMyAzMiAzMiAzMmgyMjguOGM0OS4xIDAgOTcuMSAxNC4xIDEzOC40IDQwLjdsNDQuNCAyOC42YzEuMy44IDIuOCAxLjMgNC4zIDEuM3MzLS40IDQuMy0xLjNsNDQuNC0yOC42QzYwMiA4MDcuMSA2NTAuMSA3OTMgNjk5LjIgNzkzSDkyOGMxNy43IDAgMzItMTQuMyAzMi0zMlYxOTNjMC0xNy43LTE0LjMtMzItMzItMzJNNDA0IDU1My41YzAgNC4xLTMuMiA3LjUtNy4xIDcuNUgyMTEuMWMtMy45IDAtNy4xLTMuNC03LjEtNy41di00NWMwLTQuMSAzLjItNy41IDcuMS03LjVoMTg1LjdjMy45IDAgNy4xIDMuNCA3LjEgNy41djQ1em0wLTE0MGMwIDQuMS0zLjIgNy41LTcuMSA3LjVIMjExLjFjLTMuOSAwLTcuMS0zLjQtNy4xLTcuNXYtNDVjMC00LjEgMy4yLTcuNSA3LjEtNy41aDE4NS43YzMuOSAwIDcuMSAzLjQgNy4xIDcuNXY0NXptNDE2IDE0MGMwIDQuMS0zLjIgNy41LTcuMSA3LjVINjI3LjFjLTMuOSAwLTcuMS0zLjQtNy4xLTcuNXYtNDVjMC00LjEgMy4yLTcuNSA3LjEtNy41aDE4NS43YzMuOSAwIDcuMSAzLjQgNy4xIDcuNXY0NXptMC0xNDBjMCA0LjEtMy4yIDcuNS03LjEgNy41SDYyNy4xYy0zLjkgMC03LjEtMy40LTcuMS03LjV2LTQ1YzAtNC4xIDMuMi03LjUgNy4xLTcuNWgxODUuN2MzLjkgMCA3LjEgMy40IDcuMSA3LjV2NDV6IiAvPjwvc3ZnPg==) */ 
+const ReadFilled = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={ReadFilledSvg} />
+    }
+  },
+  {
+    name: 'ReadFilled',
+  },
+)
+
+export default ReadFilled

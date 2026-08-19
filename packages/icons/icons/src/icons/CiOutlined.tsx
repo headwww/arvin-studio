@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import CiOutlinedSvg from '@arvin-studio/icons-svg/es/asn/CiOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![ci](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUxMiA2NEMyNjQuNiA2NCA2NCAyNjQuNiA2NCA1MTJzMjAwLjYgNDQ4IDQ0OCA0NDggNDQ4LTIwMC42IDQ0OC00NDhTNzU5LjQgNjQgNTEyIDY0bTAgODIwYy0yMDUuNCAwLTM3Mi0xNjYuNi0zNzItMzcyczE2Ni42LTM3MiAzNzItMzcyIDM3MiAxNjYuNiAzNzIgMzcyLTE2Ni42IDM3Mi0zNzIgMzcybTIxOC01NzIuMWgtNTAuNGMtNC40IDAtOCAzLjYtOCA4djM4NC4yYzAgNC40IDMuNiA4IDggOEg3MzBjNC40IDAgOC0zLjYgOC04VjMxOS45YzAtNC40LTMuNi04LTgtOG0tMjgxLjQgNDkuNmM0OS41IDAgODMuMSAzMS41IDg3IDc3LjYuNCA0LjIgMy44IDcuNCA4IDcuNGg1Mi42YzIuNCAwIDQuNC0yIDQuNC00LjQgMC04MS4yLTY0LTEzOC4xLTE1Mi4zLTEzOC4xQzM0NS40IDMwNCAyODYgMzczLjUgMjg2IDQ4OC40djQ5YzAgMTE0IDU5LjQgMTgyLjYgMTYyLjMgMTgyLjYgODggMCAxNTIuMy01NS4xIDE1Mi4zLTEzMi41IDAtMi40LTItNC40LTQuNC00LjRoLTUyLjdjLTQuMiAwLTcuNiAzLjItOCA3LjMtNC4yIDQzLTM3LjcgNzIuNC04NyA3Mi40LTYxLjEgMC05NS42LTQ0LjktOTUuNi0xMjUuMnYtNDkuM2MuMS04MS40IDM0LjYtMTI2LjggOTUuNy0xMjYuOCIgLz48L3N2Zz4=) */ 
+const CiOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={CiOutlinedSvg} />
+    }
+  },
+  {
+    name: 'CiOutlined',
+  },
+)
+
+export default CiOutlined

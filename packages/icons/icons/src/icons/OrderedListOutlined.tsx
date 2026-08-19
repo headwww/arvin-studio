@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import OrderedListOutlinedSvg from '@arvin-studio/icons-svg/es/asn/OrderedListOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![ordered-list](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTkyMCA3NjBIMzM2Yy00LjQgMC04IDMuNi04IDh2NTZjMCA0LjQgMy42IDggOCA4aDU4NGM0LjQgMCA4LTMuNiA4LTh2LTU2YzAtNC40LTMuNi04LTgtOG0wLTU2OEgzMzZjLTQuNCAwLTggMy42LTggOHY1NmMwIDQuNCAzLjYgOCA4IDhoNTg0YzQuNCAwIDgtMy42IDgtOHYtNTZjMC00LjQtMy42LTgtOC04bTAgMjg0SDMzNmMtNC40IDAtOCAzLjYtOCA4djU2YzAgNC40IDMuNiA4IDggOGg1ODRjNC40IDAgOC0zLjYgOC04di01NmMwLTQuNC0zLjYtOC04LThNMjE2IDcxMkgxMDBjLTIuMiAwLTQgMS44LTQgNHYzNGMwIDIuMiAxLjggNCA0IDRoNzIuNHYyMC41aC0zNS43Yy0yLjIgMC00IDEuOC00IDR2MzRjMCAyLjIgMS44IDQgNCA0aDM1LjdWODM4SDEwMGMtMi4yIDAtNCAxLjgtNCA0djM0YzAgMi4yIDEuOCA0IDQgNGgxMTZjMi4yIDAgNC0xLjggNC00VjcxNmMwLTIuMi0xLjgtNC00LTRNMTAwIDE4OGgzOHYxMjBjMCAyLjIgMS44IDQgNCA0aDQwYzIuMiAwIDQtMS44IDQtNFYxNTJjMC00LjQtMy42LTgtOC04aC03OGMtMi4yIDAtNCAxLjgtNCA0djM2YzAgMi4yIDEuOCA0IDQgNG0xMTYgMjQwSDEwMGMtMi4yIDAtNCAxLjgtNCA0djM2YzAgMi4yIDEuOCA0IDQgNGg2OC40bC03MC4zIDc3LjdhOC4zIDguMyAwIDAgMC0yLjEgNS40VjU5MmMwIDIuMiAxLjggNCA0IDRoMTE2YzIuMiAwIDQtMS44IDQtNHYtMzZjMC0yLjItMS44LTQtNC00aC02OC40bDcwLjMtNzcuN2E4LjMgOC4zIDAgMCAwIDIuMS01LjRWNDMyYzAtMi4yLTEuOC00LTQtNCIgLz48L3N2Zz4=) */ 
+const OrderedListOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={OrderedListOutlinedSvg} />
+    }
+  },
+  {
+    name: 'OrderedListOutlined',
+  },
+)
+
+export default OrderedListOutlined

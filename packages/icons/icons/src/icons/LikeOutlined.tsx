@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import LikeOutlinedSvg from '@arvin-studio/icons-svg/es/asn/LikeOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![like](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg4NS45IDUzMy43YzE2LjgtMjIuMiAyNi4xLTQ5LjQgMjYuMS03Ny43IDAtNDQuOS0yNS4xLTg3LjQtNjUuNS0xMTEuMWE2Ny43IDY3LjcgMCAwIDAtMzQuMy05LjNINTcyLjRsNi0xMjIuOWMxLjQtMjkuNy05LjEtNTcuOS0yOS41LTc5LjRBMTA2LjYgMTA2LjYgMCAwIDAgNDcxIDk5LjljLTUyIDAtOTggMzUtMTExLjggODUuMWwtODUuOSAzMTFIMTQ0Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnYzNjRjMCAxNy43IDE0LjMgMzIgMzIgMzJoNjAxLjNjOS4yIDAgMTguMi0xLjggMjYuNS01LjQgNDcuNi0yMC4zIDc4LjMtNjYuOCA3OC4zLTExOC40IDAtMTIuNi0xLjgtMjUtNS40LTM3IDE2LjgtMjIuMiAyNi4xLTQ5LjQgMjYuMS03Ny43IDAtMTIuNi0xLjgtMjUtNS40LTM3IDE2LjgtMjIuMiAyNi4xLTQ5LjQgMjYuMS03Ny43LS4yLTEyLjYtMi0yNS4xLTUuNi0zNy4xTTE4NCA4NTJWNTY4aDgxdjI4NHptNjM2LjQtMzUzLTIxLjkgMTkgMTMuOSAyNS40YTU2IDU2IDAgMCAxIDYuOSAyNy4zYzAgMTYuNS03LjIgMzIuMi0xOS42IDQzbC0yMS45IDE5IDEzLjkgMjUuNGE1NiA1NiAwIDAgMSA2LjkgMjcuM2MwIDE2LjUtNy4yIDMyLjItMTkuNiA0M2wtMjEuOSAxOSAxMy45IDI1LjRhNTYgNTYgMCAwIDEgNi45IDI3LjNjMCAyMi40LTEzLjIgNDIuNi0zMy42IDUxLjhIMzI5VjU2NC44bDk5LjUtMzYwLjVhNDQuMSA0NC4xIDAgMCAxIDQyLjItMzIuM2M3LjYgMCAxNS4xIDIuMiAyMS4xIDYuNyA5LjkgNy40IDE1LjIgMTguNiAxNC42IDMwLjVsLTkuNiAxOTguNGgzMTQuNEM4MjkgNDE4LjUgODQwIDQzNi45IDg0MCA0NTZjMCAxNi41LTcuMiAzMi4xLTE5LjYgNDMiIC8+PC9zdmc+) */ 
+const LikeOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={LikeOutlinedSvg} />
+    }
+  },
+  {
+    name: 'LikeOutlined',
+  },
+)
+
+export default LikeOutlined

@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import UngroupOutlinedSvg from '@arvin-studio/icons-svg/es/asn/UngroupOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![ungroup](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTczNiA1NTBIMjg4Yy04LjggMC0xNiA3LjItMTYgMTZ2MTc2YzAgOC44IDcuMiAxNiAxNiAxNmg0NDhjOC44IDAgMTYtNy4yIDE2LTE2VjU2NmMwLTguOC03LjItMTYtMTYtMTZtLTU2IDEzNkgzNDR2LTY0aDMzNnptMjA4IDEzMGMtMzkuOCAwLTcyIDMyLjItNzIgNzJzMzIuMiA3MiA3MiA3MiA3Mi0zMi4yIDcyLTcyLTMyLjItNzItNzItNzJtMCA5NmMtMTMuMyAwLTI0LTEwLjctMjQtMjRzMTAuNy0yNCAyNC0yNCAyNCAxMC43IDI0IDI0LTEwLjcgMjQtMjQgMjRNNzM2IDI2NkgyODhjLTguOCAwLTE2IDcuMi0xNiAxNnYxNzZjMCA4LjggNy4yIDE2IDE2IDE2aDQ0OGM4LjggMCAxNi03LjIgMTYtMTZWMjgyYzAtOC44LTcuMi0xNi0xNi0xNm0tNTYgMTM2SDM0NHYtNjRoMzM2em0yMDgtMTk0YzM5LjggMCA3Mi0zMi4yIDcyLTcycy0zMi4yLTcyLTcyLTcyLTcyIDMyLjItNzIgNzIgMzIuMiA3MiA3MiA3Mm0wLTk2YzEzLjMgMCAyNCAxMC43IDI0IDI0cy0xMC43IDI0LTI0IDI0LTI0LTEwLjctMjQtMjQgMTAuNy0yNCAyNC0yNE0xMzYgNjRjLTM5LjggMC03MiAzMi4yLTcyIDcyczMyLjIgNzIgNzIgNzIgNzItMzIuMiA3Mi03Mi0zMi4yLTcyLTcyLTcybTAgOTZjLTEzLjMgMC0yNC0xMC43LTI0LTI0czEwLjctMjQgMjQtMjQgMjQgMTAuNyAyNCAyNC0xMC43IDI0LTI0IDI0bTAgNjU2Yy0zOS44IDAtNzIgMzIuMi03MiA3MnMzMi4yIDcyIDcyIDcyIDcyLTMyLjIgNzItNzItMzIuMi03Mi03Mi03Mm0wIDk2Yy0xMy4zIDAtMjQtMTAuNy0yNC0yNHMxMC43LTI0IDI0LTI0IDI0IDEwLjcgMjQgMjQtMTAuNyAyNC0yNCAyNCIgLz48L3N2Zz4=) */ 
+const UngroupOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={UngroupOutlinedSvg} />
+    }
+  },
+  {
+    name: 'UngroupOutlined',
+  },
+)
+
+export default UngroupOutlined

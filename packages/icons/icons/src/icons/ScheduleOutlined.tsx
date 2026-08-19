@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import ScheduleOutlinedSvg from '@arvin-studio/icons-svg/es/asn/ScheduleOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![schedule](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTkyOCAyMjRINzY4di01NmMwLTQuNC0zLjYtOC04LThoLTU2Yy00LjQgMC04IDMuNi04IDh2NTZINTQ4di01NmMwLTQuNC0zLjYtOC04LThoLTU2Yy00LjQgMC04IDMuNi04IDh2NTZIMzI4di01NmMwLTQuNC0zLjYtOC04LThoLTU2Yy00LjQgMC04IDMuNi04IDh2NTZIOTZjLTE3LjcgMC0zMiAxNC4zLTMyIDMydjU3NmMwIDE3LjcgMTQuMyAzMiAzMiAzMmg4MzJjMTcuNyAwIDMyLTE0LjMgMzItMzJWMjU2YzAtMTcuNy0xNC4zLTMyLTMyLTMybS00MCA1NjhIMTM2VjI5NmgxMjB2NTZjMCA0LjQgMy42IDggOCA4aDU2YzQuNCAwIDgtMy42IDgtOHYtNTZoMTQ4djU2YzAgNC40IDMuNiA4IDggOGg1NmM0LjQgMCA4LTMuNiA4LTh2LTU2aDE0OHY1NmMwIDQuNCAzLjYgOCA4IDhoNTZjNC40IDAgOC0zLjYgOC04di01NmgxMjB6TTQxNiA0OTZIMjMyYy00LjQgMC04IDMuNi04IDh2NDhjMCA0LjQgMy42IDggOCA4aDE4NGM0LjQgMCA4LTMuNiA4LTh2LTQ4YzAtNC40LTMuNi04LTgtOG0wIDEzNkgyMzJjLTQuNCAwLTggMy42LTggOHY0OGMwIDQuNCAzLjYgOCA4IDhoMTg0YzQuNCAwIDgtMy42IDgtOHYtNDhjMC00LjQtMy42LTgtOC04bTMwOC4yLTE3Ny40TDYyMC42IDU5OC4zbC01Mi44LTczLjFjLTMtNC4yLTcuOC02LjYtMTIuOS02LjZINTAwYy02LjUgMC0xMC4zIDcuNC02LjUgMTIuN2wxMTQuMSAxNTguMmExNS45IDE1LjkgMCAwIDAgMjUuOCAwbDE2NS0yMjguN2MzLjgtNS4zIDAtMTIuNy02LjUtMTIuN0g3MzdjLTUtLjEtOS44IDIuNC0xMi44IDYuNSIgLz48L3N2Zz4=) */ 
+const ScheduleOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={ScheduleOutlinedSvg} />
+    }
+  },
+  {
+    name: 'ScheduleOutlined',
+  },
+)
+
+export default ScheduleOutlined

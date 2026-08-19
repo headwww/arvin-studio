@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import CloudDownloadOutlinedSvg from '@arvin-studio/icons-svg/es/asn/CloudDownloadOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![cloud-download](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTYyNCA3MDYuM2gtNzQuMVY0NjRjMC00LjQtMy42LTgtOC04aC02MGMtNC40IDAtOCAzLjYtOCA4djI0Mi4zSDQwMGMtNi43IDAtMTAuNCA3LjctNi4zIDEyLjlsMTEyIDE0MS43YTggOCAwIDAgMCAxMi42IDBsMTEyLTE0MS43YzQuMS01LjIuNC0xMi45LTYuMy0xMi45IiAvPjxwYXRoIGQ9Ik04MTEuNCAzNjYuN0M3NjUuNiAyNDUuOSA2NDguOSAxNjAgNTEyLjIgMTYwUzI1OC44IDI0NS44IDIxMyAzNjYuNkMxMjcuMyAzODkuMSA2NCA0NjcuMiA2NCA1NjBjMCAxMTAuNSA4OS41IDIwMCAxOTkuOSAyMDBIMzA0YzQuNCAwIDgtMy42IDgtOHYtNjBjMC00LjQtMy42LTgtOC04aC00MC4xYy0zMy43IDAtNjUuNC0xMy40LTg5LTM3LjctMjMuNS0yNC4yLTM2LTU2LjgtMzQuOS05MC42LjktMjYuNCA5LjktNTEuMiAyNi4yLTcyLjEgMTYuNy0yMS4zIDQwLjEtMzYuOCA2Ni4xLTQzLjdsMzcuOS05LjkgMTMuOS0zNi42YzguNi0yMi44IDIwLjYtNDQuMSAzNS43LTYzLjRhMjQ2IDI0NiAwIDAgMSA1Mi40LTQ5LjljNDEuMS0yOC45IDg5LjUtNDQuMiAxNDAtNDQuMnM5OC45IDE1LjMgMTQwIDQ0LjJjMTkuOSAxNCAzNy41IDMwLjggNTIuNCA0OS45IDE1LjEgMTkuMyAyNy4xIDQwLjcgMzUuNyA2My40bDEzLjggMzYuNSAzNy44IDEwQzg0Ni4xIDQ1NC41IDg4NCA1MDMuOCA4ODQgNTYwYzAgMzMuMS0xMi45IDY0LjMtMzYuMyA4Ny43YTEyMyAxMjMgMCAwIDEtODcuNiAzNi4zSDcyMGMtNC40IDAtOCAzLjYtOCA4djYwYzAgNC40IDMuNiA4IDggOGg0MC4xQzg3MC41IDc2MCA5NjAgNjcwLjUgOTYwIDU2MGMwLTkyLjctNjMuMS0xNzAuNy0xNDguNi0xOTMuMyIgLz48L3N2Zz4=) */ 
+const CloudDownloadOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={CloudDownloadOutlinedSvg} />
+    }
+  },
+  {
+    name: 'CloudDownloadOutlined',
+  },
+)
+
+export default CloudDownloadOutlined

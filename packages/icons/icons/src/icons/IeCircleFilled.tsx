@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import IeCircleFilledSvg from '@arvin-studio/icons-svg/es/asn/IeCircleFilled.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![ie-circle](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTY5My42IDI4NC40Yy0yNCAwLTUxLjEgMTEuNy03Mi42IDIyIDQ2LjMgMTggODYgNTcuMyAxMTIuMyA5OS42IDcuMS0xOC45IDE0LjYtNDcuOSAxNC42LTY3LjkgMC0zMi0yMi44LTUzLjctNTQuMy01My43TTUxMiA2NEMyNjQuNiA2NCA2NCAyNjQuNiA2NCA1MTJzMjAwLjYgNDQ4IDQ0OCA0NDggNDQ4LTIwMC42IDQ0OC00NDhTNzU5LjQgNjQgNTEyIDY0bTI1My45IDQ5Mi45SDQzNy4xYzAgMTAwLjQgMTQ0LjMgMTM2IDE5Ni44IDQ3LjRoMTIwLjhjLTMyLjYgOTEuNy0xMTkuNyAxNDYtMjE2LjggMTQ2LTM1LjEgMC03MC4zLS4xLTEwMS43LTE1LjYtODcuNCA0NC41LTE4MC4zIDU2LjYtMTgwLjMtNDIgMC00NS44IDIzLjItMTA3LjEgNDQtMTQ1QzMzNSA0ODQgMzgxLjMgNDIyLjggNDM1LjYgMzc0LjVjLTQzLjcgMTguOS05MS4xIDY2LjMtMTIyIDEwMS4yIDI1LjktMTEyLjggMTI5LjUtMTkzLjYgMjM3LjEtMTg2LjUgMTMwLTU5LjggMjA5LjctMzQuMSAyMDkuNyAzOC42IDAgMjcuNC0xMC42IDYzLjMtMjEuNCA4Ny45IDI1LjIgNDUuNSAzMy4zIDk3LjYgMjYuOSAxNDEuMk01NDAuNSAzOTkuMWMtNTMuNyAwLTEwMiAzOS43LTEwNCA5NC45aDIwOGMtMi01NS4xLTUwLjYtOTQuOS0xMDQtOTQuOU0zMjAuNiA2MDIuOWMtNzMgMTUyLjQgMTEuNSAxNzIuMiAxMDAuMyAxMjMuMy00Ni42LTI3LjUtODIuNi03Mi4yLTEwMC4zLTEyMy4zIiAvPjwvc3ZnPg==) */ 
+const IeCircleFilled = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={IeCircleFilledSvg} />
+    }
+  },
+  {
+    name: 'IeCircleFilled',
+  },
+)
+
+export default IeCircleFilled

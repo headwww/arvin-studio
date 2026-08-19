@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import ConsoleSqlOutlinedSvg from '@arvin-studio/icons-svg/es/asn/ConsoleSqlOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![console-sql](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTMwMS4zIDQ5Ni43Yy0yMy44IDAtNDAuMi0xMC41LTQxLjYtMjYuOUgyMDVjLjkgNDMuNCAzNi45IDcwLjMgOTMuOSA3MC4zIDU5LjEgMCA5NS0yOC40IDk1LTc1LjUgMC0zNS44LTIwLTU1LjktNjQuNS02NC41bC0yOS4xLTUuNmMtMjMuOC00LjctMzMuOC0xMS45LTMzLjgtMjQuMiAwLTE1IDEzLjMtMjQuNSAzMy40LTI0LjVzMzUuMyAxMS4xIDM2LjYgMjdoNTNjLS45LTQxLjctMzcuNS03MC4zLTkwLjMtNzAuMy01NC40IDAtODkuNyAyOC45LTg5LjcgNzMgMCAzNS41IDIxLjIgNTggNjIuNSA2NS44bDI5LjcgNS45YzI1LjggNS4yIDM1LjYgMTEuOSAzNS42IDI0LjQuMSAxNC43LTE0LjUgMjUuMS0zNiAyNS4xIiAvPjxwYXRoIGQ9Ik05MjggMTQwSDk2Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnY0OTZjMCAxNy43IDE0LjMgMzIgMzIgMzJoMzgwdjExMkgzMDRjLTguOCAwLTE2IDcuMi0xNiAxNnY0OGMwIDQuNCAzLjYgOCA4IDhoNDMyYzQuNCAwIDgtMy42IDgtOHYtNDhjMC04LjgtNy4yLTE2LTE2LTE2SDU0OFY3MDBoMzgwYzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE3MmMwLTE3LjctMTQuMy0zMi0zMi0zMm0tNDAgNDg4SDEzNlYyMTJoNzUyeiIgLz48cGF0aCBkPSJNODI4LjUgNDg2LjdoLTk1LjhWMzA4LjVoLTU3LjRWNTM0aDE1My4yem0tMjk4LjYgNTMuNGMxNC4xIDAgMjcuMi0yIDM5LjEtNS44bDEzLjMgMjAuM2g1My4zTDYwNy45IDUxMWMyMS4xLTIwIDMzLTUxLjEgMzMtODkuOCAwLTczLjMtNDMuMy0xMTguOC0xMTAuOS0xMTguOHMtMTExLjIgNDUuMy0xMTEuMiAxMTguOGMtLjEgNzMuNyA0MyAxMTguOSAxMTEuMSAxMTguOW0wLTE5MGMzMS42IDAgNTIuNyAyNy43IDUyLjcgNzEuMSAwIDE2LjctMy42IDMwLjYtMTAgNDAuNWwtNS4yLTYuOWgtNDguOEw1NDIgNDkxYy0zLjkuOS04IDEuNC0xMi4yIDEuNC0zMS43IDAtNTIuOC0yNy41LTUyLjgtNzEuMi4xLTQzLjYgMjEuMi03MS4xIDUyLjktNzEuMSIgLz48L3N2Zz4=) */ 
+const ConsoleSqlOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={ConsoleSqlOutlinedSvg} />
+    }
+  },
+  {
+    name: 'ConsoleSqlOutlined',
+  },
+)
+
+export default ConsoleSqlOutlined

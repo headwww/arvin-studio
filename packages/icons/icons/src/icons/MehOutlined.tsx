@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import MehOutlinedSvg from '@arvin-studio/icons-svg/es/asn/MehOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![meh](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTI4OCA0MjFhNDggNDggMCAxIDAgOTYgMCA0OCA0OCAwIDEgMC05NiAwbTM1MiAwYTQ4IDQ4IDAgMSAwIDk2IDAgNDggNDggMCAxIDAtOTYgME01MTIgNjRDMjY0LjYgNjQgNjQgMjY0LjYgNjQgNTEyczIwMC42IDQ0OCA0NDggNDQ4IDQ0OC0yMDAuNiA0NDgtNDQ4Uzc1OS40IDY0IDUxMiA2NG0yNjMgNzExYy0zNC4yIDM0LjItNzQgNjEtMTE4LjMgNzkuOEM2MTEgODc0LjIgNTYyLjMgODg0IDUxMiA4ODRzLTk5LTkuOC0xNDQuOC0yOS4yQTM3MCAzNzAgMCAwIDEgMjQ4LjkgNzc1Yy0zNC4yLTM0LjItNjEtNzQtNzkuOC0xMTguM0MxNDkuOCA2MTEgMTQwIDU2Mi4zIDE0MCA1MTJzOS44LTk5IDI5LjItMTQ0LjhBMzcwIDM3MCAwIDAgMSAyNDkgMjQ4LjljMzQuMi0zNC4yIDc0LTYxIDExOC4zLTc5LjhDNDEzIDE0OS44IDQ2MS43IDE0MCA1MTIgMTQwczk5IDkuOCAxNDQuOCAyOS4yQTM3MCAzNzAgMCAwIDEgNzc1LjEgMjQ5YzM0LjIgMzQuMiA2MSA3NCA3OS44IDExOC4zQzg3NC4yIDQxMyA4ODQgNDYxLjcgODg0IDUxMnMtOS44IDk5LTI5LjIgMTQ0LjhBMzY5IDM2OSAwIDAgMSA3NzUgNzc1TTY2NCA1NjVIMzYwYy00LjQgMC04IDMuNi04IDh2NDhjMCA0LjQgMy42IDggOCA4aDMwNGM0LjQgMCA4LTMuNiA4LTh2LTQ4YzAtNC40LTMuNi04LTgtOCIgLz48L3N2Zz4=) */ 
+const MehOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={MehOutlinedSvg} />
+    }
+  },
+  {
+    name: 'MehOutlined',
+  },
+)
+
+export default MehOutlined

@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import FileDoneOutlinedSvg from '@arvin-studio/icons-svg/es/asn/FileDoneOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![file-done](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTY4OCAzMTJ2LTQ4YzAtNC40LTMuNi04LTgtOEgyOTZjLTQuNCAwLTggMy42LTggOHY0OGMwIDQuNCAzLjYgOCA4IDhoMzg0YzQuNCAwIDgtMy42IDgtOG0tMzkyIDg4Yy00LjQgMC04IDMuNi04IDh2NDhjMCA0LjQgMy42IDggOCA4aDE4NGM0LjQgMCA4LTMuNiA4LTh2LTQ4YzAtNC40LTMuNi04LTgtOHptMzc2IDExNmMtMTE5LjMgMC0yMTYgOTYuNy0yMTYgMjE2czk2LjcgMjE2IDIxNiAyMTYgMjE2LTk2LjcgMjE2LTIxNi05Ni43LTIxNi0yMTYtMjE2bTEwNy41IDMyMy41Qzc1MC44IDg2OC4yIDcxMi42IDg4NCA2NzIgODg0cy03OC44LTE1LjgtMTA3LjUtNDQuNVM1MjAgNzcyLjYgNTIwIDczMnMxNS44LTc4LjggNDQuNS0xMDcuNVM2MzEuNCA1ODAgNjcyIDU4MHM3OC44IDE1LjggMTA3LjUgNDQuNVM4MjQgNjkxLjQgODI0IDczMnMtMTUuOCA3OC44LTQ0LjUgMTA3LjVNNzYxIDY1NmgtNDQuM2MtMi42IDAtNSAxLjItNi41IDMuM2wtNjMuNSA4Ny44LTIzLjEtMzEuOWE4IDggMCAwIDAtNi41LTMuM0g1NzNjLTYuNSAwLTEwLjMgNy40LTYuNSAxMi43bDczLjggMTAyLjFjMy4yIDQuNCA5LjcgNC40IDEyLjkgMGwxMTQuMi0xNThjMy45LTUuMy4xLTEyLjctNi40LTEyLjdNNDQwIDg1MkgyMDhWMTQ4aDU2MHYzNDRjMCA0LjQgMy42IDggOCA4aDU2YzQuNCAwIDgtMy42IDgtOFYxMDhjMC0xNy43LTE0LjMtMzItMzItMzJIMTY4Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnY3ODRjMCAxNy43IDE0LjMgMzIgMzIgMzJoMjcyYzQuNCAwIDgtMy42IDgtOHYtNTZjMC00LjQtMy42LTgtOC04IiAvPjwvc3ZnPg==) */ 
+const FileDoneOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={FileDoneOutlinedSvg} />
+    }
+  },
+  {
+    name: 'FileDoneOutlined',
+  },
+)
+
+export default FileDoneOutlined

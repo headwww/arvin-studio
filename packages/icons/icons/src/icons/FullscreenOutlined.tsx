@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import FullscreenOutlinedSvg from '@arvin-studio/icons-svg/es/asn/FullscreenOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![fullscreen](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0ibTI5MCAyMzYuNCA0My45LTQzLjlhOC4wMSA4LjAxIDAgMCAwLTQuNy0xMy42TDE2OSAxNjBjLTUuMS0uNi05LjUgMy43LTguOSA4LjlMMTc5IDMyOS4xYy44IDYuNiA4LjkgOS40IDEzLjYgNC43bDQzLjctNDMuN0wzNzAgNDIzLjdjMy4xIDMuMSA4LjIgMy4xIDExLjMgMGw0Mi40LTQyLjNjMy4xLTMuMSAzLjEtOC4yIDAtMTEuM3ptMzUyLjcgMTg3LjNjMy4xIDMuMSA4LjIgMy4xIDExLjMgMGwxMzMuNy0xMzMuNiA0My43IDQzLjdhOC4wMSA4LjAxIDAgMCAwIDEzLjYtNC43TDg2My45IDE2OWMuNi01LjEtMy43LTkuNS04LjktOC45TDY5NC44IDE3OWMtNi42LjgtOS40IDguOS00LjcgMTMuNmw0My45IDQzLjlMNjAwLjMgMzcwYTguMDMgOC4wMyAwIDAgMCAwIDExLjN6TTg0NSA2OTQuOWMtLjgtNi42LTguOS05LjQtMTMuNi00LjdsLTQzLjcgNDMuN0w2NTQgNjAwLjNhOC4wMyA4LjAzIDAgMCAwLTExLjMgMGwtNDIuNCA0Mi4zYTguMDMgOC4wMyAwIDAgMCAwIDExLjNMNzM0IDc4Ny42bC00My45IDQzLjlhOC4wMSA4LjAxIDAgMCAwIDQuNyAxMy42TDg1NSA4NjRjNS4xLjYgOS41LTMuNyA4LjktOC45em0tNDYzLjctOTQuNmE4LjAzIDguMDMgMCAwIDAtMTEuMyAwTDIzNi4zIDczMy45bC00My43LTQzLjdhOC4wMSA4LjAxIDAgMCAwLTEzLjYgNC43TDE2MC4xIDg1NWMtLjYgNS4xIDMuNyA5LjUgOC45IDguOUwzMjkuMiA4NDVjNi42LS44IDkuNC04LjkgNC43LTEzLjZMMjkwIDc4Ny42IDQyMy43IDY1NGMzLjEtMy4xIDMuMS04LjIgMC0xMS4zeiIgLz48L3N2Zz4=) */ 
+const FullscreenOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={FullscreenOutlinedSvg} />
+    }
+  },
+  {
+    name: 'FullscreenOutlined',
+  },
+)
+
+export default FullscreenOutlined

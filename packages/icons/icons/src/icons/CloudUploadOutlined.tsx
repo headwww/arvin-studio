@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import CloudUploadOutlinedSvg from '@arvin-studio/icons-svg/es/asn/CloudUploadOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![cloud-upload](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUxOC4zIDQ1OWE4IDggMCAwIDAtMTIuNiAwbC0xMTIgMTQxLjdhNy45OCA3Ljk4IDAgMCAwIDYuMyAxMi45aDczLjlWODU2YzAgNC40IDMuNiA4IDggOGg2MGM0LjQgMCA4LTMuNiA4LThWNjEzLjdINjI0YzYuNyAwIDEwLjQtNy43IDYuMy0xMi45eiIgLz48cGF0aCBkPSJNODExLjQgMzY2LjdDNzY1LjYgMjQ1LjkgNjQ4LjkgMTYwIDUxMi4yIDE2MFMyNTguOCAyNDUuOCAyMTMgMzY2LjZDMTI3LjMgMzg5LjEgNjQgNDY3LjIgNjQgNTYwYzAgMTEwLjUgODkuNSAyMDAgMTk5LjkgMjAwSDMwNGM0LjQgMCA4LTMuNiA4LTh2LTYwYzAtNC40LTMuNi04LTgtOGgtNDAuMWMtMzMuNyAwLTY1LjQtMTMuNC04OS0zNy43LTIzLjUtMjQuMi0zNi01Ni44LTM0LjktOTAuNi45LTI2LjQgOS45LTUxLjIgMjYuMi03Mi4xIDE2LjctMjEuMyA0MC4xLTM2LjggNjYuMS00My43bDM3LjktOS45IDEzLjktMzYuNmM4LjYtMjIuOCAyMC42LTQ0LjEgMzUuNy02My40YTI0NiAyNDYgMCAwIDEgNTIuNC00OS45YzQxLjEtMjguOSA4OS41LTQ0LjIgMTQwLTQ0LjJzOTguOSAxNS4zIDE0MCA0NC4yYzE5LjkgMTQgMzcuNSAzMC44IDUyLjQgNDkuOSAxNS4xIDE5LjMgMjcuMSA0MC43IDM1LjcgNjMuNGwxMy44IDM2LjUgMzcuOCAxMEM4NDYuMSA0NTQuNSA4ODQgNTAzLjggODg0IDU2MGMwIDMzLjEtMTIuOSA2NC4zLTM2LjMgODcuN2ExMjMgMTIzIDAgMCAxLTg3LjYgMzYuM0g3MjBjLTQuNCAwLTggMy42LTggOHY2MGMwIDQuNCAzLjYgOCA4IDhoNDAuMUM4NzAuNSA3NjAgOTYwIDY3MC41IDk2MCA1NjBjMC05Mi43LTYzLjEtMTcwLjctMTQ4LjYtMTkzLjMiIC8+PC9zdmc+) */ 
+const CloudUploadOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={CloudUploadOutlinedSvg} />
+    }
+  },
+  {
+    name: 'CloudUploadOutlined',
+  },
+)
+
+export default CloudUploadOutlined

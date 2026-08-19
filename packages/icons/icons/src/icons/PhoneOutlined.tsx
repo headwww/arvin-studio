@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import PhoneOutlinedSvg from '@arvin-studio/icons-svg/es/asn/PhoneOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![phone](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg3Ny4xIDIzOC43IDc3MC42IDEzMi4zYy0xMy0xMy0zMC40LTIwLjMtNDguOC0yMC4zcy0zNS44IDcuMi00OC44IDIwLjNMNTU4LjMgMjQ2LjhjLTEzIDEzLTIwLjMgMzAuNS0yMC4zIDQ4LjkgMCAxOC41IDcuMiAzNS44IDIwLjMgNDguOWw4OS42IDg5LjdhNDA2IDQwNiAwIDAgMS04Ni40IDEyNy4zYy0zNi43IDM2LjktNzkuNiA2Ni0xMjcuMiA4Ni42bC04OS42LTg5LjdjLTEzLTEzLTMwLjQtMjAuMy00OC44LTIwLjNhNjguMiA2OC4yIDAgMCAwLTQ4LjggMjAuM0wxMzIuMyA2NzNjLTEzIDEzLTIwLjMgMzAuNS0yMC4zIDQ4LjkgMCAxOC41IDcuMiAzNS44IDIwLjMgNDguOWwxMDYuNCAxMDYuNGMyMi4yIDIyLjIgNTIuOCAzNC45IDg0LjIgMzQuOSA2LjUgMCAxMi44LS41IDE5LjItMS42IDEzMi40LTIxLjggMjYzLjgtOTIuMyAzNjkuOS0xOTguM0M4MTggNjA2IDg4OC40IDQ3NC42IDkxMC40IDM0Mi4xYzYuMy0zNy42LTYuMy03Ni4zLTMzLjMtMTAzLjRtLTM3LjYgOTEuNWMtMTkuNSAxMTcuOS04Mi45IDIzNS41LTE3OC40IDMzMXMtMjEzIDE1OC45LTMzMC45IDE3OC40Yy0xNC44IDIuNS0zMC0yLjUtNDAuOC0xMy4yTDE4NC45IDcyMS45IDI5NS43IDYxMWwxMTkuOCAxMjAgLjkuOSAyMS42LThhNDgxLjMgNDgxLjMgMCAwIDAgMjg1LjctMjg1LjhsOC0yMS42LTEyMC44LTEyMC43IDExMC44LTExMC45IDEwNC41IDEwNC41YzEwLjggMTAuOCAxNS44IDI2IDEzLjMgNDAuOCIgLz48L3N2Zz4=) */ 
+const PhoneOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={PhoneOutlinedSvg} />
+    }
+  },
+  {
+    name: 'PhoneOutlined',
+  },
+)
+
+export default PhoneOutlined

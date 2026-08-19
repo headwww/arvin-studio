@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import FileJpgOutlinedSvg from '@arvin-studio/icons-svg/es/asn/FileJpgOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![file-jpg](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg3NC42IDMwMS44IDU5Ni44IDIxLjNjLTQuNS00LjUtOS40LTguMy0xNC43LTExLjUtMS40LS44LTIuOC0xLjYtNC4zLTIuMy0uOS0uNS0xLjktLjktMi44LTEuMy05LTQtMTguOS02LjItMjktNi4ySDIwMWMtMzkuOCAwLTczIDMyLjItNzMgNzJ2ODgwYzAgMzkuOCAzMy4yIDcyIDczIDcyaDYyM2MzOS44IDAgNzEtMzIuMiA3MS03MlYzNTIuNWMwLTE5LTctMzcuMi0yMC40LTUwLjdNNTgzIDExMC40IDc4My44IDMxMkg1ODN6TTgyMyA5NTJIMjAwVjcyaDMxMXYyNDBjMCAzOS44IDMzLjIgNzIgNzMgNzJoMjM5ek0zNTAgNjk2LjVjMCAyNC4yLTcuNSAzMS40LTIxLjkgMzEuNC05IDAtMTguNC01LjgtMjQuOC0xOC41TDI3Mi45IDczMmMxMy40IDIyLjkgMzIuMyAzNC4yIDYxLjMgMzQuMiA0MS42IDAgNjAuOC0yOS45IDYwLjgtNjYuMlY1NzdoLTQ1ek01MDEuMyA1NzdINDM3djE4Nmg0NHYtNjJoMjEuNmMzOS4xIDAgNzMuMS0xOS42IDczLjEtNjMuNiAwLTQ1LjgtMzMuNS02MC40LTc0LjQtNjAuNG0tLjggODlINDgxdi01M2gxOC4yYzIxLjUgMCAzMy40IDYuMiAzMy40IDI0LjkgMCAxOC4xLTEwLjUgMjguMS0zMi4xIDI4LjFtMTgyLjUtOXYzNmgzMHYzMC4xYy00IDIuOS0xMSA0LjctMTcuNyA0LjctMzQuMyAwLTUwLjctMjEuNC01MC43LTU4LjIgMC0zNi4xIDE5LjctNTcuNCA0Ny4xLTU3LjQgMTUuMyAwIDI1IDYuMiAzNCAxNC40bDIzLjctMjguM2MtMTIuNy0xMi44LTMyLjEtMjQuMi01OS4yLTI0LjItNDkuNiAwLTkxLjEgMzUuMy05MS4xIDk3IDAgNjIuNyA0MCA5NS4xIDkxLjUgOTUuMSAyNS45IDAgNDkuMi0xMC4yIDYxLjUtMjIuNlY2NTd6IiAvPjwvc3ZnPg==) */ 
+const FileJpgOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={FileJpgOutlinedSvg} />
+    }
+  },
+  {
+    name: 'FileJpgOutlined',
+  },
+)
+
+export default FileJpgOutlined

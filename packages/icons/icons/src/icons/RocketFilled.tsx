@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import RocketFilledSvg from '@arvin-studio/icons-svg/es/asn/RocketFilled.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![rocket](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTg2NCA3MzZjMC0xMTEuNi02NS40LTIwOC0xNjAtMjUyLjlWMzE3LjNjMC0xNS4xLTUuMy0yOS43LTE1LjEtNDEuMkw1MzYuNSA5NS40QzUzMC4xIDg3LjggNTIxIDg0IDUxMiA4NHMtMTguMSAzLjgtMjQuNSAxMS40TDMzNS4xIDI3Ni4xYTY0IDY0IDAgMCAwLTE1LjEgNDEuMnYxNjUuOEMyMjUuNCA1MjggMTYwIDYyNC40IDE2MCA3MzZoMTU2LjVjLTIuMyA3LjItMy41IDE1LTMuNSAyMy44IDAgMjIuMSA3LjYgNDMuNyAyMS40IDYwLjhhOTcgOTcgMCAwIDAgNDMuMSAzMC42YzIzLjEgNTQgNzUuNiA4OC44IDEzNC41IDg4LjggMjkuMSAwIDU3LjMtOC42IDgxLjQtMjQuOCAyMy42LTE1LjggNDEuOS0zNy45IDUzLTY0YTk3IDk3IDAgMCAwIDQzLjEtMzAuNSA5Ny41IDk3LjUgMCAwIDAgMjEuNC02MC44YzAtOC40LTEuMS0xNi40LTMuMS0yMy44ek01MTIgMzUyYTQ4LjAxIDQ4LjAxIDAgMCAxIDAgOTYgNDguMDEgNDguMDEgMCAwIDEgMC05Nm0xMTYuMSA0MzIuMmMtNS4yIDMtMTEuMiA0LjItMTcuMSAzLjRsLTE5LjUtMi40LTIuOCAxOS40Yy01LjQgMzcuOS0zOC40IDY2LjUtNzYuNyA2Ni41cy03MS4zLTI4LjYtNzYuNy02Ni41bC0yLjgtMTkuNS0xOS41IDIuNWEyNy43IDI3LjcgMCAwIDEtMTcuMS0zLjVjLTguNy01LTE0LjEtMTQuMy0xNC4xLTI0LjQgMC0xMC42IDUuOS0xOS40IDE0LjYtMjMuOGgyMzEuM2M4LjggNC41IDE0LjYgMTMuMyAxNC42IDIzLjgtLjEgMTAuMi01LjUgMTkuNi0xNC4yIDI0LjUiIC8+PC9zdmc+) */ 
+const RocketFilled = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={RocketFilledSvg} />
+    }
+  },
+  {
+    name: 'RocketFilled',
+  },
+)
+
+export default RocketFilled

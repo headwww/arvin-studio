@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import DribbbleSquareOutlinedSvg from '@arvin-studio/icons-svg/es/asn/DribbbleSquareOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![dribbble-square](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTQ5OC42IDQzMmMtNDAuOC03Mi41LTg0LjctMTMzLjQtOTEuMi0xNDIuMy02OC44IDMyLjUtMTIwLjMgOTUuOS0xMzYuMiAxNzIuMiAxMSAuMiAxMTIuNC43IDIyNy40LTI5LjltNjYuNSAyMS44YzUuNyAxMS43IDExLjIgMjMuNiAxNi4zIDM1LjYgMS44IDQuMiAzLjYgOC40IDUuMyAxMi43IDgxLjgtMTAuMyAxNjMuMiA2LjIgMTcxLjMgNy45LS41LTU4LjEtMjEuMy0xMTEuNC01NS41LTE1My4zLTUuMyA3LjEtNDYuNSA2MC0xMzcuNCA5Ny4xTTg4MCAxMTJIMTQ0Yy0xNy43IDAtMzIgMTQuMy0zMiAzMnY3MzZjMCAxNy43IDE0LjMgMzIgMzIgMzJoNzM2YzE3LjcgMCAzMi0xNC4zIDMyLTMyVjE0NGMwLTE3LjctMTQuMy0zMi0zMi0zMk01MTIgODAwYy0xNTguOCAwLTI4OC0xMjkuMi0yODgtMjg4czEyOS4yLTI4OCAyODgtMjg4IDI4OCAxMjkuMiAyODggMjg4LTEyOS4yIDI4OC0yODggMjg4bTg5LjctMjU5LjFjMzIuMiA4OC40IDQ1LjMgMTYwLjQgNDcuOCAxNzUuNCA1NS4yLTM3LjMgOTQuNS05Ni40IDEwNS40LTE2NC45LTguNC0yLjYtNzYuMS0yMi44LTE1My4yLTEwLjVtLTcyLjUtMjYuNGMzLjItMSA2LjQtMiA5LjctMi45LTYuMi0xNC0xMi45LTI4LTE5LjktNDEuNy0xMjIuOCAzNi44LTI0Mi4xIDM1LjItMjUyLjggMzUtLjEgMi41LS4xIDUtLjEgNy41IDAgNjMuMiAyMy45IDEyMC45IDYzLjIgMTY0LjUgNS41LTkuNiA3My0xMjEuNCAxOTkuOS0xNjIuNG0xNDUuOS0xODYuMmEyNDUuMiAyNDUuMiAwIDAgMC0yMjAuOC01NS4xYzYuOCA5LjEgNTEuNSA2OS45IDkxLjggMTQ0IDg3LjUtMzIuOCAxMjQuNS04Mi42IDEyOS04OC45TTU1NCA1NTIuOGMtMTM4LjcgNDguMy0xODguNiAxNDQuNi0xOTMgMTUzLjYgNDEuNyAzMi41IDk0LjEgNTEuOSAxNTEgNTEuOSAzNC4xIDAgNjYuNi02LjkgOTYuMS0xOS41LTMuNy0yMS42LTE3LjktOTYuOC01Mi41LTE4Ni42eiIgLz48L3N2Zz4=) */ 
+const DribbbleSquareOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={DribbbleSquareOutlinedSvg} />
+    }
+  },
+  {
+    name: 'DribbbleSquareOutlined',
+  },
+)
+
+export default DribbbleSquareOutlined

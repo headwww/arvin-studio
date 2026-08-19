@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import InstagramFilledSvg from '@arvin-studio/icons-svg/es/asn/InstagramFilled.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![instagram](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTUxMiAzNzguN2MtNzMuNCAwLTEzMy4zIDU5LjktMTMzLjMgMTMzLjNTNDM4LjYgNjQ1LjMgNTEyIDY0NS4zIDY0NS4zIDU4NS40IDY0NS4zIDUxMiA1ODUuNCAzNzguNyA1MTIgMzc4LjdNOTExLjggNTEyYzAtNTUuMi41LTEwOS45LTIuNi0xNjUtMy4xLTY0LTE3LjctMTIwLjgtNjQuNS0xNjcuNi00Ni45LTQ2LjktMTAzLjYtNjEuNC0xNjcuNi02NC41LTU1LjItMy4xLTEwOS45LTIuNi0xNjUtMi42LTU1LjIgMC0xMDkuOS0uNS0xNjUgMi42LTY0IDMuMS0xMjAuOCAxNy43LTE2Ny42IDY0LjVDMTMyLjYgMjI2LjMgMTE4LjEgMjgzIDExNSAzNDdjLTMuMSA1NS4yLTIuNiAxMDkuOS0yLjYgMTY1cy0uNSAxMDkuOSAyLjYgMTY1YzMuMSA2NCAxNy43IDEyMC44IDY0LjUgMTY3LjYgNDYuOSA0Ni45IDEwMy42IDYxLjQgMTY3LjYgNjQuNSA1NS4yIDMuMSAxMDkuOSAyLjYgMTY1IDIuNiA1NS4yIDAgMTA5LjkuNSAxNjUtMi42IDY0LTMuMSAxMjAuOC0xNy43IDE2Ny42LTY0LjUgNDYuOS00Ni45IDYxLjQtMTAzLjYgNjQuNS0xNjcuNiAzLjItNTUuMSAyLjYtMTA5LjggMi42LTE2NU01MTIgNzE3LjFjLTExMy41IDAtMjA1LjEtOTEuNi0yMDUuMS0yMDUuMVMzOTguNSAzMDYuOSA1MTIgMzA2LjkgNzE3LjEgMzk4LjUgNzE3LjEgNTEyIDYyNS41IDcxNy4xIDUxMiA3MTcuMW0yMTMuNS0zNzAuN2MtMjYuNSAwLTQ3LjktMjEuNC00Ny45LTQ3LjlzMjEuNC00Ny45IDQ3LjktNDcuOSA0Ny45IDIxLjQgNDcuOSA0Ny45YTQ3Ljg0IDQ3Ljg0IDAgMCAxLTQ3LjkgNDcuOSIgLz48L3N2Zz4=) */ 
+const InstagramFilled = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={InstagramFilledSvg} />
+    }
+  },
+  {
+    name: 'InstagramFilled',
+  },
+)
+
+export default InstagramFilled

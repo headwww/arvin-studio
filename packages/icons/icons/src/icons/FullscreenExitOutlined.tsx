@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import FullscreenExitOutlinedSvg from '@arvin-studio/icons-svg/es/asn/FullscreenExitOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![fullscreen-exit](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTM5MSAyNDAuOWMtLjgtNi42LTguOS05LjQtMTMuNi00LjdsLTQzLjcgNDMuN0wyMDAgMTQ2LjNhOC4wMyA4LjAzIDAgMCAwLTExLjMgMGwtNDIuNCA0Mi4zYTguMDMgOC4wMyAwIDAgMCAwIDExLjNMMjgwIDMzMy42bC00My45IDQzLjlhOC4wMSA4LjAxIDAgMCAwIDQuNyAxMy42TDQwMSA0MTBjNS4xLjYgOS41LTMuNyA4LjktOC45em0xMC4xIDM3My4yTDI0MC44IDYzM2MtNi42LjgtOS40IDguOS00LjcgMTMuNmw0My45IDQzLjlMMTQ2LjMgODI0YTguMDMgOC4wMyAwIDAgMCAwIDExLjNsNDIuNCA0Mi4zYzMuMSAzLjEgOC4yIDMuMSAxMS4zIDBMMzMzLjcgNzQ0bDQzLjcgNDMuN0E4LjAxIDguMDEgMCAwIDAgMzkxIDc4M2wxOC45LTE2MC4xYy42LTUuMS0zLjctOS40LTguOC04LjhtMjIxLjgtMjA0LjJMNzgzLjIgMzkxYzYuNi0uOCA5LjQtOC45IDQuNy0xMy42TDc0NCAzMzMuNiA4NzcuNyAyMDBjMy4xLTMuMSAzLjEtOC4yIDAtMTEuM2wtNDIuNC00Mi4zYTguMDMgOC4wMyAwIDAgMC0xMS4zIDBMNjkwLjMgMjc5LjlsLTQzLjctNDMuN2E4LjAxIDguMDEgMCAwIDAtMTMuNiA0LjdMNjE0LjEgNDAxYy0uNiA1LjIgMy43IDkuNSA4LjggOC45TTc0NCA2OTAuNGw0My45LTQzLjlhOC4wMSA4LjAxIDAgMCAwLTQuNy0xMy42TDYyMyA2MTRjLTUuMS0uNi05LjUgMy43LTguOSA4LjlMNjMzIDc4My4xYy44IDYuNiA4LjkgOS40IDEzLjYgNC43bDQzLjctNDMuN0w4MjQgODc3LjdjMy4xIDMuMSA4LjIgMy4xIDExLjMgMGw0Mi40LTQyLjNjMy4xLTMuMSAzLjEtOC4yIDAtMTEuM3oiIC8+PC9zdmc+) */ 
+const FullscreenExitOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={FullscreenExitOutlinedSvg} />
+    }
+  },
+  {
+    name: 'FullscreenExitOutlined',
+  },
+)
+
+export default FullscreenExitOutlined

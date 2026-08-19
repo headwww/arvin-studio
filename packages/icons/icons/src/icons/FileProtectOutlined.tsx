@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import FileProtectOutlinedSvg from '@arvin-studio/icons-svg/es/asn/FileProtectOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![file-protect](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTY0NC43IDY2OS4yYTggOCAwIDAgMC02LjUtMy4zSDU5NGMtNi41IDAtMTAuMyA3LjQtNi41IDEyLjdsNzMuOCAxMDIuMWMzLjIgNC40IDkuNyA0LjQgMTIuOSAwbDExNC4yLTE1OGMzLjgtNS4zIDAtMTIuNy02LjUtMTIuN2gtNDQuM2MtMi42IDAtNSAxLjItNi41IDMuM2wtNjMuNSA4Ny44ek02ODggMzA2di00OGMwLTQuNC0zLjYtOC04LThIMjk2Yy00LjQgMC04IDMuNi04IDh2NDhjMCA0LjQgMy42IDggOCA4aDM4NGM0LjQgMCA4LTMuNiA4LThtLTM5MiA4OGMtNC40IDAtOCAzLjYtOCA4djQ4YzAgNC40IDMuNiA4IDggOGgxODRjNC40IDAgOC0zLjYgOC04di00OGMwLTQuNC0zLjYtOC04LTh6bTE4NCA0NThIMjA4VjE0OGg1NjB2Mjk2YzAgNC40IDMuNiA4IDggOGg1NmM0LjQgMCA4LTMuNiA4LThWMTA4YzAtMTcuNy0xNC4zLTMyLTMyLTMySDE2OGMtMTcuNyAwLTMyIDE0LjMtMzIgMzJ2Nzg0YzAgMTcuNyAxNC4zIDMyIDMyIDMyaDMxMmM0LjQgMCA4LTMuNiA4LTh2LTU2YzAtNC40LTMuNi04LTgtOG00MDIuNi0zMjAuOC0xOTItNjYuN2MtLjktLjMtMS43LS40LTIuNi0uNHMtMS44LjEtMi42LjRsLTE5MiA2Ni43YTggOCAwIDAgMC01LjQgNy41djI1MS4xYzAgMi41IDEuMSA0LjggMy4xIDYuM2wxOTIgMTUwLjJjMS40IDEuMSAzLjIgMS43IDQuOSAxLjdzMy41LS42IDQuOS0xLjdsMTkyLTE1MC4yYzEuOS0xLjUgMy4xLTMuOCAzLjEtNi4zVjUzOC43YzAtMy40LTIuMi02LjQtNS40LTcuNU04MjYgNzYzLjcgNjg4IDg3MS42IDU1MCA3NjMuN1Y1NzdsMTM4LTQ4IDEzOCA0OHoiIC8+PC9zdmc+) */ 
+const FileProtectOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={FileProtectOutlinedSvg} />
+    }
+  },
+  {
+    name: 'FileProtectOutlined',
+  },
+)
+
+export default FileProtectOutlined

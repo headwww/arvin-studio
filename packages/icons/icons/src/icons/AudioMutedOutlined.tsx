@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import AudioMutedOutlinedSvg from '@arvin-studio/icons-svg/es/asn/AudioMutedOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![audio-muted](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTY4MiA0NTVWMzExbC03NiA3NnY2OGMtLjEgNTAuNy00MiA5Mi4xLTk0IDkyYTk2IDk2IDAgMCAxLTUyLTE1bC01NCA1NWMyOS4xIDIyLjQgNjUuOSAzNiAxMDYgMzYgOTMuOCAwIDE3MC03NS4xIDE3MC0xNjgiIC8+PHBhdGggZD0iTTgzMyA0NDZoLTYwYy00LjQgMC04IDMuNi04IDggMCAxNDAuMy0xMTMuNyAyNTQtMjU0IDI1NC02MyAwLTEyMC43LTIzLTE2NS02MWwtNTQgNTRhMzM0IDMzNCAwIDAgMCAxNzkgODF2MTAySDMyNmMtMTMuOSAwLTI0LjkgMTQuMy0yNSAzMnYzNmMuMSA0LjQgMi45IDggNiA4aDQwOGMzLjIgMCA2LTMuNiA2LTh2LTM2YzAtMTcuNy0xMS0zMi0yNS0zMkg1NDdWNzgyYzE2NS4zLTE3LjkgMjk0LTE1Ny45IDI5NC0zMjggMC00LjQtMy42LTgtOC04bTEzLjEtMzc3LjctNDMuNS00MS45YTggOCAwIDAgMC0xMS4yLjFsLTEyOSAxMjlDNjM0LjMgMTAxLjIgNTc3IDY0IDUxMSA2NGMtOTMuOSAwLTE3MCA3NS4zLTE3MCAxNjh2MjI0cTAgMTAuMDUgMS4yIDE5LjhsLTY4IDY4QTI1MiAyNTIgMCAwIDEgMjU4IDQ1NGMtLjItNC40LTMuOC04LTgtOGgtNjBjLTQuNCAwLTggMy42LTggOCAwIDUzIDEyLjUgMTAzIDM0LjYgMTQ3LjRsLTEzNyAxMzdhOC4wMyA4LjAzIDAgMCAwIDAgMTEuM2w0Mi43IDQyLjdjMy4xIDMuMSA4LjIgMy4xIDExLjMgMEw4NDYuMiA3OS44bC4xLS4xYzMuMS0zLjIgMy04LjMtLjItMTEuNE00MTcgNDAxVjIzMmMwLTUwLjYgNDEuOS05MiA5NC05MiA0NiAwIDg0LjEgMzIuMyA5Mi4zIDc0Ljd6IiAvPjwvc3ZnPg==) */ 
+const AudioMutedOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={AudioMutedOutlinedSvg} />
+    }
+  },
+  {
+    name: 'AudioMutedOutlined',
+  },
+)
+
+export default AudioMutedOutlined
