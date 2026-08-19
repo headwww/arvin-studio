@@ -2,7 +2,7 @@ import type { CSSProperties } from 'vue';
 
 import type { VueNode } from '../_util';
 import type { ButtonProps } from '../button';
-import type { OTPProps, SearchProps } from '../input';
+import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputProps } from '../input/Input';
 import type { SpaceProps } from '../space';
 import type {
@@ -130,11 +130,18 @@ export type InputSearchConfig = ComponentStyleConfig &
 export type OTPConfig = ComponentStyleConfig &
   Pick<OTPProps, 'classes' | 'styles' | 'variant'>;
 
+export type TextAreaConfig = ComponentStyleConfig &
+  Pick<
+    TextAreaProps,
+    'allowClear' | 'changeOnComposing' | 'classes' | 'styles' | 'variant'
+  >;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
   input?: InputConfig;
   inputSearch?: InputSearchConfig;
   otp?: OTPConfig;
   space?: SpaceConfig;
+  textArea?: TextAreaConfig;
   theme?: ThemeConfig;
 }

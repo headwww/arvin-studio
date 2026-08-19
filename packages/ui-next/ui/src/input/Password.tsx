@@ -199,7 +199,22 @@ const InternalPassword = defineComponent<
         'inputPrefixCls',
         'rootClass',
         'prefixCls',
+        // 事件回调由下方内部包装函数显式透传（emit 转发），
+        // 若同时出现在 restInputProps 与显式 props 中，
+        // 会被 JSX 编译产物的 mergeProps 合并成数组，触发
+        // "Invalid prop: type check failed ... Expected Function, got Array" 警告
+        'onBlur',
+        'onChange',
+        'onClear',
+        'onFocus',
+        'onKeydown',
+        'onKeyup',
+        'onPressEnter',
+        'onCompositionstart',
+        'onCompositionend',
+        'onUpdate:value',
       ]);
+
       const suffixSlot = getSlotPropsFnRun(slots, props, 'suffix');
       const visibilityIcon = getIcon();
       const mergedSuffix =

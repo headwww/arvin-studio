@@ -69,6 +69,9 @@ const OTPInput = defineComponent<
       'onChange',
       'onActiveChange',
       'mask',
+      // 这两个回调在下方显式透传，若不排除会被 mergeProps 合并为数组
+      'onFocus',
+      'onKeydown',
     ]);
     const maskValue = typeof props.mask === 'string' ? props.mask : props.value;
 

@@ -5,6 +5,7 @@ export {
   InputOTP,
   InputPassword,
   InputSearch,
+  TextArea,
 } from './input';
 export type {
   InputEmits,
@@ -18,6 +19,9 @@ export type {
   SearchProps as InputSearchProps,
   InputSearchRef,
   InputSlots,
+  InputTextAreaRef,
+  TextAreaProps,
+  TextAreaRef,
 } from './input';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';

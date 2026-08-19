@@ -4,6 +4,7 @@ import type {
   InputConfig,
   InputSearchConfig,
   OTPConfig,
+  TextAreaConfig,
   ThemeConfig,
 } from './component-config';
 import type { DirectionType, Variant } from './context';
@@ -32,6 +33,7 @@ export interface ConfigProviderProps {
 
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
+  textArea?: TextAreaConfig;
   theme?: ThemeConfig;
   variant?: Variant;
 }
