@@ -524,6 +524,10 @@ importers:
         version: 3.5.40(typescript@6.0.3)
 
   packages/ui-next/headless:
+    dependencies:
+      '@arvin-studio/kit':
+        specifier: workspace:*
+        version: link:../../kit
     devDependencies:
       vue:
         specifier: 'catalog:'

@@ -30,3 +30,10 @@ export function getStatusClassNames(
     [`${prefixCls}-has-feedback`]: hasFeedback,
   });
 }
+
+export function getMergedStatus(
+  contextStatus?: ValidateStatus,
+  customStatus?: InputStatus,
+) {
+  return customStatus || contextStatus;
+}

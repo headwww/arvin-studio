@@ -11,6 +11,9 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "@arvin-studio/kit": "workspace:*"
+  },
   "devDependencies": {
     "vue": "catalog:"
   }

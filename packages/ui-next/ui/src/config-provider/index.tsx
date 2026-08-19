@@ -1,7 +1,8 @@
 import type { App, SlotsType } from 'vue';
 
 import type { Locale } from '../locale';
-import type { ConfigConsumerProps, ThemeConfig } from './context';
+import type { ThemeConfig } from './component-config';
+import type { ConfigConsumerProps } from './context';
 import type {
   ConfigProviderProps as BaseConfigProviderProps,
   ConfigProviderEmits,

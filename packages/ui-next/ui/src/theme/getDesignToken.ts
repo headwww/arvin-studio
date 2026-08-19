@@ -1,4 +1,4 @@
-import type { ThemeConfig } from '../config-provider/context';
+import type { ThemeConfig } from '../config-provider/component-config';
 import type { AliasToken } from './interface';
 
 import { createTheme, getComputedToken } from '@arvin-studio/cssinjs';

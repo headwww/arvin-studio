@@ -7,7 +7,7 @@ import version from './version';
 
 export * from './components';
 
-export type { ThemeConfig } from './config-provider/context';
+export type { ThemeConfig } from './config-provider/component-config';
 
 let prefix = 'As';
 

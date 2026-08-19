@@ -32,6 +32,8 @@ export default defineConfig([
       'unicorn/no-uncalled-method': 'off',
       'unicorn/no-new-array': 'off',
       'unicorn/prefer-object-from-entries': 'off',
+      'vue/no-reserved-component-names': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
     },
   },
   {

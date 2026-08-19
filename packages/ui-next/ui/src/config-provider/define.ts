@@ -1,24 +1,25 @@
 import type { Locale } from '../locale';
 import type {
   ButtonConfig,
-  DirectionType,
+  InputConfig,
   ThemeConfig,
-  Variant,
-} from './context';
+} from './component-config';
+import type { DirectionType, Variant } from './context';
 import type { RenderEmptyHandler } from './default-render-empty';
 import type { SizeType } from './size-context';
 
 export interface ConfigProviderProps {
   button?: ButtonConfig;
-
   /** 是否禁用整个组件树下的所有表单类组件 */
   componentDisabled?: boolean;
   /** 尺寸 */
   componentSize?: SizeType;
+
   /** 设置布局展示方向*/
   direction?: DirectionType;
 
   iconPrefixCls?: string;
+  input?: InputConfig;
 
   /** 语言包配置，语言包可到 */
   locale?: Locale;
@@ -26,8 +27,8 @@ export interface ConfigProviderProps {
 
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
-  theme?: ThemeConfig;
 
+  theme?: ThemeConfig;
   variant?: Variant;
 }
 
