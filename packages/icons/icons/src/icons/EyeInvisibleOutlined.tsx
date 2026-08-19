@@ -1,0 +1,21 @@
+// GENERATE BY ./scripts/gen-icons.ts
+// DON NOT EDIT IT MANUALLY
+
+import type { AsIconProps } from '../components/AsIcon'
+import EyeInvisibleOutlinedSvg from '@arvin-studio/icons-svg/es/asn/EyeInvisibleOutlined.js'
+import { defineComponent } from 'vue'
+import AsIcon from '../components/AsIcon'
+
+ /**![eye-invisible](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTk0Mi4yIDQ4Ni4yUTg4OS40NyAzNzUuMTEgODE2LjcgMzA1bC01MC44OCA1MC44OEM4MDcuMzEgMzk1LjUzIDg0My40NSA0NDcuNCA4NzQuNyA1MTIgNzkxLjUgNjg0LjIgNjczLjQgNzY2IDUxMiA3NjZxLTcyLjY3IDAtMTMzLjg3LTIyLjM4TDMyMyA3OTguNzVRNDA4IDgzOCA1MTIgODM4cTI4OC4zIDAgNDMwLjItMzAwLjNhNjAuMyA2MC4zIDAgMCAwIDAtNTEuNW0tNjMuNTctMzIwLjY0TDgzNiAxMjIuODhhOCA4IDAgMCAwLTExLjMyIDBMNzE1LjMxIDIzMi4yUTYyNC44NiAxODYgNTEyIDE4NnEtMjg4LjMgMC00MzAuMiAzMDAuM2E2MC4zIDYwLjMgMCAwIDAgMCA1MS41cTU2LjY5IDExOS40IDEzNi41IDE5MS40MUwxMTIuNDggODM1YTggOCAwIDAgMCAwIDExLjMxTDE1NS4xNyA4ODlhOCA4IDAgMCAwIDExLjMxIDBsNzEyLjE1LTcxMi4xMmE4IDggMCAwIDAgMC0xMS4zMk0xNDkuMyA1MTJDMjMyLjYgMzM5LjggMzUwLjcgMjU4IDUxMiAyNThjNTQuNTQgMCAxMDQuMTMgOS4zNiAxNDkuMTIgMjguMzlsLTcwLjMgNzAuM2ExNzYgMTc2IDAgMCAwLTIzOC4xMyAyMzguMTNsLTgzLjQyIDgzLjQyQzIyMy4xIDYzNy40OSAxODMuMyA1ODIuMjggMTQ5LjMgNTEybTI0Ni43IDBhMTEyLjEgMTEyLjEgMCAwIDEgMTQ2LjItMTA2LjY5TDQwMS4zMSA1NDYuMkExMTIgMTEyIDAgMCAxIDM5NiA1MTIiIC8+PHBhdGggZD0iTTUwOCA2MjRxLTUuMTkgMC0xMC4yNS0uNDdsLTUyLjgyIDUyLjgyYTE3Ni4wOSAxNzYuMDkgMCAwIDAgMjI3LjQyLTIyNy40MmwtNTIuODIgNTIuODJxLjQ3IDUuMDcuNDcgMTAuMjVhMTExLjk0IDExMS45NCAwIDAgMS0xMTIgMTEyIiAvPjwvc3ZnPg==) */ 
+const EyeInvisibleOutlined = defineComponent<AsIconProps>(
+  (props) => {
+    return () => {
+      return <AsIcon {...props} icon={EyeInvisibleOutlinedSvg} />
+    }
+  },
+  {
+    name: 'EyeInvisibleOutlined',
+  },
+)
+
+export default EyeInvisibleOutlined

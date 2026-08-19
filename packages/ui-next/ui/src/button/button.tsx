@@ -1,6 +1,6 @@
 import type { App, CSSProperties, SlotsType } from 'vue';
 
-import type { RenderNodeFn } from '../_util';
+import type { RenderNodeFn, VueNode } from '../_util';
 import type {
   SemanticClassNamesType,
   SemanticStylesType,
@@ -51,6 +51,11 @@ import IconWrapper from './icon-wrapper';
 import useStyle from './style';
 import CompactStyle from './style/compact';
 
+export type LegacyButtonType = 'danger' | ButtonType;
+
+export type ButtonSemanticName = keyof ButtonSemanticClassNames &
+  keyof ButtonSemanticStyles;
+
 export interface ButtonSemanticClassNames {
   content?: string;
   icon?: string;
@@ -88,6 +93,7 @@ export interface BaseButtonProps extends ComponentBaseProps {
   disabled?: boolean;
   /** 幽灵属性，使按钮背景透明 */
   ghost?: boolean;
+  icon?: VueNode;
   /** 设置按钮图标组件的位置 */
   iconPlacement?: 'end' | 'start';
   /** 设置按钮载入状态 */

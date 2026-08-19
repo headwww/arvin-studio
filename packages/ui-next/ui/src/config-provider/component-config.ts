@@ -2,6 +2,7 @@ import type { CSSProperties } from 'vue';
 
 import type { VueNode } from '../_util';
 import type { ButtonProps } from '../button';
+import type { OTPProps, SearchProps } from '../input';
 import type { InputProps } from '../input/Input';
 import type { SpaceProps } from '../space';
 import type {
@@ -123,9 +124,17 @@ export type InputConfig = ComponentStyleConfig &
     | 'variant'
   >;
 
+export type InputSearchConfig = ComponentStyleConfig &
+  Pick<SearchProps, 'classes' | 'searchIcon' | 'styles'>;
+
+export type OTPConfig = ComponentStyleConfig &
+  Pick<OTPProps, 'classes' | 'styles' | 'variant'>;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
   input?: InputConfig;
+  inputSearch?: InputSearchConfig;
+  otp?: OTPConfig;
   space?: SpaceConfig;
   theme?: ThemeConfig;
 }

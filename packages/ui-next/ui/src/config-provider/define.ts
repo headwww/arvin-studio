@@ -2,6 +2,8 @@ import type { Locale } from '../locale';
 import type {
   ButtonConfig,
   InputConfig,
+  InputSearchConfig,
+  OTPConfig,
   ThemeConfig,
 } from './component-config';
 import type { DirectionType, Variant } from './context';
@@ -20,14 +22,16 @@ export interface ConfigProviderProps {
 
   iconPrefixCls?: string;
   input?: InputConfig;
+  inputSearch?: InputSearchConfig;
 
   /** 语言包配置，语言包可到 */
   locale?: Locale;
+  otp?: OTPConfig;
+
   prefixCls?: string;
 
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
-
   theme?: ThemeConfig;
   variant?: Variant;
 }

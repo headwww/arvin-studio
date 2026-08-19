@@ -34,6 +34,7 @@ export default defineConfig([
       'unicorn/prefer-object-from-entries': 'off',
       'vue/no-reserved-component-names': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
+      'unicorn/prefer-array-from-map': 'off',
     },
   },
   {
