@@ -23,5 +23,13 @@ export type {
   TextAreaProps,
   TextAreaRef,
 } from './input';
+export { default as InputNumber } from './input-number';
+export type {
+  InputNumberEmits,
+  InputNumberProps,
+  InputNumberRef,
+  InputNumberStepContext,
+  ValueType as InputNumberValueType,
+} from './input-number';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';

@@ -2,6 +2,7 @@ import type { Locale } from '../locale';
 import type {
   ButtonConfig,
   InputConfig,
+  InputNumberConfig,
   InputSearchConfig,
   OTPConfig,
   TextAreaConfig,
@@ -23,14 +24,15 @@ export interface ConfigProviderProps {
 
   iconPrefixCls?: string;
   input?: InputConfig;
-  inputSearch?: InputSearchConfig;
+  inputNumber?: InputNumberConfig;
 
+  inputSearch?: InputSearchConfig;
   /** 语言包配置，语言包可到 */
   locale?: Locale;
+
   otp?: OTPConfig;
 
   prefixCls?: string;
-
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
   textArea?: TextAreaConfig;

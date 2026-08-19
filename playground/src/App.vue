@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import {
-  ConfigProvider,
-  Input,
-  InputOTP,
-  InputPassword,
-  InputSearch,
-  TextArea,
-} from '@arvin-studio/ui';
+import { ConfigProvider, InputNumber } from '@arvin-studio/ui';
 </script>
 
 <template>
@@ -19,10 +12,11 @@ import {
       <Button color="pink" :loading="false" variant="solid">按钮</Button>
       <Button color="pink" :loading="false" variant="solid">按钮</Button>
     </Space> -->
-    <Input :maxlength="1" />
+    <!-- <Input :maxlength="1" />
     <InputPassword />
     <InputOTP />
-    <InputSearch />
-    <TextArea />
+    <InputSearch /> -->
+    <InputNumber />
+    <!-- <TextArea /> -->
   </ConfigProvider>
 </template>

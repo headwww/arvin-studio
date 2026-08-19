@@ -51,13 +51,13 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token) => {
     handleBorderColor,
     filledHandleBg,
     lineHeightLG,
-    antCls,
+    asCls,
     colorTextDisabled,
   } = token;
 
   const borderStyle = `${unit(lineWidth)} ${lineType} ${handleBorderColor}`;
 
-  const [varName, varRef] = genCssVar(antCls, 'input-number');
+  const [varName, varRef] = genCssVar(asCls, 'input-number');
 
   return [
     // ==========================================================
@@ -356,11 +356,11 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token) => {
 const genCompatibleStyles: GenerateStyle<InputNumberToken, CSSObject> = (
   token,
 ) => {
-  const { componentCls, antCls } = token;
+  const { componentCls, asCls } = token;
 
   return {
     [`${componentCls}-addon`]: {
-      [`&:has(${antCls}-select)`]: {
+      [`&:has(${asCls}-select)`]: {
         border: 0,
         padding: 0,
       },

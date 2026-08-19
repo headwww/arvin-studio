@@ -104,11 +104,11 @@ export const { genComponentStyleHook, genStyleHooks, genSubStyleComponent } =
  * }
  */
 export function genCssVar(
-  antCls: string,
+  asCls: string,
   component: string,
 ): readonly [varName: CssVarName, varRef: CssVarRef] {
   const cssPrefix =
-    `--${antCls.replaceAll('.', '')}-${component}-` satisfies `--${string}`;
+    `--${asCls.replaceAll('.', '')}-${component}-` satisfies `--${string}`;
   const varName: CssVarName = (name) => {
     return `${cssPrefix}${name}`;
   };

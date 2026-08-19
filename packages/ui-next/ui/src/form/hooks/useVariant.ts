@@ -27,12 +27,13 @@ import { useVariantContext } from '../context';
 /** TODO 支持 variant 配置的表单类组件（对应 ConfigProviderProps 上的专属配置 key） */
 type VariantComponents = keyof Pick<
   ConfigProviderProps,
-  'input' | 'textArea'
+  | 'input'
+  | 'inputNumber'
 
   // | 'card'
   // | 'cascader'
   // | 'datePicker'
-  // | 'inputNumber'
+  | 'textArea'
   // | 'mentions'
   // | 'rangePicker'
   // | 'select'

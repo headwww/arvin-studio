@@ -531,7 +531,7 @@ const InputNumber = defineComponent<
     };
   },
   {
-    name: 'AInputNumber',
+    name: 'AsInputNumber',
     inheritAttrs: false,
   },
 );
