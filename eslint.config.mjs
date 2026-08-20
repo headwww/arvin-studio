@@ -35,6 +35,7 @@ export default defineConfig([
       'vue/no-reserved-component-names': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       'unicorn/prefer-array-from-map': 'off',
+      'unicorn/no-late-event-control': 'off',
     },
   },
   {
