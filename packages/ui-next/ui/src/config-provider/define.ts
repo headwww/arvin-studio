@@ -6,6 +6,7 @@ import type {
   InputNumberConfig,
   InputSearchConfig,
   OTPConfig,
+  RadioConfig,
   TextAreaConfig,
   ThemeConfig,
 } from './component-config';
@@ -35,6 +36,7 @@ export interface ConfigProviderProps {
 
   otp?: OTPConfig;
   prefixCls?: string;
+  radio?: RadioConfig;
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
   textArea?: TextAreaConfig;

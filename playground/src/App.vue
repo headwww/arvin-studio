@@ -4,6 +4,7 @@ import {
   CheckboxGroup,
   ConfigProvider,
   InputNumber,
+  Switch,
 } from '@arvin-studio/ui';
 </script>
 
@@ -26,6 +27,7 @@ import {
       <Checkbox>sss</Checkbox>
       <Checkbox>sss</Checkbox>
     </CheckboxGroup>
+    <Switch />
     <!-- <TextArea /> -->
   </ConfigProvider>
 </template>

@@ -6,7 +6,9 @@ import type { CheckboxProps } from '../checkbox';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
+import type { RadioProps } from '../radio';
 import type { SpaceProps } from '../space';
+import type { SwitchProps } from '../switch';
 import type {
   AliasToken,
   MappingAlgorithm,
@@ -87,7 +89,6 @@ export interface ThemeConfig {
    * @descCN 开启零运行时模式，不会在运行时产生样式，需要手动引入 CSS 文件。
    * @descEN Enable zero-runtime mode, which will not generate style at runtime, need to import additional CSS file.
    * @default true
-   * @since 6.0.0
    * @example
    * ```tsx
    * import { ConfigProvider } from 'as';
@@ -144,6 +145,11 @@ export type InputNumberConfig = ComponentStyleConfig &
 export type CheckboxConfig = ComponentStyleConfig &
   Pick<CheckboxProps, 'classes' | 'styles'>;
 
+export type RadioConfig = ComponentStyleConfig &
+  Pick<RadioProps, 'classes' | 'styles'>;
+export type SwitchStyleConfig = ComponentStyleConfig &
+  Pick<SwitchProps, 'classes' | 'styles'>;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
   checkbox?: CheckboxConfig;
@@ -151,7 +157,9 @@ export interface ConfigComponentProps {
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
   otp?: OTPConfig;
+  radio?: RadioConfig;
   space?: SpaceConfig;
+  switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;
   theme?: ThemeConfig;
 }

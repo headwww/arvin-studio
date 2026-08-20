@@ -41,5 +41,24 @@ export type {
   InputNumberStepContext,
   ValueType as InputNumberValueType,
 } from './input-number';
+export { default as Radio, RadioButton, RadioGroup } from './radio';
+export type {
+  RadioChangeEvent,
+  RadioEmits,
+  RadioGroupEmits,
+  RadioGroupOptionType,
+  RadioGroupProps,
+  RadioGroupSlots,
+  RadioOptionType,
+  RadioProps,
+  RadioSlots,
+} from './radio';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
+export { default as Switch } from './switch';
+export type {
+  SwitchEmits,
+  SwitchProps,
+  SwitchSize,
+  SwitchSlots,
+} from './switch';
