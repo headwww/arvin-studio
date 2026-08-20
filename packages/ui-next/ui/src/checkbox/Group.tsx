@@ -200,7 +200,7 @@ const CheckboxGroup = defineComponent<
     };
   },
   {
-    name: 'ACheckboxGroup',
+    name: 'AsCheckboxGroup',
     inheritAttrs: false,
   },
 );

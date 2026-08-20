@@ -17,6 +17,8 @@ export {
 export { getLineHeight } from './themes/shared/genFontSizes';
 
 export { default as useToken } from './useToken';
+export { default as genPresetColor } from './util/genPresetColor';
+
 export {
   genComponentStyleHook,
   genStyleHooks,
