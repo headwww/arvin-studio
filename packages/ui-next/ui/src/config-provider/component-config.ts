@@ -2,6 +2,7 @@ import type { CSSProperties } from 'vue';
 
 import type { VueNode } from '../_util';
 import type { ButtonProps } from '../button';
+import type { CheckboxProps } from '../checkbox';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -140,8 +141,12 @@ export type TextAreaConfig = ComponentStyleConfig &
 export type InputNumberConfig = ComponentStyleConfig &
   Pick<InputNumberProps, 'classes' | 'styles' | 'variant'>;
 
+export type CheckboxConfig = ComponentStyleConfig &
+  Pick<CheckboxProps, 'classes' | 'styles'>;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
+  checkbox?: CheckboxConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;

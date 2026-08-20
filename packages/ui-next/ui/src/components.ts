@@ -1,4 +1,14 @@
 export { default as Button } from './button';
+export { default as Checkbox, CheckboxGroup } from './checkbox';
+export type {
+  CheckboxEmits,
+  CheckboxGroupEmits,
+  CheckboxGroupProps,
+  CheckboxGroupSlots,
+  CheckboxOptionType,
+  CheckboxProps,
+  CheckboxSlots,
+} from './checkbox';
 export { default as ConfigProvider } from './config-provider';
 export {
   default as Input,

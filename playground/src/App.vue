@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ConfigProvider, InputNumber } from '@arvin-studio/ui';
+import {
+  Checkbox,
+  CheckboxGroup,
+  ConfigProvider,
+  InputNumber,
+} from '@arvin-studio/ui';
 </script>
 
 <template>
@@ -17,6 +22,10 @@ import { ConfigProvider, InputNumber } from '@arvin-studio/ui';
     <InputOTP />
     <InputSearch /> -->
     <InputNumber />
+    <CheckboxGroup>
+      <Checkbox>sss</Checkbox>
+      <Checkbox>sss</Checkbox>
+    </CheckboxGroup>
     <!-- <TextArea /> -->
   </ConfigProvider>
 </template>
