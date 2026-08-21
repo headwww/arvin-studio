@@ -10,4 +10,5 @@ export * from './props-util';
 export { default as raf } from './raf';
 export * from './transition';
 export * from './type';
+export * from './unref-element';
 export * from './warning';

@@ -59,97 +59,145 @@ export interface TriggerRef {
   popupElement: HTMLDivElement;
 }
 
-// Removed Props List
-// Seems this can be auto
-// getDocument?: (element?: HTMLElement) => Document;
-
-// New version will not wrap popup with `rc-trigger-popup-content` when multiple children
-
+/**
+ * Trigger 组件的全部 props（无样式浮层引擎的对外契约）
+ *
+ * 按职责分组：
+ * - 触发行为：action/showAction/hideAction + 各类延迟；
+ * - 显隐控制：受控（popupVisible）/非受控（defaultPopupVisible）+ 回调；
+ * - 定位：popupPlacement/builtinPlacements/popupAlign/alignPoint；
+ * - 挂载：getPopupContainer/forceRender/autoDestroy；
+ * - 弹层：popup 内容/类名/样式/动画/遮罩/箭头/宽度拉伸；
+ * - 扩展：unique（共享弹层）/fresh（内容缓存）/mobile（移动端覆盖）。
+ */
 export interface TriggerProps {
+  /** 触发动作（可组合）：hover | click | focus | contextmenu | touch 等 */
   action?: ActionType | ActionType[];
+  /** 动画结束后的显隐回调（open 真正落定后触发） */
   afterOpenChange?: (visible: boolean) => void;
   /** @deprecated Use `afterOpenChange` instead */
+  /** @deprecated 请使用 `afterOpenChange` */
   afterPopupVisibleChange?: (visible: boolean) => void;
   alignPoint?: boolean; // Maybe we can support user pass position in the future
 
   // ==================== Arrow ====================
+  /** 是否显示箭头：布尔或箭头配置对象（类名/内容/样式） */
   arrow?: ArrowTypeOuter | boolean;
 
+  /** 关闭后是否自动销毁弹层 DOM（默认 false） */
   autoDestroy?: boolean;
 
+  /** 失焦后延迟关闭 */
   blurDelay?: number;
 
+  /** 各方位锚点配置表（points/offset/overflow 等，定位算法消费） */
   builtinPlacements?: BuildInPlacements;
 
+  /** 非受控模式的初始显隐 */
   defaultPopupVisible?: boolean;
   /** Temporarily suppress popup visibility without resetting the current open state. */
+  /** 临时压制弹层显示：不重置底层开合状态（disabled 期间状态流转照常） */
   disabled?: boolean;
+  /** 聚焦后延迟打开 */
   focusDelay?: number;
+  /** 首次渲染即挂载弹层 DOM（否则首次打开才挂载） */
   forceRender?: boolean;
   /**
    * Trigger will memo content when close.
    * This may affect the case if want to keep content update.
    * Set `fresh` to `false` will always keep update.
    */
+  /**
+   * 关闭时是否缓存弹层内容（默认 true 缓存）。
+   * 需要弹层内容持续更新时设为 false。
+   */
   fresh?: boolean;
+  /** 根据最终 align 信息追加类名（如 placement 相关样式） */
   getPopupClassNameFromAlign?: (align: AlignType) => string;
 
   // =================== Portal ====================
+  /** 弹层挂载容器（默认 body）；false 表示挂到触发元素旁 */
   getPopupContainer?: ((node: HTMLElement) => HTMLElement) | false;
+  /** 关闭动作白名单 */
   hideAction?: ActionType[];
   // ==================== Mask =====================
+  /** 是否显示遮罩 */
   mask?: boolean;
 
+  /** 点击遮罩是否关闭弹层 */
   maskClosable?: boolean;
   /** Set mask motion. You can ref `rc-motion` for more info. */
+  /** 遮罩过渡动画配置 */
   maskMotion?: CSSMotionProps;
 
   // // ========================== Mobile ==========================
+
   /**
-   * @private
-   * Will replace the config of root props.
-   * This will directly trade as mobile view which will not check what real is.
-   * This is internal usage currently, do not use in your prod.
+   * @private 移动端配置覆盖：直接替换根配置为移动端形态
+   * （全屏/底部弹层等），目前仅内部使用，生产环境勿用。
    */
   mobile?: MobileConfig;
   // ==================== Delay ====================
+  /** 鼠标移入后延迟打开（秒） */
   mouseEnterDelay?: number;
 
+  /** 鼠标移出后延迟关闭（秒） */
   mouseLeaveDelay?: number;
+  /** 显隐变化回调（受控/非受控都会触发） */
   onOpenChange?: (visible: boolean) => void;
 
+  /** 每次对齐完成后回调（可拿到最终 align 信息） */
   onPopupAlign?: (element: HTMLElement, align: AlignType) => void;
+  /** 弹层内点击回调 */
   onPopupClick?: (e: MouseEvent) => void;
 
   /** @deprecated Use `onOpenChange` instead */
+  /** @deprecated 请使用 `onOpenChange` */
   onPopupVisibleChange?: (visible: boolean) => void;
   // ==================== Popup ====================
+  /** 弹层内容：VNode 或 返回 VNode 的函数（函数形式每次打开重新求值） */
   popup: (() => VueNode) | VueNode;
+  /** 单次对齐覆盖（优先级高于 builtinPlacements 对应项） */
   popupAlign?: AlignType;
+  /** 弹层自定义类名 */
   popupClassName?: string;
   // =================== Motion ====================
   /** Set popup motion. You can ref `rc-motion` for more info. */
+  /** 弹层过渡动画配置（Vue Transition，name 对应消费方定义的动画类） */
   popupMotion?: CSSMotionProps;
+  /** 当前方位名（对应 builtinPlacements 的键，如 'bottomLeft'） */
   popupPlacement?: string;
+  /** 弹层内联样式（定位样式由 Trigger 自己注入，这里的会叠加） */
   popupStyle?: CSSProperties;
   // ==================== Open =====================
+  /** 受控显隐（传了则组件进入受控模式，开合由外部驱动） */
   popupVisible?: boolean;
+  /** 弹层类名前缀（消费方用它拼样式，如 ant-tooltip） */
   prefixCls?: string;
+  /** 打开动作白名单（与 action 二选一细化） */
   showAction?: ActionType[];
 
+  /** 弹层宽度拉伸策略：'width'（同宽）/ 'minWidth'（至少同宽）/ 'height' 等 */
   stretch?: string;
+  /** 对齐点模式：弹层跟随鼠标位置（contextmenu 场景）而非触发元素 */
 
   /**
    * Config with UniqueProvider to shared the floating popup.
    */
+  /**
+   * 配合 UniqueProvider：多个 Trigger 共享同一个弹层（同时只显示一个）。
+   */
   unique?: boolean;
 
   /** Pass to `UniqueProvider` UniqueContainer */
+  /** 共享弹层容器（UniqueProvider）的类名 */
   uniqueContainerClassName?: string;
 
   /** Pass to `UniqueProvider` UniqueContainer */
+  /** 共享弹层容器的样式 */
   uniqueContainerStyle?: CSSProperties;
 
+  /** 弹层 z-index */
   zIndex?: number;
 }
 
