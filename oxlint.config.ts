@@ -10,6 +10,8 @@ export default defineConfig({
     'prefer-spread': 'off',
     'unicorn/no-new-array': 'off',
     'typescript/no-useless-default-assignment': 'off',
+    'no-prototype-builtins': 'off',
+    'array-callback-return': 'off',
   },
   ignorePatterns: ['packages/icons/**'],
 });

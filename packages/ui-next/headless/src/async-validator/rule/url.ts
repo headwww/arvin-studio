@@ -1,0 +1,68 @@
+// https://github.com/kevva/url-regex/blob/master/index.js
+let urlReg: RegExp;
+
+const url = () => {
+  if (urlReg) {
+    return urlReg;
+  }
+
+  const word = String.raw`[a-fA-F\d:]`;
+  const b = (options: any) =>
+    options && options.includeBoundaries
+      ? String.raw`(?:(?<=\s|^)(?=${word})|(?<=${word})(?=\s|$))`
+      : '';
+
+  const v4 = String.raw`(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}`;
+
+  const v6seg = String.raw`[a-fA-F\d]{1,4}`;
+
+  const v6List = [
+    `(?:${v6seg}:){7}(?:${v6seg}|:)`, // 1:2:3:4:5:6:7::  1:2:3:4:5:6:7:8
+    `(?:${v6seg}:){6}(?:${v4}|:${v6seg}|:)`, // 1:2:3:4:5:6::    1:2:3:4:5:6::8   1:2:3:4:5:6::8  1:2:3:4:5:6::
+    `(?:${v6seg}:){5}(?::${v4}|(?::${v6seg}){1,2}|:)`, // 1:2:3:4:5::      1:2:3:4:5::7:8   1:2:3:4:5::8    1:2:3:4:5::
+    `(?:${v6seg}:){4}(?:(?::${v6seg}){0,1}:${v4}|(?::${v6seg}){1,3}|:)`, // 1:2:3:4::        1:2:3:4::6:7:8   1:2:3:4::8      1:2:3:4::
+    `(?:${v6seg}:){3}(?:(?::${v6seg}){0,2}:${v4}|(?::${v6seg}){1,4}|:)`, // 1:2:3::          1:2:3::5:6:7:8   1:2:3::8        1:2:3::
+    `(?:${v6seg}:){2}(?:(?::${v6seg}){0,3}:${v4}|(?::${v6seg}){1,5}|:)`, // 1:2::            1:2::4:5:6:7:8   1:2::8          1:2::
+    `(?:${v6seg}:){1}(?:(?::${v6seg}){0,4}:${v4}|(?::${v6seg}){1,6}|:)`, // 1::              1::3:4:5:6:7:8   1::8            1::
+    `(?::(?:(?::${v6seg}){0,5}:${v4}|(?::${v6seg}){1,7}|:))`, // ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8  ::8             ::
+  ];
+  const v6Eth0 = `(?:%[0-9a-zA-Z]{1,})?`; // %eth0            %1
+
+  const v6 = `(?:${v6List.join('|')})${v6Eth0}`;
+
+  // Pre-compile only the exact regexes because adding a global flag make regexes stateful
+  const v46Exact = new RegExp(`(?:^${v4}$)|(?:^${v6}$)`);
+  const v4exact = new RegExp(`^${v4}$`);
+  const v6exact = new RegExp(`^${v6}$`);
+
+  const ip = (options: any) =>
+    options && options.exact
+      ? v46Exact
+      : new RegExp(
+          `(?:${b(options)}${v4}${b(options)})|(?:${b(options)}${v6}${b(options)})`,
+          'g',
+        );
+
+  ip.v4 = (options?: any) =>
+    options && options.exact
+      ? v4exact
+      : new RegExp(`${b(options)}${v4}${b(options)}`, 'g');
+  ip.v6 = (options?: any) =>
+    options && options.exact
+      ? v6exact
+      : new RegExp(`${b(options)}${v6}${b(options)}`, 'g');
+
+  const protocol = `(?:(?:[a-z]+:)?//)`;
+  const auth = String.raw`(?:\S+(?::\S*)?@)?`;
+  const ipv4 = ip.v4().source;
+  const ipv6 = ip.v6().source;
+  const host = String.raw`(?:(?:[a-z\u00a1-\uffff0-9][-_]*)*[a-z\u00a1-\uffff0-9]+)`;
+  const domain = String.raw`(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*`;
+  const tld = String.raw`(?:\.(?:[a-z\u00a1-\uffff]{2,}))`;
+  const port = String.raw`(?::\d{2,5})?`;
+  const path = String.raw`(?:[/?#][^\s"]*)?`;
+  const regex = String.raw`(?:${protocol}|www\.)${auth}(?:localhost|${ipv4}|${ipv6}|${host}${domain}${tld})${port}${path}`;
+  urlReg = new RegExp(`(?:^${regex}$)`, 'i');
+  return urlReg;
+};
+export default url;

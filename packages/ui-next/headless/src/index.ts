@@ -1,3 +1,4 @@
+export * from './async-validator';
 export * from './checkbox';
 export * from './color-picker';
 export * from './dialog';
