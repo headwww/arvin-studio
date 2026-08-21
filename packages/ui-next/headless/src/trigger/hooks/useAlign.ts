@@ -1,0 +1,940 @@
+import type { Ref } from 'vue';
+
+import type { TriggerProps } from '../index';
+import type {
+  AlignPointLeftRight,
+  AlignPointTopBottom,
+  AlignType,
+  OffsetType,
+} from '../interface';
+
+import {
+  computed,
+  nextTick,
+  reactive,
+  ref,
+  shallowRef,
+  toRefs,
+  watch,
+} from 'vue';
+
+import { isDOM } from '../../util';
+import isVisible from '../../util/Dom/isVisible';
+import { collectScroller, getVisibleArea, getWin, toNum } from '../util';
+
+type Rect = Record<'height' | 'width' | 'x' | 'y', number>;
+
+type Points = [topBottom: AlignPointTopBottom, leftRight: AlignPointLeftRight];
+
+function getUnitOffset(size: number, offset: OffsetType = 0) {
+  const offsetStr = `${offset}`;
+  const cells = offsetStr.match(/^(.*)%$/);
+  if (cells) {
+    return size * (parseFloat(cells[1]!) / 100);
+  }
+  return parseFloat(offsetStr);
+}
+
+function getNumberOffset(
+  rect: { height: number; width: number },
+  offset?: OffsetType[],
+) {
+  const [offsetX, offsetY] = offset || [];
+
+  return [
+    getUnitOffset(rect.width, offsetX),
+    getUnitOffset(rect.height, offsetY),
+  ];
+}
+
+function splitPoints(points: string = ''): Points {
+  return [points[0] as any, points[1] as any];
+}
+
+interface SelfTransform {
+  scaleX: number;
+  scaleY: number;
+  translateX: number;
+  translateY: number;
+}
+
+/**
+ * Extract the scale/translate applied by the popup element's OWN computed
+ * transform. Scale compensation in `_onAlign` exists for ancestor transforms
+ * (e.g. a zoomed container), which scale the rect while the element's computed
+ * `transform` stays `none`. A motion keyframe mid-flight (ant-slide-up holds
+ * `scaleY(0.8)` at frame 0) also shrinks the rect, but shows up in the
+ * element's computed transform — it must NOT be compensated, otherwise every
+ * offset is divided by the motion scale and the popup lands off by that ratio.
+ */
+function getSelfTransform(transform: string | undefined): null | SelfTransform {
+  if (!transform || transform === 'none') {
+    return null;
+  }
+  let v: null | number[] = null;
+  const matrix3d = transform.match(/^matrix3d\(([^)]+)\)$/);
+  const matrix = transform.match(/^matrix\(([^)]+)\)$/);
+  if (matrix3d) {
+    const m = matrix3d[1]!.split(',').map(Number);
+    v = [
+      Math.hypot(m[0]!, m[1]!, m[2]!),
+      Math.hypot(m[4]!, m[5]!, m[6]!),
+      m[12]!,
+      m[13]!,
+    ];
+  } else if (matrix) {
+    const m = matrix[1]!.split(',').map(Number);
+    v = [Math.hypot(m[0]!, m[1]!), Math.hypot(m[2]!, m[3]!), m[4]!, m[5]!];
+  }
+  if (!v || v.some((n) => Number.isNaN(n))) {
+    return null;
+  }
+  return {
+    scaleX: v[0] || 1,
+    scaleY: v[1] || 1,
+    translateX: v[2] || 0,
+    translateY: v[3] || 0,
+  };
+}
+
+/**
+ * Map a rect measured under the element's own transform back to its layout
+ * (untransformed) space, so align math works with the position the popup will
+ * occupy once its motion finishes.
+ */
+function unscaleSelfRect(
+  rect: Rect,
+  self: SelfTransform,
+  transformOrigin: string,
+): Rect {
+  const [oxStr, oyStr] = (transformOrigin || '').split(' ', 2);
+  const ox = parseFloat(oxStr!) || 0;
+  const oy = parseFloat(oyStr!) || 0;
+  return {
+    x: rect.x - self.translateX - ox * (1 - self.scaleX),
+    y: rect.y - self.translateY - oy * (1 - self.scaleY),
+    width: rect.width / self.scaleX,
+    height: rect.height / self.scaleY,
+  };
+}
+
+function getAlignPoint(rect: Rect, points: Points) {
+  const topBottom = points[0];
+  const leftRight = points[1];
+
+  let x: number;
+  let y: number;
+
+  // Top & Bottom
+  if (topBottom === 't') {
+    y = rect.y;
+  } else if (topBottom === 'b') {
+    y = rect.y + rect.height;
+  } else {
+    y = rect.y + rect.height / 2;
+  }
+
+  // Left & Right
+  if (leftRight === 'l') {
+    x = rect.x;
+  } else if (leftRight === 'r') {
+    x = rect.x + rect.width;
+  } else {
+    x = rect.x + rect.width / 2;
+  }
+
+  return { x, y };
+}
+
+function reversePoints(points: Points, index: number): Points {
+  const reverseMap = {
+    t: 'b',
+    b: 't',
+    l: 'r',
+    r: 'l',
+  };
+
+  const clone = [...points] as Points;
+  clone[index] = (reverseMap as any)[points[index]!] || 'c';
+  return clone;
+}
+
+function flatPoints(points: Points): string {
+  return points.join('');
+}
+
+function shouldSwitchPlacement(
+  isOverflow: boolean,
+  isVisibleFirst: boolean,
+  newVisibleArea: number,
+  originVisibleArea: number,
+  newRecommendArea: number,
+  originRecommendArea: number,
+) {
+  if (isOverflow) {
+    return (
+      newVisibleArea > originVisibleArea ||
+      (newVisibleArea === originVisibleArea &&
+        (!isVisibleFirst || newRecommendArea >= originRecommendArea))
+    );
+  }
+
+  return (
+    newVisibleArea > originVisibleArea ||
+    (isVisibleFirst &&
+      newVisibleArea === originVisibleArea &&
+      newRecommendArea > originRecommendArea)
+  );
+}
+
+export default function useAlign(
+  open: Ref<boolean>,
+  popupEle: Ref<HTMLElement>,
+  target: Ref<[x: number, y: number] | HTMLElement>,
+  placement: Ref<string>,
+  builtinPlacements: Ref<any>,
+  popupAlign?: Ref<AlignType | undefined>,
+  onPopupAlign?: TriggerProps['onPopupAlign'],
+  mobile?: Ref<boolean | undefined>,
+) {
+  const offsetInfo = reactive({
+    ready: false,
+    offsetX: 0,
+    offsetY: 0,
+    offsetR: 0,
+    offsetB: 0,
+    arrowX: 0,
+    arrowY: 0,
+    scaleX: 1,
+    scaleY: 1,
+    align: builtinPlacements.value[placement.value] || {},
+  });
+
+  const alignCountRef = shallowRef(0);
+  const scrollerList = computed(() => {
+    if (!popupEle.value || mobile?.value) {
+      return [];
+    }
+    return collectScroller(popupEle.value);
+  });
+
+  // ========================= Flip ==========================
+  // We will memo flip info.
+  // If size change to make flip, it will memo the flip info and use it in next align.
+  const prevFlipRef = ref<{
+    bt?: boolean;
+    lr?: boolean;
+    rl?: boolean;
+    tb?: boolean;
+  }>({});
+
+  const resetFlipCache = () => {
+    prevFlipRef.value = {};
+  };
+
+  let cacheTargetRect: any = null;
+
+  let cacheScale: any = null;
+
+  // ========================= Align =========================
+  const _onAlign = (cache = false) => {
+    if (cache && !cacheTargetRect) {
+      return;
+    }
+    if (popupEle.value && target.value && open.value && !mobile?.value) {
+      const popupElement = popupEle.value;
+      const doc = popupElement.ownerDocument;
+      const win = getWin(popupElement);
+
+      const popupComputedStyle = win!.getComputedStyle(popupElement);
+      const { position: popupPosition } = popupComputedStyle;
+
+      const originLeft = popupElement.style.left;
+      const originTop = popupElement.style.top;
+      const originRight = popupElement.style.right;
+      const originBottom = popupElement.style.bottom;
+      const originOverflow = popupElement.style.overflow;
+      const originOverflowX = popupElement.style.overflowX;
+      const originOverflowY = popupElement.style.overflowY;
+      // Placement
+      const placementInfo: AlignType = {
+        ...builtinPlacements.value[placement.value],
+        ...popupAlign?.value,
+      };
+
+      // placeholder element
+      const placeholderElement = doc.createElement('div');
+      popupElement.parentElement?.append(placeholderElement);
+      placeholderElement.style.left = `${popupElement.offsetLeft}px`;
+      placeholderElement.style.top = `${popupElement.offsetTop}px`;
+      placeholderElement.style.position = popupPosition;
+      placeholderElement.style.height = `${popupElement.offsetHeight}px`;
+      placeholderElement.style.width = `${popupElement.offsetWidth}px`;
+
+      // Reset first
+      popupElement.style.left = '0';
+      popupElement.style.top = '0';
+      popupElement.style.right = 'auto';
+      popupElement.style.bottom = 'auto';
+      popupElement.style.overflow = 'hidden';
+
+      // Calculate align style, we should consider `transform` case
+      let targetRect: Rect;
+      if (Array.isArray(target.value)) {
+        targetRect = {
+          x: target.value[0],
+          y: target.value[1],
+          width: 0,
+          height: 0,
+        };
+      } else {
+        const targetRectInfo = target.value.getBoundingClientRect();
+        const rect = cache
+          ? Object.assign(targetRectInfo, cacheTargetRect ?? {})
+          : targetRectInfo;
+        if (!cache) {
+          cacheTargetRect = {
+            width: rect.width,
+            height: rect.height,
+          };
+        }
+        rect.x ??= rect.left;
+        rect.y ??= rect.top;
+        targetRect = {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+        };
+      }
+      const rawPopupRect = popupElement.getBoundingClientRect();
+      const {
+        clientWidth,
+        clientHeight,
+        scrollWidth,
+        scrollHeight,
+        scrollTop,
+        scrollLeft,
+      } = doc.documentElement;
+
+      const targetHeight = targetRect.height;
+      const targetWidth = targetRect.width;
+
+      // Get bounding of visible area
+      const visibleRegion = {
+        left: 0,
+        top: 0,
+        right: clientWidth,
+        bottom: clientHeight,
+      };
+
+      const scrollRegion = {
+        left: -scrollLeft,
+        top: -scrollTop,
+        right: scrollWidth - scrollLeft,
+        bottom: scrollHeight - scrollTop,
+      };
+
+      let { htmlRegion } = placementInfo;
+      const VISIBLE = 'visible' as const;
+      const VISIBLE_FIRST = 'visibleFirst' as const;
+      if (htmlRegion !== 'scroll' && htmlRegion !== VISIBLE_FIRST) {
+        htmlRegion = VISIBLE;
+      }
+      const isVisibleFirst = htmlRegion === VISIBLE_FIRST;
+
+      const scrollRegionArea = getVisibleArea(scrollRegion, scrollerList.value);
+      const visibleRegionArea = getVisibleArea(
+        visibleRegion,
+        scrollerList.value,
+      );
+
+      const visibleArea =
+        htmlRegion === VISIBLE ? visibleRegionArea : scrollRegionArea;
+
+      // When set to `visibleFirst`,
+      // the check `adjust` logic will use `visibleRegion` for check first.
+      const adjustCheckVisibleArea = isVisibleFirst
+        ? visibleRegionArea
+        : visibleArea;
+
+      // Record right & bottom align data
+      popupElement.style.left = 'auto';
+      popupElement.style.top = 'auto';
+      popupElement.style.right = '0';
+      popupElement.style.bottom = '0';
+
+      const rawPopupMirrorRect = popupElement.getBoundingClientRect();
+
+      // Reset back
+      popupElement.style.left = originLeft;
+      popupElement.style.top = originTop;
+      popupElement.style.right = originRight;
+      popupElement.style.bottom = originBottom;
+      popupElement.style.overflow = originOverflow;
+      popupElement.style.overflowX = originOverflowX;
+      popupElement.style.overflowY = originOverflowY;
+
+      // eslint-disable-next-line unicorn/prefer-dom-node-remove
+      popupElement.parentElement?.removeChild(placeholderElement);
+
+      // Use the same logic as React version:
+      // Get popup dimensions from getBoundingClientRect and computedStyle
+      const { height, width } = popupComputedStyle;
+
+      // React aligns in rc-motion's prepare phase, before motion start classes
+      // apply their transform, and React re-renders interrupted motions back
+      // to a clean className. Vue's <Transition> mutates classes imperatively,
+      // so the popup may carry its motion transform (e.g. ant-slide-up's
+      // scaleY(0.8) keyframe, or classes stuck by an interrupted enter) while
+      // we measure. Map the rects back to layout space so only ancestor
+      // transforms remain in the scale compensation below.
+      const selfTransform = getSelfTransform(popupComputedStyle.transform);
+      let popupRect: Rect = {
+        x: rawPopupRect.x ?? (rawPopupRect as DOMRect).left,
+        y: rawPopupRect.y ?? (rawPopupRect as DOMRect).top,
+        width: rawPopupRect.width,
+        height: rawPopupRect.height,
+      };
+      let popupMirrorRect = {
+        right: rawPopupMirrorRect.right,
+        bottom: rawPopupMirrorRect.bottom,
+      };
+      if (selfTransform) {
+        popupRect = unscaleSelfRect(
+          popupRect,
+          selfTransform,
+          popupComputedStyle.transformOrigin,
+        );
+        const mirror = unscaleSelfRect(
+          {
+            x: rawPopupMirrorRect.x ?? (rawPopupMirrorRect as DOMRect).left,
+            y: rawPopupMirrorRect.y ?? (rawPopupMirrorRect as DOMRect).top,
+            width: rawPopupMirrorRect.width,
+            height: rawPopupMirrorRect.height,
+          },
+          selfTransform,
+          popupComputedStyle.transformOrigin,
+        );
+        popupMirrorRect = {
+          right: mirror.x + mirror.width,
+          bottom: mirror.y + mirror.height,
+        };
+      }
+
+      const popupHeight = popupRect.height;
+      const popupWidth = popupRect.width;
+
+      // Calculate scale
+      const scaleX =
+        cache && cacheScale
+          ? cacheScale?.scaleX
+          : toNum(Math.round((popupWidth / parseFloat(width)) * 1000) / 1000);
+      const scaleY =
+        cache && cacheScale
+          ? cacheScale?.scaleY
+          : toNum(Math.round((popupHeight / parseFloat(height)) * 1000) / 1000);
+      if (!cache) {
+        cacheScale = {
+          scaleX,
+          scaleY,
+        };
+      }
+
+      // No need to align since it's not visible in view
+      if (
+        scaleX === 0 ||
+        scaleY === 0 ||
+        (isDOM(target) && !isVisible(target))
+      ) {
+        return;
+      }
+
+      // Offset
+      const { offset, targetOffset } = placementInfo;
+      let [popupOffsetX, popupOffsetY] = getNumberOffset(popupRect, offset);
+      const [targetOffsetX, targetOffsetY] = getNumberOffset(
+        targetRect,
+        targetOffset,
+      );
+
+      targetRect.x -= targetOffsetX!;
+      targetRect.y -= targetOffsetY!;
+
+      // Points
+      const [popupPoint, targetPoint] = placementInfo.points || [];
+      const targetPoints = splitPoints(targetPoint);
+      const popupPoints = splitPoints(popupPoint);
+
+      const targetAlignPoint = getAlignPoint(targetRect, targetPoints);
+      const popupAlignPoint = getAlignPoint(popupRect, popupPoints);
+      // Real align info may not same as origin one
+      const nextAlignInfo = {
+        ...placementInfo,
+      };
+
+      let nextPoints = [popupPoints, targetPoints];
+      // Next Offset
+      let nextOffsetX = targetAlignPoint.x - popupAlignPoint.x + popupOffsetX!;
+      let nextOffsetY = targetAlignPoint.y - popupAlignPoint.y + popupOffsetY!;
+
+      // ============== Intersection ===============
+      // Get area by position. Used for check if flip area is better
+      function getIntersectionVisibleArea(
+        offsetX: number,
+        offsetY: number,
+        area = visibleArea,
+      ) {
+        const l = popupRect.x + offsetX;
+        const t = popupRect.y + offsetY;
+
+        const r = l + popupWidth;
+        const b = t + popupHeight;
+
+        const visibleL = Math.max(l, area.left);
+        const visibleT = Math.max(t, area.top);
+        const visibleR = Math.min(r, area.right);
+        const visibleB = Math.min(b, area.bottom);
+
+        return Math.max(0, (visibleR - visibleL) * (visibleB - visibleT));
+      }
+
+      const originIntersectionVisibleArea = getIntersectionVisibleArea(
+        nextOffsetX,
+        nextOffsetY,
+      );
+
+      // As `visibleFirst`, we prepare this for check
+      const originIntersectionRecommendArea = getIntersectionVisibleArea(
+        nextOffsetX,
+        nextOffsetY,
+        visibleRegionArea,
+      );
+
+      // ========================== Overflow ===========================
+      const targetAlignPointTL = getAlignPoint(targetRect, ['t', 'l']);
+      const popupAlignPointTL = getAlignPoint(popupRect, ['t', 'l']);
+      const targetAlignPointBR = getAlignPoint(targetRect, ['b', 'r']);
+      const popupAlignPointBR = getAlignPoint(popupRect, ['b', 'r']);
+
+      const overflow = placementInfo.overflow || {};
+      const { adjustX, adjustY, shiftX, shiftY } = overflow;
+
+      const supportAdjust = (val: boolean | number) => {
+        if (typeof val === 'boolean') {
+          return val;
+        }
+        return val >= 0;
+      };
+
+      // Prepare position
+      let nextPopupY: number;
+      let nextPopupBottom: number;
+      let nextPopupX: number;
+      let nextPopupRight: number;
+
+      function syncNextPopupPosition() {
+        nextPopupY = popupRect.y + nextOffsetY;
+        nextPopupBottom = nextPopupY + popupHeight;
+        nextPopupX = popupRect.x + nextOffsetX;
+        nextPopupRight = nextPopupX + popupWidth;
+      }
+      syncNextPopupPosition();
+
+      // >>>>>>>>>> Top & Bottom
+      const needAdjustY = supportAdjust(adjustY!);
+
+      const sameTB = popupPoints[0] === targetPoints[0];
+
+      // Bottom to Top
+      const overflowBottom = nextPopupBottom! > adjustCheckVisibleArea.bottom;
+      if (
+        needAdjustY &&
+        popupPoints[0] === 't' &&
+        (overflowBottom || prevFlipRef.value.bt)
+      ) {
+        let tmpNextOffsetY: number = nextOffsetY;
+
+        if (sameTB) {
+          tmpNextOffsetY -= popupHeight - targetHeight;
+        } else {
+          tmpNextOffsetY =
+            targetAlignPointTL.y - popupAlignPointBR.y - popupOffsetY!;
+        }
+
+        const newVisibleArea = getIntersectionVisibleArea(
+          nextOffsetX,
+          tmpNextOffsetY,
+        );
+        const newVisibleRecommendArea = getIntersectionVisibleArea(
+          nextOffsetX,
+          tmpNextOffsetY,
+          visibleRegionArea,
+        );
+
+        const shouldFlip = shouldSwitchPlacement(
+          overflowBottom,
+          isVisibleFirst,
+          newVisibleArea,
+          originIntersectionVisibleArea,
+          newVisibleRecommendArea,
+          originIntersectionRecommendArea,
+        );
+
+        if (shouldFlip) {
+          prevFlipRef.value.bt = true;
+          nextOffsetY = tmpNextOffsetY;
+          popupOffsetY = -popupOffsetY!;
+
+          nextPoints = [
+            reversePoints(nextPoints[0]!, 0),
+            reversePoints(nextPoints[1]!, 0),
+          ];
+        } else {
+          prevFlipRef.value.bt = false;
+        }
+      }
+
+      // Top to Bottom
+      const overflowTop = nextPopupY! < adjustCheckVisibleArea.top;
+      if (
+        needAdjustY &&
+        popupPoints[0] === 'b' &&
+        (overflowTop || prevFlipRef.value.tb)
+      ) {
+        let tmpNextOffsetY: number = nextOffsetY;
+
+        if (sameTB) {
+          tmpNextOffsetY += popupHeight - targetHeight;
+        } else {
+          tmpNextOffsetY =
+            targetAlignPointBR.y - popupAlignPointTL.y - popupOffsetY!;
+        }
+
+        const newVisibleArea = getIntersectionVisibleArea(
+          nextOffsetX,
+          tmpNextOffsetY,
+        );
+        const newVisibleRecommendArea = getIntersectionVisibleArea(
+          nextOffsetX,
+          tmpNextOffsetY,
+          visibleRegionArea,
+        );
+
+        const shouldFlip = shouldSwitchPlacement(
+          overflowTop,
+          isVisibleFirst,
+          newVisibleArea,
+          originIntersectionVisibleArea,
+          newVisibleRecommendArea,
+          originIntersectionRecommendArea,
+        );
+
+        if (shouldFlip) {
+          prevFlipRef.value.tb = true;
+          nextOffsetY = tmpNextOffsetY;
+          popupOffsetY = -popupOffsetY!;
+
+          nextPoints = [
+            reversePoints(nextPoints[0]!, 0),
+            reversePoints(nextPoints[1]!, 0),
+          ];
+        } else {
+          prevFlipRef.value.tb = false;
+        }
+      }
+
+      // >>>>>>>>>> Left & Right
+      const needAdjustX = supportAdjust(adjustX!);
+
+      // >>>>> Flip
+      const sameLR = popupPoints[1] === targetPoints[1];
+
+      // Right to Left
+      const overflowRight = nextPopupRight! > adjustCheckVisibleArea.right;
+      if (
+        needAdjustX &&
+        popupPoints[1] === 'l' &&
+        (overflowRight || prevFlipRef.value.rl)
+      ) {
+        let tmpNextOffsetX: number = nextOffsetX;
+
+        if (sameLR) {
+          tmpNextOffsetX -= popupWidth - targetWidth;
+        } else {
+          tmpNextOffsetX =
+            targetAlignPointTL.x - popupAlignPointBR.x - popupOffsetX!;
+        }
+
+        const newVisibleArea = getIntersectionVisibleArea(
+          tmpNextOffsetX,
+          nextOffsetY,
+        );
+        const newVisibleRecommendArea = getIntersectionVisibleArea(
+          tmpNextOffsetX,
+          nextOffsetY,
+          visibleRegionArea,
+        );
+
+        const shouldFlip = shouldSwitchPlacement(
+          overflowRight,
+          isVisibleFirst,
+          newVisibleArea,
+          originIntersectionVisibleArea,
+          newVisibleRecommendArea,
+          originIntersectionRecommendArea,
+        );
+
+        if (shouldFlip) {
+          prevFlipRef.value.rl = true;
+          nextOffsetX = tmpNextOffsetX;
+          popupOffsetX = -popupOffsetX!;
+
+          nextPoints = [
+            reversePoints(nextPoints[0]!, 1),
+            reversePoints(nextPoints[1]!, 1),
+          ];
+        } else {
+          prevFlipRef.value.rl = false;
+        }
+      }
+
+      // Left to Right
+      const overflowLeft = nextPopupX! < adjustCheckVisibleArea.left;
+      if (
+        needAdjustX &&
+        popupPoints[1] === 'r' &&
+        (overflowLeft || prevFlipRef.value.lr)
+      ) {
+        let tmpNextOffsetX: number = nextOffsetX;
+
+        if (sameLR) {
+          tmpNextOffsetX += popupWidth - targetWidth;
+        } else {
+          tmpNextOffsetX =
+            targetAlignPointBR.x - popupAlignPointTL.x - popupOffsetX!;
+        }
+
+        const newVisibleArea = getIntersectionVisibleArea(
+          tmpNextOffsetX,
+          nextOffsetY,
+        );
+        const newVisibleRecommendArea = getIntersectionVisibleArea(
+          tmpNextOffsetX,
+          nextOffsetY,
+          visibleRegionArea,
+        );
+
+        const shouldFlip = shouldSwitchPlacement(
+          overflowLeft,
+          isVisibleFirst,
+          newVisibleArea,
+          originIntersectionVisibleArea,
+          newVisibleRecommendArea,
+          originIntersectionRecommendArea,
+        );
+
+        if (shouldFlip) {
+          prevFlipRef.value.lr = true;
+          nextOffsetX = tmpNextOffsetX;
+          popupOffsetX = -popupOffsetX!;
+
+          nextPoints = [
+            reversePoints(nextPoints[0]!, 1),
+            reversePoints(nextPoints[1]!, 1),
+          ];
+        } else {
+          prevFlipRef.value.lr = false;
+        }
+      }
+
+      nextAlignInfo.points = [
+        flatPoints(nextPoints[0]!),
+        flatPoints(nextPoints[1]!),
+      ];
+
+      // ============================ Shift ============================
+      syncNextPopupPosition();
+
+      const numShiftX = shiftX === true ? 0 : shiftX;
+      if (typeof numShiftX === 'number') {
+        // Left
+        if (nextPopupX! < visibleRegionArea.left) {
+          nextOffsetX -= nextPopupX! - visibleRegionArea.left - popupOffsetX!;
+
+          if (targetRect.x + targetWidth < visibleRegionArea.left + numShiftX) {
+            nextOffsetX +=
+              targetRect.x - visibleRegionArea.left + targetWidth - numShiftX;
+          }
+        }
+
+        // Right
+        if (nextPopupRight! > visibleRegionArea.right) {
+          nextOffsetX -=
+            nextPopupRight! - visibleRegionArea.right - popupOffsetX!;
+
+          if (targetRect.x > visibleRegionArea.right - numShiftX) {
+            nextOffsetX += targetRect.x - visibleRegionArea.right + numShiftX;
+          }
+        }
+      }
+
+      const numShiftY = shiftY === true ? 0 : shiftY;
+      if (typeof numShiftY === 'number') {
+        // Top
+        if (nextPopupY! < visibleRegionArea.top) {
+          nextOffsetY -= nextPopupY! - visibleRegionArea.top - popupOffsetY!;
+
+          // When target if far away from visible area
+          // Stop shift
+          if (targetRect.y + targetHeight < visibleRegionArea.top + numShiftY) {
+            nextOffsetY +=
+              targetRect.y - visibleRegionArea.top + targetHeight - numShiftY;
+          }
+        }
+
+        // Bottom
+        if (nextPopupBottom! > visibleRegionArea.bottom) {
+          nextOffsetY -=
+            nextPopupBottom! - visibleRegionArea.bottom - popupOffsetY!;
+
+          if (targetRect.y > visibleRegionArea.bottom - numShiftY) {
+            nextOffsetY += targetRect.y - visibleRegionArea.bottom + numShiftY;
+          }
+        }
+      }
+
+      // ============================ Arrow ============================
+      // Arrow center align
+      const popupLeft = popupRect.x + nextOffsetX;
+      const popupRight = popupLeft + popupWidth;
+      const popupTop = popupRect.y + nextOffsetY;
+      const popupBottom = popupTop + popupHeight;
+
+      const targetLeft = targetRect.x;
+      const targetRight = targetLeft + targetWidth;
+      const targetTop = targetRect.y;
+      const targetBottom = targetTop + targetHeight;
+
+      /** Max left of the popup and target element */
+      const maxLeft = Math.max(popupLeft, targetLeft);
+      /** Min right of the popup and target element */
+      const minRight = Math.min(popupRight, targetRight);
+
+      /** The center X of popup & target cross area */
+      const xCenter = (maxLeft + minRight) / 2;
+      /** Arrow X of popup offset */
+      const nextArrowX = xCenter - popupLeft;
+
+      const maxTop = Math.max(popupTop, targetTop);
+      const minBottom = Math.min(popupBottom, targetBottom);
+
+      const yCenter = (maxTop + minBottom) / 2;
+      const nextArrowY = yCenter - popupTop;
+      onPopupAlign?.(popupEle.value, nextAlignInfo);
+
+      // Additional calculate right & bottom position
+      let offsetX4Right =
+        popupMirrorRect.right - popupRect.x - (nextOffsetX + popupRect.width);
+      let offsetY4Bottom =
+        popupMirrorRect.bottom - popupRect.y - (nextOffsetY + popupRect.height);
+
+      if (scaleX === 1) {
+        nextOffsetX = Math.floor(nextOffsetX);
+        offsetX4Right = Math.floor(offsetX4Right);
+      }
+
+      if (scaleY === 1) {
+        nextOffsetY = Math.floor(nextOffsetY);
+        offsetY4Bottom = Math.floor(offsetY4Bottom);
+      }
+      // Divide by scale (same as React version)
+      const nextOffsetInfo = {
+        ready: true,
+        offsetX: nextOffsetX / scaleX,
+        offsetY: nextOffsetY / scaleY,
+        offsetR: offsetX4Right / scaleX,
+        offsetB: offsetY4Bottom / scaleY,
+        arrowX: nextArrowX / scaleX,
+        arrowY: nextArrowY / scaleY,
+        scaleX,
+        scaleY,
+        align: nextAlignInfo,
+      };
+      Object.assign(offsetInfo, nextOffsetInfo);
+    }
+  };
+  // 给onAlign添加一个requestAnimationFrame的效果，合并多次调用
+  const onAlign = _onAlign;
+
+  const triggerAlign = (cache?: boolean) => {
+    alignCountRef.value += 1;
+    const id = alignCountRef.value;
+
+    // Merge all align requirement into one frame
+    // eslint-disable-next-line unicorn/prefer-promise-try, unicorn/prefer-await
+    Promise.resolve().then(() => {
+      if (alignCountRef.value === id) {
+        onAlign(cache);
+      }
+    });
+  };
+
+  watch(popupEle, async (ele) => {
+    if (!(ele && open.value) || mobile?.value) {
+      return;
+    }
+
+    await nextTick();
+    triggerAlign();
+  });
+
+  // Reset ready status when placement & open changed
+  const resetReady = () => {
+    offsetInfo.ready = false;
+  };
+  watch(placement, () => {
+    resetReady();
+  });
+
+  watch(
+    open,
+    () => {
+      if (open.value) {
+        return;
+      }
+
+      resetFlipCache();
+      resetReady();
+    },
+    {
+      immediate: true,
+    },
+  );
+
+  const {
+    ready,
+    offsetX,
+    offsetR,
+    offsetY,
+    offsetB,
+    align,
+    arrowY,
+    arrowX,
+    scaleY,
+    scaleX,
+  } = toRefs(offsetInfo);
+  return [
+    ready,
+    offsetX,
+    offsetY,
+    offsetR,
+    offsetB,
+    arrowX,
+    arrowY,
+    scaleX,
+    scaleY,
+    align,
+    triggerAlign,
+  ] as const;
+}

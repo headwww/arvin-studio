@@ -5,4 +5,5 @@ export * from './input-number';
 export * from './resize-observer';
 export * from './switch';
 export * from './textarea';
+export * from './trigger';
 export * from './util';
