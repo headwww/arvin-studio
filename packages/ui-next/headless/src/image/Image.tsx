@@ -93,7 +93,7 @@ export interface ImageProps extends Partial<Omit<ImageElementProps, 'src'>> {
 }
 
 const defaults = {
-  prefixCls: 'vc-image',
+  prefixCls: 'headless-image',
   preview: true,
   classNames: {},
   styles: {},
@@ -103,7 +103,7 @@ const Image = defineComponent<ImageProps>(
   (props = defaults, { attrs, slots }) => {
     const groupContext = usePreviewGroupContext();
 
-    const prefixCls = computed(() => props.prefixCls ?? 'vc-image');
+    const prefixCls = computed(() => props.prefixCls ?? 'headless-image');
     const previewPrefixCls = computed(
       () => props.previewPrefixCls ?? `${prefixCls.value}-preview`,
     );

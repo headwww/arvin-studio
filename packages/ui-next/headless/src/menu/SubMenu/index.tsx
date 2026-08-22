@@ -66,7 +66,7 @@ const InternalSubMenu = defineComponent<SubMenuProps>(
 
     // ================================ Context Values ================================
     const prefixCls = computed(
-      () => menuContext?.value?.prefixCls || 'vc-menu',
+      () => menuContext?.value?.prefixCls || 'headless-menu',
     );
     const mode = computed(() => menuContext?.value?.mode || 'vertical');
     const openKeys = computed(() => menuContext?.value?.openKeys || []);

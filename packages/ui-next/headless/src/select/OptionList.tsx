@@ -1,0 +1,567 @@
+import type { CSSProperties } from 'vue';
+
+import type { FlattenOptionData, RawValueType } from './interface';
+import type { BaseOptionType } from './Select';
+
+import { computed, defineComponent, shallowRef, watch } from 'vue';
+
+import { clsx } from '@arvin-studio/kit';
+
+import { pickAttrs } from '../util';
+import KeyCode from '../util/KeyCode';
+import List from '../virtual-list/List';
+import useBaseProps from './hooks/useBaseProps';
+import { useSelectContext } from './SelectContext';
+import TransBtn from './TransBtn';
+import { isPlatformMac } from './utils/platformUtil';
+import { isValidCount } from './utils/valueUtil';
+
+export interface ScrollConfig {
+  align?: 'auto' | 'bottom' | 'top';
+  index?: number;
+  key?: number | string;
+  offset?: number;
+}
+
+export interface RefOptionListProps {
+  onKeyDown: (event: KeyboardEvent) => void;
+  onKeyUp: (event: KeyboardEvent) => void;
+  scrollTo?: (args: number | ScrollConfig) => void;
+}
+
+function isTitleType(content: any): content is number | string {
+  return typeof content === 'string' || typeof content === 'number';
+}
+
+/**
+ * Using virtual list of option display.
+ * Will fallback to dom if use customize render.
+ */
+const OptionList = defineComponent({
+  name: 'OptionList',
+  inheritAttrs: false,
+  setup(_, { expose }) {
+    const baseProps = useBaseProps();
+    const context = useSelectContext();
+
+    const itemPrefixCls = computed(() => `${baseProps.value?.prefixCls}-item`);
+
+    // Memoized flatten options (only update when open or options change)
+    const memoFlattenOptions = computed(() => {
+      if (!baseProps.value?.open) {
+        return context.value?.flattenOptions || [];
+      }
+      return context.value?.flattenOptions || [];
+    });
+
+    // =========================== List ===========================
+    const listRef = shallowRef<any>(null);
+
+    const overMaxCount = computed<boolean>(() => {
+      const { maxCount, rawValues } = context.value || {};
+      return !!(
+        baseProps.value?.multiple &&
+        isValidCount(maxCount!) &&
+        rawValues &&
+        rawValues.size >= maxCount!
+      );
+    });
+
+    const onListMouseDown = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+
+    const scrollIntoView = (args: number | ScrollConfig) => {
+      listRef.value?.scrollTo(
+        typeof args === 'number' ? { index: args } : args,
+      );
+    };
+
+    // https://github.com/ant-design/ant-design/issues/34975
+    const isSelected = (value: RawValueType): boolean => {
+      if (baseProps.value?.mode === 'combobox') {
+        return false;
+      }
+      return context.value?.rawValues?.has(value) || false;
+    };
+
+    // ========================== Active ==========================
+    const getEnabledActiveIndex = (
+      index: number,
+      offset: number = 1,
+    ): number => {
+      const len = memoFlattenOptions.value.length;
+
+      for (let i = 0; i < len; i += 1) {
+        const current = (index + i * offset + len) % len;
+
+        const { group, data } = memoFlattenOptions.value[current] || {};
+
+        if (
+          !group &&
+          !data?.disabled &&
+          (isSelected(data?.value) || !overMaxCount.value)
+        ) {
+          return current;
+        }
+      }
+
+      return -1;
+    };
+
+    const activeIndex = shallowRef(-1);
+
+    const setActive = (index: number, fromKeyboard = false) => {
+      activeIndex.value = index;
+
+      const info = {
+        source: fromKeyboard ? ('keyboard' as const) : ('mouse' as const),
+      };
+
+      // Trigger active event
+      const flattenItem = memoFlattenOptions.value[index];
+      if (!flattenItem) {
+        context.value?.onActiveValue?.(null as any, -1, info);
+        return;
+      }
+      context.value?.onActiveValue?.(flattenItem.value!, index, info);
+    };
+
+    const getActiveIndexByRawValue = (): number => {
+      const rawValues = context.value?.rawValues;
+      if (baseProps.value?.multiple || rawValues?.size !== 1) {
+        return -1;
+      }
+
+      const value: RawValueType = Array.from(rawValues)[0]!;
+      const searchValue = baseProps.value?.searchValue;
+
+      return memoFlattenOptions.value.findIndex(({ data }) =>
+        searchValue
+          ? String(data?.value).startsWith(searchValue)
+          : data?.value === value,
+      );
+    };
+
+    // Auto active first item when list length or searchValue changed
+    watch(
+      [
+        () => memoFlattenOptions.value.length,
+        () => baseProps.value?.searchValue,
+      ],
+      () => {
+        const defaultFirst = context.value?.defaultActiveFirstOption !== false;
+        const activeIndexByRawValue = getActiveIndexByRawValue();
+        setActive(
+          activeIndexByRawValue === -1
+            ? defaultFirst
+              ? getEnabledActiveIndex(0)
+              : -1
+            : activeIndexByRawValue,
+        );
+      },
+      { immediate: true },
+    );
+
+    // https://github.com/ant-design/ant-design/issues/48036
+    const isAriaSelected = (value: RawValueType): boolean => {
+      if (baseProps.value?.mode === 'combobox') {
+        return (
+          String(value).toLowerCase() ===
+          (baseProps.value?.searchValue || '').toLowerCase()
+        );
+      }
+      return context.value?.rawValues?.has(value) || false;
+    };
+
+    // Auto scroll to item position in single mode
+    watch(
+      [
+        () => baseProps.value?.open,
+        () => baseProps.value?.searchValue,
+        () => memoFlattenOptions.value.length,
+      ],
+      (_, __, onCleanup) => {
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+        const rawValues = context.value?.rawValues;
+        if (
+          !baseProps.value?.multiple &&
+          baseProps.value?.open &&
+          rawValues?.size === 1
+        ) {
+          // Scroll to the option closest to the searchValue if searching.
+          const index = getActiveIndexByRawValue();
+
+          if (index !== -1) {
+            setActive(index);
+            timeoutId = setTimeout(() => {
+              scrollIntoView(index);
+            }, 0);
+          }
+        }
+
+        // Force trigger scrollbar visible when open
+        if (baseProps.value?.open) {
+          listRef.value?.scrollTo(undefined as any);
+        }
+
+        onCleanup(() => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+        });
+      },
+      { immediate: true, flush: 'post' },
+    );
+
+    // ========================== Values ==========================
+    const onSelectValue = (value?: RawValueType) => {
+      if (value !== undefined) {
+        context.value?.onSelect?.(value, {
+          selected: !context.value?.rawValues?.has(value),
+        });
+      }
+
+      // Single mode should always close by select
+      if (!baseProps.value?.multiple) {
+        baseProps.value?.toggleOpen?.(false);
+      }
+    };
+
+    // ========================= Keyboard =========================
+    const onKeyDown = (event: KeyboardEvent) => {
+      // eslint-disable-next-line unicorn/prefer-keyboard-event-key
+      const { which, ctrlKey } = event;
+      switch (which) {
+        // >>> Arrow keys & ctrl + n/p on Mac
+        case KeyCode.DOWN:
+        case KeyCode.N:
+        case KeyCode.P:
+        case KeyCode.UP: {
+          let offset = 0;
+          if (which === KeyCode.UP) {
+            offset = -1;
+          } else if (which === KeyCode.DOWN) {
+            offset = 1;
+          } else if (isPlatformMac() && ctrlKey) {
+            if (which === KeyCode.N) {
+              offset = 1;
+            } else if (which === KeyCode.P) {
+              offset = -1;
+            }
+          }
+
+          if (offset !== 0) {
+            const nextActiveIndex = getEnabledActiveIndex(
+              activeIndex.value + offset,
+              offset,
+            );
+            scrollIntoView(nextActiveIndex);
+            setActive(nextActiveIndex, true);
+          }
+
+          break;
+        }
+
+        // >>> Select (Tab / Enter)
+        case KeyCode.ENTER:
+        case KeyCode.TAB: {
+          // value
+          const item = memoFlattenOptions.value[activeIndex.value];
+          if (!item || item.data.disabled) {
+            onSelectValue(undefined);
+            return;
+          }
+
+          if (
+            !overMaxCount.value ||
+            context.value?.rawValues?.has(item.value!)
+          ) {
+            onSelectValue(item.value);
+          } else {
+            onSelectValue(undefined);
+          }
+
+          if (baseProps.value?.open) {
+            event.preventDefault();
+          }
+
+          break;
+        }
+
+        // >>> Close
+        case KeyCode.ESC: {
+          baseProps.value?.toggleOpen?.(false);
+          if (baseProps.value?.open) {
+            event.stopPropagation();
+          }
+        }
+      }
+    };
+
+    const onKeyUp = () => {};
+
+    // Expose methods
+    expose({
+      onKeyDown,
+      onKeyUp,
+      scrollTo: (index: number | ScrollConfig) => {
+        scrollIntoView(index);
+      },
+    });
+
+    return () => {
+      const { id, notFoundContent, onPopupScroll } = baseProps.value || {};
+
+      const {
+        menuItemSelectedIcon,
+        fieldNames,
+        virtual,
+        direction,
+        listHeight,
+        listItemHeight,
+        optionRender,
+        classNames: contextClassNames,
+        styles: contextStyles,
+      } = context.value || {};
+
+      // ========================== Render ==========================
+      if (memoFlattenOptions.value.length === 0) {
+        return (
+          <div
+            class={`${itemPrefixCls.value}-empty`}
+            id={`${id}_list`}
+            onMousedown={onListMouseDown}
+            role="listbox"
+          >
+            {notFoundContent}
+          </div>
+        );
+      }
+
+      const omitFieldNameList = new Set(
+        Object.keys(fieldNames || {}).map((key) => (fieldNames as any)?.[key]),
+      );
+
+      const getLabel = (item: FlattenOptionData<BaseOptionType>) => item.label;
+
+      function getItemAriaProps(
+        item: FlattenOptionData<BaseOptionType>,
+        index: number,
+      ) {
+        const { group } = item;
+
+        return {
+          role: group ? 'presentation' : 'option',
+          id: `${id}_list_${index}`,
+        };
+      }
+
+      const renderItem = (index: number) => {
+        const item = memoFlattenOptions.value[index];
+        if (!item) {
+          return null;
+        }
+        const itemData = item.data || {};
+        const { value, disabled } = itemData;
+        const { group } = item;
+        const attrs = pickAttrs(itemData, true);
+        const mergedLabel = getLabel(item);
+        return item ? (
+          <div
+            aria-label={
+              typeof mergedLabel === 'string' && !group
+                ? mergedLabel
+                : undefined
+            }
+            {...attrs}
+            key={index}
+            {...getItemAriaProps(item, index)}
+            aria-disabled={disabled}
+            aria-selected={isAriaSelected(value)}
+          >
+            {value}
+          </div>
+        ) : null;
+      };
+
+      const a11yProps = {
+        role: 'listbox',
+        id: `${id}_list`,
+      };
+      return (
+        <>
+          {virtual && (
+            <div
+              {...a11yProps}
+              style={{ height: 0, width: 0, overflow: 'hidden' }}
+            >
+              {renderItem(activeIndex.value - 1)}
+              {renderItem(activeIndex.value)}
+              {renderItem(activeIndex.value + 1)}
+            </div>
+          )}
+          <List
+            data={memoFlattenOptions.value}
+            fullHeight={false}
+            height={listHeight}
+            itemHeight={listItemHeight}
+            itemKey="key"
+            prefixCls={`${baseProps.value?.prefixCls}-dropdown-list`}
+            ref={(el: any) => {
+              listRef.value = el;
+            }}
+            {...{ onMousedown: onListMouseDown }}
+            class={contextClassNames?.popup?.list}
+            direction={direction}
+            innerProps={virtual ? undefined : a11yProps}
+            onScroll={onPopupScroll as any}
+            style={contextStyles?.popup?.list}
+            virtual={virtual}
+          >
+            {{
+              default: ({
+                item,
+                index: itemIndex,
+              }: {
+                index: number;
+                item: FlattenOptionData<BaseOptionType>;
+              }) => {
+                const { group, groupOption, data, label, value } = item;
+                const { key } = data;
+
+                // Group
+                if (group) {
+                  const groupTitle =
+                    data.title ??
+                    (isTitleType(label) ? label.toString() : undefined);
+
+                  return (
+                    <div
+                      class={clsx(
+                        itemPrefixCls.value,
+                        `${itemPrefixCls.value}-group`,
+                        data.className,
+                      )}
+                      title={groupTitle}
+                    >
+                      {label === undefined ? key : label}
+                    </div>
+                  );
+                }
+
+                const {
+                  disabled,
+                  title,
+                  // oxlint-disable-next-line no-unused-vars
+                  children,
+                  style,
+                  className,
+                  ...otherProps
+                } = data;
+                const passedProps: Record<string, any> = {};
+                Object.keys(otherProps).forEach((propKey) => {
+                  if (!omitFieldNameList.has(propKey)) {
+                    passedProps[propKey] = otherProps[propKey];
+                  }
+                });
+
+                // Option
+                const selected = isSelected(value!);
+
+                const mergedDisabled =
+                  disabled || (!selected && overMaxCount.value);
+
+                const optionPrefixCls = `${itemPrefixCls.value}-option`;
+
+                const optionClassName = clsx(
+                  itemPrefixCls.value,
+                  optionPrefixCls,
+                  className,
+                  contextClassNames?.popup?.listItem,
+                  {
+                    [`${optionPrefixCls}-grouped`]: groupOption,
+                    [`${optionPrefixCls}-active`]:
+                      activeIndex.value === itemIndex && !mergedDisabled,
+                    [`${optionPrefixCls}-disabled`]: mergedDisabled,
+                    [`${optionPrefixCls}-selected`]: selected,
+                  },
+                );
+
+                const mergedLabel = getLabel(item);
+
+                const iconVisible =
+                  !menuItemSelectedIcon ||
+                  typeof menuItemSelectedIcon === 'function' ||
+                  selected;
+
+                // https://github.com/ant-design/ant-design/issues/34145
+                const content =
+                  typeof mergedLabel === 'number'
+                    ? mergedLabel
+                    : mergedLabel || value;
+                // https://github.com/ant-design/ant-design/issues/26717
+                let optionTitle = isTitleType(content)
+                  ? content.toString()
+                  : undefined;
+                if (title !== undefined) {
+                  optionTitle = title;
+                }
+
+                return (
+                  <div
+                    {...pickAttrs(passedProps)}
+                    {...(virtual ? {} : getItemAriaProps(item, itemIndex))}
+                    aria-disabled={mergedDisabled}
+                    aria-selected={virtual ? undefined : isAriaSelected(value!)}
+                    class={optionClassName}
+                    onClick={() => {
+                      if (!mergedDisabled) {
+                        onSelectValue(value);
+                      }
+                    }}
+                    onMousemove={() => {
+                      if (activeIndex.value === itemIndex || mergedDisabled) {
+                        return;
+                      }
+                      setActive(itemIndex);
+                    }}
+                    style={
+                      {
+                        ...contextStyles?.popup?.listItem,
+                        ...style,
+                      } as CSSProperties
+                    }
+                    title={optionTitle}
+                  >
+                    <div class={`${optionPrefixCls}-content`}>
+                      {typeof optionRender === 'function'
+                        ? optionRender(item, { index: itemIndex })
+                        : content}
+                    </div>
+                    {iconVisible && (
+                      <TransBtn
+                        className={`${itemPrefixCls.value}-option-state`}
+                        customizeIcon={menuItemSelectedIcon}
+                        customizeIconProps={{
+                          value,
+                          disabled: mergedDisabled,
+                          isSelected: selected,
+                        }}
+                      >
+                        {selected ? '✓' : null}
+                      </TransBtn>
+                    )}
+                  </div>
+                );
+              },
+            }}
+          </List>
+        </>
+      );
+    };
+  },
+});
+
+export default OptionList;

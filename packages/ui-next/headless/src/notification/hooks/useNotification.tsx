@@ -150,7 +150,7 @@ export default function useNotification(
         config,
       );
       if (mergedConfig.key === null || mergedConfig.key === undefined) {
-        mergedConfig.key = `vc-notification-${uniqueKey}`;
+        mergedConfig.key = `headless-notification-${uniqueKey}`;
         uniqueKey += 1;
       }
       taskQueue.value = [

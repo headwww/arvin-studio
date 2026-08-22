@@ -118,7 +118,7 @@ const Tooltip = defineComponent<TooltipProps>(
         trigger = ['hover'],
         mouseEnterDelay = 0,
         mouseLeaveDelay = 0.1,
-        prefixCls = 'vc-tooltip',
+        prefixCls = 'headless-tooltip',
         onVisibleChange,
         afterVisibleChange,
         motion,

@@ -119,7 +119,7 @@ export default function useMouseEvent(
         window?.top?.addEventListener('mousemove', onMouseMove, false);
       }
     } catch (error) {
-      warning(false, `[vc-image] ${error}`);
+      warning(false, `[headless-image] ${error}`);
     }
     onCleanup(() => {
       window.removeEventListener('mouseup', onMouseUp);

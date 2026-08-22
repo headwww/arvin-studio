@@ -13,5 +13,8 @@ export default defineConfig({
     'no-prototype-builtins': 'off',
     'array-callback-return': 'off',
   },
-  ignorePatterns: ['packages/icons/**'],
+  ignorePatterns: [
+    'packages/icons/**',
+    'packages/ui-next/headless/src/qrcode/libs/qrcodegen.ts',
+  ],
 });

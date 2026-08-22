@@ -61,8 +61,8 @@ export const extract: ExtractStyle<CSSVarCacheValue<any>> = (
   // ====================== Style ======================
   // Used for rc-util
   const sharedAttrs = {
-    'data-vc-order': 'prependQueue',
-    'data-vc-priority': `${order}`,
+    'data-headless-order': 'prependQueue',
+    'data-headless-priority': `${order}`,
   };
 
   const styleText = toStyleStr(

@@ -43,6 +43,9 @@ export default defineConfig([
     },
   },
   {
-    ignores: ['packages/icons/**'],
+    ignores: [
+      'packages/icons/**',
+      'packages/ui-next/headless/src/qrcode/libs/qrcodegen.ts',
+    ],
   },
 ]);

@@ -1,0 +1,63 @@
+import type { InputHTMLAttributes } from 'vue';
+
+import type { InputRef } from '../Input';
+
+import { computed, defineComponent, shallowRef } from 'vue';
+
+import { pickAttrs } from '../../../util';
+import useBaseProps from '../../hooks/useBaseProps';
+import { useSelectInputContext } from '../context';
+import MultipleContent from './MultipleContent';
+import SingleContent from './SingleContent';
+
+export interface SharedContentProps {
+  inputProps: InputHTMLAttributes;
+}
+
+const SelectContent = defineComponent(
+  (_, { expose }) => {
+    const selectInputContext = useSelectInputContext();
+    const baseProps = useBaseProps();
+
+    const inputRef = shallowRef<InputRef>();
+
+    expose({
+      input: computed(() => inputRef.value?.input as any),
+    });
+
+    const multiple = computed(() => selectInputContext.value?.multiple);
+    const onInputKeyDown = computed(
+      () => selectInputContext.value?.onInputKeyDown,
+    );
+    const showSearch = computed(() => baseProps.value?.showSearch);
+
+    const ariaProps = computed(() =>
+      pickAttrs(baseProps.value ?? {}, { aria: true }),
+    );
+
+    const sharedInputProps = computed<SharedContentProps['inputProps']>(() => ({
+      ...ariaProps.value,
+      onKeyDown: onInputKeyDown.value,
+      readonly: !showSearch.value,
+      tabindex: baseProps.value?.tabIndex,
+    }));
+
+    return () => {
+      if (multiple.value) {
+        return (
+          <MultipleContent inputProps={sharedInputProps.value} ref={inputRef} />
+        );
+      }
+
+      return (
+        <SingleContent inputProps={sharedInputProps.value} ref={inputRef} />
+      );
+    };
+  },
+  {
+    name: 'SelectContent',
+    inheritAttrs: false,
+  },
+);
+
+export default SelectContent;

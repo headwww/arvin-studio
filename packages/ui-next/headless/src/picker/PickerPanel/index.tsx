@@ -159,7 +159,8 @@ const PickerPanel = defineComponent<PickerPanelProps>(
     const rootRef = ref<HTMLDivElement>();
 
     const mergedPrefixCls = computed(
-      () => pickerContext.value.prefixCls || props.prefixCls || 'vc-picker',
+      () =>
+        pickerContext.value.prefixCls || props.prefixCls || 'headless-picker',
     );
     const mergedGenerateConfig = computed(
       () => props.generateConfig || pickerContext.value.generateConfig,

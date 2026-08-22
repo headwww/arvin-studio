@@ -5,7 +5,7 @@ import { computed, shallowRef, unref, watch } from 'vue';
 import { getTargetScrollBarSize, removeCSS, updateCSS } from '../util';
 import { isBodyOverflowing } from './util';
 
-const UNIQUE_ID = `vc-util-locker-${Date.now()}`;
+const UNIQUE_ID = `headless-util-locker-${Date.now()}`;
 
 let uuid = 0;
 export default function useScrollLocker(

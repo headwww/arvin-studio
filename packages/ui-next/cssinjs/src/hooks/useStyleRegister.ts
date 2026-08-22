@@ -777,8 +777,8 @@ export const extract: ExtractStyle<StyleCacheValue> = (
   let keyStyleText = styleStr;
 
   const sharedAttrs = {
-    'data-vc-order': 'prependQueue',
-    'data-vc-priority': `${order}`,
+    'data-headless-order': 'prependQueue',
+    'data-headless-priority': `${order}`,
   };
 
   keyStyleText = toStyleStr(styleStr, undefined, styleId, sharedAttrs, plain);

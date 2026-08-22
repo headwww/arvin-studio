@@ -49,7 +49,7 @@ function defaultRenderRest<ItemType>(omittedItems: ItemType[]) {
 }
 
 const overflowProps = {
-  prefixCls: { type: String, default: 'vc-overflow' },
+  prefixCls: { type: String, default: 'headless-overflow' },
   data: { type: Array as PropType<any[]>, default: () => [] },
   renderItem: Function as PropType<
     (item: any, info: { index: number }) => VueNode
@@ -320,7 +320,7 @@ const OverflowImpl = defineComponent({
 
     return () => {
       const {
-        prefixCls = 'vc-overflow',
+        prefixCls = 'headless-overflow',
         component: Component = 'div',
         itemComponent,
       } = props;

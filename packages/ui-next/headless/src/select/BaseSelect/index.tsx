@@ -1,0 +1,918 @@
+import type { CSSProperties } from 'vue';
+
+import type { AlignType, BuildInPlacements } from '../../trigger';
+import type { VueNode } from '../../util';
+import type { ScrollConfig, ScrollTo } from '../../virtual-list';
+import type { ComponentsConfig } from '../hooks';
+import type {
+  DisplayInfoType,
+  DisplayValueType,
+  Mode,
+  Placement,
+  RawValueType,
+  RenderDOMFunc,
+  RenderNode,
+} from '../interface';
+
+import { computed, defineComponent, shallowRef, watch } from 'vue';
+
+import { clsx, omit } from '@arvin-studio/kit';
+
+import { getDOM, KeyCodeStr } from '../../util';
+import { useAllowClear, useBaseSelectProvider } from '../hooks';
+import useComponents from '../hooks/useComponents';
+import useLock from '../hooks/useLock';
+import useOpen, { macroTask } from '../hooks/useOpen';
+import useSelectTriggerControl, {
+  isInside,
+} from '../hooks/useSelectTriggerControl';
+import SelectInput from '../SelectInput';
+import SelectTrigger from '../SelectTrigger';
+import { getSeparatedContent, isValidCount } from '../utils/valueUtil';
+import Polite from './Polite';
+
+export type BaseSelectSemanticName =
+  | 'clear'
+  | 'content'
+  | 'input'
+  | 'item'
+  | 'itemContent'
+  | 'itemRemove'
+  | 'placeholder'
+  | 'prefix'
+  | 'suffix';
+
+/**
+ * ZombieJ:
+ * We are currently refactoring the semantic structure of the component. Changelog:
+ * - Remove `suffixIcon` and change to `suffix`.
+ * - Add `components.root` for replacing response element.
+ *   - Remove `getInputElement` and `getRawInputElement` since we can use `components.input` instead.
+ */
+
+export type {
+  DisplayInfoType,
+  DisplayValueType,
+  Mode,
+  Placement,
+  RawValueType,
+  RenderDOMFunc,
+  RenderNode,
+};
+
+export interface RefOptionListProps {
+  onKeyDown: (event: KeyboardEvent) => void;
+  onKeyUp: (event: KeyboardEvent) => void;
+  scrollTo: (args: number | ScrollConfig) => void;
+}
+
+export interface CustomTagProps {
+  closable: boolean;
+  disabled: boolean;
+  index: number;
+  isMaxTag: boolean;
+  label: VueNode;
+  onClose: (event?: MouseEvent) => void;
+  value: any;
+}
+
+export interface BaseSelectRef {
+  blur: () => void;
+  focus: (options?: FocusOptions) => void;
+  nativeElement: HTMLElement;
+  scrollTo: ScrollTo;
+}
+
+export interface BaseSelectPrivateProps {
+  /** Link search input with target element */
+  activeDescendantId?: string;
+  // >>> Active
+  /** Current dropdown list active item string value */
+  activeValue?: string;
+  autoClearSearchValue?: boolean;
+
+  // >>> Value
+  displayValues: DisplayValueType[];
+  /** Tell if provided `options` is empty */
+  emptyOptions: boolean;
+
+  // >>> MISC
+  id: string;
+  omitDomProps?: string[];
+  onActiveValueChange?: (value: null | string) => void;
+
+  onDisplayValuesChange: (
+    values: DisplayValueType[],
+    info: {
+      type: DisplayInfoType;
+      values: DisplayValueType[];
+    },
+  ) => void;
+  /** Trigger onSearch, return false to prevent trigger open event */
+  onSearch: (
+    searchValue: string,
+    info: {
+      source:
+        | 'blur' // Not trigger event
+        | 'effect' // Code logic trigger
+        | 'submit' // tag mode only
+        | 'typing'; // User typing
+    },
+  ) => void;
+  /** Trigger when search text match the `tokenSeparators`. Will provide split content */
+  onSearchSplit?: (words: string[]) => void;
+  // >>> Dropdown
+  OptionList: any;
+
+  prefixCls: string;
+  // >>> Search
+  searchValue: string;
+}
+
+export type BaseSelectPropsWithoutPrivate = Omit<
+  BaseSelectProps,
+  keyof BaseSelectPrivateProps
+>;
+
+export interface BaseSelectProps extends BaseSelectPrivateProps {
+  // >>> Icons
+  allowClear?: boolean | { clearIcon?: VueNode; label?: string };
+  // >>> Dropdown/Popup
+  animation?: string;
+  autoFocus?: boolean;
+  builtinPlacements?: BuildInPlacements;
+
+  choiceTransitionName?: string;
+  // Style
+  className?: string;
+  classNames?: Partial<Record<BaseSelectSemanticName, string>>;
+  /**
+   * Clear all icon
+   * @deprecated Please use `allowClear` instead
+   */
+  clearIcon?: VueNode;
+  // >>> Components
+  components?: ComponentsConfig;
+  defaultOpen?: boolean;
+
+  direction?: 'ltr' | 'rtl';
+  // >>> Status
+  disabled?: boolean;
+  // >>> Customize Input
+  /** @private Internal usage. Do not use in your production. */
+  getInputElement?: () => any;
+  getPopupContainer?: RenderDOMFunc;
+  /** @private Internal usage. Do not use in your production. */
+  getRawInputElement?: () => any;
+  loading?: boolean;
+
+  maxCount?: number;
+
+  maxLength?: number;
+
+  maxTagCount?: 'responsive' | number;
+  maxTagPlaceholder?: ((omittedValues: DisplayValueType[]) => any) | VueNode;
+
+  // >>> Selector
+  maxTagTextLength?: number;
+  // >>> Mode
+  mode?: Mode;
+  notFoundContent?: VueNode;
+
+  onBlur?: (event: FocusEvent) => void;
+  onClear?: () => void;
+
+  onClick?: (event: MouseEvent) => void;
+  onFocus?: (event: FocusEvent) => void;
+  onInputKeyDown?: (event: KeyboardEvent) => void;
+
+  onKeyDown?: (event: KeyboardEvent) => void;
+
+  onKeyUp?: (event: KeyboardEvent) => void;
+  onMouseDown?: (event: MouseEvent) => void;
+  onMouseEnter?: (event: MouseEvent) => void;
+  onMouseLeave?: (event: MouseEvent) => void;
+  onPopupScroll?: (e: Event) => void;
+  onPopupVisibleChange?: (open: boolean) => void;
+
+  // >>> Open
+  open?: boolean;
+  placeholder?: VueNode;
+
+  placement?: Placement;
+  popupAlign?: AlignType;
+  popupClassName?: string;
+  popupMatchSelectWidth?: boolean | number;
+  popupRender?: (menu: any) => any;
+
+  popupStyle?: CSSProperties;
+  prefix?: VueNode;
+  /** Selector remove icon */
+  removeIcon?: RenderNode;
+
+  // >>> Focus
+  showAction?: ('click' | 'focus')[];
+  showScrollBar?: 'optional' | boolean;
+  // Selector
+  showSearch?: boolean;
+
+  style?: CSSProperties;
+  styles?: Partial<Record<BaseSelectSemanticName, CSSProperties>>;
+  suffix?: RenderNode;
+  /** @deprecated Please use `suffix` instead. */
+  suffixIcon?: RenderNode;
+  tabIndex?: number;
+  tagRender?: (props: CustomTagProps) => any;
+  // MISC
+  title?: string;
+  // >>> Search
+  tokenSeparators?: ((input: string) => string[]) | string[];
+
+  transitionName?: string;
+}
+
+export const isMultiple = (mode: Mode) =>
+  mode === 'tags' || mode === 'multiple';
+
+const omitKeys: any = [
+  'id',
+  'prefixCls',
+  'className',
+  'styles',
+  'classNames',
+  'showSearch',
+  'tagRender',
+  'showScrollBar',
+  'direction',
+  'omitDomProps',
+
+  // Value
+  'displayValues',
+  'onDisplayValuesChange',
+  'emptyOptions',
+  'notFoundContent',
+  'onClear',
+  'maxCount',
+  'placeholder',
+
+  // Mode
+  'mode',
+
+  // Status
+  'disabled',
+  'loading',
+
+  // Customize Input
+  'getInputElement',
+  'getRawInputElement',
+
+  // Open
+  'open',
+  'defaultOpen',
+  'onPopupVisibleChange',
+
+  // Active
+  'activeValue',
+  'onActiveValueChange',
+  'activeDescendantId',
+
+  // Search
+  'searchValue',
+  'autoClearSearchValue',
+  'onSearch',
+  'onSearchSplit',
+  'tokenSeparators',
+
+  // Icons
+  'allowClear',
+  'prefix',
+  'suffix',
+  'suffixIcon',
+  'clearIcon',
+
+  // Dropdown
+  'OptionList',
+  'animation',
+  'transitionName',
+  'popupStyle',
+  'popupClassName',
+  'popupMatchSelectWidth',
+  'popupRender',
+  'popupAlign',
+  'placement',
+  'builtinPlacements',
+  'getPopupContainer',
+
+  // Focus
+  'showAction',
+  'onFocus',
+  'onBlur',
+
+  // Rest Events
+  'onKeyUp',
+  'onKeyDown',
+  'onMouseDown',
+
+  // Components
+  'components',
+] as const;
+
+const defaults = {
+  showScrollBar: 'optional',
+  notFoundContent: 'Not Found',
+  showAction: [],
+} as any;
+export const BaseSelect = defineComponent<BaseSelectProps>(
+  (props = defaults, { expose, attrs }) => {
+    // ============================== Refs for props ==============================
+    const mode = computed(() => props.mode);
+    const getInputElement = computed(() => props.getInputElement);
+    const getRawInputElement = computed(() => props.getRawInputElement);
+    const components = computed(() => props.components);
+    const searchValue = computed(() => props.searchValue);
+    const displayValues = computed(() => props.displayValues);
+    const open = computed(() => props.open);
+    const tokenSeparators = computed(() => props.tokenSeparators);
+    const disabled = computed(() => props.disabled);
+
+    // ============================== MISC ==============================
+    const multiple = computed(() => isMultiple(mode.value!));
+    // ============================== Refs ==============================
+    const containerRef = shallowRef();
+    const triggerRef = shallowRef();
+    const listRef = shallowRef();
+
+    /** Used for component focused management */
+    const focused = shallowRef(false);
+
+    // =========================== Imperative ===========================
+    expose({
+      focus: (...args: any) => containerRef.value?.focus?.(...args),
+      blur: () => containerRef.value?.blur?.(),
+      scrollTo: (arg: ScrollTo) => listRef.value?.scrollTo(arg),
+      nativeElement: computed(() => getDOM(containerRef)),
+    });
+
+    // =========================== Components ===========================
+    const mergedComponents = useComponents(
+      components as any,
+      getInputElement as any,
+      getRawInputElement as any,
+    );
+
+    // ========================== Search Value ==========================
+    const mergedSearchValue = computed(() => {
+      if (mode.value !== 'combobox') {
+        return searchValue.value;
+      }
+      const val = displayValues.value?.[0]?.value;
+      return typeof val === 'string' || typeof val === 'number'
+        ? String(val)
+        : '';
+    });
+
+    const mergedNotFoundContent = computed(() => {
+      return props.notFoundContent ?? 'Not Found';
+    });
+
+    // ============================== Open ==============================
+    // Not trigger `open` when `notFoundContent` is empty
+    const emptyListContent = computed(
+      () => !props?.notFoundContent && props.emptyOptions,
+    );
+    const [rawOpen, mergedOpen, triggerOpen, lockOptions] = useOpen(
+      props?.defaultOpen || false,
+      open as any,
+      (openVal) => {
+        props.onPopupVisibleChange?.(openVal);
+      },
+      (nextOpen) => {
+        return props.disabled || emptyListContent.value ? false : nextOpen;
+      },
+    );
+
+    // ============================= Search =============================
+    const tokenWithEnter = computed(() => {
+      const value = tokenSeparators.value;
+      return (
+        typeof value === 'function' ||
+        (value || []).some((tokenSeparator: string) =>
+          ['\n', '\r\n'].includes(tokenSeparator),
+        )
+      );
+    });
+
+    /**
+     * ant-design#57391 / rc-select#1220: when `tokenSeparators` is a
+     * function, defer the split decision to the user callback. Otherwise
+     * fall back to the static-string-array behaviour via getSeparatedContent.
+     */
+    const splitByTokenSeparators = (
+      input: string,
+      end?: number,
+    ): null | string[] => {
+      const value = tokenSeparators.value;
+      if (typeof value === 'function') {
+        const tokens = value(input);
+        const isUnchanged =
+          Array.isArray(tokens) && tokens.length === 1 && tokens[0] === input;
+        if (!Array.isArray(tokens) || tokens.length === 0 || isUnchanged) {
+          return null;
+        }
+        return end === undefined ? tokens : tokens.slice(0, end);
+      }
+      return getSeparatedContent(input, value as string[], end);
+    };
+
+    const onInternalSearch = (
+      searchText: string,
+      fromTyping: boolean,
+      isCompositing: boolean,
+    ) => {
+      const { maxCount } = props;
+      if (
+        multiple.value &&
+        isValidCount(maxCount) &&
+        displayValues.value.length >= maxCount!
+      ) {
+        return;
+      }
+      let ret = true;
+      let newSearchText = searchText;
+      props?.onActiveValueChange?.(null);
+
+      const cap = isValidCount(maxCount)
+        ? maxCount! - displayValues.value.length
+        : undefined;
+      // Check if match the `tokenSeparators`
+      const patchLabels: null | string[] = isCompositing
+        ? null
+        : splitByTokenSeparators(searchText, cap);
+
+      // Ignore combobox since it's not split-able
+      if (mode.value !== 'combobox' && patchLabels) {
+        newSearchText = '';
+        props?.onSearchSplit?.(patchLabels);
+
+        // Should close when paste finish
+        triggerOpen(false);
+        // Tell Selector that break next actions
+        ret = false;
+      }
+
+      if (props.onSearch && mergedSearchValue.value !== newSearchText) {
+        props?.onSearch?.(newSearchText, {
+          source: fromTyping ? 'typing' : 'effect',
+        });
+      }
+      // Open if from typing
+      if (searchText && fromTyping && ret) {
+        triggerOpen(true);
+      }
+      return ret;
+    };
+
+    // Only triggered when menu is closed & mode is tags
+    // If menu is open, OptionList will take charge
+    // If mode isn't tags, press enter is not meaningful when you can't see any option
+    const onInternalSearchSubmit = (searchText: string) => {
+      const { maxCount } = props;
+      // fix https://github.com/antdv-next/antdv-next/issues/529
+      if (
+        multiple.value &&
+        isValidCount(maxCount) &&
+        displayValues.value.length >= maxCount!
+      ) {
+        return;
+      }
+      // prevent empty tags from appearing when you click the Enter button
+      if (!searchText || !searchText.trim()) {
+        return;
+      }
+      props?.onSearch?.(searchText, { source: 'submit' });
+    };
+
+    // Clean up search value when the dropdown is closed.
+    // We use `rawOpen` here to avoid clearing the search input when the dropdown is
+    // programmatically closed due to `notFoundContent={null}` and no matching options.
+    // This allows the user to continue typing their search query.
+    watch(
+      rawOpen,
+      () => {
+        if (!rawOpen.value && !multiple.value && mode.value !== 'combobox') {
+          onInternalSearch('', false, false);
+        }
+      },
+      {
+        immediate: true,
+      },
+    );
+
+    // ============================ Disabled ============================
+    // Close dropdown & remove focus state when disabled change
+    watch(
+      [disabled, mergedOpen],
+      () => {
+        if (!disabled.value) {
+          return;
+        }
+
+        triggerOpen(false);
+        focused.value = false;
+      },
+      {
+        immediate: true,
+      },
+    );
+
+    // ============================ Keyboard ============================
+    /**
+     * We record input value here to check if can press to clean up by backspace
+     * - null: Key is not down, this is reset by key up
+     * - true: Search text is empty when first time backspace down
+     * - false: Search text is not empty when first time backspace down
+     */
+    const [getClearLock, setClearLock] = useLock();
+    const keyLockRef = shallowRef(false);
+
+    // KeyDown
+    const onInternalKeyDown = (event: KeyboardEvent) => {
+      const clearLock = getClearLock();
+      // React reads the pre-render `mergedOpen` inside the whole event, while
+      // Vue refs update synchronously. `SelectInput.onInternalInputKeyDown`
+      // runs first on the input element and may already have opened the
+      // dropdown via `toggleOpen(true)`, so prefer the open state it recorded
+      // before that. This keeps the Enter key that opens the dropdown from
+      // being forwarded to OptionList (which would instantly select the
+      // active option and close the dropdown again).
+      // see https://github.com/antdv-next/antdv-next/issues/594
+      const wasOpen =
+        (event as any)._select_open_before === undefined
+          ? mergedOpen.value
+          : ((event as any)._select_open_before as boolean);
+      const { key } = event;
+      const isEnterKey = key === KeyCodeStr.Enter;
+      const isSpaceKey = key === KeyCodeStr.Space;
+
+      // Enter or Space opens dropdown (ARIA combobox: spacebar should open)
+      if (isEnterKey || isSpaceKey) {
+        // Do not submit form when type in the input; prevent Space from scrolling page.
+        const isCombobox = mode.value === 'combobox';
+        const isEditable = isCombobox || !!props.showSearch;
+        if ((isSpaceKey && !isEditable) || (isEnterKey && !isCombobox)) {
+          event.preventDefault();
+        }
+        // We only manage open state here, close logic should handle by list component
+        if (!mergedOpen.value) {
+          triggerOpen(true);
+        }
+      }
+
+      setClearLock(!!mergedSearchValue.value);
+
+      // Remove value by `backspace`
+      if (
+        key === KeyCodeStr.Backspace &&
+        !clearLock &&
+        multiple.value &&
+        !mergedSearchValue.value &&
+        displayValues.value.length > 0
+      ) {
+        const cloneDisplayValues = [...displayValues.value];
+        let removedDisplayValue: DisplayValueType | null = null;
+
+        for (let i = cloneDisplayValues.length - 1; i >= 0; i -= 1) {
+          const current = cloneDisplayValues[i];
+          if (!current!.disabled) {
+            cloneDisplayValues.splice(i, 1);
+            removedDisplayValue = current!;
+            break;
+          }
+        }
+        if (removedDisplayValue) {
+          props?.onDisplayValuesChange(cloneDisplayValues, {
+            type: 'remove',
+            values: [removedDisplayValue],
+          });
+        }
+      }
+
+      // Lock other operations until key up
+      if (wasOpen && (!isEnterKey || !keyLockRef.value) && !isSpaceKey) {
+        // Lock the Enter key after it is pressed to avoid repeated triggering of the onChange event.
+        if (isEnterKey) {
+          keyLockRef.value = true;
+        }
+        listRef.value?.onKeyDown?.(event);
+      }
+      props?.onKeyDown?.(event);
+    };
+
+    const onInternalKeyUp = (event: KeyboardEvent) => {
+      if (mergedOpen.value) {
+        listRef.value?.onKeyUp?.(event);
+      }
+      if (event.key === KeyCodeStr.Enter) {
+        keyLockRef.value = false;
+      }
+      props?.onKeyUp?.(event);
+    };
+
+    // ============================ Selector ============================
+    const onSelectorRemove = (val: DisplayValueType) => {
+      const newValues = displayValues.value.filter(
+        (i: DisplayValueType) => i !== val,
+      );
+
+      props?.onDisplayValuesChange(newValues, {
+        type: 'remove',
+        values: [val],
+      });
+    };
+
+    const onInputBlur = () => {
+      // Unlock the Enter key after the input blur; otherwise, the Enter key needs to be pressed twice to trigger the correct effect.
+      keyLockRef.value = false;
+    };
+
+    // ========================== Focus / Blur ==========================
+    const getSelectElements = () => [
+      getDOM(containerRef),
+      triggerRef.value?.getPopupElement?.(),
+    ];
+
+    // Close when click on non-select element
+    useSelectTriggerControl(
+      getSelectElements,
+      mergedOpen,
+      triggerOpen,
+      computed(() => !!mergedComponents.value.root),
+    );
+
+    // ========================== Focus / Blur ==========================
+    const internalMouseDownRef = shallowRef(false);
+
+    const onInternalFocus = (event: FocusEvent) => {
+      focused.value = true;
+      if (!disabled.value) {
+        // `showAction` should handle `focus` if set
+        if (props.showAction?.includes?.('focus')) {
+          triggerOpen(true);
+        }
+
+        props?.onFocus?.(event);
+      }
+    };
+
+    const onRootBlur = () => {
+      // Delay close should check the activeElement
+      if (mergedOpen.value && !internalMouseDownRef.value) {
+        triggerOpen(false, {
+          cancelFun: () =>
+            isInside(
+              getSelectElements(),
+              document.activeElement as HTMLElement,
+            ),
+        });
+      }
+    };
+
+    const onInternalBlur = (event: FocusEvent) => {
+      focused.value = false;
+      if (mergedSearchValue.value) {
+        // `tags` mode should move `searchValue` into values
+        if (mode.value === 'tags') {
+          props?.onSearch?.(mergedSearchValue.value, { source: 'submit' });
+        } else if (mode.value === 'multiple') {
+          // `multiple` mode only clean the search value but not trigger event
+          props?.onSearch?.('', { source: 'blur' });
+        }
+      }
+
+      onRootBlur();
+
+      if (!disabled.value) {
+        props?.onBlur?.(event);
+      }
+    };
+
+    const onInternalMouseDown = (event: MouseEvent) => {
+      const { target } = event;
+
+      const popupElement: HTMLDivElement =
+        triggerRef?.value?.getPopupElement?.();
+      // We should give focus back to selector if clicked item is not focusable
+      if (popupElement?.contains?.(target as HTMLElement) && triggerOpen) {
+        triggerOpen(true);
+      }
+      props?.onMouseDown?.(event);
+      internalMouseDownRef.value = true;
+      macroTask(() => {
+        internalMouseDownRef.value = false;
+      });
+    };
+
+    // ============================ Dropdown ============================
+    const forceState = shallowRef({});
+    // We need force update here since popup dom is render async
+    function onPopupMouseEnter() {
+      forceState.value = {};
+    }
+
+    // ============================ Context =============================
+    const baseSelectContext = computed(() => {
+      return {
+        ...props,
+        notFoundContent: mergedNotFoundContent.value,
+        open: mergedOpen.value,
+        triggerOpen: mergedOpen.value,
+        toggleOpen: triggerOpen,
+        multiple: multiple.value,
+        lockOptions: lockOptions.value,
+        rawOpen: rawOpen.value,
+      };
+    });
+
+    // Provide context
+    useBaseSelectProvider(baseSelectContext);
+
+    // ============================= Clear ==============================
+    const onClearMouseDown = () => {
+      props?.onClear?.();
+      containerRef.value?.focus?.();
+      props?.onDisplayValuesChange([], {
+        type: 'clear',
+        values: displayValues.value,
+      });
+      onInternalSearch('', false, false);
+    };
+    const allowClearConfig = useAllowClear(
+      computed(() => props.prefixCls),
+      displayValues,
+      computed(() => props.allowClear ?? false),
+      computed(() => props.clearIcon),
+      computed(() => disabled.value ?? false),
+      mergedSearchValue,
+      mode,
+    );
+    return () => {
+      const {
+        OptionList,
+        prefixCls,
+        className,
+        loading,
+        showSearch,
+        prefix,
+        placeholder,
+        activeValue,
+        animation,
+        transitionName,
+        popupStyle,
+        popupClassName,
+        direction,
+        popupMatchSelectWidth,
+        popupRender,
+        popupAlign,
+        placement,
+        builtinPlacements,
+        getPopupContainer,
+        emptyOptions,
+      } = props;
+      const mergedAllowClear = allowClearConfig.value.allowClear;
+      const clearNode = allowClearConfig.value.clearIcon;
+      const clearLabel = allowClearConfig.value.label;
+      // ========================== Custom Input ==========================
+      // Only works in `combobox`
+      const customizeInputElement =
+        (mode.value === 'combobox' &&
+          typeof getInputElement.value === 'function' &&
+          getInputElement.value()) ||
+        null;
+      // Used for raw custom input trigger
+      const onTriggerVisibleChange: ((newOpen: boolean) => void) | null =
+        mergedComponents.value?.root
+          ? (newOpen: boolean) => {
+              triggerOpen(newOpen);
+            }
+          : null;
+
+      // ============================= Suffix =============================
+      const mergedSuffixIconFn = () => {
+        const nextSuffix = props.suffix ?? props?.suffixIcon;
+        if (typeof nextSuffix === 'function') {
+          return (nextSuffix as any)?.({
+            searchValue: mergedSearchValue.value,
+            open: mergedOpen.value,
+            focused: focused.value,
+            showSearch: props.showSearch,
+            loading: props.loading,
+          });
+        }
+        return nextSuffix;
+      };
+      const mergedSuffixIcon = mergedSuffixIconFn();
+
+      // =========================== OptionList ===========================
+      const optionList = <OptionList ref={listRef} />;
+
+      // ============================= Select =============================
+      const mergedClassName = clsx(prefixCls, className, {
+        [`${prefixCls}-focused`]: focused.value,
+        [`${prefixCls}-multiple`]: multiple.value,
+        [`${prefixCls}-single`]: !multiple.value,
+        [`${prefixCls}-allow-clear`]: mergedAllowClear,
+        [`${prefixCls}-show-arrow`]:
+          mergedSuffixIcon !== undefined && mergedSuffixIcon !== null,
+        [`${prefixCls}-disabled`]: disabled.value,
+        [`${prefixCls}-loading`]: loading,
+        [`${prefixCls}-open`]: mergedOpen.value,
+        [`${prefixCls}-customize-input`]: customizeInputElement,
+        [`${prefixCls}-show-search`]: showSearch,
+      });
+
+      // >>> Render
+      let renderNode = (
+        <SelectInput
+          {...attrs}
+          {...omit(props, omitKeys)}
+          activeValue={activeValue}
+          className={mergedClassName}
+          clearIcon={clearNode}
+          clearLabel={clearLabel}
+          // Components
+          components={mergedComponents.value}
+          // Values
+          displayValues={displayValues.value}
+          // Focus state
+          focused={focused.value}
+          mode={mode.value}
+          // Type or mode
+          multiple={multiple.value}
+          onBlur={onInternalBlur}
+          onClearMouseDown={onClearMouseDown}
+          onFocus={onInternalFocus}
+          onInputBlur={onInputBlur}
+          onKeyDown={onInternalKeyDown}
+          onKeyUp={onInternalKeyUp}
+          // Open
+          onMouseDown={onInternalMouseDown}
+          onSearch={onInternalSearch}
+          onSearchSubmit={onInternalSearchSubmit}
+          onSelectorRemove={onSelectorRemove}
+          placeholder={placeholder}
+          // UI
+          prefix={prefix}
+          // Style
+          prefixCls={prefixCls}
+          // Ref
+          ref={containerRef}
+          searchValue={mergedSearchValue.value}
+          suffix={mergedSuffixIcon}
+          // Token handling
+          tokenWithEnter={tokenWithEnter.value}
+        />
+      );
+      renderNode = (
+        <SelectTrigger
+          animation={animation}
+          builtinPlacements={builtinPlacements}
+          direction={direction}
+          disabled={disabled.value ?? false}
+          empty={emptyOptions}
+          getPopupContainer={getPopupContainer}
+          onPopupBlur={onRootBlur}
+          onPopupMouseDown={onInternalMouseDown}
+          onPopupMouseEnter={onPopupMouseEnter}
+          onPopupVisibleChange={onTriggerVisibleChange}
+          placement={placement}
+          popupAlign={popupAlign}
+          popupClassName={popupClassName}
+          popupElement={optionList}
+          popupMatchSelectWidth={popupMatchSelectWidth}
+          popupRender={popupRender}
+          popupStyle={popupStyle}
+          prefixCls={prefixCls}
+          ref={triggerRef}
+          transitionName={transitionName}
+          visible={mergedOpen.value}
+        >
+          {renderNode}
+        </SelectTrigger>
+      );
+
+      return (
+        <>
+          <Polite
+            values={displayValues.value}
+            visible={focused.value && !mergedOpen.value}
+          />
+          {renderNode}
+        </>
+      );
+    };
+  },
+  {
+    name: 'BaseSelect',
+    inheritAttrs: false,
+  },
+);

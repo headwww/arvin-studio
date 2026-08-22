@@ -48,7 +48,7 @@ export interface PreviewGroupProps {
 }
 
 const defaults = {
-  previewPrefixCls: 'vc-image-preview',
+  previewPrefixCls: 'headless-image-preview',
   icons: {},
 } as any;
 

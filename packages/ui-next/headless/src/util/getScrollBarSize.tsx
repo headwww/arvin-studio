@@ -35,7 +35,7 @@ let cached: ScrollBarSize;
  */
 function measureScrollbarSize(ele?: HTMLElement): ScrollBarSize {
   // 为测量节点生成唯一 id（供注入的 ::-webkit-scrollbar 样式选择器使用）
-  const randomId = `vc-scrollbar-measure-${Math.random().toString(36).substring(7)}`;
+  const randomId = `headless-scrollbar-measure-${Math.random().toString(36).substring(7)}`;
   const measureEle = document.createElement('div');
   measureEle.id = randomId;
 
