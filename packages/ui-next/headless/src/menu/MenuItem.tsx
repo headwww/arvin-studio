@@ -1,0 +1,306 @@
+import type { HTMLAttributes } from 'vue';
+
+import type { ItemData, MenuItemType } from './interface.ts';
+
+import { computed, defineComponent, shallowRef, watch } from 'vue';
+
+import { clsx, omit } from '@arvin-studio/kit';
+
+import { Overflow } from '../overflow';
+import { toPropsRefs } from '../util/index';
+import KeyCode from '../util/KeyCode.js';
+import { warning } from '../util/warning';
+import { useMenuId } from './context/IdContext';
+import { useMenuContext } from './context/MenuContext';
+import { useFullPath, useMeasure } from './context/PathContext';
+import { usePrivateContext } from './context/PrivateContext';
+import useActive from './hooks/useActive';
+import useDirectionStyle from './hooks/useDirectionStyle';
+import Icon from './Icon';
+import { warnItemProp } from './utils/warnUtil';
+
+export interface MenuItemProps extends Omit<MenuItemType, 'key' | 'label'> {
+  /** @deprecated No place to use this. Should remove */
+  attribute?: Record<string, string>;
+
+  /** @private Internal filled key. Do not set it directly */
+  eventKey?: string;
+
+  /** @private Origin item config from items prop */
+  itemData?: ItemData;
+
+  onFocus?: (e: FocusEvent) => void;
+
+  onKeyDown?: (e: KeyboardEvent) => void;
+  role?: string;
+  /** @private Do not use. Private warning empty usage */
+  warnKey?: boolean;
+}
+
+// Since Menu event provide the `info.item` which point to the MenuItem node instance.
+// We have to use class component here.
+// This should be removed from doc & api in future.
+const LegacyMenuItem = defineComponent<{
+  elementRef?: any;
+}>(
+  (props, { slots, attrs }) => {
+    return () => {
+      const { title, attribute, ...restProps } = attrs;
+      const { elementRef } = props;
+      // Here the props are eventually passed to the DOM element.
+      // React does not recognize non-standard attributes.
+      // Therefore, remove the props that is not used here.
+      // ref: https://github.com/ant-design/ant-design/issues/41395
+      const passedProps = omit(restProps, [
+        'eventKey',
+        'popupClassName',
+        'popupOffset',
+        'onTitleClick',
+      ]);
+
+      warning(
+        !attribute,
+        '`attribute` of Menu.Item is deprecated. Please pass attribute directly.',
+      );
+
+      return (
+        <Overflow.Item
+          {...(attribute as any)}
+          title={typeof title === 'string' ? title : undefined}
+          {...passedProps}
+          ref={elementRef}
+        >
+          {slots?.default?.()}
+        </Overflow.Item>
+      );
+    };
+  },
+  {
+    name: 'LegacyMenuItem',
+    inheritAttrs: false,
+  },
+);
+
+/**
+ * Real Menu Item component
+ */
+
+const InternalMenuItem = defineComponent<MenuItemProps>(
+  (props, { slots, attrs }) => {
+    const { eventKey } = toPropsRefs(props, 'eventKey');
+    const domDataId = useMenuId(eventKey as any);
+    const menuContext = useMenuContext();
+    const privateContext = usePrivateContext();
+    const legacyMenuItemRef = shallowRef();
+    const elementRef = shallowRef<HTMLLIElement>();
+    const mergedDisabled = computed(
+      () => props.disabled ?? menuContext?.value?.disabled,
+    );
+    const connectedKeys = useFullPath(eventKey as any);
+    // @ts-expect-error this is a global variable which injected by babel plugin
+    // eslint-disable-next-line n/prefer-global/process
+    if (process.env.NODE_ENV !== 'production' && props.warnKey) {
+      warning(false, 'MenuItem should not leave undefined `key`.');
+    }
+    // ============================= Info =============================
+    const getEventInfo = (e: KeyboardEvent | MouseEvent) => {
+      // If itemData exists (items mode), use it; otherwise build from props (children mode)
+      const itemData: ItemData = props.itemData || {
+        key: eventKey.value || '',
+        label: slots?.default?.(),
+        itemIcon: props.itemIcon,
+        extra: props.extra,
+        title: typeof attrs.title === 'string' ? attrs.title : undefined,
+      };
+
+      return {
+        key: eventKey.value,
+        keyPath: connectedKeys.value,
+        item: legacyMenuItemRef.value,
+        domEvent: e,
+        itemData,
+      };
+    };
+
+    // ============================ Active ============================
+    const ret = useActive(
+      eventKey as any,
+      mergedDisabled as any,
+      props?.onMouseEnter,
+      props?.onMouseLeave,
+    );
+    const active = ret.active;
+
+    // ============================ Select ============================
+    const selected = computed(
+      () =>
+        !!menuContext?.value?.selectedKeys?.includes?.(eventKey.value as any),
+    );
+
+    // ======================== DirectionStyle ========================
+    const directionStyle = useDirectionStyle(
+      computed(() => connectedKeys.value.length),
+    );
+
+    // ============================ Events ============================
+    const onInternalClick = (e: MouseEvent) => {
+      if (mergedDisabled.value) {
+        return;
+      }
+      const info = getEventInfo(e);
+
+      props?.onClick?.(warnItemProp(info as any) as any);
+      menuContext?.value?.onItemClick?.(info as any);
+    };
+
+    const onInternalKeyDown = (e: KeyboardEvent) => {
+      props?.onKeyDown?.(e);
+      // eslint-disable-next-line unicorn/prefer-keyboard-event-key
+      if (e.which === KeyCode.ENTER) {
+        const info = getEventInfo(e);
+
+        // Legacy. Key will also trigger click event
+        props?.onClick?.(warnItemProp(info as any) as any);
+        menuContext?.value?.onItemClick?.(info as any);
+      }
+    };
+
+    /**
+     * Used for accessibility. Helper will focus element without key board.
+     * We should manually trigger an active
+     */
+    const onInternalFocus = (e: FocusEvent) => {
+      menuContext?.value?.onActive?.(eventKey.value as any);
+      props?.onFocus?.(e);
+    };
+    // ============================ Render ============================
+    return () => {
+      const { role, disabled, itemIcon, ...restProps } = props;
+      const optionRoleProps: HTMLAttributes = {};
+      if (role === 'option') {
+        optionRoleProps['aria-selected'] = selected.value;
+      }
+
+      const {
+        prefixCls,
+        overflowDisabled,
+        itemIcon: contextItemIcon,
+      } = menuContext?.value ?? {};
+
+      // ============================= Icon =============================
+      const mergedItemIcon = itemIcon || contextItemIcon;
+      const itemCls = `${prefixCls}-item`;
+      const activeProps = {
+        onMouseenter: ret.onMouseEnter,
+        onMouseleave: ret.onMouseLeave,
+      };
+
+      // Internally re-dispatched handlers must not also be spread onto the DOM
+      // node: Vue `mergeProps` stacks same-name listeners (unlike JSX override
+      // in rc-menu), so the user callback would fire twice — once with the raw
+      // event and once via the internal info dispatch.
+      let renderNode = (
+        <LegacyMenuItem
+          data-menu-id={
+            overflowDisabled && domDataId.value ? null : domDataId.value
+          }
+          elementRef={elementRef}
+          ref={legacyMenuItemRef}
+          role={role === null ? 'none' : role || 'menuitem'}
+          tabIndex={disabled ? null : -1}
+          {...omit({ ...restProps, ...attrs }, [
+            'extra',
+            'onClick',
+            'onKeyDown',
+            'onFocus',
+            'onMouseEnter',
+            'onMouseLeave',
+            'class',
+          ])}
+          {...activeProps}
+          {...(optionRoleProps as any)}
+          aria-disabled={disabled}
+          className={clsx(
+            itemCls,
+            {
+              [`${itemCls}-active`]: active.value,
+              [`${itemCls}-selected`]: selected.value,
+              [`${itemCls}-disabled`]: mergedDisabled.value,
+            },
+            props.class,
+          )}
+          component="li"
+          onClick={onInternalClick}
+          onFocus={onInternalFocus}
+          onKeydown={onInternalKeyDown}
+          style={[directionStyle.value, props?.style]}
+        >
+          {slots?.default?.()}
+          <Icon
+            icon={mergedItemIcon}
+            props={{
+              ...props,
+              isSelected: selected.value,
+            }}
+          />
+        </LegacyMenuItem>
+      );
+      if (privateContext._internalRenderMenuItem) {
+        renderNode = privateContext._internalRenderMenuItem(renderNode, props, {
+          selected: selected.value,
+        });
+      }
+      return renderNode;
+    };
+  },
+  {
+    name: 'InternalMenuItem',
+    inheritAttrs: false,
+  },
+);
+
+const MenuItem = defineComponent<MenuItemProps>(
+  (props, { slots, attrs }) => {
+    const { eventKey } = toPropsRefs(props, 'eventKey');
+    // ==================== Record KeyPath ====================
+    const measure = useMeasure();
+    const connectedKeyPath = useFullPath(eventKey as any);
+    watch(
+      [connectedKeyPath],
+      (_n, _o, onCleanup) => {
+        if (measure) {
+          measure.registerPath(eventKey.value!, connectedKeyPath.value as any);
+        }
+        onCleanup(() => {
+          measure?.unregisterPath(
+            eventKey.value!,
+            connectedKeyPath.value as any,
+          );
+        });
+      },
+      {
+        immediate: true,
+      },
+    );
+    return () => {
+      if (measure) {
+        return null;
+      }
+      // ======================== Render ========================
+      // attrs.class is ClassValue (may be null) while MenuItemProps#class is
+      // the items-config string — cast the merged spread for the passthrough
+      return (
+        <InternalMenuItem
+          {...({ ...attrs, ...props } as any)}
+          v-slots={slots}
+        />
+      );
+    };
+  },
+  {
+    name: 'MenuItem',
+    inheritAttrs: false,
+  },
+);
+
+export default MenuItem;

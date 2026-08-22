@@ -1,0 +1,136 @@
+import type { Ref } from 'vue';
+
+import { onUnmounted, ref } from 'vue';
+
+import isFF from '../utils/isFirefox';
+import useOriginScroll from './useOriginScroll';
+
+type FireFoxDOMMouseScrollEvent = Event & {
+  detail?: number;
+};
+
+export default function useFrameWheel(
+  inVirtual: Ref<boolean>,
+  isScrollAtTop: Ref<boolean>,
+  isScrollAtBottom: Ref<boolean>,
+  isScrollAtLeft: Ref<boolean>,
+  isScrollAtRight: Ref<boolean>,
+  horizontalScroll: Ref<boolean>,
+  /**
+   * Return `true` when you need to prevent default event
+   */
+  onWheelDelta: (offset: number, horizontal: boolean) => void,
+): [(e: WheelEvent) => void, EventListener] {
+  const offsetRef = ref(0);
+  let nextFrame: null | number = null;
+
+  // Firefox patch
+  const wheelValueRef = ref<null | number>(null);
+  const isMouseScrollRef = ref<boolean>(false);
+
+  // Scroll status sync
+  const originScroll = useOriginScroll(
+    isScrollAtTop,
+    isScrollAtBottom,
+    isScrollAtLeft,
+    isScrollAtRight,
+  );
+
+  function onWheelY(e: WheelEvent, deltaY: number) {
+    if (nextFrame) cancelAnimationFrame(nextFrame);
+
+    // Do nothing when scroll at the edge, Skip check when is in scroll
+    if (originScroll(false, deltaY)) return;
+
+    // Skip if nest List has handled this event
+    const event = e as WheelEvent & {
+      _virtualHandled?: boolean;
+    };
+    if (event._virtualHandled) {
+      return;
+    } else {
+      event._virtualHandled = true;
+    }
+
+    offsetRef.value += deltaY;
+    wheelValueRef.value = deltaY;
+
+    // Proxy of scroll events
+    if (!isFF) {
+      event.preventDefault();
+    }
+
+    nextFrame = requestAnimationFrame(() => {
+      // Patch a multiple for Firefox to fix wheel number too small
+      const patchMultiple = isMouseScrollRef.value ? 10 : 1;
+      onWheelDelta(offsetRef.value * patchMultiple, false);
+      offsetRef.value = 0;
+    });
+  }
+
+  function onWheelX(event: WheelEvent, deltaX: number) {
+    onWheelDelta(deltaX, true);
+
+    if (!isFF) {
+      event.preventDefault();
+    }
+  }
+
+  // Check for which direction does wheel do. `sx` means `shift + wheel`
+  const wheelDirectionRef = ref<'sx' | 'x' | 'y' | null>(null);
+  let wheelDirectionClean: null | number = null;
+
+  function onWheel(event: WheelEvent) {
+    if (!inVirtual.value) return;
+
+    // Wait for 2 frame to clean direction
+    if (wheelDirectionClean) cancelAnimationFrame(wheelDirectionClean);
+    wheelDirectionClean = requestAnimationFrame(() => {
+      wheelDirectionRef.value = null;
+    });
+
+    const { deltaX, deltaY, shiftKey } = event;
+
+    let mergedDeltaX = deltaX;
+    let mergedDeltaY = deltaY;
+
+    if (
+      wheelDirectionRef.value === 'sx' ||
+      (!wheelDirectionRef.value && shiftKey && deltaY && !deltaX)
+    ) {
+      mergedDeltaX = deltaY;
+      mergedDeltaY = 0;
+
+      wheelDirectionRef.value = 'sx';
+    }
+
+    const absX = Math.abs(mergedDeltaX);
+    const absY = Math.abs(mergedDeltaY);
+
+    if (wheelDirectionRef.value === null) {
+      wheelDirectionRef.value =
+        horizontalScroll.value && absX > absY ? 'x' : 'y';
+    }
+
+    if (wheelDirectionRef.value === 'y') {
+      onWheelY(event, mergedDeltaY);
+    } else {
+      onWheelX(event, mergedDeltaX);
+    }
+  }
+
+  // A patch for firefox
+  const onFireFoxScroll: EventListener = (event) => {
+    if (!inVirtual.value) return;
+
+    isMouseScrollRef.value =
+      (event as FireFoxDOMMouseScrollEvent).detail === wheelValueRef.value;
+  };
+
+  onUnmounted(() => {
+    if (nextFrame) cancelAnimationFrame(nextFrame);
+    if (wheelDirectionClean) cancelAnimationFrame(wheelDirectionClean);
+  });
+
+  return [onWheel, onFireFoxScroll];
+}

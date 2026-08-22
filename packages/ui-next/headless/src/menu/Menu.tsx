@@ -1,0 +1,693 @@
+import type { CSSProperties } from 'vue';
+
+import type { CSSMotionProps } from '../util/transition';
+import type { VueNode } from '../util/type';
+import type {
+  BuiltinPlacements,
+  Components,
+  ItemType,
+  MenuClickEventHandler,
+  MenuInfo,
+  MenuMode,
+  PopupRender,
+  RenderIconType,
+  SelectEventHandler,
+  SelectInfo,
+  TriggerSubMenuAction,
+} from './interface.ts';
+import type { SemanticName } from './SubMenu';
+
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  shallowRef,
+  watch,
+} from 'vue';
+
+import { clsx } from '@arvin-studio/kit';
+
+import { Overflow } from '../overflow';
+import { filterEmpty } from '../util';
+import useId from '../util/hooks/useId';
+import isEqual from '../util/isEqual';
+import { useIdContextProvide } from './context/IdContext';
+import InheritableContextProvider, {
+  useMenuContextProvider,
+} from './context/MenuContext';
+import { MeasureProvider, PathUserProvider } from './context/PathContext';
+import { PrivateContextProvider } from './context/PrivateContext';
+import useAccessibility, {
+  getFocusableElements,
+  refreshElements,
+} from './hooks/useAccessibility';
+import useKeyRecords, { OVERFLOW_KEY } from './hooks/useKeyRecords';
+import useMemoCallback from './hooks/useMemoCallback';
+import MenuItem from './MenuItem';
+import SubMenu from './SubMenu';
+import { parseItems } from './utils/nodeUtil';
+import { warnItemProp } from './utils/warnUtil';
+
+/**
+ * Menu modify after refactor:
+ * ## Add
+ * - disabled
+ *
+ * ## Remove
+ * - openTransitionName
+ * - openAnimation
+ * - onDestroy
+ * - siderCollapsed: Seems antd do not use this prop (Need test in antd)
+ * - collapsedWidth: Seems this logic should be handle by antd Layout.Sider
+ */
+
+// optimize for render
+const EMPTY_LIST: string[] = [];
+export interface MenuProps {
+  /**
+   * @private NEVER! EVER! USE IN PRODUCTION!!!
+   * This is a hack API for `antd` to fix `findDOMNode` issue.
+   * Not use it! Not accept any PR try to make it as normal API.
+   * By zombieJ
+   */
+  _internalComponents?: Components;
+  // >>>>> Internal
+  /** *
+   * @private Only used for `pro-layout`. Do not use in your prod directly
+   * and we do not promise any compatibility for this.
+   */
+  _internalRenderMenuItem?: (
+    originNode: any,
+    menuItemProps: any,
+    stateProps: {
+      selected: boolean;
+    },
+  ) => any;
+  /** *
+   * @private Only used for `pro-layout`. Do not use in your prod directly
+   * and we do not promise any compatibility for this.
+   */
+  _internalRenderSubMenuItem?: (
+    originNode: any,
+    subMenuItemProps: any,
+    stateProps: {
+      active: boolean;
+      disabled: boolean;
+      open: boolean;
+      selected: boolean;
+    },
+  ) => any;
+  // Active control
+  activeKey?: string;
+  builtinPlacements?: BuiltinPlacements;
+
+  classes?: Partial<Record<SemanticName, string>>;
+  defaultActiveFirst?: boolean;
+
+  /** Default menu motion of each mode */
+  defaultMotions?: Partial<{ [key in 'other' | MenuMode]: CSSMotionProps }>;
+
+  // Open control
+  defaultOpenKeys?: string[];
+  defaultSelectedKeys?: string[];
+
+  /** direction of menu */
+  direction?: 'ltr' | 'rtl';
+  disabled?: boolean;
+
+  /** @private Disable auto overflow. Pls note the prop name may refactor since we do not final decided. */
+  disabledOverflow?: boolean;
+  expandIcon?: RenderIconType;
+
+  extraRender?: (item: ItemType) => any;
+  forceSubMenuRender?: boolean;
+
+  // >>>>> Function
+  getPopupContainer?: (node: HTMLElement) => HTMLElement;
+  iconRender?: (item: ItemType) => any;
+
+  id?: string;
+  inlineCollapsed?: boolean;
+
+  // Level
+  inlineIndent?: number;
+
+  // Icon
+  itemIcon?: RenderIconType;
+  items?: ItemType[];
+
+  labelRender?: (item: ItemType) => any;
+  // Mode
+  mode?: MenuMode;
+  // Motion
+  /** Menu motion define. Use `defaultMotions` if you need config motion of each mode */
+  motion?: CSSMotionProps;
+  multiple?: boolean;
+  // >>>>> Events
+  onClick?: MenuClickEventHandler;
+
+  onDeselect?: SelectEventHandler;
+  onOpenChange?: (openKeys: string[]) => void;
+  onSelect?: SelectEventHandler;
+
+  openKeys?: string[];
+
+  overflowedIndicator?: VueNode;
+
+  /** @private Internal usage. Do not use in your production. */
+  overflowedIndicatorPopupClassName?: string;
+  popupRender?: PopupRender;
+
+  prefixCls?: string;
+  rootClass?: string;
+
+  // Selection
+  selectable?: boolean;
+
+  selectedKeys?: string[];
+  styles?: Partial<Record<SemanticName, CSSProperties>>;
+
+  subMenuCloseDelay?: number;
+  // Popup
+  subMenuOpenDelay?: number;
+  triggerSubMenuAction?: TriggerSubMenuAction;
+}
+
+const defaults = {
+  prefixCls: 'headless-menu',
+  mode: 'vertical',
+  subMenuOpenDelay: 0.1,
+  subMenuCloseDelay: 0.1,
+  selectable: true,
+  multiple: false,
+  inlineIndent: 24,
+  triggerSubMenuAction: 'hover',
+  overflowedIndicator: '...',
+} as any;
+
+const Menu = defineComponent<MenuProps>(
+  (props = defaults, { slots, expose, attrs: _attrs }) => {
+    const containerRef = shallowRef<HTMLUListElement>();
+    const uuid = useId(
+      props?.id ? `headless-menu-uuid-${props.id}` : 'headless-menu-uuid',
+    );
+    const isRtl = computed(() => props?.direction === 'rtl');
+    const childList = shallowRef<any[]>([]);
+    const mergedOverflowIndicator = computed(
+      () => props.overflowedIndicator ?? defaults.overflowedIndicator,
+    );
+    const overflowIndicatorVersion = ref(0);
+    watch(
+      mergedOverflowIndicator,
+      () => {
+        overflowIndicatorVersion.value += 1;
+      },
+      { immediate: true },
+    );
+
+    // Provide uuid context
+    useIdContextProvide(computed(() => uuid));
+
+    // ========================= Open =========================
+    const innerOpenKeys = ref(props?.openKeys ?? props?.defaultOpenKeys);
+    watch(
+      () => props.openKeys,
+      () => {
+        innerOpenKeys.value = props?.openKeys;
+      },
+    );
+
+    const mergedOpenKeys = computed({
+      get() {
+        if (props.openKeys) {
+          return props.openKeys;
+        }
+        return innerOpenKeys.value ?? EMPTY_LIST;
+      },
+      set(value) {
+        innerOpenKeys.value = value;
+      },
+    });
+
+    const triggerOpenKeys = (keys: string[], forceFlush = false) => {
+      function doUpdate() {
+        mergedOpenKeys.value = keys;
+        props?.onOpenChange?.(keys);
+      }
+      if (forceFlush) {
+        nextTick(doUpdate);
+      } else {
+        doUpdate();
+      }
+    };
+
+    // >>>>> Cache & Reset open keys when inlineCollapsed changed
+    const inlineCacheOpenKeys = shallowRef(mergedOpenKeys.value);
+    const mountRef = shallowRef(false);
+
+    // ========================= Mode =========================
+    const modeMerged = computed(() => {
+      const { mode, inlineCollapsed } = props;
+      if ((mode === 'inline' || mode === 'vertical') && inlineCollapsed) {
+        return ['vertical', inlineCollapsed];
+      }
+      return [mode, false];
+    });
+    const mergedMode = computed(() => modeMerged.value[0]);
+    const mergedInlineCollapsed = computed(() => modeMerged.value[1]);
+    const isInlineMode = computed(() => mergedMode.value === 'inline');
+    const internalMode = shallowRef(mergedMode.value);
+    const internalInlineCollapsed = shallowRef(mergedInlineCollapsed.value);
+
+    watch([mergedMode, mergedInlineCollapsed], () => {
+      internalMode.value = mergedMode.value;
+      internalInlineCollapsed.value = mergedInlineCollapsed.value;
+      if (!mountRef.value) {
+        return;
+      }
+
+      // Synchronously update MergedOpenKeys
+      if (isInlineMode.value) {
+        mergedOpenKeys.value = inlineCacheOpenKeys.value;
+      } else {
+        // Trigger open event in case its in control
+        triggerOpenKeys(EMPTY_LIST);
+      }
+    });
+
+    // ====================== Responsive ======================
+    const lastVisibleIndex = shallowRef(0);
+
+    // Cache
+    watch(mergedOpenKeys, () => {
+      if (isInlineMode.value) {
+        inlineCacheOpenKeys.value = mergedOpenKeys.value;
+      }
+    });
+    onMounted(() => {
+      mountRef.value = true;
+    });
+    onUnmounted(() => {
+      mountRef.value = false;
+    });
+
+    // ========================= Path =========================
+    const {
+      registerPath,
+      unregisterPath,
+      refreshOverflowKeys,
+
+      isSubPathKey,
+      getKeyPath,
+      getKeys,
+      getSubPathKeys,
+    } = useKeyRecords();
+
+    // ======================= Context Providers ==============
+    const registerPathContext = computed(() => ({
+      registerPath,
+      unregisterPath,
+    }));
+
+    const pathUserContext = computed(() => ({
+      isSubPathKey,
+    }));
+
+    // ======================== Active ========================
+    const mergedActiveKey = shallowRef(props?.activeKey);
+    watch(
+      () => props.activeKey,
+      () => {
+        mergedActiveKey.value = props?.activeKey;
+      },
+    );
+
+    const onActive = useMemoCallback((key: string) => {
+      mergedActiveKey.value = key;
+    });
+    const onInactive = useMemoCallback(() => {
+      mergedActiveKey.value = undefined;
+    });
+
+    // ======================== Select ========================
+    // >>>>> Select keys
+    const innerSelectKeys = ref(
+      props?.selectedKeys ?? props?.defaultSelectedKeys ?? EMPTY_LIST,
+    );
+    watch(
+      () => props.selectedKeys,
+      () => {
+        innerSelectKeys.value = props.selectedKeys ?? EMPTY_LIST;
+      },
+    );
+
+    const mergedSelectKeys = computed(() => {
+      const keys = innerSelectKeys.value;
+      if (Array.isArray(keys)) {
+        return keys;
+      }
+      if (keys === null || keys === undefined) {
+        return EMPTY_LIST;
+      }
+      return [keys];
+    });
+
+    // >>>>> Trigger select
+    const triggerSelection = (info: MenuInfo) => {
+      if (props.selectable) {
+        // Insert or Remove
+        const { key: targetKey } = info;
+        const exist = mergedSelectKeys.value.includes(targetKey);
+        let newSelectKeys: string[];
+
+        if (props.multiple) {
+          newSelectKeys = exist
+            ? mergedSelectKeys.value.filter((key) => key !== targetKey)
+            : [...mergedSelectKeys.value, targetKey];
+        } else {
+          newSelectKeys = [targetKey];
+        }
+        if (props.selectedKeys === undefined) {
+          innerSelectKeys.value = newSelectKeys;
+        }
+
+        // Trigger event
+        const selectInfo: SelectInfo = {
+          ...info,
+          selectedKeys: newSelectKeys,
+        };
+
+        if (exist) {
+          props.onDeselect?.(selectInfo);
+        } else {
+          props.onSelect?.(selectInfo);
+        }
+      }
+
+      // Whatever selectable, always close it
+      if (
+        !props.multiple &&
+        mergedOpenKeys.value.length > 0 &&
+        internalMode.value !== 'inline'
+      ) {
+        triggerOpenKeys(EMPTY_LIST);
+      }
+    };
+
+    // =========================  Open =========================
+    /**
+     * Click for item. SubMenu do not have selection status
+     */
+    const onInternalClick = (info: MenuInfo) => {
+      props.onClick?.(warnItemProp(info));
+      triggerSelection(info);
+    };
+
+    const onInternalOpenChange = (key: string, open: boolean) => {
+      let newOpenKeys = mergedOpenKeys.value.filter((k) => k !== key);
+
+      if (open) {
+        newOpenKeys.push(key);
+      } else if (internalMode.value !== 'inline') {
+        // We need find all related popup to close
+        const subPathKeys = getSubPathKeys(key);
+        newOpenKeys = newOpenKeys.filter((k) => !subPathKeys.has(k));
+      }
+
+      if (!isEqual(mergedOpenKeys.value, newOpenKeys, true)) {
+        triggerOpenKeys(newOpenKeys, true);
+      }
+    };
+
+    // ==================== Accessibility =====================
+    const triggerAccessibilityOpen = (key: string, open?: boolean) => {
+      const nextOpen = open ?? !mergedOpenKeys.value.includes(key);
+      onInternalOpenChange(key, nextOpen);
+    };
+    const setMergedActiveKey = (key: string) => {
+      mergedActiveKey.value = key;
+    };
+    // TODO: Add keyboard accessibility support
+    // const onInternalKeyDown = useAccessibility(...)
+    const onInternalKeyDown = useAccessibility(
+      internalMode as any,
+      mergedActiveKey as any,
+      isRtl as any,
+      uuid,
+
+      containerRef as any,
+      getKeys,
+      getKeyPath,
+
+      setMergedActiveKey,
+      triggerAccessibilityOpen,
+
+      (...args) => {
+        (_attrs as any)?.onKeydown?.(...args);
+      },
+    );
+
+    // ======================== Effect ========================
+    watch(
+      () => [props.activeKey, () => props.defaultActiveFirst, childList.value],
+      () => {
+        if (props.activeKey !== undefined) {
+          mergedActiveKey.value = props.activeKey;
+        } else if (props.defaultActiveFirst && childList.value[0]) {
+          mergedActiveKey.value = (childList.value[0] as any)?.key;
+        }
+      },
+      { immediate: true },
+    );
+
+    const allVisible = computed(
+      () =>
+        lastVisibleIndex.value >= childList.value.length - 1 ||
+        internalMode.value !== 'horizontal' ||
+        props?.disabledOverflow,
+    );
+
+    watch(
+      [lastVisibleIndex, allVisible, childList],
+      () => {
+        refreshOverflowKeys(
+          allVisible.value
+            ? EMPTY_LIST
+            : childList.value
+                .slice(lastVisibleIndex.value + 1)
+                .map((child) => (child as any).key as string),
+        );
+      },
+      { immediate: true },
+    );
+
+    // ======================= Context ========================
+    const privateContext = computed(() => ({
+      _internalRenderMenuItem: props._internalRenderMenuItem,
+      _internalRenderSubMenuItem: props._internalRenderSubMenuItem,
+    }));
+
+    const menuContext = computed(() => {
+      return {
+        prefixCls: props.prefixCls!,
+        rootClass: props.rootClass,
+        classes: props.classes,
+        styles: props.styles,
+        mode: internalMode.value as MenuMode,
+        openKeys: mergedOpenKeys.value,
+        rtl: isRtl.value,
+        // Disabled
+        disabled: props.disabled,
+        // Motion
+        motion: props.motion,
+        defaultMotions: props.defaultMotions,
+        // Active
+        activeKey: mergedActiveKey.value!,
+        onActive,
+        onInactive,
+        // Selection
+        selectedKeys: mergedSelectKeys.value,
+        // Level
+        inlineIndent: props.inlineIndent || defaults.inlineIndent,
+        // Popup
+        subMenuOpenDelay: props.subMenuOpenDelay || defaults.subMenuOpenDelay,
+        subMenuCloseDelay:
+          props.subMenuCloseDelay || defaults.subMenuCloseDelay,
+        forceSubMenuRender: props.forceSubMenuRender,
+        builtinPlacements: props.builtinPlacements,
+        triggerSubMenuAction:
+          props.triggerSubMenuAction || defaults.triggerSubMenuAction,
+        getPopupContainer: props.getPopupContainer!,
+        // Icon
+        itemIcon: props.itemIcon,
+        expandIcon: props.expandIcon,
+        // Events
+        onItemClick: onInternalClick,
+        onOpenChange: onInternalOpenChange,
+        popupRender: props.popupRender,
+      };
+    });
+
+    useMenuContextProvider(menuContext);
+
+    expose({
+      list: containerRef,
+      focus: (options: any) => {
+        const keys = getKeys();
+        const { elements, key2element, element2key } = refreshElements(
+          keys,
+          uuid,
+        );
+        const focusableElements = getFocusableElements(
+          containerRef.value!,
+          elements,
+        );
+        let shouldFocusKey: string;
+        if (mergedActiveKey.value && keys.includes(mergedActiveKey.value)) {
+          shouldFocusKey = mergedActiveKey.value;
+        } else {
+          shouldFocusKey = focusableElements[0]
+            ? element2key.get(focusableElements[0])
+            : childList.value.find((node) => !node.props.disabled)?.key;
+        }
+        const elementToFocus = key2element.get(shouldFocusKey);
+        if (shouldFocusKey && elementToFocus) {
+          elementToFocus?.focus?.(options);
+        }
+      },
+      findItem: ({ key: itemKey }: any) => {
+        const keys = getKeys();
+        const { key2element } = refreshElements(keys, uuid);
+        return key2element.get(itemKey) || null;
+      },
+    });
+
+    return () => {
+      const { prefixCls, rootClass } = props;
+      // 在 render 函数中获取 slots
+      const children = filterEmpty(slots.default?.());
+
+      childList.value = parseItems(
+        children,
+        props?.items,
+        EMPTY_LIST,
+        props?._internalComponents || {},
+        props?.prefixCls || defaults.prefixCls,
+        {
+          labelRender: props?.labelRender,
+          extraRender: props?.extraRender,
+          iconRender: props?.iconRender,
+        },
+      );
+
+      // Measure child list for path registration
+      const measureChildList = parseItems(
+        children,
+        props?.items,
+        EMPTY_LIST,
+        {},
+        props?.prefixCls || defaults.prefixCls,
+      );
+
+      // >>>>> Children
+      const wrappedChildList =
+        internalMode.value !== 'horizontal' || props?.disabledOverflow
+          ? childList.value // Need wrap for overflow dropdown that do not response for open
+          : childList.value.map((child, index) => (
+              // Always wrap provider to avoid sub node re-mount
+              <InheritableContextProvider
+                classes={props.classes}
+                key={(child as any).key}
+                overflowDisabled={index > lastVisibleIndex.value}
+                styles={props.styles}
+              >
+                {child}
+              </InheritableContextProvider>
+            ));
+      // >>>>> Container
+      const container = (
+        <Overflow
+          class={clsx(
+            prefixCls,
+            `${prefixCls}-root`,
+            `${prefixCls}-${internalMode.value}`,
+            (_attrs.class as any) || '',
+            {
+              [`${prefixCls}-inline-collapsed`]: internalInlineCollapsed.value,
+              [`${prefixCls}-rtl`]: isRtl.value,
+            },
+            rootClass,
+          )}
+          component="ul"
+          data={wrappedChildList}
+          itemComponent={MenuItem}
+          prefixCls={`${prefixCls}-overflow`}
+          ref={containerRef}
+          style={_attrs.style as CSSProperties}
+          {...{
+            dir: props.direction,
+            role: 'menu',
+            tabindex: (_attrs.tabindex as number) ?? 0,
+          }}
+          data-menu-list
+          maxCount={
+            internalMode.value !== 'horizontal' || props?.disabledOverflow
+              ? (Overflow as any).INVALIDATE
+              : (Overflow as any).RESPONSIVE
+          }
+          onVisibleChange={(newLastIndex: number) => {
+            lastVisibleIndex.value = newLastIndex;
+          }}
+          renderRawItem={(node: any) => {
+            return node;
+          }}
+          renderRawRest={(omitItems: any[]) => {
+            // We use origin list since wrapped list use context to prevent open
+            const len = omitItems.length;
+            const originOmitItems = len ? childList.value.slice(-len) : null;
+            return (
+              <SubMenu
+                disabled={allVisible.value}
+                eventKey={OVERFLOW_KEY}
+                internalPopupClose={len === 0}
+                popupClassName={props.overflowedIndicatorPopupClassName}
+                title={mergedOverflowIndicator.value}
+              >
+                {originOmitItems}
+              </SubMenu>
+            );
+          }}
+          ssr="full"
+          {...{
+            onKeydown: onInternalKeyDown,
+          }}
+        />
+      );
+
+      // >>>>> Render
+      return (
+        <PrivateContextProvider {...privateContext.value}>
+          <PathUserProvider {...pathUserContext.value}>
+            {container}
+          </PathUserProvider>
+
+          {/* Measure menu keys. Add `display: none` to avoid some developer miss use the Menu */}
+          <div aria-hidden style={{ display: 'none' }}>
+            <MeasureProvider {...registerPathContext.value}>
+              {measureChildList}
+            </MeasureProvider>
+          </div>
+        </PrivateContextProvider>
+      );
+    };
+  },
+  {
+    name: 'HeadlessMenu',
+    inheritAttrs: false,
+  },
+);
+
+export default Menu;

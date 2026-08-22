@@ -3,6 +3,7 @@ export * from './Dom';
 export * from './EventInterface';
 export * from './FastColor';
 export * from './getScrollBarSize';
+export * from './isEqual';
 export * from './KeyCode';
 export * from './mini-decimal';
 export * from './pickAttrs';

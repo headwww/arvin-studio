@@ -1,0 +1,273 @@
+import type { SetupContext } from 'vue';
+
+import type { VueNode } from '../../../util';
+import type { SelectorProps } from '../../interface';
+import type { InputRef } from './Input';
+
+import { computed, defineComponent, ref, watch } from 'vue';
+
+import { clsx } from '@arvin-studio/kit';
+
+import ResizeObserver from '../../../resize-observer';
+import { usePickerContext } from '../context';
+import ClearIcon from './ClearIcon';
+import useInputProps from './hooks/useInputHooks';
+import useRootProps from './hooks/useRootProps';
+import Icon from './Icon';
+import Input from './Input';
+
+export type SelectorIdType =
+  | string
+  | {
+      end?: string;
+      start?: string;
+    };
+
+export interface RangeSelectorProps<
+  DateType = any,
+> extends SelectorProps<DateType> {
+  activeIndex: null | number;
+  allHelp: boolean;
+  autoFocus?: boolean;
+  disabled: [boolean, boolean];
+  id?: SelectorIdType;
+  invalid: [boolean, boolean];
+  onActiveInfo: (
+    info: [
+      activeInputLeft: number,
+      activeInputRight: number,
+      selectorWidth: number,
+    ],
+  ) => void;
+  onChange: (date: DateType, index?: number) => void;
+  onMouseDown?: (e: MouseEvent) => void;
+  placeholder?: [string, string] | string;
+  placement?: string;
+  separator?: VueNode;
+  tabIndex?: number | string;
+  value?: [DateType?, DateType?];
+}
+
+const RangeSelector = defineComponent(
+  (props: RangeSelectorProps, { attrs, expose }: SetupContext) => {
+    const pickerContext = usePickerContext();
+    const prefixCls = computed(() => pickerContext.value.prefixCls);
+    const classNames = computed(() => pickerContext.value.classNames);
+    const styles = computed(() => pickerContext.value.styles);
+
+    const rtl = computed(() => props.direction === 'rtl');
+
+    // ========================== Id ==========================
+    const ids = computed(() => {
+      if (typeof props.id === 'string') {
+        return [props.id];
+      }
+      const mergedId = props.id || {};
+      return [mergedId.start, mergedId.end];
+    });
+
+    // ========================= Refs =========================
+    const rootRef = ref<HTMLDivElement>();
+    const inputStartRef = ref<InputRef>();
+    const inputEndRef = ref<InputRef>();
+
+    const getInput = (index: number) =>
+      [inputStartRef, inputEndRef][index]?.value;
+
+    expose({
+      nativeElement: rootRef,
+      // Exposed so `useFocusLock` can compare the actually focused element
+      // against each field and pull focus back to the expected one.
+      // 暴露给 `useFocusLock`，用于比较实际聚焦元素并把焦点拉回预期 field。
+      get startInput() {
+        return inputStartRef.value?.inputElement;
+      },
+      get endInput() {
+        return inputEndRef.value?.inputElement;
+      },
+      focus: (options?: any) => {
+        if (typeof options === 'object') {
+          const { index = 0, ...rest } = options || {};
+          getInput(index)?.focus(rest);
+        } else {
+          getInput(options ?? 0)?.focus();
+        }
+      },
+      blur: () => {
+        getInput(0)?.blur();
+        getInput(1)?.blur();
+      },
+    });
+
+    // ======================== Props =========================
+    // Filter root-level events like onMouseEnter/onMouseLeave.
+    const rootProps = useRootProps(props as any);
+
+    // ===================== Placeholder ======================
+    const mergedPlaceholder = computed(() =>
+      Array.isArray(props.placeholder)
+        ? props.placeholder
+        : [props.placeholder, props.placeholder],
+    );
+
+    // ======================== Inputs ========================
+    const inputPropsArgs = computed(() => {
+      return {
+        ...props,
+        id: ids.value,
+        placeholder: mergedPlaceholder.value,
+      };
+    });
+
+    const [getInputProps] = useInputProps(inputPropsArgs as any);
+
+    // ====================== ActiveBar =======================
+    const activeBarStyle = ref<any>({
+      position: 'absolute',
+      width: 0,
+    });
+
+    const syncActiveOffset = () => {
+      const input = getInput(props.activeIndex!);
+      if (input && rootRef.value && input.nativeElement) {
+        // Input component exposes nativeElement
+        const inputRect = input.nativeElement.getBoundingClientRect();
+        const parentRect = rootRef.value.getBoundingClientRect();
+        const rectOffset = inputRect.left - parentRect.left;
+        activeBarStyle.value = {
+          ...activeBarStyle.value,
+          width: `${inputRect.width}px`,
+          left: `${rectOffset}px`,
+        };
+        props.onActiveInfo?.([
+          inputRect.left,
+          inputRect.right,
+          parentRect.width,
+        ]);
+      }
+    };
+
+    watch(() => props.activeIndex, syncActiveOffset, { flush: 'post' });
+
+    // ======================== Clear =========================
+    const showClear = computed(
+      () =>
+        props.clearIcon &&
+        ((props.value?.[0] && !props.disabled?.[0]) ||
+          (props.value?.[1] && !props.disabled?.[1])),
+    );
+
+    // ======================= Disabled =======================
+    const autoFocus = computed(
+      () => (props as any).autoFocus ?? (props as any).autofocus,
+    );
+    const tabIndex = computed(
+      () => (props as any).tabIndex ?? (props as any).tabindex,
+    );
+    const startAutoFocus = computed(
+      () => autoFocus.value && !props.disabled?.[0],
+    );
+    const endAutoFocus = computed(
+      () => autoFocus.value && !startAutoFocus.value && !props.disabled?.[1],
+    );
+
+    return () => {
+      const {
+        prefix,
+        suffixIcon,
+        clearIcon,
+        separator,
+        disabled,
+        invalid,
+        onClick,
+        onClear,
+      } = props;
+
+      const rootDivProps = {
+        ...rootProps.value,
+        class: clsx(
+          prefixCls.value,
+          `${prefixCls.value}-range`,
+          {
+            [`${prefixCls.value}-focused`]: props.focused,
+            [`${prefixCls.value}-disabled`]: disabled?.every((i) => i),
+            [`${prefixCls.value}-invalid`]: invalid?.some((i) => i),
+            [`${prefixCls.value}-rtl`]: rtl.value,
+          },
+          attrs.class as string,
+          props.class,
+        ),
+        style: { ...(attrs as any).style, ...props.style } as any,
+        onClick: (event: MouseEvent) => {
+          if (Array.isArray(onClick)) {
+            onClick.forEach((fn) => fn?.(event));
+          } else {
+            onClick?.(event);
+          }
+        },
+        onMousedown: (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (
+            target !== inputStartRef.value?.inputElement &&
+            target !== inputEndRef.value?.inputElement
+          ) {
+            e.preventDefault();
+          }
+
+          props.onMouseDown?.(e);
+        },
+      };
+
+      return (
+        <ResizeObserver onResize={syncActiveOffset}>
+          <div {...rootDivProps} ref={rootRef}>
+            {prefix && (
+              <div
+                class={clsx(
+                  `${prefixCls.value}-prefix`,
+                  classNames.value.prefix,
+                )}
+                style={styles.value.prefix}
+              >
+                {prefix}
+              </div>
+            )}
+            <Input
+              ref={inputStartRef}
+              {...getInputProps(0)}
+              autofocus={startAutoFocus.value}
+              class={`${prefixCls.value}-input-start`}
+              data-range="start"
+              tabindex={tabIndex.value}
+            />
+            <div class={`${prefixCls.value}-range-separator`}>
+              {separator ?? '~'}
+            </div>
+            <Input
+              ref={inputEndRef}
+              {...getInputProps(1)}
+              autofocus={endAutoFocus.value}
+              class={`${prefixCls.value}-input-end`}
+              data-range="end"
+              tabindex={tabIndex.value}
+            />
+            <div
+              class={`${prefixCls.value}-active-bar`}
+              style={activeBarStyle.value}
+            />
+            <Icon icon={suffixIcon} />
+            {showClear.value && (
+              <ClearIcon icon={clearIcon} onClear={onClear!} />
+            )}
+          </div>
+        </ResizeObserver>
+      );
+    };
+  },
+  {
+    name: 'RangeSelector',
+    inheritAttrs: false,
+  },
+);
+
+export default RangeSelector;

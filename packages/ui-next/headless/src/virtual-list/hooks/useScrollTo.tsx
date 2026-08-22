@@ -1,0 +1,249 @@
+import type { Ref } from 'vue';
+
+import type { Key } from '../../util';
+import type { GetKey, GetSize } from '../interface';
+import type CacheMap from '../utils/CacheMap';
+
+import { shallowRef, watch } from 'vue';
+
+import { warning } from '../../util';
+
+const MAX_TIMES = 10;
+
+export type ScrollAlign = 'auto' | 'bottom' | 'top';
+
+export interface ScrollPos {
+  left?: number;
+  top?: number;
+}
+
+export interface ScrollOffsetInfo {
+  /**
+   * Resolved align direction. For `auto` this reads `'auto'` on the first
+   * measure pass (before the direction is decided) and settles to
+   * `'top'`/`'bottom'` on the pass that actually positions the item.
+   *
+   * 已解析的对齐方向。auto 在首帧测量时仍是 'auto'，定向后变 'top'/'bottom'。
+   */
+  align: ScrollAlign;
+  /**
+   * Get item size range by key.
+   * 通过 key 获取元素在虚拟列表中的尺寸范围。
+   */
+  getSize: GetSize;
+}
+
+export type ScrollOffset = ((info: ScrollOffsetInfo) => number) | number;
+
+export type ScrollTarget =
+  | {
+      align?: ScrollAlign;
+      index: number;
+      offset?: ScrollOffset;
+    }
+  | {
+      align?: ScrollAlign;
+      key: Key;
+      offset?: ScrollOffset;
+    };
+
+function getOffset(rawOffset: ScrollOffset, info: ScrollOffsetInfo) {
+  const resolvedOffset =
+    typeof rawOffset === 'function' ? rawOffset(info) : rawOffset;
+
+  return Number.isFinite(resolvedOffset) ? resolvedOffset : 0;
+}
+
+export default function useScrollTo(
+  containerRef: Ref<HTMLDivElement>,
+  data: Ref<any[]>,
+  heights: CacheMap,
+  itemHeight: Ref<number>,
+  getKey: GetKey<any>,
+  getSize: GetSize,
+  collectHeight: () => void,
+  syncScrollTop: (newTop: number) => void,
+  triggerFlash: () => void,
+): [(arg: number | ScrollTarget) => void, () => number] {
+  const syncState = shallowRef<null | {
+    index: number;
+    lastTop?: number;
+    offset: ScrollOffset;
+    originAlign: ScrollAlign;
+    targetAlign?: 'bottom' | 'top';
+    times: number;
+  }>(null);
+
+  // =================== Calculate Total Height ====================
+  // Calculate the total scroll height based on all items
+  const getTotalHeight = () => {
+    let totalHeight = 0;
+    for (let i = 0; i < data.value.length; i += 1) {
+      const key = getKey(data.value[i]);
+      const cacheHeight = heights.get(key);
+      totalHeight += cacheHeight === undefined ? itemHeight.value : cacheHeight;
+    }
+    return totalHeight;
+  };
+
+  // ========================== Sync Scroll ==========================
+  watch(
+    syncState,
+    () => {
+      if (syncState.value && syncState.value.times < MAX_TIMES) {
+        // Never reach
+        if (!containerRef.value) {
+          syncState.value = { ...syncState.value };
+          return;
+        }
+
+        collectHeight();
+
+        const {
+          targetAlign,
+          originAlign,
+          index,
+          offset: rawOffset,
+        } = syncState.value;
+        const mergedAlign = targetAlign || originAlign;
+        const offset = getOffset(rawOffset, { getSize, align: mergedAlign });
+
+        const height = containerRef.value.clientHeight;
+        let needCollectHeight = false;
+        let newTargetAlign: 'bottom' | 'top' | null = targetAlign ?? null;
+        let targetTop: null | number = null;
+
+        // Go to next frame if height not exist
+        if (height) {
+          const mergedAlign = targetAlign || originAlign;
+
+          // Get top & bottom
+          let stackTop = 0;
+          let itemTop = 0;
+          let itemBottom = 0;
+
+          const maxLen = Math.min(data.value.length - 1, index);
+
+          for (let i = 0; i <= maxLen; i += 1) {
+            const key = getKey(data.value[i]);
+            itemTop = stackTop;
+            const cacheHeight = heights.get(key);
+            itemBottom =
+              itemTop +
+              (cacheHeight === undefined ? itemHeight.value : cacheHeight);
+
+            stackTop = itemBottom;
+          }
+
+          // Check if need sync height (visible range has item not record height)
+          let leftHeight = mergedAlign === 'top' ? offset : height - offset;
+          for (let i = maxLen; i >= 0; i -= 1) {
+            const key = getKey(data.value[i]);
+            const cacheHeight = heights.get(key);
+
+            if (cacheHeight === undefined) {
+              needCollectHeight = true;
+              break;
+            }
+
+            leftHeight -= cacheHeight;
+            if (leftHeight <= 0) {
+              break;
+            }
+          }
+
+          // Scroll to
+          switch (mergedAlign) {
+            case 'bottom': {
+              targetTop = itemBottom - height + offset;
+              break;
+            }
+            case 'top': {
+              targetTop = itemTop - offset;
+              break;
+            }
+
+            default: {
+              const { scrollTop } = containerRef.value;
+              const scrollBottom = scrollTop + height;
+              if (itemTop < scrollTop) {
+                newTargetAlign = 'top';
+              } else if (itemBottom > scrollBottom) {
+                newTargetAlign = 'bottom';
+              }
+            }
+          }
+
+          if (targetTop !== null) {
+            syncScrollTop(targetTop);
+          }
+
+          // One more time for sync
+          if (targetTop !== syncState.value.lastTop) {
+            needCollectHeight = true;
+          }
+        }
+
+        // Trigger next effect
+        if (needCollectHeight) {
+          syncState.value = {
+            ...syncState.value,
+            times: syncState.value.times + 1,
+            targetAlign: newTargetAlign as any,
+            lastTop: targetTop as any,
+          };
+        }
+      } else if (
+        // @ts-expect-error this is a global variable which injected by babel plugin
+        // eslint-disable-next-line n/prefer-global/process
+        process.env.NODE_ENV !== 'production' &&
+        syncState.value?.times === MAX_TIMES
+      ) {
+        warning(
+          false,
+          'Seems `scrollTo` with `rc-virtual-list` reach the max limitation. Please fire issue for us. Thanks.',
+        );
+      }
+    },
+    {
+      immediate: true,
+      flush: 'post',
+    },
+  );
+
+  // =========================== Scroll To ===========================
+  const scrollTo = (arg: null | number | ScrollTarget | undefined) => {
+    // When not argument provided, we think dev may want to show the scrollbar
+    if (arg === null || arg === undefined) {
+      triggerFlash();
+      return;
+    }
+
+    // Normal scroll logic
+    // raf.cancel(scrollRef.value!)
+
+    if (typeof arg === 'number') {
+      syncScrollTop(arg);
+    } else if (arg && typeof arg === 'object') {
+      let index: number;
+      const { align } = arg;
+
+      if ('index' in arg) {
+        ({ index } = arg);
+      } else {
+        index = data.value.findIndex((item) => getKey(item) === arg.key);
+      }
+
+      const { offset: rawOffset = 0 } = arg;
+
+      syncState.value = {
+        times: 0,
+        index,
+        offset: rawOffset,
+        originAlign: align!,
+      };
+    }
+  };
+
+  return [scrollTo, getTotalHeight];
+}

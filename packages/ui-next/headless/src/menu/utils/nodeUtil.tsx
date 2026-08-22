@@ -1,0 +1,162 @@
+import type { VueNode } from '../../util';
+import type { Components, ItemType } from '../interface';
+
+import { filterEmpty } from '../../util';
+import Divider from '../Divider';
+import MenuItem from '../MenuItem';
+import MenuItemGroup from '../MenuItemGroup';
+import SubMenu from '../SubMenu';
+import { parseChildren } from './commonUtil';
+
+function convertItemsToNodes(
+  list: ItemType[],
+  components: Required<Components>,
+  prefixCls?: string,
+  slots?: {
+    extraRender?: (item: ItemType) => any;
+    iconRender?: (item: ItemType) => any;
+    labelRender?: (item: ItemType) => any;
+  },
+): VueNode[] {
+  const {
+    item: MergedMenuItem,
+    group: MergedMenuItemGroup,
+    submenu: MergedSubMenu,
+    divider: MergedDivider,
+  } = components;
+
+  return (list || [])
+    .map((opt, index) => {
+      if (opt && typeof opt === 'object') {
+        const { children, key, type, ...restProps } = opt as any;
+        const mergedKey = key ?? `tmp-${index}`;
+        let label;
+        let extra;
+        let icon;
+        const _labelRender = slots?.labelRender ? slots.labelRender(opt) : null;
+        const _extraRender = slots?.extraRender ? slots.extraRender(opt) : null;
+        const _iconRender = slots?.iconRender ? slots.iconRender(opt) : null;
+        const labelArr = filterEmpty(
+          Array.isArray(_labelRender) ? _labelRender : [_labelRender],
+        ).filter((item) => item !== undefined && item !== null);
+        const extraArr = filterEmpty(
+          Array.isArray(_extraRender) ? _extraRender : [_extraRender],
+        ).filter((item) => item !== undefined && item !== null);
+        const iconArr = filterEmpty(
+          Array.isArray(_iconRender) ? _iconRender : [_iconRender],
+        ).filter((item) => item !== undefined && item !== null);
+        // Icon
+        if (iconArr.length > 0) {
+          icon = iconArr?.[0];
+        }
+        if (labelArr.length > 0) {
+          label = labelArr?.[0];
+        }
+        if (extraArr.length > 0) {
+          extra = extraArr?.[0];
+        }
+        if (!label) {
+          label = (opt as any).label;
+        }
+        if (!extra) {
+          extra = (opt as any).extra;
+        }
+        if (!icon) {
+          icon = (opt as any).icon;
+        }
+
+        // MenuItemGroup & SubMenuItem
+        if (children || type === 'group') {
+          if (type === 'group') {
+            // Group
+            return (
+              <MergedMenuItemGroup
+                key={mergedKey}
+                {...restProps}
+                icon={icon}
+                title={label}
+              >
+                {convertItemsToNodes(children, components, prefixCls, slots)}
+              </MergedMenuItemGroup>
+            );
+          }
+
+          // Sub Menu
+          // `title` on the item config is the native tooltip text, while the
+          // rendered title comes from `label` — keep them apart.
+          const { title: itemTitle, ...subMenuRestProps } = restProps;
+
+          return (
+            <MergedSubMenu
+              key={mergedKey}
+              {...subMenuRestProps}
+              icon={icon}
+              itemTitle={typeof itemTitle === 'string' ? itemTitle : undefined}
+              title={label}
+            >
+              {convertItemsToNodes(children, components, prefixCls, slots)}
+            </MergedSubMenu>
+          );
+        }
+
+        // MenuItem & Divider
+        if (type === 'divider') {
+          return <MergedDivider key={mergedKey} {...restProps} />;
+        }
+
+        const hasExtra = !!extra || extra === 0;
+        return (
+          <MergedMenuItem
+            key={mergedKey}
+            {...restProps}
+            extra={extra}
+            icon={icon}
+            itemData={{
+              ...(opt as any),
+              itemIcon: icon ?? restProps?.itemIcon,
+              key: mergedKey,
+            }}
+          >
+            {hasExtra ? (
+              <span class={`${prefixCls}-item-label`}>{label}</span>
+            ) : (
+              label
+            )}
+            {hasExtra && <span class={`${prefixCls}-item-extra`}>{extra}</span>}
+          </MergedMenuItem>
+        );
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+}
+
+export function parseItems(
+  children: undefined | VueNode,
+  items: ItemType[] | undefined,
+  keyPath: string[],
+  components: Components,
+  prefixCls?: string,
+  slots?: {
+    extraRender?: (item: ItemType) => any;
+    iconRender?: (item: ItemType) => any;
+    labelRender?: (item: ItemType) => any;
+  },
+) {
+  let childNodes = children;
+
+  const mergedComponents: Required<Components> = {
+    divider: Divider,
+    item: MenuItem,
+    group: MenuItemGroup,
+    submenu: SubMenu,
+    ...components,
+  };
+
+  if (items) {
+    childNodes = convertItemsToNodes(items, mergedComponents, prefixCls, slots);
+  }
+
+  return parseChildren(childNodes, keyPath);
+}

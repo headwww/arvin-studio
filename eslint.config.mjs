@@ -37,6 +37,9 @@ export default defineConfig([
       'unicorn/prefer-array-from-map': 'off',
       'unicorn/no-late-event-control': 'off',
       'unicorn/no-unused-array-method-return': 'off',
+      'unicorn/prefer-promise-try': 'off',
+      'unicorn/prefer-await': 'off',
+      'unicorn/no-negation-in-equality-check': 'off',
     },
   },
   {
