@@ -1,3 +1,5 @@
+import type { Ref } from 'vue';
+
 import type { Theme } from '@arvin-studio/cssinjs';
 
 import type { DesignTokenProviderProps } from './context';
@@ -106,7 +108,14 @@ export function getComputedToken(
   return mergedDerivativeToken;
 }
 
-export default function useToken() {
+export default function useToken(): [
+  theme: Ref<Theme<SeedToken, AliasToken>>,
+  token: Ref<GlobalToken>,
+  hashId: Ref<string>,
+  realToken: Ref<GlobalToken>,
+  cssVar: Ref<DesignTokenProviderProps['cssVar']>,
+  zeroRuntime: Ref<boolean>,
+] {
   const designContext = useDesignToken();
   const config = useConfig();
   const salt = computed(() => `${version}-${designContext.value.hashed || ''}`);
@@ -146,7 +155,7 @@ export default function useToken() {
   );
   const token = computed(() => cachedToken.value[0]);
   return [
-    mergedTheme,
+    mergedTheme as any,
     realToken,
     hashId,
     token,

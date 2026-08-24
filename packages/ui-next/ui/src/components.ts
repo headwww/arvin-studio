@@ -62,3 +62,13 @@ export type {
   SwitchSize,
   SwitchSlots,
 } from './switch';
+
+export { default as Tooltip, UniqueProvider } from './tooltip';
+export type {
+  TooltipAlignConfig,
+  TooltipEmits,
+  TooltipPlacement,
+  TooltipProps,
+  TooltipRef,
+  TooltipSlots,
+} from './tooltip';

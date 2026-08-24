@@ -5,6 +5,7 @@ import type { ComponentToken as InputComponentToken } from '../../input/style';
 import type { ComponentToken as RadioComponentToken } from '../../radio/style';
 import type { ComponentToken as SpaceComponentToken } from '../../space/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
+import type { ComponentToken as TooltipComponentToken } from '../../tooltip/style';
 
 export interface ComponentTokenMap {
   Button?: ButtonComponentToken;
@@ -14,4 +15,5 @@ export interface ComponentTokenMap {
   Radio?: RadioComponentToken;
   Space?: SpaceComponentToken;
   Switch?: SwitchComponentToken;
+  Tooltip?: TooltipComponentToken;
 }

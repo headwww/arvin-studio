@@ -14,6 +14,7 @@ import type {
   MappingAlgorithm,
   OverrideToken,
 } from '../theme/interface';
+import type { TooltipProps } from '../tooltip';
 
 export interface ComponentStyleConfig {
   class?: string;
@@ -150,6 +151,16 @@ export type RadioConfig = ComponentStyleConfig &
 export type SwitchStyleConfig = ComponentStyleConfig &
   Pick<SwitchProps, 'classes' | 'styles'>;
 
+export type TooltipConfig = {
+  /**
+   * @descCN 是否开启 Tooltip 流畅过渡动画
+   * @descEN Whether to enable smooth transition for tooltips
+   * @default false
+   */
+  unique?: boolean;
+} & ComponentStyleConfig &
+  Pick<TooltipProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
+
 export interface ConfigComponentProps {
   button?: ButtonConfig;
   checkbox?: CheckboxConfig;
@@ -162,4 +173,5 @@ export interface ConfigComponentProps {
   switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;
   theme?: ThemeConfig;
+  tooltip?: TooltipConfig;
 }

@@ -5,6 +5,7 @@ import {
   ConfigProvider,
   InputNumber,
   Switch,
+  Tooltip,
 } from '@arvin-studio/ui';
 </script>
 
@@ -29,5 +30,8 @@ import {
     </CheckboxGroup>
     <Switch />
     <!-- <TextArea /> -->
+    <Tooltip title="prompt text">
+      <span>dsds</span>
+    </Tooltip>
   </ConfigProvider>
 </template>

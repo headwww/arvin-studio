@@ -1,0 +1,145 @@
+import type { InjectionKey, Ref } from 'vue';
+
+import { getCurrentInstance, inject, provide, ref } from 'vue';
+
+import {
+  resetWarned as rcResetWarned,
+  warningOnce as rcWarning,
+} from '@arvin-studio/headless';
+
+export function noop() {}
+
+let deprecatedWarnList: null | Record<string, string[]> = null;
+
+export function resetWarned() {
+  deprecatedWarnList = null;
+  rcResetWarned();
+}
+
+// @ts-expect-error fix this
+// eslint-disable-next-line n/prefer-global/process
+export const isDev = process.env.NODE_ENV !== 'production';
+
+type Warning = (valid: boolean, component: string, message?: string) => void;
+
+let _warning: Warning = noop;
+// eslint-disable-next-line unicorn/prefer-ternary
+if (isDev) {
+  _warning = (valid, component, message) => {
+    rcWarning(valid, `[antd: ${component}] ${message}`);
+
+    // StrictMode will inject console which will not throw warning in React 17.
+    if (isDev) {
+      resetWarned();
+    }
+  };
+}
+const warning = _warning;
+
+type BaseTypeWarning = (
+  valid: boolean,
+  /**
+   * - deprecated: Some API will be removed in future but still support now.
+   * - usage: Some API usage is not correct.
+   * - breaking: Breaking change like API is removed.
+   */
+  type: 'breaking' | 'deprecated' | 'usage',
+  message?: string,
+) => void;
+
+type TypeWarning = BaseTypeWarning & {
+  deprecated: (
+    valid: boolean,
+    oldProp: string,
+    newProp: string,
+    message?: string,
+  ) => void;
+};
+
+export interface WarningContextProps {
+  /**
+   * @descCN 设置警告等级，设置 `false` 时会将废弃相关信息聚合为单条信息。
+   * @descEN Set the warning level. When set to `false`, discard related information will be aggregated into a single message.
+   * @since 5.10.0
+   */
+  strict?: boolean;
+}
+
+export interface WarningContextType {
+  strict: Ref<boolean | undefined>;
+}
+
+const WarningContextKey: InjectionKey<WarningContextType> =
+  Symbol('WarningContext');
+
+export function useWarningProvider(props: WarningContextType) {
+  provide(WarningContextKey, props);
+}
+
+export function useWarningContext() {
+  const instance = getCurrentInstance();
+  if (!instance) {
+    return {} as any;
+  }
+  return inject(WarningContextKey, {
+    strict: ref(true),
+  });
+}
+
+/**
+ * This is a hook but we not named as `useWarning`
+ * since this is only used in development.
+ * We should always wrap this in `if (process.env.NODE_ENV !== 'production')` condition
+ */
+export const devUseWarning: (component: string) => TypeWarning = isDev
+  ? (component) => {
+      const { strict } = useWarningContext();
+
+      const typeWarning: TypeWarning = (valid, type, message) => {
+        if (!valid) {
+          if (strict?.value === false && type === 'deprecated') {
+            const existWarning = deprecatedWarnList;
+
+            if (!deprecatedWarnList) {
+              deprecatedWarnList = {};
+            }
+
+            deprecatedWarnList[component] ||= [];
+            if (!deprecatedWarnList[component].includes(message || '')) {
+              deprecatedWarnList[component].push(message || '');
+            }
+
+            // Warning for the first time
+            if (!existWarning) {
+              console.warn(
+                '[antd] There exists deprecated usage in your code:',
+                deprecatedWarnList,
+              );
+            }
+          } else {
+            warning(valid, component, message);
+          }
+        }
+      };
+
+      typeWarning.deprecated = (valid, oldProp, newProp, message) => {
+        typeWarning(
+          valid,
+          'deprecated',
+          `\`${oldProp}\` is deprecated. Please use \`${newProp}\` instead.${
+            message ? ` ${message}` : ''
+          }`,
+        );
+      };
+
+      return typeWarning;
+    }
+  : () => {
+      const noopWarning: TypeWarning = () => {};
+
+      noopWarning.deprecated = noop;
+
+      return noopWarning;
+    };
+
+export default warning;
