@@ -1,0 +1,49 @@
+import type { CSSProperties } from 'vue';
+
+import { defineComponent } from 'vue';
+
+import { clsx } from '@arvin-studio/kit';
+
+import { useInjectSlider } from '../context';
+import { getDirectionStyle } from '../util';
+
+export interface DotProps {
+  activeStyle?: ((dotValue: number) => CSSProperties) | CSSProperties;
+  prefixCls: string;
+  style?: ((dotValue: number) => CSSProperties) | CSSProperties;
+  value: number;
+}
+
+const Dot = defineComponent<DotProps>((props, { attrs }) => {
+  const sliderContext = useInjectSlider();
+  return () => {
+    const { min, max, direction, included, includedStart, includedEnd } =
+      sliderContext.value;
+    const { prefixCls, value, activeStyle } = props;
+
+    const dotClassName = `${prefixCls}-dot`;
+    const active = included && includedStart <= value && value <= includedEnd;
+
+    // ============================ Offset ============================
+    let mergedStyle: CSSProperties = {
+      ...getDirectionStyle(direction, value, min, max),
+    };
+
+    if (active) {
+      mergedStyle = {
+        ...mergedStyle,
+        ...(typeof activeStyle === 'function'
+          ? activeStyle(value)
+          : activeStyle),
+      };
+    }
+
+    return (
+      <span
+        class={clsx(dotClassName, { [`${dotClassName}-active`]: active })}
+        style={{ ...mergedStyle, ...(attrs.style as CSSProperties) }}
+      />
+    );
+  };
+});
+export default Dot;

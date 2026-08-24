@@ -1,3 +1,4 @@
+export * from './Children/toArray';
 export * from './colors';
 export * from './Dom';
 export * from './EventInterface';
