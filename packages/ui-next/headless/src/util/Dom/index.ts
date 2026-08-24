@@ -1,4 +1,5 @@
 export { default as canUseDom } from './canUseDom';
+export * from './class';
 export { default as contains } from './contains';
 export * from './dynamicCSS';
 export * from './findDOMNode';
