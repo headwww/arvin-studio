@@ -3,6 +3,9 @@ import { ref } from 'vue';
 
 import {
   Alert,
+  Anchor,
+  Avatar,
+  AvatarGroup,
   Button,
   Checkbox,
   CheckboxGroup,
@@ -53,10 +56,55 @@ const alertCloseResult = ref('未关闭');
 const onAlertClose = () => {
   alertCloseResult.value = '已关闭（触发 @close）';
 };
+
+/** Anchor 横向模式 items（指向页面真实存在的演示区块） */
+const anchorHorizontalItems = [
+  { key: 'anchor-b-1', href: '#demo-tooltip', title: 'Tooltip' },
+  { key: 'anchor-b-2', href: '#demo-popover', title: 'Popover' },
+  { key: 'anchor-b-3', href: '#demo-alert', title: 'Alert' },
+] as const;
+
+/** Anchor 当前高亮链接（演示 change 事件） */
+const anchorCurrent = ref('');
+const onAnchorChange = (link: string) => {
+  anchorCurrent.value = link;
+};
+
+/** 全局 Anchor 导航：按组件分组指向各演示区块 */
+const demoItems = [
+  { key: 'demo-basic', href: '#demo-basic', title: '基础组件' },
+  { key: 'demo-tooltip', href: '#demo-tooltip', title: 'Tooltip' },
+  { key: 'demo-popover', href: '#demo-popover', title: 'Popover' },
+  { key: 'demo-popconfirm', href: '#demo-popconfirm', title: 'Popconfirm' },
+  { key: 'demo-alert', href: '#demo-alert', title: 'Alert' },
+  { key: 'demo-anchor', href: '#demo-anchor', title: 'Anchor' },
+  { key: 'demo-avatar', href: '#demo-avatar', title: 'Avatar' },
+] as const;
+
+/** Avatar 演示用图片地址 */
+const avatarSrc = 'https://i.pravatar.cc/100?img=12';
+/** 必然加载失败的地址，用于演示图片错误回退 */
+const badSrc = 'https://example.com/not-exist.png';
+/** 返回 false 阻止默认回退（展示破图），可自行处理错误 */
+const onAvatarError = () => {
+  console.log('Avatar 图片加载失败');
+  return false;
+};
 </script>
 
 <template>
   <ConfigProvider>
+    <!-- ==================== 全局 Anchor 导航 ==================== -->
+    <div class="demo-anchor-nav">
+      <Anchor
+        :items="demoItems"
+        direction="horizontal"
+        :offset-top="16"
+        :target-offset="120"
+        @change="onAnchorChange"
+      />
+    </div>
+
     <!-- <SpaceCompact>
       <Button type="primary"> Button </Button>
       <SpaceAddon> $ </SpaceAddon>
@@ -69,18 +117,20 @@ const onAlertClose = () => {
     <InputPassword />
     <InputOTP />
     <InputSearch /> -->
-    <InputNumber />
-    <CheckboxGroup>
-      <Checkbox>sss</Checkbox>
-      <Checkbox>sss</Checkbox>
-    </CheckboxGroup>
-    <Switch />
-    <!-- <TextArea /> -->
 
-    <hr />
+    <section id="demo-basic" class="demo-section">
+      <h3>基础组件</h3>
+      <InputNumber />
+      <CheckboxGroup>
+        <Checkbox>sss</Checkbox>
+        <Checkbox>sss</Checkbox>
+      </CheckboxGroup>
+      <Switch />
+      <!-- <TextArea /> -->
+    </section>
 
-    <!-- ==================== Tooltip 用法 ==================== -->
-    <h3>Tooltip</h3>
+    <section id="demo-tooltip" class="demo-section">
+      <h3>Tooltip</h3>
 
     <h4>基础用法（title prop，默认 hover 触发 + top 方向）</h4>
     <div class="row">
@@ -178,11 +228,10 @@ const onAlertClose = () => {
         切换（当前：{{ tooltipOpen }}）
       </Button>
     </div>
+    </section>
 
-    <hr />
-
-    <!-- ==================== Popover 用法 ==================== -->
-    <h3>Popover</h3>
+    <section id="demo-popover" class="demo-section">
+      <h3>Popover</h3>
 
     <h4>基础用法（title + content prop）</h4>
     <div class="row">
@@ -242,11 +291,10 @@ const onAlertClose = () => {
         切换（当前：{{ popoverOpen }}）
       </Button>
     </div>
+    </section>
 
-    <hr />
-
-    <!-- ==================== Popconfirm 用法 ==================== -->
-    <h3>Popconfirm</h3>
+    <section id="demo-popconfirm" class="demo-section">
+      <h3>Popconfirm</h3>
 
     <h4>基础用法（默认 click 触发，title + confirm / cancel 事件）</h4>
     <div class="row">
@@ -319,11 +367,10 @@ const onAlertClose = () => {
         切换（当前：{{ popconfirmOpen }}）
       </Button>
     </div>
+    </section>
 
-    <hr />
-
-    <!-- ==================== Alert 用法 ==================== -->
-    <h3>Alert</h3>
+    <section id="demo-alert" class="demo-section">
+      <h3>Alert</h3>
 
     <h4>基础用法（四种 type + showIcon）</h4>
     <div class="col">
@@ -431,6 +478,101 @@ const onAlertClose = () => {
         <template #description>插槽描述，可放任意节点</template>
       </Alert>
     </div>
+    </section>
+
+    <section id="demo-anchor" class="demo-section">
+      <h3>Anchor</h3>
+
+      <h4>横向模式（direction="horizontal" + affix=false + #item 插槽）</h4>
+    <div class="anchor-horizontal">
+      <Anchor
+        :items="anchorHorizontalItems"
+        direction="horizontal"
+        :affix="false"
+        @change="onAnchorChange"
+      >
+        <template #item="{ title }">
+          <span>📍 {{ title }}</span>
+        </template>
+      </Anchor>
+    </div>
+    </section>
+
+    <section id="demo-avatar" class="demo-section">
+      <h3>Avatar</h3>
+
+      <h4>基础用法（文字 / 图片 / 图标）</h4>
+      <div class="row">
+        <Avatar>U</Avatar>
+        <Avatar :src="avatarSrc" alt="avatar" />
+        <Avatar icon="🧑💻" />
+        <Avatar>张三</Avatar>
+      </div>
+
+      <h4>size 尺寸（预设 / 数字 / 响应式）</h4>
+      <div class="row">
+        <Avatar size="small">S</Avatar>
+        <Avatar size="medium">M</Avatar>
+        <Avatar size="large">L</Avatar>
+        <Avatar :size="64">64</Avatar>
+        <Avatar :size="{ xs: 24, md: 48, xl: 64 }">R</Avatar>
+        <span class="hint">响应式 size：拖动窗口宽度观察变化</span>
+      </div>
+
+      <h4>shape 形状</h4>
+      <div class="row">
+        <Avatar shape="circle">circle</Avatar>
+        <Avatar shape="square">square</Avatar>
+        <Avatar :size="48" shape="square" :src="avatarSrc" />
+      </div>
+
+      <h4>icon 插槽 / gap 文字间距</h4>
+      <div class="row">
+        <Avatar>
+          <template #icon>🎨</template>
+        </Avatar>
+        <Avatar :size="64" :gap="2">头像文字很长</Avatar>
+        <Avatar :size="64" :gap="10">头像文字很长</Avatar>
+      </div>
+
+      <h4>图片加载失败回退（onError）</h4>
+      <div class="row">
+        <Avatar :src="badSrc" alt="加载失败">Fallback</Avatar>
+        <Avatar :src="badSrc" alt="阻止回退" :on-error="onAvatarError">自定义</Avatar>
+        <span class="hint">左侧失败后回退显示文字；右侧 onError 返回 false 阻止默认回退</span>
+      </div>
+
+      <h4>AvatarGroup（基础 / max 折叠 + Popover）</h4>
+      <div class="row">
+        <AvatarGroup>
+          <Avatar>U</Avatar>
+          <Avatar>B</Avatar>
+          <Avatar icon="🧑💻" />
+          <Avatar :src="avatarSrc" />
+          <Avatar>陈</Avatar>
+        </AvatarGroup>
+      </div>
+      <div class="row">
+        <AvatarGroup :max="{ count: 3 }">
+          <Avatar>U</Avatar>
+          <Avatar>B</Avatar>
+          <Avatar>C</Avatar>
+          <Avatar>D</Avatar>
+          <Avatar>E</Avatar>
+          <Avatar>F</Avatar>
+        </AvatarGroup>
+        <AvatarGroup
+          :max="{ count: 4, popover: { placement: 'bottom', trigger: 'click' } }"
+        >
+          <Avatar>U</Avatar>
+          <Avatar>B</Avatar>
+          <Avatar>C</Avatar>
+          <Avatar>D</Avatar>
+          <Avatar>E</Avatar>
+        </AvatarGroup>
+        <span class="hint">max 折叠后剩余头像通过 Popover 查看（右侧为 click 触发）</span>
+      </div>
+    </section>
   </ConfigProvider>
 </template>
 
@@ -462,5 +604,24 @@ h4 {
   flex-direction: column;
   gap: 12px;
   padding: 8px 0;
+}
+
+.anchor-horizontal {
+  padding: 8px 0;
+}
+
+.demo-anchor-nav {
+  padding: 8px 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+
+.demo-section {
+  padding: 8px 0;
+}
+
+.hint {
+  color: #999;
+  font-size: 12px;
 }
 </style>

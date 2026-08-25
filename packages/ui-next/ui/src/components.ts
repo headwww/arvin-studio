@@ -7,6 +7,20 @@ export type {
   AlertSemanticType,
   AlertSlots,
 } from './alert';
+export { default as Anchor } from './anchor';
+export type {
+  AnchorEmits,
+  AnchorLinkProps,
+  AnchorProps,
+  AnchorSlots,
+} from './anchor';
+export { default as Avatar, AvatarGroup } from './avatar';
+export type {
+  AvatarEmits,
+  AvatarGroupProps,
+  AvatarProps,
+  AvatarSlots,
+} from './avatar';
 export { default as Button } from './button';
 export { default as Checkbox, CheckboxGroup } from './checkbox';
 export type {
@@ -42,6 +56,7 @@ export type {
   TextAreaProps,
   TextAreaRef,
 } from './input';
+
 export { default as InputNumber } from './input-number';
 export type {
   InputNumberEmits,
@@ -56,7 +71,6 @@ export type {
   PopconfirmProps,
   PopconfirmSlots,
 } from './popconfirm';
-
 export { default as Popover } from './popover';
 export type {
   PopoverEmits,
@@ -64,6 +78,7 @@ export type {
   PopoverRef,
   PopoverSlots,
 } from './popover';
+
 export { default as Radio, RadioButton, RadioGroup } from './radio';
 export type {
   RadioChangeEvent,
@@ -78,7 +93,6 @@ export type {
 } from './radio';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
-
 export { default as Switch } from './switch';
 export type {
   SwitchEmits,

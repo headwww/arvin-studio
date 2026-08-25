@@ -1,0 +1,163 @@
+/* eslint-disable unicorn/no-this-outside-of-class */
+import type { GlobalToken } from '../theme';
+
+import { computed } from 'vue';
+
+import { useToken } from '../theme/internal';
+import {
+  addMediaQueryListener,
+  removeMediaQueryListener,
+} from './mediaQueryUtil';
+
+export const responsiveArray = [
+  'xxxl',
+  'xxl',
+  'xl',
+  'lg',
+  'md',
+  'sm',
+  'xs',
+] as const;
+export const responsiveArrayReversed = [...responsiveArray].toReversed();
+
+export type Breakpoint = (typeof responsiveArray)[number];
+export type BreakpointMap = Record<Breakpoint, string>;
+export type ScreenMap = Partial<Record<Breakpoint, boolean>>;
+export type ScreenSizeMap = Partial<Record<Breakpoint, number>>;
+
+type SubscribeFunc = (screens: ScreenMap) => void;
+
+function getResponsiveMap(token: GlobalToken): BreakpointMap {
+  return {
+    xs: `(max-width: ${token.screenXSMax}px)`,
+    sm: `(min-width: ${token.screenSM}px)`,
+    md: `(min-width: ${token.screenMD}px)`,
+    lg: `(min-width: ${token.screenLG}px)`,
+    xl: `(min-width: ${token.screenXL}px)`,
+    xxl: `(min-width: ${token.screenXXL}px)`,
+    xxxl: `(min-width: ${token.screenXXXL}px)`,
+  };
+}
+/**
+ * Ensures that the breakpoints token are valid, in good order
+ * For each breakpoint : screenMin <= screen <= screenMax and screenMax <= nextScreenMin
+ */
+function validateBreakpoints(token: GlobalToken) {
+  const indexableToken: any = token;
+  const revBreakpoints = [...responsiveArray].toReversed();
+
+  revBreakpoints.forEach((breakpoint, i) => {
+    const breakpointUpper = breakpoint.toUpperCase();
+    const screenMin = `screen${breakpointUpper}Min`;
+    const screen = `screen${breakpointUpper}`;
+
+    if (indexableToken[screenMin] > indexableToken[screen]) {
+      throw new Error(
+        `${screenMin}<=${screen} fails : !(${indexableToken[screenMin]}<=${indexableToken[screen]})`,
+      );
+    }
+
+    if (i < revBreakpoints.length - 1) {
+      const screenMax = `screen${breakpointUpper}Max`;
+
+      if (indexableToken[screen] > indexableToken[screenMax]) {
+        throw new Error(
+          `${screen}<=${screenMax} fails : !(${indexableToken[screen]}<=${indexableToken[screenMax]})`,
+        );
+      }
+
+      const nextBreakpointUpperMin = (revBreakpoints as any)[
+        i + 1
+      ].toUpperCase();
+      const nextScreenMin = `screen${nextBreakpointUpperMin}Min`;
+
+      if (indexableToken[screenMax] > indexableToken[nextScreenMin]) {
+        throw new Error(
+          `${screenMax}<=${nextScreenMin} fails : !(${indexableToken[screenMax]}<=${indexableToken[nextScreenMin]})`,
+        );
+      }
+    }
+  });
+  return token;
+}
+
+export function matchScreen(screens: ScreenMap, screenSizes?: ScreenSizeMap) {
+  if (!screenSizes) {
+    return;
+  }
+  for (const breakpoint of responsiveArray) {
+    if (screens[breakpoint] && screenSizes?.[breakpoint] !== undefined) {
+      return screenSizes[breakpoint];
+    }
+  }
+}
+interface ResponsiveObserverType {
+  dispatch: (map: ScreenMap) => boolean;
+  matchHandlers: Record<
+    PropertyKey,
+    {
+      listener: (this: MediaQueryList, ev: MediaQueryListEvent) => void;
+      mql: MediaQueryList;
+    }
+  >;
+  register: () => void;
+  responsiveMap: BreakpointMap;
+  subscribe: (func: SubscribeFunc) => number;
+  unregister: () => void;
+  unsubscribe: (token: number) => void;
+}
+
+function useResponsiveObserver() {
+  const [, token] = useToken();
+
+  return computed<ResponsiveObserverType>(() => {
+    const responsiveMap = getResponsiveMap(validateBreakpoints(token.value));
+    const subscribers = new Map<number, SubscribeFunc>();
+    let subUid = -1;
+    let screens: Partial<Record<Breakpoint, boolean>> = {};
+    return {
+      responsiveMap,
+      matchHandlers: {},
+      dispatch(pointMap: ScreenMap) {
+        screens = pointMap;
+        subscribers.forEach((func) => func(screens));
+        return subscribers.size > 0;
+      },
+      subscribe(func: SubscribeFunc): number {
+        if (subscribers.size === 0) {
+          this.register();
+        }
+        subUid += 1;
+        subscribers.set(subUid, func);
+        func(screens);
+        return subUid;
+      },
+      unsubscribe(paramToken: number) {
+        subscribers.delete(paramToken);
+        if (subscribers.size === 0) {
+          this.unregister();
+        }
+      },
+      register() {
+        Object.entries(responsiveMap).forEach(([screen, mediaQuery]) => {
+          const listener = ({ matches }: { matches: boolean }) => {
+            this.dispatch({ ...screens, [screen]: matches });
+          };
+          const mql = window.matchMedia(mediaQuery);
+          addMediaQueryListener(mql, listener);
+          this.matchHandlers[mediaQuery] = { mql, listener };
+          listener(mql);
+        });
+      },
+      unregister() {
+        Object.values(responsiveMap).forEach((mediaQuery) => {
+          const handler: any = this.matchHandlers[mediaQuery];
+          removeMediaQueryListener(handler?.mql, handler?.listener);
+        });
+        subscribers.clear();
+      },
+    };
+  });
+}
+
+export default useResponsiveObserver;

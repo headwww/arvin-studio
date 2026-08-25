@@ -46,4 +46,6 @@ export default ResizeObserver as typeof ResizeObserver & {
   Collection: typeof Collection;
 };
 
+export { ResizeObserver };
+
 export { _rs } from './utils/observerUtil';
