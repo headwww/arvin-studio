@@ -1,0 +1,265 @@
+import type { CSSObject } from '@arvin-studio/cssinjs';
+
+import type { ArrowOffsetToken } from '../../style/placementArrow';
+import type { ArrowToken } from '../../style/roundedArrow';
+import type {
+  FullToken,
+  GenerateStyle,
+  GetDefaultToken,
+  PresetColorType,
+} from '../../theme/internal';
+
+import { resetComponent } from '../../style';
+import { initZoomMotion } from '../../style/motion';
+import getArrowStyle, { getArrowOffsetToken } from '../../style/placementArrow';
+import { getArrowToken } from '../../style/roundedArrow';
+import { genStyleHooks, mergeToken, PresetColors } from '../../theme/internal';
+import { genCssVar } from '../../theme/util/genStyleUtils';
+
+export interface ComponentToken extends ArrowOffsetToken, ArrowToken {
+  /** @internal */
+  innerContentPadding: number | string;
+  /** @internal */
+  innerPadding: number;
+  /**
+   * @deprecated Please use `titleMinWidth` instead
+   * @desc 气泡卡片最小宽度
+   * @descEN Min width of Popover
+   */
+  minWidth?: number | string;
+  /** @internal */
+  titleBorderBottom: string;
+  /** @internal */
+  titleMarginBottom: number;
+  /**
+   * @desc 气泡卡片标题最小宽度
+   * @descEN Min width of Popover title
+   */
+  titleMinWidth: number | string;
+  /** @internal */
+  titlePadding: number | string;
+  /**
+   * @deprecated Please use `titleMinWidth` instead
+   * @desc 气泡卡片宽度
+   * @descEN Width of Popover
+   */
+  width?: number | string;
+  /**
+   * @desc 气泡卡片 z-index
+   * @descEN z-index of Popover
+   */
+  zIndexPopup: number;
+}
+
+/**
+ * @desc Popover 组件的 Token
+ * @descEN Token for Popover component
+ */
+export type PopoverToken = {
+  /**
+   * @desc 气泡卡片背景色
+   * @descEN Background color of Popover
+   */
+  popoverBg: string;
+  /**
+   * @desc 气泡卡片文字颜色
+   * @descEN Text color of Popover
+   */
+  popoverColor: string;
+} & FullToken<'Popover'>;
+
+const FALL_BACK_ORIGIN = '50%';
+
+const genBaseStyle: GenerateStyle<PopoverToken> = (token) => {
+  const {
+    componentCls,
+    popoverColor,
+    titleMinWidth,
+    fontWeightStrong,
+    innerPadding,
+    dropShadowPopover,
+    colorTextHeading,
+    borderRadiusLG,
+    zIndexPopup,
+    titleMarginBottom,
+    colorBgElevated,
+    popoverBg,
+    titleBorderBottom,
+    innerContentPadding,
+    titlePadding,
+    asCls,
+  } = token;
+
+  const [varName, varRef] = genCssVar(asCls, 'tooltip');
+
+  return [
+    {
+      [componentCls]: {
+        ...resetComponent(token),
+        position: 'absolute',
+        top: 0,
+        left: {
+          _skip_check_: true,
+          value: 0,
+        },
+        zIndex: zIndexPopup,
+        fontWeight: 'normal',
+        whiteSpace: 'normal',
+        textAlign: 'start',
+        cursor: 'auto',
+        userSelect: 'text',
+        filter: dropShadowPopover,
+
+        // When use `autoArrow`, origin will follow the arrow position
+        [varName('valid-offset-x')]: varRef('arrow-offset-x', 'var(--arrow-x)'),
+        transformOrigin: [
+          varRef('valid-offset-x', FALL_BACK_ORIGIN),
+          `var(--arrow-y, ${FALL_BACK_ORIGIN})`,
+        ].join(' '),
+
+        [varName('arrow-background-color')]: colorBgElevated,
+        width: 'max-content',
+        maxWidth: '100vw',
+
+        '&-rtl': {
+          direction: 'rtl',
+        },
+
+        '&-hidden': {
+          display: 'none',
+        },
+
+        [`${componentCls}-content`]: {
+          position: 'relative',
+        },
+
+        [`${componentCls}-container`]: {
+          backgroundColor: popoverBg,
+          backgroundClip: 'padding-box',
+          borderRadius: borderRadiusLG,
+          padding: innerPadding,
+        },
+
+        [`${componentCls}-title`]: {
+          minWidth: titleMinWidth,
+          marginBottom: titleMarginBottom,
+          color: colorTextHeading,
+          fontWeight: fontWeightStrong,
+          borderBottom: titleBorderBottom,
+          padding: titlePadding,
+        },
+
+        [`${componentCls}-content`]: {
+          color: popoverColor,
+          padding: innerContentPadding,
+        },
+      },
+    },
+
+    // Arrow Style
+    getArrowStyle<PopoverToken>(token, varRef('arrow-background-color'), {
+      arrowShadow: false,
+    }),
+
+    // Pure Render
+    {
+      [`${componentCls}-pure`]: {
+        position: 'relative',
+        maxWidth: 'none',
+        margin: token.sizePopupArrow,
+        display: 'inline-block',
+      },
+    },
+  ];
+};
+
+const genColorStyle: GenerateStyle<PopoverToken, CSSObject> = (token) => {
+  const { componentCls, asCls } = token;
+  const [varName] = genCssVar(asCls, 'tooltip');
+  return {
+    [componentCls]: PresetColors.map((colorKey: keyof PresetColorType) => {
+      const lightColor = token[`${colorKey}6`];
+      return {
+        [`&${componentCls}-${colorKey}`]: {
+          [varName('arrow-background-color')]: lightColor,
+          [`${componentCls}-inner`]: {
+            backgroundColor: lightColor,
+          },
+          [`${componentCls}-arrow`]: {
+            background: 'transparent',
+          },
+        },
+      };
+    }),
+  };
+};
+
+export const prepareComponentToken: GetDefaultToken<'Popover'> = (token) => {
+  const {
+    lineWidth,
+    controlHeight,
+    fontHeight,
+    padding,
+    wireframe,
+    zIndexPopupBase,
+    borderRadiusLG,
+    marginXS,
+    lineType,
+    colorSplit,
+    paddingSM,
+  } = token;
+
+  const titlePaddingBlockDist = controlHeight - fontHeight;
+  const popoverTitlePaddingBlockTop = titlePaddingBlockDist / 2;
+  const popoverTitlePaddingBlockBottom = titlePaddingBlockDist / 2 - lineWidth;
+  const popoverPaddingHorizontal = padding;
+
+  return {
+    titleMinWidth: 177,
+    zIndexPopup: zIndexPopupBase + 30,
+    ...getArrowToken(token),
+    ...getArrowOffsetToken({
+      contentRadius: borderRadiusLG,
+      limitVerticalRadius: true,
+    }),
+
+    // internal
+    innerPadding: wireframe ? 0 : 12,
+    titleMarginBottom: wireframe ? 0 : marginXS,
+    titlePadding: wireframe
+      ? `${popoverTitlePaddingBlockTop}px ${popoverPaddingHorizontal}px ${popoverTitlePaddingBlockBottom}px`
+      : 0,
+    titleBorderBottom: wireframe
+      ? `${lineWidth}px ${lineType} ${colorSplit}`
+      : 'none',
+    innerContentPadding: wireframe
+      ? `${paddingSM}px ${popoverPaddingHorizontal}px`
+      : 0,
+  };
+};
+
+export default genStyleHooks(
+  'Popover',
+  (token) => {
+    const { colorBgElevated, colorText } = token;
+
+    const popoverToken = mergeToken<PopoverToken>(token, {
+      popoverBg: colorBgElevated,
+      popoverColor: colorText,
+    });
+
+    return [
+      genBaseStyle(popoverToken),
+      genColorStyle(popoverToken),
+      initZoomMotion(popoverToken, 'zoom-big'),
+    ];
+  },
+  prepareComponentToken,
+  {
+    resetStyle: false,
+    deprecatedTokens: [
+      ['width', 'titleMinWidth'],
+      ['minWidth', 'titleMinWidth'],
+    ],
+  },
+);

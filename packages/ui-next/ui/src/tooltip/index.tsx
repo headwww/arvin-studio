@@ -327,6 +327,7 @@ const InternalTooltip = defineComponent<
         destroyOnHidden,
         openClass,
         arrow: _arrow,
+        onOpenChange: _onOpenChange, // 解构出来但不使用
         ...restProps
       } = props;
       const title = getSlotPropsFnRun(slots, props, 'title');

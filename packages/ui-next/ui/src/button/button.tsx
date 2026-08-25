@@ -51,7 +51,7 @@ import IconWrapper from './icon-wrapper';
 import useStyle from './style';
 import CompactStyle from './style/compact';
 
-export type LegacyButtonType = 'danger' | ButtonType;
+export type LegacyButtonType = ButtonType;
 
 export type ButtonSemanticName = keyof ButtonSemanticClassNames &
   keyof ButtonSemanticStyles;

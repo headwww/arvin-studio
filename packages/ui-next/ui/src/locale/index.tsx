@@ -5,6 +5,8 @@
 
 import type { InjectionKey, Ref } from 'vue';
 
+import type { PopconfirmLocale } from '../popconfirm/PurePanel';
+
 import { computed, defineComponent, inject, provide, ref } from 'vue';
 
 /** 国际化上下文属性，合并了 Locale 和存在标记 */
@@ -22,10 +24,16 @@ const LocaleContextKey: InjectionKey<LocaleContext> = Symbol('LocaleContext');
 /** 内部标记，用于标识 Provider 组件 */
 export const AS_MARK = 'internalMark';
 
-/** 语言包接口 */
+/** TODO 语言包接口 */
 export interface Locale {
+  global?: {
+    close?: string;
+    placeholder?: string;
+    sortable?: string;
+  };
   /** 语言标识符，如 `zh-CN`、`en-US` */
   locale: string;
+  Popconfirm?: PopconfirmLocale;
 }
 
 /** LocaleProvider 组件 Props */

@@ -1,11 +1,14 @@
 import type { CSSProperties } from 'vue';
 
 import type { VueNode } from '../_util';
+import type { AlertProps } from '../alert';
 import type { ButtonProps } from '../button';
 import type { CheckboxProps } from '../checkbox';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
+import type { PopconfirmProps } from '../popconfirm';
+import type { PopoverProps } from '../popover';
 import type { RadioProps } from '../radio';
 import type { SpaceProps } from '../space';
 import type { SwitchProps } from '../switch';
@@ -161,13 +164,33 @@ export type TooltipConfig = {
 } & ComponentStyleConfig &
   Pick<TooltipProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
 
+export type PopoverConfig = ComponentStyleConfig &
+  Pick<PopoverProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
+
+export type PopconfirmConfig = ComponentStyleConfig &
+  Pick<PopconfirmProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
+
+export type AlertConfig = ComponentStyleConfig &
+  Pick<
+    AlertProps,
+    'classes' | 'closable' | 'closeIcon' | 'styles' | 'variant'
+  > & {
+    errorIcon?: VueNode;
+    infoIcon?: VueNode;
+    successIcon?: VueNode;
+    warningIcon?: VueNode;
+  };
+
 export interface ConfigComponentProps {
+  alert?: AlertConfig;
   button?: ButtonConfig;
   checkbox?: CheckboxConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
   otp?: OTPConfig;
+  popconfirm?: PopconfirmConfig;
+  popover?: PopoverConfig;
   radio?: RadioConfig;
   space?: SpaceConfig;
   switch?: SwitchStyleConfig;
