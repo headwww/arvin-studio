@@ -50,6 +50,24 @@ export type {
   CollapseProps,
 } from './collapse';
 export { default as ConfigProvider } from './config-provider';
+export { default as Descriptions, DescriptionsItem } from './descriptions';
+
+export type {
+  DescriptionsItemProps,
+  DescriptionsItemSlots,
+  DescriptionsItemType,
+  DescriptionsProps,
+  DescriptionsSlots,
+} from './descriptions';
+export { default as Divider } from './divider';
+export type { DividerProps } from './divider';
+export { default as Drawer } from './drawer';
+export type {
+  DrawerEmits,
+  DrawerProps,
+  DrawerResizableConfig,
+  DrawerSlots,
+} from './drawer';
 export {
   default as Input,
   InputOTP,
@@ -57,7 +75,6 @@ export {
   InputSearch,
   TextArea,
 } from './input';
-
 export type {
   InputEmits,
   OTPEmits as InputOTPEmits,
@@ -107,6 +124,16 @@ export type {
   RadioProps,
   RadioSlots,
 } from './radio';
+export {
+  default as Skeleton,
+  SkeletonAvatar,
+  SkeletonButton,
+  SkeletonImage,
+  SkeletonInput,
+  SkeletonNode,
+} from './skeleton';
+export type { SkeletonProps } from './skeleton';
+
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
 export { default as Switch } from './switch';
@@ -125,3 +152,5 @@ export type {
   TooltipRef,
   TooltipSlots,
 } from './tooltip';
+export { default as Watermark } from './watermark';
+export type { WatermarkProps } from './watermark';

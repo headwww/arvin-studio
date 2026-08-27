@@ -275,7 +275,7 @@ const Collapse = defineComponent<
     };
   },
   {
-    name: 'ACollapse',
+    name: 'AsCollapse',
     inheritAttrs: false,
   },
 );

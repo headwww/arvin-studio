@@ -1,0 +1,337 @@
+import type { App, CSSProperties, SlotsType } from 'vue';
+
+import type { EmptyEmit } from '../_util';
+import type {
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { ComponentBaseProps } from '../config-provider/context';
+import type { SkeletonAvatarProps as AvatarProps } from './Avatar';
+import type { SkeletonParagraphProps } from './Paragraph';
+import type { SkeletonTitleProps } from './Title';
+
+import { computed, defineComponent } from 'vue';
+
+import { clsx, omit } from '@arvin-studio/kit';
+
+import {
+  useMergeSemantic,
+  useSemanticRootStyle,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { toPropsRefs } from '../_util/tools';
+import { useComponentBaseConfig } from '../config-provider/context';
+import SkeletonAvatar from './Avatar';
+import SkeletonButton from './Button';
+import Element from './Element';
+import SkeletonImage from './Image';
+import SkeletonInput from './Input';
+import SkeletonNode from './Node';
+import Paragraph from './Paragraph';
+import useStyle from './style';
+import Title from './Title';
+
+/* This only for skeleton internal. */
+type SkeletonAvatarProps = Omit<AvatarProps, 'active'>;
+
+export type SkeletonSemanticName = keyof SkeletonSemanticClassNames &
+  keyof SkeletonSemanticStyles;
+
+export interface SkeletonSemanticClassNames {
+  avatar?: string;
+  header?: string;
+  paragraph?: string;
+  root?: string;
+  section?: string;
+  title?: string;
+}
+
+export interface SkeletonSemanticStyles {
+  avatar?: CSSProperties;
+  header?: CSSProperties;
+  paragraph?: CSSProperties;
+  root?: CSSProperties;
+  section?: CSSProperties;
+  title?: CSSProperties;
+}
+
+export type SkeletonClassNamesType = SemanticClassNamesType<
+  SkeletonProps,
+  SkeletonSemanticClassNames
+>;
+
+export type SkeletonStylesType = SemanticStylesType<
+  SkeletonProps,
+  SkeletonSemanticStyles
+>;
+
+export interface SkeletonProps extends ComponentBaseProps {
+  active?: boolean;
+  avatar?: boolean | SkeletonAvatarProps;
+  classes?: SkeletonClassNamesType;
+  loading?: boolean;
+  paragraph?: boolean | SkeletonParagraphProps;
+  round?: boolean;
+  styles?: SkeletonStylesType;
+  title?: boolean | SkeletonTitleProps;
+}
+
+export interface SkeletonSlots {
+  default?: () => any;
+}
+
+function getComponentProps<T>(prop?: boolean | T): Record<string, never> | T {
+  if (prop && typeof prop === 'object') {
+    return prop;
+  }
+  return {};
+}
+
+function getAvatarBasicProps(
+  hasTitle: boolean,
+  hasParagraph: boolean,
+): SkeletonAvatarProps {
+  if (hasTitle && !hasParagraph) {
+    // Square avatar
+    return { size: 'large', shape: 'square' };
+  }
+
+  return { size: 'large', shape: 'circle' };
+}
+
+function getTitleBasicProps(
+  hasAvatar: boolean,
+  hasParagraph: boolean,
+): SkeletonTitleProps {
+  if (!hasAvatar && hasParagraph) {
+    return { width: '38%' };
+  }
+
+  if (hasAvatar && hasParagraph) {
+    return { width: '50%' };
+  }
+
+  return {};
+}
+
+function getParagraphBasicProps(
+  hasAvatar: boolean,
+  hasTitle: boolean,
+): SkeletonParagraphProps {
+  const basicProps: SkeletonParagraphProps = {};
+
+  // Width
+  if (!hasAvatar || !hasTitle) {
+    basicProps.width = '61%';
+  }
+
+  // Rows
+  basicProps.rows = !hasAvatar && hasTitle ? 3 : 2;
+
+  return basicProps;
+}
+
+const defaults = {
+  avatar: false,
+  title: true,
+  paragraph: true,
+  loading: undefined,
+} as any;
+
+const Skeleton = defineComponent<
+  SkeletonProps,
+  EmptyEmit,
+  string,
+  SlotsType<SkeletonSlots>
+>(
+  (props = defaults, { attrs, slots }) => {
+    const {
+      prefixCls,
+      direction,
+      class: contextClassName,
+      style: contextStyle,
+      classes: contextClassNames,
+      styles: contextStyles,
+    } = useComponentBaseConfig('skeleton', props);
+    const [hashId, cssVarCls] = useStyle(prefixCls);
+    const { classes, styles } = toPropsRefs(props, 'classes', 'styles');
+
+    // =========== Merged Props for Semantic ==========
+    const mergedProps = computed(() => props);
+    const contextStyleRoot = useSemanticRootStyle(contextStyle);
+
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      SkeletonClassNamesType,
+      SkeletonStylesType,
+      SkeletonProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, contextStyleRoot as any, styles),
+      useToProps(mergedProps),
+    );
+
+    return () => {
+      const {
+        loading,
+        rootClass,
+        avatar = false,
+        title = true,
+        paragraph = true,
+        active,
+        round,
+      } = props;
+
+      if (loading || loading === undefined) {
+        const hasAvatar = !!avatar;
+        const hasTitle = !!title;
+        const hasParagraph = !!paragraph;
+
+        // Avatar
+        let avatarNode: any;
+        if (hasAvatar) {
+          const avatarProps: SkeletonAvatarProps = {
+            prefixCls: `${prefixCls.value}-avatar`,
+            ...getAvatarBasicProps(hasTitle, hasParagraph),
+            ...getComponentProps(avatar),
+          };
+          // We direct use SkeletonElement as avatar in skeleton internal.
+          avatarNode = (
+            <div
+              class={[
+                mergedClassNames.value.header,
+                `${prefixCls.value}-header`,
+              ]}
+              style={mergedStyles.value.header}
+            >
+              <Element
+                class={mergedClassNames.value.avatar}
+                {...avatarProps}
+                style={mergedStyles.value.avatar}
+              />
+            </div>
+          );
+        }
+
+        let contentNode: any;
+        if (hasTitle || hasParagraph) {
+          // Title
+          let $title: any;
+          if (hasTitle) {
+            const titleProps: SkeletonTitleProps = {
+              prefixCls: `${prefixCls.value}-title`,
+              ...getTitleBasicProps(hasAvatar, hasParagraph),
+              ...getComponentProps(title),
+            };
+
+            $title = (
+              <Title
+                class={mergedClassNames.value.title}
+                {...titleProps}
+                style={mergedStyles.value.title}
+              />
+            );
+          }
+
+          // Paragraph
+          let paragraphNode: any;
+          if (hasParagraph) {
+            const paragraphProps: SkeletonParagraphProps = {
+              prefixCls: `${prefixCls.value}-paragraph`,
+              ...getParagraphBasicProps(hasAvatar, hasTitle),
+              ...getComponentProps(paragraph),
+            };
+
+            paragraphNode = (
+              <Paragraph
+                class={mergedClassNames.value.paragraph}
+                {...paragraphProps}
+                style={mergedStyles.value.paragraph}
+              />
+            );
+          }
+
+          contentNode = (
+            <div
+              class={[
+                mergedClassNames.value.section,
+                `${prefixCls.value}-section`,
+              ]}
+              style={mergedStyles.value.section}
+            >
+              {$title}
+              {paragraphNode}
+            </div>
+          );
+        }
+
+        const cls = clsx(
+          prefixCls.value,
+          {
+            [`${prefixCls.value}-with-avatar`]: hasAvatar,
+            [`${prefixCls.value}-active`]: active,
+            [`${prefixCls.value}-rtl`]: direction.value === 'rtl',
+            [`${prefixCls.value}-round`]: round,
+          },
+          mergedClassNames.value.root,
+          contextClassName.value,
+          (attrs as any)?.class,
+          rootClass,
+          hashId.value,
+          cssVarCls.value,
+        );
+
+        return (
+          <div
+            class={cls}
+            {...omit(attrs, ['class', 'style'])}
+            style={[mergedStyles.value.root, (attrs as any)?.style]}
+          >
+            {avatarNode}
+            {contentNode}
+          </div>
+        );
+      }
+      return slots.default?.() ?? null;
+    };
+  },
+  {
+    name: 'ASkeleton',
+    inheritAttrs: false,
+  },
+);
+
+(Skeleton as any).install = (app: App) => {
+  app.component(Skeleton.name, Skeleton);
+  app.component(SkeletonButton.name, SkeletonButton);
+  app.component(SkeletonAvatar.name, SkeletonAvatar);
+  app.component(SkeletonInput.name, SkeletonInput);
+  app.component(SkeletonImage.name, SkeletonImage);
+  app.component(SkeletonNode.name, SkeletonNode);
+};
+
+export type SkeletonType = typeof Skeleton & {
+  Avatar: typeof SkeletonAvatar;
+  Button: typeof SkeletonButton;
+  Image: typeof SkeletonImage;
+  Input: typeof SkeletonInput;
+  Node: typeof SkeletonNode;
+};
+
+const SkeletonWithSubComponents = Skeleton as SkeletonType;
+
+SkeletonWithSubComponents.Button = SkeletonButton;
+SkeletonWithSubComponents.Avatar = SkeletonAvatar;
+SkeletonWithSubComponents.Input = SkeletonInput;
+SkeletonWithSubComponents.Image = SkeletonImage;
+SkeletonWithSubComponents.Node = SkeletonNode;
+
+export default SkeletonWithSubComponents;
+
+export {
+  SkeletonAvatar,
+  SkeletonButton,
+  SkeletonImage,
+  SkeletonInput,
+  SkeletonNode,
+};

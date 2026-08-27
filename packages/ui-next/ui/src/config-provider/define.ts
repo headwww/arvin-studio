@@ -7,6 +7,9 @@ import type {
   CheckboxConfig,
   CollapseConfig,
   ComponentStyleConfig,
+  DescriptionsConfig,
+  DividerConfig,
+  DrawerConfig,
   InputConfig,
   InputNumberConfig,
   InputSearchConfig,
@@ -14,6 +17,7 @@ import type {
   PopconfirmConfig,
   PopoverConfig,
   RadioConfig,
+  SkeletonConfig,
   TextAreaConfig,
   ThemeConfig,
   TooltipConfig,
@@ -36,12 +40,15 @@ export interface ConfigProviderProps {
   collapse?: CollapseConfig;
   /** 是否禁用整个组件树下的所有表单类组件 */
   componentDisabled?: boolean;
-
   /** 尺寸 */
   componentSize?: SizeType;
 
+  descriptions?: DescriptionsConfig;
   /** 设置布局展示方向*/
   direction?: DirectionType;
+
+  divider?: DividerConfig;
+  drawer?: DrawerConfig;
   iconPrefixCls?: string;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
@@ -55,6 +62,7 @@ export interface ConfigProviderProps {
   radio?: RadioConfig;
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
+  skeleton?: SkeletonConfig;
   textArea?: TextAreaConfig;
   theme?: ThemeConfig;
   tooltip?: TooltipConfig;

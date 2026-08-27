@@ -8,12 +8,16 @@ import type { RibbonProps } from '../badge/Ribbon';
 import type { ButtonProps } from '../button';
 import type { CheckboxProps } from '../checkbox';
 import type { CollapseProps } from '../collapse';
+import type { DescriptionsProps } from '../descriptions';
+import type { DividerProps } from '../divider';
+import type { DrawerProps } from '../drawer';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
 import type { PopconfirmProps } from '../popconfirm';
 import type { PopoverProps } from '../popover';
 import type { RadioProps } from '../radio';
+import type { SkeletonProps } from '../skeleton';
 import type { SpaceProps } from '../space';
 import type { SwitchProps } from '../switch';
 import type {
@@ -201,6 +205,22 @@ export interface ComponentStyleConfig {
   style?: CSSProperties;
   styles?: unknown;
 }
+
+export type DescriptionsConfig = ComponentStyleConfig &
+  Pick<DescriptionsProps, 'classes' | 'styles'>;
+
+export type DividerConfig = ComponentStyleConfig &
+  Pick<DividerProps, 'classes' | 'styles'>;
+
+export type DrawerConfig = ComponentStyleConfig &
+  Pick<
+    DrawerProps,
+    'classes' | 'closable' | 'closeIcon' | 'mask' | 'styles'
+  > & { focusable?: any };
+
+export type SkeletonConfig = ComponentStyleConfig &
+  Pick<SkeletonProps, 'classes' | 'styles'>;
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -210,6 +230,9 @@ export interface ConfigComponentProps {
   carousel?: ComponentStyleConfig;
   checkbox?: CheckboxConfig;
   collapse?: CollapseConfig;
+  descriptions?: DescriptionsConfig;
+  divider?: DividerConfig;
+  drawer?: DrawerConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
@@ -218,6 +241,7 @@ export interface ConfigComponentProps {
   popover?: PopoverConfig;
   radio?: RadioConfig;
   ribbon?: RibbonConfig;
+  skeleton?: SkeletonConfig;
   space?: SpaceConfig;
   switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;
