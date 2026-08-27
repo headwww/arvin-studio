@@ -164,6 +164,16 @@ const omitKeys: (keyof InputProps)[] = [
   'suffix',
   'maxlength',
   'readonly',
+  'onBlur',
+  'onChange',
+  'onClear',
+  'onCompositionend',
+  'onCompositionstart',
+  'onFocus',
+  'onKeydown',
+  'onKeyup',
+  'onPressEnter',
+  'onUpdate:value',
 ];
 
 const InternalInput = defineComponent<

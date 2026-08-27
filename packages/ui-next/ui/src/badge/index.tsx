@@ -404,7 +404,7 @@ const InternalBadge = defineComponent<
     };
   },
   {
-    name: 'ABadge',
+    name: 'AsBadge',
     inheritAttrs: false,
   },
 );

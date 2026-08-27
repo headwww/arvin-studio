@@ -99,7 +99,7 @@ export default defineComponent<
     };
   },
   {
-    name: 'AScrollNumber',
+    name: 'AsScrollNumber',
     inheritAttrs: false,
   },
 );

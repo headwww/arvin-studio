@@ -130,7 +130,6 @@ export interface InputNumberProps
   suffix?: VueNode;
   type?: 'number' | 'text';
   /**
-   * @since 5.13.0
    * @default "outlined"
    */
   variant?: Variant;

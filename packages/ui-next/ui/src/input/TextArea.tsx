@@ -106,7 +106,6 @@ export interface TextAreaProps
   size?: SizeType;
   status?: InputStatus;
   styles?: TextAreaStylesType;
-  /** @since 5.13.0 */
   variant?: Variant;
 }
 
@@ -150,6 +149,16 @@ const omitKeys: string[] = [
   'variant',
   'prefixCls',
   'allowClear',
+  'onBlur',
+  'onChange',
+  'onCompositionend',
+  'onCompositionstart',
+  'onFocus',
+  'onKeydown',
+  'onMousedown',
+  'onPressEnter',
+  'onResize',
+  'onUpdate:value',
 ];
 
 const InternalTextArea = defineComponent<

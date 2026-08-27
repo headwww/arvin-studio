@@ -3,4 +3,4 @@ export {
   type SlickProps,
   type SlickRef,
 } from './interface';
-export { default } from './Slider';
+export { default as Slick } from './Slider';

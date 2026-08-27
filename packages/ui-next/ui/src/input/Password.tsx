@@ -199,6 +199,16 @@ const InternalPassword = defineComponent<
         'inputPrefixCls',
         'rootClass',
         'prefixCls',
+        'onBlur',
+        'onChange',
+        'onClear',
+        'onCompositionend',
+        'onCompositionstart',
+        'onFocus',
+        'onKeydown',
+        'onKeyup',
+        'onPressEnter',
+        'onUpdate:value',
       ]);
 
       const suffixSlot = getSlotPropsFnRun(slots, props, 'suffix');

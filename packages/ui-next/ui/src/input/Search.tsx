@@ -136,6 +136,16 @@ const omitInputKeys: (keyof SearchProps)[] = [
   'rootClass',
   'prefixCls',
   'inputPrefixCls',
+  'onBlur',
+  'onChange',
+  'onClear',
+  'onCompositionend',
+  'onCompositionstart',
+  'onFocus',
+  'onKeydown',
+  'onKeyup',
+  'onPressEnter',
+  'onUpdate:value',
 ];
 
 export interface SearchSlots {

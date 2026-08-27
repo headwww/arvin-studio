@@ -4,8 +4,10 @@ import type { VueNode } from '../_util';
 import type { AlertProps } from '../alert';
 import type { AnchorProps } from '../anchor';
 import type { BadgeProps } from '../badge';
+import type { RibbonProps } from '../badge/Ribbon';
 import type { ButtonProps } from '../button';
 import type { CheckboxProps } from '../checkbox';
+import type { CollapseProps } from '../collapse';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -50,7 +52,6 @@ export interface ThemeConfig {
    * @descCN 通过 `cssVar` 配置来开启 CSS 变量模式，这个配置会被继承。
    * @descEN Enable CSS variable mode through `cssVar` configuration, This configuration will be inherited.
    * @default false
-   * @since 5.12.0
    */
   /*
    * `true` only (not `boolean`): CSS variables are always on in v6 —
@@ -77,7 +78,6 @@ export interface ThemeConfig {
    * @descCN 是否开启 `hashed` 属性。如果你的应用中只存在一个版本的 as，你可以设置为 `false` 来进一步减小样式体积。
    * @descEN Whether to enable the `hashed` attribute. If there is only one version of as in your application, you can set `false` to reduce the bundle size.
    * @default true
-   * @since 5.0.0
    */
   hashed?: boolean;
   /**
@@ -189,6 +189,12 @@ export type AnchorStyleConfig = ComponentStyleConfig &
 export type BadgeConfig = ComponentStyleConfig &
   Pick<BadgeProps, 'classes' | 'styles'>;
 
+export type RibbonConfig = ComponentStyleConfig &
+  Pick<RibbonProps, 'classes' | 'styles'>;
+
+export type CollapseConfig = ComponentStyleConfig &
+  Pick<CollapseProps, 'expandIcon'>;
+
 export interface ComponentStyleConfig {
   class?: string;
   classes?: unknown;
@@ -201,7 +207,9 @@ export interface ConfigComponentProps {
   avatar?: ComponentStyleConfig;
   badge?: BadgeConfig;
   button?: ButtonConfig;
+  carousel?: ComponentStyleConfig;
   checkbox?: CheckboxConfig;
+  collapse?: CollapseConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
@@ -209,6 +217,7 @@ export interface ConfigComponentProps {
   popconfirm?: PopconfirmConfig;
   popover?: PopoverConfig;
   radio?: RadioConfig;
+  ribbon?: RibbonConfig;
   space?: SpaceConfig;
   switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;

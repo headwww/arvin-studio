@@ -12,11 +12,15 @@ import type { ComponentBaseProps } from '../config-provider/context';
 
 import { computed, defineComponent } from 'vue';
 
-import { getAttrStyleAndClass } from '@arvin-studio/headless';
 import { clsx } from '@arvin-studio/kit';
 
 import { isPresetColor } from '../_util/colors';
-import { useMergeSemantic, useToArr, useToProps } from '../_util/hooks';
+import {
+  getAttrStyleAndClass,
+  useMergeSemantic,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
 import { getSlotPropsFnRun, toPropsRefs } from '../_util/tools';
 import { useComponentBaseConfig } from '../config-provider/context';
 import useStyle from './style/ribbon';
@@ -168,7 +172,7 @@ export default defineComponent<
     };
   },
   {
-    name: 'ABadgeRibbon',
+    name: 'AsBadgeRibbon',
     inheritAttrs: false,
   },
 );

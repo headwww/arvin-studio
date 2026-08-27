@@ -53,10 +53,6 @@ export interface CollapseProps {
   defaultActiveKey?: Key | Key[];
   destroyOnHidden?: boolean;
   expandIcon?: (props: object) => any;
-  /**
-   * Collapse items content
-   * @since 3.6.0
-   */
   items?: ItemType[];
   onChange?: (key: Key[]) => void;
   openMotion?: TransitionProps;

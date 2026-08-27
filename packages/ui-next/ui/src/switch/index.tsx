@@ -76,7 +76,6 @@ export interface SwitchProps extends ComponentBaseProps, SwitchEmitsProps {
   defaultChecked?: CheckedValueType;
   /**
    * Alias for `defaultChecked`.
-   * @since 5.12.0
    */
   defaultValue?: CheckedValueType;
   disabled?: boolean;
@@ -93,7 +92,6 @@ export interface SwitchProps extends ComponentBaseProps, SwitchEmitsProps {
   unCheckedValue?: CheckedValueType;
   /**
    * Alias for `checked`.
-   * @since 5.12.0
    */
   value?: CheckedValueType;
 }

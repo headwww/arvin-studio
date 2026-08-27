@@ -25,6 +25,14 @@ export { default as Badge, BadgeRibbon } from './badge';
 export type { BadgeProps, BadgeSlots } from './badge';
 export type { RibbonProps as BadgeRibbonProps } from './badge/Ribbon';
 export { default as Button } from './button';
+export { default as Carousel } from './carousel';
+export type {
+  CarouselEmits,
+  CarouselProps,
+  CarouselRef,
+  CarouselSlots,
+} from './carousel';
+
 export { default as Checkbox, CheckboxGroup } from './checkbox';
 export type {
   CheckboxEmits,
@@ -35,7 +43,12 @@ export type {
   CheckboxProps,
   CheckboxSlots,
 } from './checkbox';
-
+export { default as Collapse, CollapsePanel } from './collapse';
+export type {
+  CollapsePanelProps,
+  CollapsePanelSlots,
+  CollapseProps,
+} from './collapse';
 export { default as ConfigProvider } from './config-provider';
 export {
   default as Input,
@@ -44,6 +57,7 @@ export {
   InputSearch,
   TextArea,
 } from './input';
+
 export type {
   InputEmits,
   OTPEmits as InputOTPEmits,
@@ -69,7 +83,6 @@ export type {
   ValueType as InputNumberValueType,
 } from './input-number';
 export { default as Popconfirm } from './popconfirm';
-
 export type {
   PopconfirmEmits,
   PopconfirmProps,

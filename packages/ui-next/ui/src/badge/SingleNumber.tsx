@@ -149,7 +149,7 @@ export default defineComponent<SingleNumberProps>(
     };
   },
   {
-    name: 'ASingleNumber',
+    name: 'AsSingleNumber',
     inheritAttrs: false,
   },
 );

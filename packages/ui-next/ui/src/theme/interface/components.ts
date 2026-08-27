@@ -4,7 +4,9 @@ import type { ComponentToken as AnchorComponentToken } from '../../anchor/style'
 import type { ComponentToken as AvatarComponentToken } from '../../avatar/style';
 import type { ComponentToken as BadgeComponentToken } from '../../badge/style';
 import type { ComponentToken as ButtonComponentToken } from '../../button/style';
+import type { ComponentToken as CarouselComponentToken } from '../../carousel/style';
 import type { ComponentToken as CheckboxComponentToken } from '../../checkbox/style';
+import type { ComponentToken as CollapseComponentToken } from '../../collapse/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
 import type { ComponentToken as InputComponentToken } from '../../input/style';
 import type { ComponentToken as PopconfirmComponentToken } from '../../popconfirm/style';
@@ -20,7 +22,9 @@ export interface ComponentTokenMap {
   Avatar?: AvatarComponentToken;
   Badge?: BadgeComponentToken;
   Button?: ButtonComponentToken;
+  Carousel?: CarouselComponentToken;
   Checkbox?: CheckboxComponentToken;
+  Collapse?: CollapseComponentToken;
   Input?: InputComponentToken;
   InputNumber?: InputNumberComponentToken;
   Popconfirm?: PopconfirmComponentToken;

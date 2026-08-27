@@ -5,6 +5,7 @@ import type {
   BadgeConfig,
   ButtonConfig,
   CheckboxConfig,
+  CollapseConfig,
   ComponentStyleConfig,
   InputConfig,
   InputNumberConfig,
@@ -29,17 +30,19 @@ export interface ConfigProviderProps {
   badge?: BadgeConfig;
 
   button?: ButtonConfig;
+  carousel?: ComponentStyleConfig;
   checkbox?: CheckboxConfig;
+
+  collapse?: CollapseConfig;
   /** 是否禁用整个组件树下的所有表单类组件 */
   componentDisabled?: boolean;
 
   /** 尺寸 */
   componentSize?: SizeType;
+
   /** 设置布局展示方向*/
   direction?: DirectionType;
-
   iconPrefixCls?: string;
-
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;

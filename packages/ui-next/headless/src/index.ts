@@ -1,5 +1,6 @@
 export * from './async-validator';
 export * from './checkbox';
+export * from './collapse';
 export * from './color-picker';
 export * from './dialog';
 export * from './drawer';
@@ -7,6 +8,7 @@ export * from './input';
 export * from './input-number';
 export * from './notification';
 export * from './resize-observer';
+export * from './slick';
 export * from './switch';
 export * from './textarea';
 export * from './tooltip';
