@@ -3,6 +3,7 @@ import type { CSSProperties } from 'vue';
 import type { VueNode } from '../_util';
 import type { AlertProps } from '../alert';
 import type { AnchorProps } from '../anchor';
+import type { BadgeProps } from '../badge';
 import type { ButtonProps } from '../button';
 import type { CheckboxProps } from '../checkbox';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
@@ -185,15 +186,11 @@ export type AlertConfig = ComponentStyleConfig &
 export type AnchorStyleConfig = ComponentStyleConfig &
   Pick<AnchorProps, 'classes' | 'styles'>;
 
+export type BadgeConfig = ComponentStyleConfig &
+  Pick<BadgeProps, 'classes' | 'styles'>;
+
 export interface ComponentStyleConfig {
   class?: string;
-  /*
-   * `unknown`, NOT `any`: component configs are built as
-   * `ComponentStyleConfig & Pick<XxxProps, 'classes' | 'styles'>`, and
-   * intersecting a same-named property with `any` collapses it to `any`
-   * (`any & T = any`), silently erasing every component's semantic
-   * classes/styles config type. `unknown & T = T` keeps them intact.
-   */
   classes?: unknown;
   style?: CSSProperties;
   styles?: unknown;
@@ -202,6 +199,7 @@ export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
   avatar?: ComponentStyleConfig;
+  badge?: BadgeConfig;
   button?: ButtonConfig;
   checkbox?: CheckboxConfig;
   input?: InputConfig;

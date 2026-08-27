@@ -19,6 +19,7 @@ import { useComponentBaseConfig } from '../config-provider/context';
 import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
 import { useSize } from '../config-provider/hooks/useSize';
 import { useFormItemContext, useFormItemInputContext } from '../form/context';
+import { toNamePathStr } from '../form/hooks/useForm';
 import { useRadioGroupContextProvider } from './context';
 import Radio from './radio';
 import useStyle from './style';

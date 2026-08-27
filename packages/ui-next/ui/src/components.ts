@@ -21,6 +21,9 @@ export type {
   AvatarProps,
   AvatarSlots,
 } from './avatar';
+export { default as Badge, BadgeRibbon } from './badge';
+export type { BadgeProps, BadgeSlots } from './badge';
+export type { RibbonProps as BadgeRibbonProps } from './badge/Ribbon';
 export { default as Button } from './button';
 export { default as Checkbox, CheckboxGroup } from './checkbox';
 export type {
@@ -32,6 +35,7 @@ export type {
   CheckboxProps,
   CheckboxSlots,
 } from './checkbox';
+
 export { default as ConfigProvider } from './config-provider';
 export {
   default as Input,
@@ -56,7 +60,6 @@ export type {
   TextAreaProps,
   TextAreaRef,
 } from './input';
-
 export { default as InputNumber } from './input-number';
 export type {
   InputNumberEmits,
@@ -66,6 +69,7 @@ export type {
   ValueType as InputNumberValueType,
 } from './input-number';
 export { default as Popconfirm } from './popconfirm';
+
 export type {
   PopconfirmEmits,
   PopconfirmProps,
@@ -78,7 +82,6 @@ export type {
   PopoverRef,
   PopoverSlots,
 } from './popover';
-
 export { default as Radio, RadioButton, RadioGroup } from './radio';
 export type {
   RadioChangeEvent,

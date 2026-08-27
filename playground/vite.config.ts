@@ -16,7 +16,12 @@ export default defineConfig({
     tsxResolveTypes({
       defaultPropsToUndefined: ['Boolean'],
     }),
+    vueJsx({
+      // 尝试配置
+      mergeProps: false,
+      // 或者
+      transformOn: false,
+    }),
     vue(),
-    vueJsx(),
   ],
 });

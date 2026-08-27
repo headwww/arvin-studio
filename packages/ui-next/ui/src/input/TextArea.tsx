@@ -150,20 +150,6 @@ const omitKeys: string[] = [
   'variant',
   'prefixCls',
   'allowClear',
-  // 事件回调由下方内部包装函数显式透传（emit 转发），
-  // 若同时出现在 restProps 与显式 props 中，
-  // 会被 JSX 编译产物的 mergeProps 合并成数组，触发
-  // "Invalid prop: type check failed ... Expected Function, got Array" 警告
-  'onKeydown',
-  'onBlur',
-  'onChange',
-  'onFocus',
-  'onPressEnter',
-  'onResize',
-  'onMousedown',
-  'onCompositionstart',
-  'onCompositionend',
-  'onUpdate:value',
 ];
 
 const InternalTextArea = defineComponent<

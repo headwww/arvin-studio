@@ -6,13 +6,20 @@ import {
   Anchor,
   Avatar,
   AvatarGroup,
+  Badge,
+  BadgeRibbon,
   Button,
   Checkbox,
   CheckboxGroup,
   ConfigProvider,
+  Input,
   InputNumber,
   Popconfirm,
   Popover,
+  Radio,
+  RadioButton,
+  RadioGroup,
+  Space,
   Switch,
   Tooltip,
 } from '@arvin-studio/ui';
@@ -57,13 +64,6 @@ const onAlertClose = () => {
   alertCloseResult.value = '已关闭（触发 @close）';
 };
 
-/** Anchor 横向模式 items（指向页面真实存在的演示区块） */
-const anchorHorizontalItems = [
-  { key: 'anchor-b-1', href: '#demo-tooltip', title: 'Tooltip' },
-  { key: 'anchor-b-2', href: '#demo-popover', title: 'Popover' },
-  { key: 'anchor-b-3', href: '#demo-alert', title: 'Alert' },
-] as const;
-
 /** Anchor 当前高亮链接（演示 change 事件） */
 const anchorCurrent = ref('');
 const onAnchorChange = (link: string) => {
@@ -77,8 +77,14 @@ const demoItems = [
   { key: 'demo-popover', href: '#demo-popover', title: 'Popover' },
   { key: 'demo-popconfirm', href: '#demo-popconfirm', title: 'Popconfirm' },
   { key: 'demo-alert', href: '#demo-alert', title: 'Alert' },
-  { key: 'demo-anchor', href: '#demo-anchor', title: 'Anchor' },
   { key: 'demo-avatar', href: '#demo-avatar', title: 'Avatar' },
+  { key: 'demo-button', href: '#demo-button', title: 'Button' },
+  { key: 'demo-checkbox', href: '#demo-checkbox', title: 'Checkbox' },
+  { key: 'demo-input', href: '#demo-input', title: 'Input' },
+  { key: 'demo-inputnumber', href: '#demo-inputnumber', title: 'InputNumber' },
+  { key: 'demo-radio', href: '#demo-radio', title: 'Radio' },
+  { key: 'demo-space', href: '#demo-space', title: 'Space' },
+  { key: 'demo-badge', href: '#demo-badge', title: 'Badge' },
 ] as const;
 
 /** Avatar 演示用图片地址 */
@@ -89,6 +95,44 @@ const badSrc = 'https://example.com/not-exist.png';
 const onAvatarError = () => {
   console.log('Avatar 图片加载失败');
   return false;
+};
+
+/** Checkbox 演示状态 */
+const checkboxChecked = ref(true);
+const checkedValues = ref(['A', 'C']);
+const checkedValues2 = ref(['apple']);
+const checkedValues3 = ref<string[]>([]);
+const checkboxOptions = [
+  { label: '苹果', value: 'apple' },
+  { label: '香蕉', value: 'banana' },
+  { label: '橘子', value: 'orange', disabled: true },
+];
+
+/** Input 演示状态 */
+const inputValue = ref('');
+
+/** InputNumber 演示状态 */
+const numValue = ref(3);
+
+/** Radio 演示状态 */
+const radioValue = ref('A');
+const radioValue2 = ref('mon');
+const radioValue3 = ref('1');
+const radioValue4 = ref('x');
+const radioChecked = ref(true);
+const radioOptions = [
+  { label: '周一', value: 'mon' },
+  { label: '周二', value: 'tue' },
+  { label: '周三', value: 'wed', disabled: true },
+];
+
+/** Badge 演示状态（count 动态增减，观察数字滚动动画） */
+const badgeCount = ref(5);
+const increaseBadge = () => {
+  badgeCount.value += 1;
+};
+const decreaseBadge = () => {
+  badgeCount.value = Math.max(0, badgeCount.value - 1);
 };
 </script>
 
@@ -102,7 +146,11 @@ const onAvatarError = () => {
         :offset-top="16"
         :target-offset="120"
         @change="onAnchorChange"
-      />
+      >
+        <template #item="{ title }">
+          <span>📍 {{ title }}</span>
+        </template>
+      </Anchor>
     </div>
 
     <!-- <SpaceCompact>
@@ -480,24 +528,6 @@ const onAvatarError = () => {
     </div>
     </section>
 
-    <section id="demo-anchor" class="demo-section">
-      <h3>Anchor</h3>
-
-      <h4>横向模式（direction="horizontal" + affix=false + #item 插槽）</h4>
-    <div class="anchor-horizontal">
-      <Anchor
-        :items="anchorHorizontalItems"
-        direction="horizontal"
-        :affix="false"
-        @change="onAnchorChange"
-      >
-        <template #item="{ title }">
-          <span>📍 {{ title }}</span>
-        </template>
-      </Anchor>
-    </div>
-    </section>
-
     <section id="demo-avatar" class="demo-section">
       <h3>Avatar</h3>
 
@@ -573,6 +603,379 @@ const onAvatarError = () => {
         <span class="hint">max 折叠后剩余头像通过 Popover 查看（右侧为 click 触发）</span>
       </div>
     </section>
+
+    <section id="demo-button" class="demo-section">
+      <h3>Button</h3>
+
+      <h4>type 类型</h4>
+      <div class="row">
+        <Button>default</Button>
+        <Button type="primary">primary</Button>
+        <Button type="dashed">dashed</Button>
+        <Button type="link">link</Button>
+        <Button type="text">text</Button>
+      </div>
+
+      <h4>variant / color 变体</h4>
+      <div class="row">
+        <Button color="pink" variant="solid">pink solid</Button>
+        <Button color="blue" variant="outlined">blue outlined</Button>
+        <Button color="green" variant="filled">green filled</Button>
+        <Button color="gold" variant="dashed">gold dashed</Button>
+        <Button variant="text">text</Button>
+        <Button variant="link">link</Button>
+      </div>
+
+      <h4>size / shape</h4>
+      <div class="row">
+        <Button size="small">small</Button>
+        <Button size="medium">medium</Button>
+        <Button size="large">large</Button>
+        <Button shape="circle">C</Button>
+        <Button shape="round">round</Button>
+        <Button shape="square">square</Button>
+      </div>
+
+      <h4>状态（disabled / loading / danger / ghost）</h4>
+      <div class="row">
+        <Button type="primary" disabled>disabled</Button>
+        <Button type="primary" loading>loading</Button>
+        <Button type="primary" danger>danger</Button>
+        <Button ghost>ghost</Button>
+        <Button danger>danger default</Button>
+      </div>
+      <div class="row">
+        <Button type="primary" block>block 撑满父容器</Button>
+      </div>
+
+      <h4>图标 / iconPlacement / 链接按钮</h4>
+      <div class="row">
+        <Button type="primary" icon="⭐">icon start</Button>
+        <Button type="primary" icon="⭐" icon-placement="end">icon end</Button>
+        <Button type="primary" shape="circle" icon="👍" />
+        <Button href="https://example.com" target="_blank" type="link">
+          链接按钮
+        </Button>
+      </div>
+    </section>
+
+    <section id="demo-checkbox" class="demo-section">
+      <h3>Checkbox</h3>
+
+      <h4>基础（v-model:checked）</h4>
+      <div class="row">
+        <Checkbox v-model:checked="checkboxChecked">
+          当前：{{ checkboxChecked }}
+        </Checkbox>
+        <Checkbox default-checked>默认选中</Checkbox>
+        <Checkbox disabled>禁用</Checkbox>
+        <Checkbox disabled checked>禁用 + 选中</Checkbox>
+      </div>
+
+      <h4>CheckboxGroup（options 配置式，v-model:value）</h4>
+      <div class="row">
+        <CheckboxGroup
+          v-model:value="checkedValues"
+          :options="['A', 'B', 'C', 'D']"
+        />
+        <span>选中：{{ checkedValues }}</span>
+      </div>
+      <div class="row">
+        <CheckboxGroup v-model:value="checkedValues2" :options="checkboxOptions" />
+        <span>选中：{{ checkedValues2 }}</span>
+      </div>
+
+      <h4>CheckboxGroup（插槽子项）</h4>
+      <div class="row">
+        <CheckboxGroup v-model:value="checkedValues3">
+          <Checkbox value="a">选项 A</Checkbox>
+          <Checkbox value="b">选项 B</Checkbox>
+          <Checkbox value="c" disabled>选项 C（禁用）</Checkbox>
+        </CheckboxGroup>
+      </div>
+    </section>
+
+    <section id="demo-input" class="demo-section">
+      <h3>Input</h3>
+
+      <h4>基础（v-model:value）</h4>
+      <div class="row">
+        <Input
+          v-model:value="inputValue"
+          placeholder="请输入内容"
+          style="width: 220px"
+        />
+        <span>值：{{ inputValue }}</span>
+      </div>
+
+      <h4>size / disabled / readonly / status</h4>
+      <div class="row">
+        <Input size="small" placeholder="small" style="width: 140px" />
+        <Input placeholder="medium" style="width: 140px" />
+        <Input size="large" placeholder="large" style="width: 140px" />
+        <Input disabled placeholder="disabled" style="width: 140px" />
+        <Input readonly value="只读内容" style="width: 140px" />
+        <Input status="error" placeholder="error 状态" style="width: 140px" />
+        <Input status="warning" placeholder="warning 状态" style="width: 140px" />
+      </div>
+
+      <h4>maxlength + showCount / allowClear</h4>
+      <div class="row">
+        <Input
+          :maxlength="10"
+          show-count
+          placeholder="最多 10 字"
+          style="width: 220px"
+        />
+        <Input
+          allow-clear
+          default-value="可清除"
+          placeholder="allowClear"
+          style="width: 220px"
+        />
+      </div>
+
+      <h4>prefix / suffix 插槽</h4>
+      <div class="row">
+        <Input placeholder="前缀" style="width: 220px">
+          <template #prefix>🔍</template>
+        </Input>
+        <Input placeholder="后缀" style="width: 220px">
+          <template #suffix>@qq.com</template>
+        </Input>
+      </div>
+
+      <h4>variant 变体</h4>
+      <div class="row">
+        <Input variant="outlined" placeholder="outlined" style="width: 160px" />
+        <Input variant="filled" placeholder="filled" style="width: 160px" />
+        <Input variant="borderless" placeholder="borderless" style="width: 160px" />
+        <Input variant="underlined" placeholder="underlined" style="width: 160px" />
+      </div>
+    </section>
+
+    <section id="demo-inputnumber" class="demo-section">
+      <h3>InputNumber</h3>
+
+      <h4>基础（v-model:value）</h4>
+      <div class="row">
+        <InputNumber v-model:value="numValue" />
+        <span>值：{{ numValue }}</span>
+      </div>
+
+      <h4>min / max / step / precision</h4>
+      <div class="row">
+        <InputNumber :min="0" :max="100" :step="5" default-value="50" />
+        <InputNumber :precision="2" :step="0.5" default-value="1.5" />
+        <span class="hint">支持键盘上下键 / 滚轮 / 步进器调整</span>
+      </div>
+
+      <h4>disabled / controls / prefix / suffix</h4>
+      <div class="row">
+        <InputNumber disabled default-value="3" />
+        <InputNumber :controls="false" default-value="7" />
+        <InputNumber prefix="¥" suffix="元" default-value="99" />
+      </div>
+    </section>
+
+    <section id="demo-radio" class="demo-section">
+      <h3>Radio</h3>
+
+      <h4>RadioGroup（v-model:value + options）</h4>
+      <div class="row">
+        <RadioGroup v-model:value="radioValue" :options="['A', 'B', 'C']" />
+        <span>选中：{{ radioValue }}</span>
+      </div>
+
+      <h4>options 对象形式（含禁用项）</h4>
+      <div class="row">
+        <RadioGroup v-model:value="radioValue2" :options="radioOptions" />
+        <span>选中：{{ radioValue2 }}</span>
+      </div>
+
+      <h4>RadioButton 按钮样式（optionType / buttonStyle / size）</h4>
+      <div class="row">
+        <RadioGroup v-model:value="radioValue3" option-type="button">
+          <RadioButton value="1">一月</RadioButton>
+          <RadioButton value="2">二月</RadioButton>
+          <RadioButton value="3">三月</RadioButton>
+        </RadioGroup>
+      </div>
+      <div class="row">
+        <RadioGroup
+          v-model:value="radioValue4"
+          option-type="button"
+          button-style="solid"
+          size="small"
+        >
+          <RadioButton value="x">X</RadioButton>
+          <RadioButton value="y">Y</RadioButton>
+          <RadioButton value="z">Z</RadioButton>
+        </RadioGroup>
+      </div>
+
+      <h4>单独 Radio（v-model:checked）</h4>
+      <div class="row">
+        <Radio v-model:checked="radioChecked">开关：{{ radioChecked }}</Radio>
+        <Radio disabled>禁用</Radio>
+      </div>
+    </section>
+
+    <section id="demo-space" class="demo-section">
+      <h3>Space</h3>
+
+      <h4>基础（size 预设）</h4>
+      <div class="row">
+        <Space size="small">
+          <Button type="primary">small</Button>
+          <Button>按钮</Button>
+          <Button>按钮</Button>
+        </Space>
+        <Space size="large">
+          <Button type="primary">large</Button>
+          <Button>按钮</Button>
+        </Space>
+      </div>
+
+      <h4>自定义间距 / wrap 换行</h4>
+      <div class="row">
+        <Space :size="24">
+          <Button>24px 间距</Button>
+          <Button>按钮</Button>
+        </Space>
+      </div>
+      <div style="width: 360px">
+        <Space :size="[8, 16]" wrap>
+          <Button v-for="n in 8" :key="n">按钮 {{ n }}</Button>
+        </Space>
+      </div>
+
+      <h4>vertical 垂直排列</h4>
+      <div class="row">
+        <Space vertical>
+          <Button>上</Button>
+          <Button>中</Button>
+          <Button>下</Button>
+        </Space>
+      </div>
+
+      <h4>separator 分隔符</h4>
+      <div class="row">
+        <Space separator="|">
+          <span>一</span>
+          <span>二</span>
+          <span>三</span>
+        </Space>
+        <Space>
+          <template #separator><span style="color: #f50">◆</span></template>
+          <span>一</span>
+          <span>二</span>
+          <span>三</span>
+        </Space>
+      </div>
+
+      <h4>align 对齐</h4>
+      <div class="row">
+        <Space align="start">
+          <Button>start</Button>
+          <span style="font-size: 24px">大</span>
+          <span>小</span>
+        </Space>
+        <Space align="center">
+          <Button>center</Button>
+          <span style="font-size: 24px">大</span>
+          <span>小</span>
+        </Space>
+        <Space align="end">
+          <Button>end</Button>
+          <span style="font-size: 24px">大</span>
+          <span>小</span>
+        </Space>
+      </div>
+    </section>
+
+    <section id="demo-badge" class="demo-section">
+      <h3>Badge</h3>
+
+      <h4>count 数字徽标（含 overflowCount / showZero）</h4>
+      <div class="row">
+        <Badge :count="badgeCount">
+          <Avatar shape="square" size="large">U</Avatar>
+        </Badge>
+        <Button @click="increaseBadge">+1</Button>
+        <Button @click="decreaseBadge">-1</Button>
+        <Badge :count="0" show-zero>
+          <Avatar shape="square" size="large">U</Avatar>
+        </Badge>
+        <Badge :count="100" :overflow-count="99">
+          <Avatar shape="square" size="large">U</Avatar>
+        </Badge>
+        <span class="hint">count 变化带数字滚动动画；100 超出 overflowCount 显示 99+</span>
+      </div>
+
+      <h4>dot 红点</h4>
+      <div class="row">
+        <Badge dot>
+          <Button>通知</Button>
+        </Badge>
+        <Badge dot color="green">
+          <Button>在线</Button>
+        </Badge>
+      </div>
+
+      <h4>status 状态点 + text</h4>
+      <div class="row">
+        <Badge status="success" text="成功" />
+        <Badge status="processing" text="处理中" />
+        <Badge status="warning" text="警告" />
+        <Badge status="error" text="错误" />
+        <Badge status="default" text="默认" />
+      </div>
+
+      <h4>color 自定义颜色（count / dot / 状态点）</h4>
+      <div class="row">
+        <Badge :count="6" color="pink">
+          <Button>pink</Button>
+        </Badge>
+        <Badge :count="9" color="#52c41a">
+          <Button>自定义色</Button>
+        </Badge>
+        <Badge dot color="volcano">
+          <Button>volcano</Button>
+        </Badge>
+        <Badge color="gold" text="gold 状态点" />
+      </div>
+
+      <h4>#count 插槽（自定义徽标内容）</h4>
+      <div class="row">
+        <Badge>
+          <template #count>🔥</template>
+          <Button>插槽 count</Button>
+        </Badge>
+      </div>
+
+      <h4>offset 偏移</h4>
+      <div class="row">
+        <Badge :count="8" :offset="[6, -6]">
+          <Button>右上偏移</Button>
+        </Badge>
+        <Badge :count="8" :offset="[-6, 6]">
+          <Button>左下偏移</Button>
+        </Badge>
+      </div>
+
+      <h4>BadgeRibbon 缎带</h4>
+      <div class="row">
+        <BadgeRibbon text="HOT" color="red">
+          <div class="ribbon-card">缎带卡片内容</div>
+        </BadgeRibbon>
+      </div>
+      <div class="row">
+        <BadgeRibbon text="新品" color="blue" placement="start">
+          <div class="ribbon-card">placement="start"</div>
+        </BadgeRibbon>
+      </div>
+    </section>
   </ConfigProvider>
 </template>
 
@@ -606,10 +1009,6 @@ h4 {
   padding: 8px 0;
 }
 
-.anchor-horizontal {
-  padding: 8px 0;
-}
-
 .demo-anchor-nav {
   padding: 8px 0 16px;
   border-bottom: 1px solid #f0f0f0;
@@ -623,5 +1022,16 @@ h4 {
 .hint {
   color: #999;
   font-size: 12px;
+}
+
+.ribbon-card {
+  width: 220px;
+  height: 120px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

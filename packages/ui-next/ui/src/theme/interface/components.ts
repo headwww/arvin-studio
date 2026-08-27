@@ -2,6 +2,7 @@ import type { ComponentToken as AffixComponentToken } from '../../affix/style';
 import type { ComponentToken as AlertComponentToken } from '../../alert/style';
 import type { ComponentToken as AnchorComponentToken } from '../../anchor/style';
 import type { ComponentToken as AvatarComponentToken } from '../../avatar/style';
+import type { ComponentToken as BadgeComponentToken } from '../../badge/style';
 import type { ComponentToken as ButtonComponentToken } from '../../button/style';
 import type { ComponentToken as CheckboxComponentToken } from '../../checkbox/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
@@ -17,6 +18,7 @@ export interface ComponentTokenMap {
   Alert?: AlertComponentToken;
   Anchor?: AnchorComponentToken;
   Avatar?: AvatarComponentToken;
+  Badge?: BadgeComponentToken;
   Button?: ButtonComponentToken;
   Checkbox?: CheckboxComponentToken;
   Input?: InputComponentToken;

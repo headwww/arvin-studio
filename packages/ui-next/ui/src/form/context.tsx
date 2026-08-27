@@ -16,6 +16,7 @@ import type { InjectionKey, Ref } from 'vue';
 
 import type { ValidateStatus } from '../_util/statusUtils';
 import type { Variant } from '../config-provider/context';
+import type { NamePath } from './types';
 
 import { inject, provide, ref } from 'vue';
 
@@ -45,6 +46,7 @@ export interface FormItemStatusContextProps {
   hasFeedback?: boolean;
   /** 是否为 Form.Item 内部的实际输入元素（用于区分 addon 等辅助节点） */
   isFormItemInput?: boolean;
+  name?: NamePath;
   // TODO name?: NamePath;
   /** 校验状态（success / warning / error 等），决定输入框的错误/成功样式 */
   status?: ValidateStatus;
