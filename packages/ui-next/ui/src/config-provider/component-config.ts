@@ -11,6 +11,7 @@ import type { CollapseProps } from '../collapse';
 import type { DescriptionsProps } from '../descriptions';
 import type { DividerProps } from '../divider';
 import type { DrawerProps } from '../drawer';
+import type { EmptyProps } from '../empty';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -221,6 +222,9 @@ export type DrawerConfig = ComponentStyleConfig &
 export type SkeletonConfig = ComponentStyleConfig &
   Pick<SkeletonProps, 'classes' | 'styles'>;
 
+export type EmptyConfig = ComponentStyleConfig &
+  Pick<EmptyProps, 'classes' | 'image' | 'styles'>;
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -233,6 +237,7 @@ export interface ConfigComponentProps {
   descriptions?: DescriptionsConfig;
   divider?: DividerConfig;
   drawer?: DrawerConfig;
+  empty?: EmptyConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;

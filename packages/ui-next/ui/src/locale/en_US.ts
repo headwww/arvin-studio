@@ -13,6 +13,9 @@ const localeValues: Locale = {
     okText: 'OK',
     cancelText: 'Cancel',
   },
+  Empty: {
+    description: 'No data',
+  },
 };
 
 export default localeValues;

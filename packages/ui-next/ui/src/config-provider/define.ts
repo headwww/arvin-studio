@@ -10,6 +10,7 @@ import type {
   DescriptionsConfig,
   DividerConfig,
   DrawerConfig,
+  EmptyConfig,
   InputConfig,
   InputNumberConfig,
   InputSearchConfig,
@@ -49,6 +50,7 @@ export interface ConfigProviderProps {
 
   divider?: DividerConfig;
   drawer?: DrawerConfig;
+  empty?: EmptyConfig;
   iconPrefixCls?: string;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;

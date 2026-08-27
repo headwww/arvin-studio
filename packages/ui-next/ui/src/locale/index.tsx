@@ -5,6 +5,7 @@
 
 import type { InjectionKey, Ref } from 'vue';
 
+import type { TransferLocale as TransferLocaleForEmpty } from '../empty';
 import type { PopconfirmLocale } from '../popconfirm/PurePanel';
 
 import { computed, defineComponent, inject, provide, ref } from 'vue';
@@ -26,6 +27,7 @@ export const AS_MARK = 'internalMark';
 
 /** TODO 语言包接口 */
 export interface Locale {
+  Empty?: TransferLocaleForEmpty;
   global?: {
     close?: string;
     placeholder?: string;

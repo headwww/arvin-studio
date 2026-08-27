@@ -10,6 +10,30 @@ import { computed, inject, provide, ref } from 'vue';
 export const defaultPrefixCls = 'as';
 export const defaultIconPrefixCls = 'asicon';
 
+type GetClassNamesOrEmptyObject<Config extends { classes?: any }> =
+  Config extends {
+    classes?: infer ClassNames;
+  }
+    ? ClassNames
+    : object;
+
+type GetStylesOrEmptyObject<Config extends { styles?: any }> = Config extends {
+  styles?: infer Styles;
+}
+  ? Styles
+  : object;
+
+type ComponentReturnType<T extends keyof ConfigComponentProps> = Omit<
+  NonNullable<ConfigComponentProps[T]>,
+  'classes' | 'styles'
+> & {
+  classes: GetClassNamesOrEmptyObject<NonNullable<ConfigComponentProps[T]>>;
+  direction: ConfigConsumerProps['direction'];
+  getPopupContainer: ConfigConsumerProps['getPopupContainer'];
+  getPrefixCls: ConfigConsumerProps['getPrefixCls'];
+  styles: GetStylesOrEmptyObject<NonNullable<ConfigComponentProps[T]>>;
+};
+
 const EMPTY_OBJECT = {};
 
 export type DirectionType = 'ltr' | 'rtl' | undefined;
@@ -126,6 +150,25 @@ export function useBaseConfig<K extends string>(
     }),
     getPopupContainer: config?.value.getPopupContainer,
   };
+}
+
+export function useComponentConfig<T extends keyof ConfigComponentProps>(
+  propName: T,
+) {
+  const context = useConfig();
+  return computed(() => {
+    const { getPrefixCls, direction, getPopupContainer } = context.value;
+    const propValue: ConfigConsumerProps[T] = context.value[propName];
+
+    return {
+      classes: EMPTY_OBJECT,
+      styles: EMPTY_OBJECT,
+      ...propValue,
+      getPrefixCls,
+      direction,
+      getPopupContainer,
+    } as ComponentReturnType<T>;
+  });
 }
 
 /**

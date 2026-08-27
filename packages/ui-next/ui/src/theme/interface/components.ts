@@ -10,6 +10,7 @@ import type { ComponentToken as CollapseComponentToken } from '../../collapse/st
 import type { ComponentToken as DescriptionsComponentToken } from '../../descriptions/style';
 import type { ComponentToken as DividerComponentToken } from '../../divider/style';
 import type { ComponentToken as DrawerComponentToken } from '../../drawer/style';
+import type { ComponentToken as EmptyComponentToken } from '../../empty/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
 import type { ComponentToken as InputComponentToken } from '../../input/style';
 import type { ComponentToken as PopconfirmComponentToken } from '../../popconfirm/style';
@@ -32,6 +33,7 @@ export interface ComponentTokenMap {
   Descriptions?: DescriptionsComponentToken;
   Divider?: DividerComponentToken;
   Drawer?: DrawerComponentToken;
+  Empty?: EmptyComponentToken;
   Input?: InputComponentToken;
   InputNumber?: InputNumberComponentToken;
   Popconfirm?: PopconfirmComponentToken;
