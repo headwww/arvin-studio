@@ -3,15 +3,37 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./src/*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
   "scripts": {
-    "build": "pnpm exec tsdown",
+    "build": "vite build && tsdown --config ./tsdown.dts.config.ts && node ./scripts/postbuild.mjs",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.33.4",
+  "peerDependencies": {
+    "vue": "catalog:"
+  },
   "dependencies": {
     "@arvin-studio/kit": "workspace:*",
     "date-fns": "^4.4.0",
@@ -22,6 +44,10 @@
   },
   "devDependencies": {
     "@types/luxon": "^3.7.5",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "vite": "^7.2.7",
+    "vite-plugin-tsx-resolve-types": "^1.0.1",
     "vue": "catalog:"
   }
 }
