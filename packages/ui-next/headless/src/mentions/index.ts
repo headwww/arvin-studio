@@ -2,12 +2,12 @@ export { useUnstableContext, useUnstableContextProvider } from './context';
 export type {
   DataDrivenOptionProps,
   Direction,
+  Placement as MentionsPlacement,
   MentionsProps,
   MentionsRef,
-  Placement,
 } from './Mentions';
 
-export { default } from './Mentions';
-export type { OptionProps } from './Option';
+export { default as Mentions } from './Mentions';
+export type { OptionProps as MentionsOptionProps } from './Option';
 
-export { default as Option } from './Option';
+export { default as MentionsOption } from './Option';

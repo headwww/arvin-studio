@@ -8,6 +8,7 @@ export * from './dropdown';
 export * from './image';
 export * from './input';
 export * from './input-number';
+export * from './mentions';
 export * from './menu';
 export * from './mutate-observer';
 export * from './notification';

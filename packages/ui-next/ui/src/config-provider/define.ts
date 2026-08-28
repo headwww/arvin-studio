@@ -18,6 +18,9 @@ import type {
   InputConfig,
   InputNumberConfig,
   InputSearchConfig,
+  MasonryConfig,
+  MentionsConfig,
+  MenuConfig,
   OTPConfig,
   PopconfirmConfig,
   PopoverConfig,
@@ -51,8 +54,8 @@ export interface ConfigProviderProps {
   descriptions?: DescriptionsConfig;
   /** 设置布局展示方向*/
   direction?: DirectionType;
-
   divider?: DividerConfig;
+
   drawer?: DrawerConfig;
   empty?: EmptyConfig;
   flex?: FlexConfig;
@@ -66,6 +69,9 @@ export interface ConfigProviderProps {
   layout?: ComponentStyleConfig;
   /** 语言包配置，语言包可到 */
   locale?: Locale;
+  masonry?: MasonryConfig;
+  mentions?: MentionsConfig;
+  menu?: MenuConfig;
   otp?: OTPConfig;
   popconfirm?: PopconfirmConfig;
   popover?: PopoverConfig;

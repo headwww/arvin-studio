@@ -19,12 +19,12 @@ import { filterEmpty, ResizeObserver } from '@arvin-studio/headless';
 import { clsx } from '@arvin-studio/kit';
 
 import { getAttrStyleAndClass } from '../_util/hooks';
-import useBreakpoint from '../_util/hooks/useBreakpoint';
 import { responsiveArray } from '../_util/responsiveObserver';
 import { getSlotPropsFnRun } from '../_util/tools';
 import { useComponentBaseConfig } from '../config-provider/context';
 import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
 import { useSize } from '../config-provider/hooks/useSize';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
 import { useAvatarContext } from './AvatarContext';
 import useStyle from './style';
 

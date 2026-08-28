@@ -13,6 +13,7 @@
     "@arvin-studio/ui": "workspace:*",
     "@arvin-studio/cssinjs": "workspace:*",
     "@arvin-studio/headless": "workspace:*",
+    "@arvin-studio/icons": "workspace:*",
     "vue": "catalog:"
   },
   "devDependencies": {

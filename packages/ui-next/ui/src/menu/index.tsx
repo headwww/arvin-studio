@@ -1,0 +1,111 @@
+import type { App, SlotsType } from 'vue';
+
+import type {
+  MenuInfo,
+  SelectInfo,
+  MenuRef as VcMenuRef,
+} from '@arvin-studio/headless';
+
+import type { ItemType } from './interface.ts';
+import type {
+  MenuProps as BaseMenuProps,
+  MenuEmits,
+  MenuEmitsProps,
+  MenuSlots,
+} from './menu';
+
+import { computed, defineComponent, shallowRef } from 'vue';
+
+import { useSiderCtx } from '../layout/Sider';
+import InternalMenu from './menu';
+import MenuDivider from './MenuDivider';
+import Item from './MenuItem';
+import MenuItemGroup from './MenuItemGroup';
+import SubMenu from './SubMenu';
+
+export type MenuItemType = ItemType;
+export type { MenuEmits, MenuSlots };
+
+export interface MenuRef {
+  focus: (options?: FocusOptions) => void;
+  menu: null | VcMenuRef;
+}
+
+export interface InternalMenuProps
+  extends
+    BaseMenuProps,
+    /* @vue-ignore */
+    MenuEmitsProps {}
+
+export type MenuProps = InternalMenuProps;
+
+const Menu = defineComponent<
+  InternalMenuProps,
+  MenuEmits,
+  string,
+  SlotsType<MenuSlots>
+>(
+  (props, { slots, attrs, emit, expose }) => {
+    const menuRef = shallowRef();
+    const { siderCollapsed } = useSiderCtx();
+    expose({
+      menu: computed(() => menuRef?.value?.menu),
+      focus: (options?: FocusOptions) => {
+        menuRef.value?.menu?.focus?.(options);
+      },
+    });
+    return () => {
+      const events = {
+        onClick: (info: MenuInfo) => emit('click', info),
+        onSelect: (info: SelectInfo) => emit('select', info),
+        onDeselect: (info: SelectInfo) => emit('deselect', info),
+        onOpenChange: (openKeys: string[]) => emit('openChange', openKeys),
+        'onUpdate:openKeys': (openKeys: string[]) =>
+          emit('update:openKeys', openKeys),
+        'onUpdate:selectedKeys': (selectedKeys: string[]) =>
+          emit('update:selectedKeys', selectedKeys),
+      };
+      return (
+        <InternalMenu
+          ref={menuRef}
+          {...attrs}
+          {...props}
+          {...events}
+          siderCollapsed={siderCollapsed?.value as any}
+          v-slots={slots}
+        />
+      );
+    };
+  },
+  {
+    name: 'AMenu',
+    inheritAttrs: false,
+  },
+);
+
+(Menu as any).Item = Item;
+(Menu as any).SubMenu = SubMenu;
+(Menu as any).ItemGroup = MenuItemGroup;
+(Menu as any).Divider = MenuDivider;
+
+(Menu as any).install = (app: App) => {
+  app.component(Menu.name, Menu);
+  app.component(Item.name, Item);
+  app.component(SubMenu.name, SubMenu);
+  app.component(MenuItemGroup.name, MenuItemGroup);
+  app.component(MenuDivider.name, MenuDivider);
+};
+
+export const MenuItem = Item;
+export { MenuDivider, MenuItemGroup, SubMenu };
+
+export default Menu as typeof Menu & {
+  Divider: typeof MenuDivider;
+  Item: typeof Item;
+  ItemGroup: typeof MenuItemGroup;
+  SubMenu: typeof SubMenu;
+};
+
+export { type MenuItemProps } from './MenuItem';
+export { type MenuItemGroupProps } from './MenuItemGroup';
+export { type SubMenuProps } from './SubMenu';

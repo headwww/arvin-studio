@@ -19,6 +19,8 @@ import type { ImageProps } from '../image';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
+import type { MasonryProps } from '../masonry';
+import type { MenuProps } from '../menu';
 import type { PopconfirmProps } from '../popconfirm';
 import type { PopoverProps } from '../popover';
 import type { RadioProps } from '../radio';
@@ -248,6 +250,15 @@ export type ImageConfig = ComponentStyleConfig &
       Pick<ImageProps, 'classes' | 'styles'> & { mask?: MaskType };
   };
 
+export type MasonryConfig = ComponentStyleConfig &
+  Pick<MasonryProps, 'classes' | 'styles'>;
+
+export type MentionsConfig = ComponentStyleConfig &
+  Pick<TextAreaProps, 'allowClear' | 'classes' | 'styles' | 'variant'>;
+
+export type MenuConfig = ComponentStyleConfig &
+  Pick<MenuProps, 'classes' | 'expandIcon' | 'styles'>;
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -269,6 +280,9 @@ export interface ConfigComponentProps {
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
   layout?: ComponentStyleConfig;
+  masonry?: MasonryConfig;
+  mentions?: MentionsConfig;
+  menu?: MenuConfig;
   otp?: OTPConfig;
   popconfirm?: PopconfirmConfig;
   popover?: PopoverConfig;

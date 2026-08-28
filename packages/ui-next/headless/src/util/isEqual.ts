@@ -67,3 +67,4 @@ function isEqual(obj1: any, obj2: any, shallow = false): boolean {
 }
 
 export default isEqual;
+export { isEqual };

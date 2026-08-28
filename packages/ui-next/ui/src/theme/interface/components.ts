@@ -1,3 +1,4 @@
+import type { ComponentToken as WaveToken } from '../../_util/wave/style';
 import type { ComponentToken as AffixComponentToken } from '../../affix/style';
 import type { ComponentToken as AlertComponentToken } from '../../alert/style';
 import type { ComponentToken as AnchorComponentToken } from '../../anchor/style';
@@ -13,14 +14,19 @@ import type { ComponentToken as DrawerComponentToken } from '../../drawer/style'
 import type { ComponentToken as EmptyComponentToken } from '../../empty/style';
 import type { ComponentToken as FlexComponentToken } from '../../flex/style';
 import type { ComponentToken as FloatButtonComponentToken } from '../../float-button/style';
+import type { ComponentToken as GridComponentToken } from '../../grid/style';
 import type { ComponentToken as ImageComponentToken } from '../../image/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
 import type { ComponentToken as InputComponentToken } from '../../input/style';
 import type { ComponentToken as LayoutComponentToken } from '../../layout/style';
-import type { ComponentToken as PopconfirmComponentToken } from '../../popconfirm/style';
+import type { ComponentToken as MasonryComponentToken } from '../../masonry/style';
+import type { ComponentToken as MentionsComponentToken } from '../../mentions/style';
+import type { ComponentToken as MenuComponentToken } from '../../menu/style';
+import type { ComponentToken as PopoverComponentToken } from '../../popover/style';
 import type { ComponentToken as RadioComponentToken } from '../../radio/style';
 import type { ComponentToken as SkeletonComponentToken } from '../../skeleton/style';
 import type { ComponentToken as SpaceComponentToken } from '../../space/style';
+import type { ComponentToken as SpinComponentToken } from '../../spin/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
 import type { ComponentToken as TooltipComponentToken } from '../../tooltip/style';
 
@@ -40,14 +46,20 @@ export interface ComponentTokenMap {
   Empty?: EmptyComponentToken;
   Flex?: FlexComponentToken;
   FloatButton?: FloatButtonComponentToken;
+  Grid?: GridComponentToken;
   Image?: ImageComponentToken;
   Input?: InputComponentToken;
   InputNumber?: InputNumberComponentToken;
   Layout?: LayoutComponentToken;
-  Popconfirm?: PopconfirmComponentToken;
+  Masonry?: MasonryComponentToken;
+  Mentions?: MentionsComponentToken;
+  Menu?: MenuComponentToken;
+  Popover?: PopoverComponentToken;
   Radio?: RadioComponentToken;
   Skeleton?: SkeletonComponentToken;
   Space?: SpaceComponentToken;
+  Spin?: SpinComponentToken;
   Switch?: SwitchComponentToken;
   Tooltip?: TooltipComponentToken;
+  Wave?: WaveToken;
 }

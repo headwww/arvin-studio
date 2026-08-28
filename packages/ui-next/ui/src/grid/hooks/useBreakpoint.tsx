@@ -1,12 +1,12 @@
 import type { Ref } from 'vue';
 
-import type { ScreenMap } from '../responsiveObserver';
+import type { ScreenMap } from '../../_util/responsiveObserver';
 
 import { nextTick, ref, unref, watchEffect } from 'vue';
 
 import { canUseDom } from '@arvin-studio/headless';
 
-import useResponsiveObserver from '../responsiveObserver';
+import useResponsiveObserver from '../../_util/responsiveObserver';
 
 export function useBreakpoint(
   refreshOnChange: boolean | Ref<boolean> = true,

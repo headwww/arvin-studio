@@ -1,0 +1,416 @@
+import type { CSSProperties, PublicProps, SlotsType } from 'vue';
+
+import type {
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { Breakpoint } from '../_util/responsiveObserver';
+import type { ComponentBaseProps } from '../config-provider/context';
+import type { RowProps } from '../grid';
+import type { ItemHeightData } from './hooks/usePositions';
+import type { MasonryItemType } from './MasonryItem';
+
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  ref,
+  shallowRef,
+  TransitionGroup,
+  watch,
+} from 'vue';
+
+import {
+  createElementRef,
+  getTransitionGroupProps,
+  isEqual,
+  ResizeObserver,
+} from '@arvin-studio/headless';
+import { clsx } from '@arvin-studio/kit';
+
+import {
+  getAttrStyleAndClass,
+  useMergeSemantic,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { useChildLoadEvents } from '../_util/hooks/useChildLoadEvents';
+import { responsiveArray } from '../_util/responsiveObserver';
+import { toPropsRefs } from '../_util/tools';
+import { useComponentBaseConfig } from '../config-provider/context';
+import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
+import useGutter from '../grid/hooks/useGutter';
+import { genCssVar } from '../theme/util/genStyleUtils';
+import useDelay from './hooks/useDelay';
+import usePositions from './hooks/usePositions';
+import useRefs from './hooks/useRefs';
+import MasonryItem from './MasonryItem';
+import useStyle from './style';
+
+export type Gap = number | undefined;
+export type Key = number | string;
+
+export type MasonrySemanticName = keyof MasonrySemanticClassNames &
+  keyof MasonrySemanticStyles;
+
+export interface MasonrySemanticClassNames {
+  item?: string;
+  root?: string;
+}
+
+export interface MasonrySemanticStyles {
+  item?: CSSProperties;
+  root?: CSSProperties;
+}
+
+export type MasonryClassNamesType = SemanticClassNamesType<
+  MasonryProps,
+  MasonrySemanticClassNames
+>;
+
+export type MasonryStylesType = SemanticStylesType<
+  MasonryProps,
+  MasonrySemanticStyles
+>;
+
+export interface MasonryProps<T = any>
+  extends
+    ComponentBaseProps,
+    /* @vue-ignore */
+    MasonryEmitsProps {
+  classes?: MasonryClassNamesType;
+  /** Number of columns in the masonry grid layout */
+  columns?: number | Partial<Record<Breakpoint, number>>;
+  fresh?: boolean;
+
+  /** Spacing between items */
+  gutter?: RowProps['gutter'];
+
+  itemRender?: (itemInfo: MasonryItemType<T> & { index: number }) => any;
+
+  // Data
+  items?: MasonryItemType<T>[];
+
+  /** Trigger when item layout order changed */
+  // onLayoutChange?: (sortInfo: { key: Key; column: number }[]) => void;
+
+  styles?: MasonryStylesType;
+}
+
+export interface MasonryEmits {
+  layoutChange: (sortInfo: { column: number; key: Key }[]) => void;
+}
+export interface MasonryEmitsProps {
+  onLayoutChange?: MasonryEmits['layoutChange'];
+}
+
+export interface MasonrySlots<T = any> {
+  default: () => any;
+  itemRender?: (itemInfo: MasonryItemType<T> & { index: number }) => any;
+}
+
+export interface MasonryRef {
+  nativeElement: HTMLDivElement;
+}
+
+interface MasonryInstance<T = any> {
+  $emit: (
+    event: 'layoutChange',
+    sortInfo: { column: number; key: Key }[],
+  ) => void;
+  $props: MasonryProps<T> & PublicProps;
+  $slots: MasonrySlots<T>;
+}
+
+export interface MasonryConstructor {
+  new <T = any>(props: MasonryProps<T>): MasonryInstance<T>;
+  /**
+   * Non-generic fallback signature. TypeScript infers from the last overload,
+   * so this keeps render-function usage like `h(Masonry, props)` resolvable
+   * against Vue's `Constructor<P>` overload of `h` (see #634), while the
+   * generic signature above still drives template/Volar inference.
+   */
+  new (props: MasonryProps<any>): MasonryInstance;
+  install: (app: import('vue').App) => void;
+}
+
+type ItemColumnsType = [item: MasonryItemType, column: number];
+
+const defaults = {
+  gutter: 0,
+} as any;
+const Masonry = defineComponent<
+  MasonryProps,
+  MasonryEmits,
+  string,
+  SlotsType<MasonrySlots>
+>(
+  (props = defaults, { expose, emit, attrs, slots }) => {
+    const {
+      direction,
+      class: contextClassName,
+      style: contextStyle,
+      classes: contextClassNames,
+      styles: contextStyles,
+      prefixCls,
+      rootPrefixCls,
+    } = useComponentBaseConfig('masonry', props);
+    const { classes, styles, gutter, columns } = toPropsRefs(
+      props,
+      'classes',
+      'styles',
+      'gutter',
+      'columns',
+    );
+
+    const rootCls = useCSSVarCls(prefixCls);
+    const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
+    const [varName, varRef] = genCssVar(rootPrefixCls.value, 'masonry');
+    // ======================= Refs =======================
+    const containerRef = shallowRef<HTMLDivElement>();
+    expose({
+      nativeElement: containerRef,
+    });
+
+    const [setItemRef, getItemRef] = useRefs();
+
+    // ======================= Item =======================
+    const mergedItems = shallowRef<MasonryItemType[]>([]);
+    watch(
+      () => props.items,
+      () => {
+        mergedItems.value = props?.items ?? [];
+      },
+      {
+        immediate: true,
+      },
+    );
+
+    // ==================== Breakpoint ====================
+    const screens = useBreakpoint();
+    const gutters = useGutter(gutter, screens);
+    const horizontalGutter = computed(() => gutters.value[0] || 0);
+    const verticalGutter = computed(
+      () => gutters.value[1] || horizontalGutter.value,
+    );
+
+    // ====================== Layout ======================
+    const columnCount = computed(() => {
+      if (!columns.value) {
+        return 3;
+      }
+      if (typeof columns.value === 'number') {
+        return columns.value;
+      }
+      // Find first matching responsive breakpoint
+      const matchingBreakpoint = responsiveArray.find(
+        (breakpoint) =>
+          screens.value![breakpoint] &&
+          (columns.value as any)?.[breakpoint] !== undefined,
+      );
+
+      if (matchingBreakpoint) {
+        return columns.value[matchingBreakpoint] as number;
+      }
+      return columns.value.xs ?? 1;
+    });
+
+    // =========== Merged Props for Semantic ==========
+    const mergedProps = computed(() => {
+      return {
+        ...props,
+        columns: columnCount.value,
+      } as MasonryProps;
+    });
+
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      MasonryClassNamesType,
+      MasonryStylesType,
+      MasonryProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, styles),
+      useToProps(mergedProps),
+    );
+
+    // ================== Items Position ==================
+    const itemHeights = ref<ItemHeightData[]>([]);
+
+    const collectItemSize = useDelay(() => {
+      const nextItemHeights = mergedItems.value.map((item, index) => {
+        const itemKey = item?.key ?? index;
+        const itemEle = getItemRef(itemKey);
+        const rect = itemEle?.getBoundingClientRect();
+        return [itemKey, rect ? rect?.height : 0, item?.column] as const;
+      });
+      if (!isEqual(itemHeights.value, nextItemHeights)) {
+        itemHeights.value = nextItemHeights as any;
+      }
+    });
+
+    const { bindEvent } = useChildLoadEvents();
+    onMounted(() => {
+      if (containerRef.value) {
+        bindEvent(containerRef.value, () => {
+          collectItemSize();
+        });
+      }
+    });
+    const [itemPositions, totalHeight] = usePositions(
+      itemHeights,
+      columnCount,
+      verticalGutter,
+    );
+
+    const itemWithPositions = computed(() => {
+      return mergedItems.value.map((item, index) => {
+        const key = item.key ?? index;
+        return {
+          item,
+          itemIndex: index,
+          // CSSMotion will transform key to string.
+          // Let's keep the original key here.
+          itemKey: key,
+          key,
+          position: itemPositions.value.get(key),
+        } as const;
+      });
+    });
+
+    watch(
+      [mergedItems, columnCount],
+      () => {
+        collectItemSize();
+      },
+      {
+        immediate: true,
+        flush: 'post',
+      },
+    );
+
+    // Trigger for `onLayoutChange`
+    const itemColumns = ref<ItemColumnsType[]>([]);
+
+    watch(
+      itemWithPositions,
+      () => {
+        if (itemWithPositions.value.some(({ position }) => !position)) {
+          return;
+        }
+
+        const nextItemColumns = itemWithPositions.value.map<ItemColumnsType>(
+          ({ item, position }) => [item, position!.column],
+        );
+        if (!isEqual(itemColumns.value, nextItemColumns)) {
+          itemColumns.value = nextItemColumns;
+        }
+      },
+      {
+        immediate: true,
+        flush: 'post',
+      },
+    );
+
+    watch(
+      itemColumns,
+      async () => {
+        if (
+          !props.items?.length ||
+          props.items.length !== itemColumns.value.length
+        ) {
+          return;
+        }
+        const items = itemColumns.value.map(([item, column]) => ({
+          ...item,
+          column,
+        }));
+        emit('layoutChange', items);
+      },
+      {
+        immediate: true,
+        flush: 'post',
+      },
+    );
+
+    return () => {
+      const { fresh } = props;
+      const { className, style, restAttrs } = getAttrStyleAndClass(attrs);
+      const motionName = `${prefixCls.value}-item-fade`;
+      const transitionProps = getTransitionGroupProps(motionName);
+      const itemRender = slots?.itemRender ?? props?.itemRender;
+      return (
+        <ResizeObserver onResize={collectItemSize}>
+          <div
+            {...restAttrs}
+            class={clsx(
+              prefixCls.value,
+              contextClassName.value,
+              mergedClassNames.value?.root,
+              props.rootClass,
+              className,
+              hashId.value,
+              cssVarCls.value,
+              { [`${prefixCls.value}-rtl`]: direction.value === 'rtl' },
+            )}
+            ref={containerRef}
+            style={{
+              height: `${totalHeight.value}px`,
+              ...contextStyles.value.root,
+              ...contextStyle.value,
+              ...style,
+            }}
+          >
+            <TransitionGroup {...transitionProps}>
+              {itemWithPositions.value.map((motionInfo) => {
+                const { item, itemKey, itemIndex, key } = motionInfo;
+                const position = motionInfo.position as any;
+                const columnIndex = position?.column ?? 0;
+                const widthVar = `calc((100% + ${horizontalGutter.value}px) / ${columnCount.value})`;
+                const itemStyle: CSSProperties = {
+                  [varName('item-width')]: widthVar,
+                  insetInlineStart: `calc(${varRef('item-width')} * ${columnIndex})`,
+                  width: `calc(${varRef('item-width')} - ${horizontalGutter.value}px)`,
+                  top: `${position?.top}px`,
+                  position: 'absolute',
+                };
+
+                return (
+                  <MasonryItem
+                    class={clsx(mergedClassNames.value?.item, item.class)}
+                    column={columnIndex}
+                    index={itemIndex}
+                    item={item}
+                    itemRender={itemRender}
+                    key={key}
+                    prefixCls={prefixCls.value}
+                    ref={createElementRef((element) => {
+                      // vue >=3.5.39 no longer re-invokes function refs reactively,
+                      // so resolve-and-store must tolerate the element ref not being
+                      // ready yet (retry on nextTick). sync antdv-next#623 pattern.
+                      setItemRef(itemKey, element as any);
+                    })}
+                    style={{
+                      ...mergedStyles.value?.item,
+                      ...item.style,
+                      ...itemStyle,
+                    }}
+                    {...({
+                      onResize: fresh ? collectItemSize : null,
+                    } as any)}
+                  />
+                );
+              })}
+            </TransitionGroup>
+          </div>
+        </ResizeObserver>
+      );
+    };
+  },
+  {
+    name: 'AsMasonry',
+    inheritAttrs: false,
+  },
+);
+
+export default Masonry;

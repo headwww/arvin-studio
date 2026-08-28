@@ -30,6 +30,8 @@ ExportMenu.Divider = Divider;
 
 export default ExportMenu;
 
+export { ExportMenu };
+
 export { useFullPath } from './context/PathContext';
 export {
   type MenuClickEventHandler,

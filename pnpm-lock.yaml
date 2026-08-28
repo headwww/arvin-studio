@@ -33,6 +33,9 @@ catalogs:
     '@types/stylis':
       specifier: ^4.2.7
       version: 4.2.7
+    '@types/throttle-debounce':
+      specifier: ^5.0.2
+      version: 5.0.2
     '@typescript-eslint/eslint-plugin':
       specifier: ^8.65.0
       version: 8.65.0
@@ -147,6 +150,9 @@ catalogs:
     stylis:
       specifier: ^4.4.0
       version: 4.4.0
+    throttle-debounce:
+      specifier: ^5.0.2
+      version: 5.0.2
     tsdown:
       specifier: ^0.22.13
       version: 0.22.14
@@ -574,7 +580,13 @@ importers:
       scroll-into-view-if-needed:
         specifier: 'catalog:'
         version: 3.1.0
+      throttle-debounce:
+        specifier: 'catalog:'
+        version: 5.0.2
     devDependencies:
+      '@types/throttle-debounce':
+        specifier: 'catalog:'
+        version: 5.0.2
       vue:
         specifier: 'catalog:'
         version: 3.5.40(typescript@6.0.3)
@@ -587,6 +599,9 @@ importers:
       '@arvin-studio/headless':
         specifier: workspace:*
         version: link:../packages/ui-next/headless
+      '@arvin-studio/icons':
+        specifier: workspace:*
+        version: link:../packages/icons/icons
       '@arvin-studio/kit':
         specifier: workspace:*
         version: link:../packages/kit
@@ -2266,6 +2281,9 @@ packages:
 
   '@types/stylis@4.2.7':
     resolution: {integrity: sha512-VgDNokpBoKF+wrdvhAAfS55OMQpL6QRglwTwNC3kIgBrzZxA4WsFj+2eLfEA/uMUDzBcEhYmjSbwQakn/i3ajA==}
+
+  '@types/throttle-debounce@5.0.2':
+    resolution: {integrity: sha512-pDzSNulqooSKvSNcksnV72nk8p7gRqN8As71Sp28nov1IgmPKWbOEIwAWvBME5pPTtaXJAvG3O4oc76HlQ4kqQ==}
 
   '@types/through2@2.0.41':
     resolution: {integrity: sha512-ryQ0tidWkb1O1JuYvWKyMLYEtOWDqF5mHerJzKz/gQpoAaJq2l/dsMPBF0B5BNVT34rbARYJ5/tsZwLfUi2kwQ==}
@@ -5252,6 +5270,10 @@ packages:
   text-decoder@1.2.7:
     resolution: {integrity: sha512-vlLytXkeP4xvEq2otHeJfSQIRyWxo/oZGEbXrtEEF9Hnmrdly59sUbzZ/QgyWuLYHctCHxFF4tRQZNQ9k60ExQ==}
 
+  throttle-debounce@5.0.2:
+    resolution: {integrity: sha512-B71/4oyj61iNH0KeCamLuE2rmKuTO5byTOSVwECM5FA7TiAiAW+UqTKZ9ERueC4qvgSttUhdmq1mXC3kJqGX7A==}
+    engines: {node: '>=12.22'}
+
   through2@2.0.5:
     resolution: {integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==}
 
@@ -7031,6 +7053,8 @@ snapshots:
       '@types/node': 25.9.5
 
   '@types/stylis@4.2.7': {}
+
+  '@types/throttle-debounce@5.0.2': {}
 
   '@types/through2@2.0.41':
     dependencies:
@@ -10304,6 +10328,8 @@ snapshots:
       b4a: 1.8.1
     transitivePeerDependencies:
       - react-native-b4a
+
+  throttle-debounce@5.0.2: {}
 
   through2@2.0.5:
     dependencies:

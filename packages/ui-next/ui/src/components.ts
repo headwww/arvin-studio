@@ -144,6 +144,41 @@ export {
   useLayoutSider,
 } from './layout';
 export type { LayoutProps } from './layout';
+export { default as Masonry } from './masonry';
+export type {
+  MasonryEmits,
+  MasonryProps,
+  MasonryRef,
+  MasonrySlots,
+} from './masonry';
+export { default as Mentions, Option as MentionsOption } from './mentions';
+export type {
+  MentionPlacement,
+  MentionsClassNamesType,
+  MentionsEmits,
+  MentionsOptionProps,
+  MentionsProps,
+  MentionsRef,
+  MentionsSlots,
+  MentionsStylesType,
+} from './mentions';
+export {
+  default as Menu,
+  MenuDivider,
+  MenuItem,
+  MenuItemGroup,
+  SubMenu,
+} from './menu';
+export type {
+  MenuEmits,
+  MenuItemGroupProps,
+  MenuItemProps,
+  MenuItemType,
+  MenuProps,
+  MenuRef,
+  MenuSlots,
+  SubMenuProps,
+} from './menu';
 export { default as Popconfirm } from './popconfirm';
 export type {
   PopconfirmEmits,
@@ -180,6 +215,11 @@ export {
 export type { SkeletonProps } from './skeleton';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
+export { default as Spin } from './spin';
+export type {
+  SpinProps,
+  SpinSlots,
+} from './spin';
 export { default as Switch } from './switch';
 export type {
   SwitchEmits,

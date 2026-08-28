@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/throttle-debounce": "catalog:",
     "vue": "catalog:"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@arvin-studio/icons": "workspace:*",
     "@arvin-studio/kit": "workspace:*",
     "@vueuse/core": "catalog:",
-    "scroll-into-view-if-needed": "catalog:"
+    "scroll-into-view-if-needed": "catalog:",
+    "throttle-debounce": "catalog:"
   }
 }

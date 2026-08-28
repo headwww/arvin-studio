@@ -18,11 +18,15 @@ import DemoFloatButton from './demos/DemoFloatButton.vue';
 import DemoImage from './demos/DemoImage.vue';
 import DemoInput from './demos/DemoInput.vue';
 import DemoInputNumber from './demos/DemoInputNumber.vue';
+import DemoMasonry from './demos/DemoMasonry.vue';
+import DemoMentions from './demos/DemoMentions.vue';
+import DemoMenu from './demos/DemoMenu.vue';
 import DemoPopconfirm from './demos/DemoPopconfirm.vue';
 import DemoPopover from './demos/DemoPopover.vue';
 import DemoRadio from './demos/DemoRadio.vue';
 import DemoSkeleton from './demos/DemoSkeleton.vue';
 import DemoSpace from './demos/DemoSpace.vue';
+import DemoSpin from './demos/DemoSpin.vue';
 import DemoTooltip from './demos/DemoTooltip.vue';
 import DemoWatermark from './demos/DemoWatermark.vue';
 
@@ -50,6 +54,10 @@ const demoItems = [
   { key: 'demo-image', href: '#demo-image', title: 'Image' },
   { key: 'demo-skeleton', href: '#demo-skeleton', title: 'Skeleton' },
   { key: 'demo-watermark', href: '#demo-watermark', title: 'Watermark' },
+  { key: 'demo-masonry', href: '#demo-masonry', title: 'Masonry' },
+  { key: 'demo-mentions', href: '#demo-mentions', title: 'Mentions' },
+  { key: 'demo-menu', href: '#demo-menu', title: 'Menu' },
+  { key: 'demo-spin', href: '#demo-spin', title: 'Spin' },
 ] as const;
 
 /** Anchor 当前高亮链接（演示 change 事件） */
@@ -111,6 +119,10 @@ const onAnchorChange = (link: string) => {
     <DemoImage />
     <DemoSkeleton />
     <DemoWatermark />
+    <DemoMasonry />
+    <DemoMentions />
+    <DemoMenu />
+    <DemoSpin />
   </ConfigProvider>
 </template>
 

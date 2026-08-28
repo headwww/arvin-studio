@@ -7,7 +7,7 @@ import { defineComponent } from 'vue';
 
 import { clsx } from '@arvin-studio/kit';
 
-import { getAttrStyleAndClass } from '../_util/hooks/useMergeSemantic';
+import { getAttrStyleAndClass } from '../_util/hooks';
 
 export interface ElementSemanticClassNames {
   content?: string;

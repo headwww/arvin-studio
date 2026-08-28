@@ -22,13 +22,13 @@ import {
   useToArr,
   useToProps,
 } from '../_util/hooks';
-import useBreakpoint from '../_util/hooks/useBreakpoint';
 import { matchScreen } from '../_util/responsiveObserver';
 import { getSlotPropsFnRun, toPropsRefs } from '../_util/tools';
 import { resolveSlotsNode } from '../_util/vnode';
 import { devUseWarning, isDev } from '../_util/warning';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
 import DEFAULT_COLUMN_MAP from './constant';
 import { useDescriptionsProvider } from './DescriptionsContext';
 import useItems from './hooks/useItems';
