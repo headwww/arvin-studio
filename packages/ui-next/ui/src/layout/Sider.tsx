@@ -1,0 +1,350 @@
+import type { CSSProperties, InjectionKey, Ref, SlotsType } from 'vue';
+
+import type {
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { Breakpoint } from '../_util/responsiveObserver';
+
+import {
+  computed,
+  defineComponent,
+  inject,
+  onBeforeUnmount,
+  provide,
+  ref,
+  shallowRef,
+  watch,
+} from 'vue';
+
+import { canUseDom } from '@arvin-studio/headless';
+import { BarsOutlined, LeftOutlined, RightOutlined } from '@arvin-studio/icons';
+import { clsx, omit } from '@arvin-studio/kit';
+
+import { useMergeSemantic, useToArr, useToProps } from '../_util/hooks';
+import {
+  addMediaQueryListener,
+  removeMediaQueryListener,
+} from '../_util/mediaQueryUtil';
+import { getSlotPropsFnRun, toPropsRefs } from '../_util/tools';
+import { useBaseConfig } from '../config-provider/context';
+import { useLayoutCtx } from './context';
+import useStyle from './style/sider';
+
+const dimensionMaxMap: Record<Breakpoint, string> = {
+  xs: '479.98px',
+  sm: '575.98px',
+  md: '767.98px',
+  lg: '991.98px',
+  xl: '1199.98px',
+  xxl: '1599.98px',
+  xxxl: `1839.98px`,
+};
+
+function isNumeric(val: any) {
+  return !Number.isNaN(Number.parseFloat(val)) && Number.isFinite(Number(val));
+}
+
+export interface SiderContextProps {
+  siderCollapsed?: Ref<boolean>;
+}
+
+const SiderContextKey: InjectionKey<SiderContextProps> = Symbol('SiderContext');
+
+function useSiderProvider(props: SiderContextProps) {
+  provide(SiderContextKey, props);
+}
+
+export function useSiderCtx() {
+  return inject(SiderContextKey, {
+    siderCollapsed: ref(false),
+  });
+}
+
+export type CollapseType = 'clickTrigger' | 'responsive';
+
+export type SiderTheme = 'dark' | 'light';
+
+export interface SiderSemanticClassNames {
+  body?: string;
+  root?: string;
+}
+
+export interface SiderSemanticStyles {
+  body?: CSSProperties;
+  root?: CSSProperties;
+}
+
+export type SiderClassNamesType = SemanticClassNamesType<
+  SiderProps,
+  SiderSemanticClassNames
+>;
+
+export type SiderStylesType = SemanticStylesType<
+  SiderProps,
+  SiderSemanticStyles
+>;
+
+export interface SiderProps
+  /* @vue-ignore */
+  extends SiderEmitsProps {
+  breakpoint?: Breakpoint;
+  classes?: SiderClassNamesType;
+  collapsed?: boolean;
+  collapsedWidth?: number | string;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+  prefixCls?: string;
+  reverseArrow?: boolean;
+  styles?: SiderStylesType;
+  theme?: SiderTheme;
+  width?: number | string;
+  zeroWidthTriggerStyle?: CSSProperties;
+}
+
+export interface SiderEmits {
+  breakpoint: (broken: boolean) => void;
+  collapse: (collapsed: boolean, type: CollapseType) => void;
+  'update:collapsed': (collapsed: boolean) => void;
+}
+export interface SiderEmitsProps {
+  onBreakpoint?: SiderEmits['breakpoint'];
+  onCollapse?: SiderEmits['collapse'];
+  'onUpdate:collapsed'?: SiderEmits['update:collapsed'];
+}
+
+export interface SiderSlots {
+  default: () => any;
+  trigger: () => any;
+}
+
+export interface SiderState {
+  below: boolean;
+  collapsed?: boolean;
+}
+
+const generateId = (() => {
+  let i = 0;
+  return (prefix = '') => {
+    i += 1;
+    return `${prefix}${i}`;
+  };
+})();
+
+const defaultProps = {
+  theme: 'dark',
+  width: 200,
+  collapsedWidth: 80,
+  collapsed: undefined,
+} as any;
+
+const Sider = defineComponent<
+  SiderProps,
+  SiderEmits,
+  string,
+  SlotsType<SiderSlots>
+>(
+  (props = defaultProps, { emit, slots, attrs }) => {
+    const { siderHook } = useLayoutCtx();
+    const collapsed = shallowRef(
+      !!(props.collapsed === undefined
+        ? props.defaultCollapsed
+        : props.collapsed),
+    );
+    watch(
+      () => props.collapsed,
+      (value) => {
+        if (value !== undefined) {
+          // oxlint-disable-next-line typescript/no-unnecessary-type-conversion
+          collapsed.value = !!value;
+        }
+      },
+    );
+    const below = shallowRef(false);
+
+    const handleSetCollapsed = (value: boolean, type: CollapseType) => {
+      if (props.collapsed === undefined) {
+        collapsed.value = value;
+      }
+      emit('collapse', value, type);
+      emit('update:collapsed', value);
+    };
+    // =========================== Prefix ===========================
+    const { prefixCls, direction } = useBaseConfig('layout-sider', props);
+
+    const [hashId, cssVarCls] = useStyle(prefixCls);
+
+    // =========================== Semantic ===========================
+    const { classes, styles } = toPropsRefs(props, 'classes', 'styles');
+    // Semantic callbacks must see the effective collapsed state, not the raw
+    // `props.collapsed` (which stays undefined in uncontrolled/responsive mode).
+    // Mirror ant-design's `semanticProps` that overrides `collapsed`. sync ant-design#57938
+    const mergedProps = computed(() => ({
+      ...props,
+      collapsed: collapsed.value,
+    }));
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      SiderClassNamesType,
+      SiderStylesType,
+      SiderProps
+    >(useToArr(classes), useToArr(styles), useToProps(mergedProps));
+
+    // ========================= Responsive =========================
+    const responsiveHandler: (
+      mql: MediaQueryList | MediaQueryListEvent,
+    ) => void = (mql) => {
+      below.value = mql.matches;
+      emit('breakpoint', mql.matches);
+      if (collapsed.value !== mql.matches) {
+        handleSetCollapsed(mql.matches, 'responsive');
+      }
+    };
+
+    watch(
+      () => props.breakpoint,
+      (_n, _ol, onCleanup) => {
+        if (!canUseDom()) {
+          return;
+        }
+        let mql: MediaQueryList;
+        const breakpoint = props.breakpoint;
+        if (
+          window?.matchMedia !== undefined &&
+          breakpoint &&
+          breakpoint in dimensionMaxMap
+        ) {
+          mql = window.matchMedia(
+            `screen and (max-width: ${dimensionMaxMap[breakpoint]})`,
+          );
+          addMediaQueryListener(mql, responsiveHandler);
+          responsiveHandler(mql);
+        }
+        onCleanup(() => {
+          removeMediaQueryListener(mql, responsiveHandler);
+        });
+      },
+      {
+        immediate: true,
+      },
+    );
+
+    const uniqueId = generateId('ant-sider-');
+    siderHook.addSider(uniqueId);
+    onBeforeUnmount(() => {
+      siderHook.removeSider(uniqueId);
+    });
+
+    const toggle = () => {
+      handleSetCollapsed(!collapsed.value, 'clickTrigger');
+    };
+    const rawWidth = computed(() => {
+      return collapsed.value ? props.collapsedWidth : props.width;
+    });
+
+    // use "px" as fallback unit for width
+    const siderWidth = computed(() =>
+      isNumeric(rawWidth.value)
+        ? `${rawWidth.value}px`
+        : String(rawWidth.value),
+    );
+    useSiderProvider({
+      siderCollapsed: collapsed,
+    });
+    return () => {
+      const {
+        collapsedWidth,
+        reverseArrow,
+        zeroWidthTriggerStyle,
+        theme,
+        collapsible,
+      } = props;
+      const trigger = getSlotPropsFnRun(slots, props, 'trigger');
+      // special trigger when collapsedWidth == 0
+      const zeroWidthTrigger =
+        Number.parseFloat(String(collapsedWidth || 0)) === 0 ? (
+          <span
+            class={clsx(
+              `${prefixCls.value}-zero-width-trigger`,
+              `${prefixCls.value}-zero-width-trigger-${reverseArrow ? 'right' : 'left'}`,
+            )}
+            onClick={toggle}
+            style={zeroWidthTriggerStyle}
+          >
+            {trigger || <BarsOutlined />}
+          </span>
+        ) : null;
+
+      const reverseIcon = (direction.value === 'rtl') === !reverseArrow;
+      const iconObj = {
+        expanded: reverseIcon ? <RightOutlined /> : <LeftOutlined />,
+        collapsed: reverseIcon ? <LeftOutlined /> : <RightOutlined />,
+      };
+
+      const status = collapsed.value ? 'collapsed' : 'expanded';
+      const defaultTrigger = iconObj[status];
+
+      const triggerDom =
+        trigger === null
+          ? null
+          : zeroWidthTrigger || (
+              <div
+                class={`${prefixCls.value}-trigger`}
+                onClick={toggle}
+                style={{ width: `${siderWidth.value}` }}
+              >
+                {trigger || defaultTrigger}
+              </div>
+            );
+
+      const divStyle: CSSProperties = {
+        flex: `0 0 ${siderWidth.value}`,
+        maxWidth: `${siderWidth.value}`, // Fix width transition bug in IE11
+        minWidth: `${siderWidth.value}`, // https://github.com/ant-design/ant-design/issues/6349
+        width: `${siderWidth.value}`,
+      };
+
+      const siderCls = clsx(
+        prefixCls.value,
+        `${prefixCls.value}-${theme}`,
+        {
+          [`${prefixCls.value}-collapsed`]: collapsed.value,
+          [`${prefixCls.value}-has-trigger`]:
+            collapsible && trigger !== null && !zeroWidthTrigger,
+          // oxlint-disable-next-line typescript/no-unnecessary-type-conversion
+          [`${prefixCls.value}-below`]: !!below.value,
+          [`${prefixCls.value}-zero-width`]:
+            Number.parseFloat(siderWidth.value) === 0,
+        },
+        (attrs as any).class,
+        mergedClassNames.value.root,
+        hashId.value,
+        cssVarCls.value,
+      );
+
+      return (
+        <aside
+          class={siderCls}
+          {...omit(attrs, ['style', 'class'])}
+          style={[mergedStyles.value.root, (attrs as any).style, divStyle]}
+        >
+          <div
+            class={clsx(
+              `${prefixCls.value}-children`,
+              mergedClassNames.value.body,
+            )}
+            style={mergedStyles.value.body}
+          >
+            {slots?.default?.()}
+          </div>
+          {collapsible || (below.value && zeroWidthTrigger) ? triggerDom : null}
+        </aside>
+      );
+    };
+  },
+  {
+    name: 'AsLayoutSider',
+    inheritAttrs: false,
+  },
+);
+
+export default Sider;

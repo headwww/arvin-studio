@@ -14,6 +14,8 @@ import DemoDescriptions from './demos/DemoDescriptions.vue';
 import DemoDivider from './demos/DemoDivider.vue';
 import DemoDrawer from './demos/DemoDrawer.vue';
 import DemoEmpty from './demos/DemoEmpty.vue';
+import DemoFloatButton from './demos/DemoFloatButton.vue';
+import DemoImage from './demos/DemoImage.vue';
 import DemoInput from './demos/DemoInput.vue';
 import DemoInputNumber from './demos/DemoInputNumber.vue';
 import DemoPopconfirm from './demos/DemoPopconfirm.vue';
@@ -44,6 +46,8 @@ const demoItems = [
   { key: 'demo-divider', href: '#demo-divider', title: 'Divider' },
   { key: 'demo-drawer', href: '#demo-drawer', title: 'Drawer' },
   { key: 'demo-empty', href: '#demo-empty', title: 'Empty' },
+  { key: 'demo-float-button', href: '#demo-float-button', title: 'FloatButton' },
+  { key: 'demo-image', href: '#demo-image', title: 'Image' },
   { key: 'demo-skeleton', href: '#demo-skeleton', title: 'Skeleton' },
   { key: 'demo-watermark', href: '#demo-watermark', title: 'Watermark' },
 ] as const;
@@ -103,6 +107,8 @@ const onAnchorChange = (link: string) => {
     <DemoDivider />
     <DemoDrawer />
     <DemoEmpty />
+    <DemoFloatButton />
+    <DemoImage />
     <DemoSkeleton />
     <DemoWatermark />
   </ConfigProvider>

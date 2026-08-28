@@ -14,6 +14,6 @@ type ImageType = typeof Image & {
 const ExportImage = Image as ImageType;
 ExportImage.PreviewGroup = PreviewGroup;
 
-export default ExportImage;
+export { ExportImage };
 
 export type { PreviewGroupProps } from './PreviewGroup';

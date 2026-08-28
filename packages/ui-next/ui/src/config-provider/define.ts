@@ -11,6 +11,10 @@ import type {
   DividerConfig,
   DrawerConfig,
   EmptyConfig,
+  FlexConfig,
+  FloatButtonConfig,
+  FloatButtonGroupConfig,
+  ImageConfig,
   InputConfig,
   InputNumberConfig,
   InputSearchConfig,
@@ -51,10 +55,15 @@ export interface ConfigProviderProps {
   divider?: DividerConfig;
   drawer?: DrawerConfig;
   empty?: EmptyConfig;
+  flex?: FlexConfig;
+  floatButton?: FloatButtonConfig;
+  floatButtonGroup?: FloatButtonGroupConfig;
   iconPrefixCls?: string;
+  image?: ImageConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
+  layout?: ComponentStyleConfig;
   /** 语言包配置，语言包可到 */
   locale?: Locale;
   otp?: OTPConfig;

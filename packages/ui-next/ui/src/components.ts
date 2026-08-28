@@ -25,6 +25,19 @@ export { default as Badge, BadgeRibbon } from './badge';
 export type { BadgeProps, BadgeSlots } from './badge';
 export type { RibbonProps as BadgeRibbonProps } from './badge/Ribbon';
 export { default as Button } from './button';
+export type {
+  ButtonColorType,
+  ButtonEmits,
+  ButtonHTMLType,
+  ButtonProps,
+  ButtonSemanticName,
+  ButtonShape,
+  ButtonSize,
+  ButtonSlots,
+  ButtonType,
+  ButtonVariantType,
+  LegacyButtonType,
+} from './button';
 export { default as Carousel } from './carousel';
 export type {
   CarouselEmits,
@@ -70,6 +83,26 @@ export type {
 } from './drawer';
 export { default as Empty } from './empty';
 export type { EmptyProps, EmptySlots } from './empty';
+export { default as Flex } from './flex';
+export type { FlexProps, FlexSlots } from './flex';
+export {
+  BackTop,
+  default as FloatButton,
+  FloatButtonGroup,
+} from './float-button';
+export type {
+  FloatButtonGroupProps,
+  FloatButtonProps,
+  FloatButtonRef,
+} from './float-button';
+export { default as Image, ImagePreviewGroup } from './image';
+export type {
+  ImageEmits,
+  PreviewConfig as ImagePreviewConfig,
+  ImagePreviewGroupProps,
+  ImageProps,
+  ImageSlots,
+} from './image';
 export {
   default as Input,
   InputOTP,
@@ -101,6 +134,16 @@ export type {
   InputNumberStepContext,
   ValueType as InputNumberValueType,
 } from './input-number';
+
+export {
+  default as Layout,
+  LayoutContent,
+  LayoutFooter,
+  LayoutHeader,
+  LayoutSider,
+  useLayoutSider,
+} from './layout';
+export type { LayoutProps } from './layout';
 export { default as Popconfirm } from './popconfirm';
 export type {
   PopconfirmEmits,
@@ -126,7 +169,6 @@ export type {
   RadioProps,
   RadioSlots,
 } from './radio';
-
 export {
   default as Skeleton,
   SkeletonAvatar,

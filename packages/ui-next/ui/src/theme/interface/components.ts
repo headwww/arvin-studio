@@ -11,8 +11,12 @@ import type { ComponentToken as DescriptionsComponentToken } from '../../descrip
 import type { ComponentToken as DividerComponentToken } from '../../divider/style';
 import type { ComponentToken as DrawerComponentToken } from '../../drawer/style';
 import type { ComponentToken as EmptyComponentToken } from '../../empty/style';
+import type { ComponentToken as FlexComponentToken } from '../../flex/style';
+import type { ComponentToken as FloatButtonComponentToken } from '../../float-button/style';
+import type { ComponentToken as ImageComponentToken } from '../../image/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
 import type { ComponentToken as InputComponentToken } from '../../input/style';
+import type { ComponentToken as LayoutComponentToken } from '../../layout/style';
 import type { ComponentToken as PopconfirmComponentToken } from '../../popconfirm/style';
 import type { ComponentToken as RadioComponentToken } from '../../radio/style';
 import type { ComponentToken as SkeletonComponentToken } from '../../skeleton/style';
@@ -34,8 +38,12 @@ export interface ComponentTokenMap {
   Divider?: DividerComponentToken;
   Drawer?: DrawerComponentToken;
   Empty?: EmptyComponentToken;
+  Flex?: FlexComponentToken;
+  FloatButton?: FloatButtonComponentToken;
+  Image?: ImageComponentToken;
   Input?: InputComponentToken;
   InputNumber?: InputNumberComponentToken;
+  Layout?: LayoutComponentToken;
   Popconfirm?: PopconfirmComponentToken;
   Radio?: RadioComponentToken;
   Skeleton?: SkeletonComponentToken;

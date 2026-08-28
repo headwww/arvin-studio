@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'vue';
 
 import type { VueNode } from '../_util';
+import type { MaskType } from '../_util/hooks/useMergedMask';
 import type { AlertProps } from '../alert';
 import type { AnchorProps } from '../anchor';
 import type { BadgeProps } from '../badge';
@@ -12,6 +13,9 @@ import type { DescriptionsProps } from '../descriptions';
 import type { DividerProps } from '../divider';
 import type { DrawerProps } from '../drawer';
 import type { EmptyProps } from '../empty';
+import type { FlexProps } from '../flex';
+import type { FloatButtonGroupProps, FloatButtonProps } from '../float-button';
+import type { ImageProps } from '../image';
 import type { OTPProps, SearchProps, TextAreaProps } from '../input';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -225,6 +229,25 @@ export type SkeletonConfig = ComponentStyleConfig &
 export type EmptyConfig = ComponentStyleConfig &
   Pick<EmptyProps, 'classes' | 'image' | 'styles'>;
 
+export type FlexConfig = ComponentStyleConfig & Pick<FlexProps, 'vertical'>;
+
+export type FloatButtonConfig = ComponentStyleConfig &
+  Pick<FloatButtonProps, 'classes' | 'styles'> & {
+    backTopIcon?: VueNode;
+  };
+
+export type FloatButtonGroupConfig = ComponentStyleConfig &
+  Pick<FloatButtonGroupProps, 'classes' | 'styles'> & {
+    closeIcon?: VueNode;
+  };
+
+export type ImageConfig = ComponentStyleConfig &
+  Pick<ImageProps, 'classes' | 'styles'> & {
+    fallback?: string;
+    preview?: Partial<Record<'closeIcon', any>> &
+      Pick<ImageProps, 'classes' | 'styles'> & { mask?: MaskType };
+  };
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -238,9 +261,14 @@ export interface ConfigComponentProps {
   divider?: DividerConfig;
   drawer?: DrawerConfig;
   empty?: EmptyConfig;
+  flex?: FlexConfig;
+  floatButton?: FloatButtonConfig;
+  floatButtonGroup?: FloatButtonGroupConfig;
+  image?: ImageConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;
   inputSearch?: InputSearchConfig;
+  layout?: ComponentStyleConfig;
   otp?: OTPConfig;
   popconfirm?: PopconfirmConfig;
   popover?: PopoverConfig;

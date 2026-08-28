@@ -5,6 +5,7 @@ export * from './color-picker';
 export * from './dialog';
 export * from './drawer';
 export * from './dropdown';
+export * from './image';
 export * from './input';
 export * from './input-number';
 export * from './menu';
