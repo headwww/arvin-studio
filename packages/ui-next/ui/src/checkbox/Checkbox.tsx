@@ -151,6 +151,7 @@ const InternalCheckbox = defineComponent<
         contextDisabled.value,
     );
 
+    // ===================== Checked Value =====================
     // 获取选中和非选中的值，默认为 true/false
     const mergedCheckedValue = computed(() => props.checkedValue ?? true);
     const mergedUnCheckedValue = computed(() => props.unCheckedValue ?? false);
@@ -159,7 +160,6 @@ const InternalCheckbox = defineComponent<
     const currentValue = shallowRef<CheckedValueType>(
       props?.checked ?? props?.defaultChecked ?? mergedUnCheckedValue.value,
     );
-
     watch(
       () => props.checked,
       (newChecked) => {
@@ -178,6 +178,7 @@ const InternalCheckbox = defineComponent<
       return isChecked.value;
     });
 
+    // =========== Merged Props for Semantic ==========
     const mergedProps = computed(() => {
       return {
         ...props,
@@ -199,7 +200,6 @@ const InternalCheckbox = defineComponent<
 
     const prevValue = shallowRef(props.value);
     const checkboxRef = shallowRef();
-
     watch([() => props.value, () => props?.skipGroup], (_n, _o, onCleanup) => {
       if (props.skipGroup || !checkboxGroup?.value) {
         return;
@@ -212,7 +212,6 @@ const InternalCheckbox = defineComponent<
         checkboxGroup?.value?.cancelValue?.(prevValue.value);
       });
     });
-
     if (checkboxGroup?.value) {
       checkboxGroup?.value?.registerValue?.(prevValue.value);
     }
@@ -234,11 +233,10 @@ const InternalCheckbox = defineComponent<
     const isControlled = computed(() => props.checked !== undefined);
 
     const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
-
+    // ============================ Event Lock ============================
     const [onLabelClick, onInputClick] = useBubbleLock((e) => {
       emit('click', e as MouseEvent);
     });
-
     const keys = [
       'prefixCls',
       'rootClass',
@@ -249,20 +247,18 @@ const InternalCheckbox = defineComponent<
       'styles',
       'checkedValue',
       'unCheckedValue',
-    ] as const;
-
+    ];
     expose({
       blur: () => checkboxRef.value?.blur?.(),
       focus: () => checkboxRef.value?.focus?.(),
       input: computed(() => checkboxRef.value?.input),
     });
-
     return () => {
       const { skipGroup, rootClass, indeterminate } = props;
       const children = checkRenderNode(filterEmpty(slots?.default?.() ?? []));
       const { className, style, restAttrs } = getAttrStyleAndClass(attrs);
       const checkboxProps: any = {
-        ...omit(props, keys as any),
+        ...omit(props, keys),
       };
 
       // 是否在 Group 中使用
