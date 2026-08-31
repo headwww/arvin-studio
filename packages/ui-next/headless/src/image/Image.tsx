@@ -54,11 +54,11 @@ export interface PreviewConfig extends Omit<
   onOpenChange?: (open: boolean) => void;
 }
 
-export type SemanticName = 'cover' | 'image' | 'root';
+export type ImgSemanticName = 'cover' | 'image' | 'root';
 
 export interface ImageProps extends Partial<Omit<ImageElementProps, 'src'>> {
   classNames?: Partial<
-    Record<SemanticName, string> & {
+    Record<ImgSemanticName, string> & {
       popup?: Partial<Record<PreviewSemanticName, string>>;
     }
   >;
@@ -85,7 +85,7 @@ export interface ImageProps extends Partial<Omit<ImageElementProps, 'src'>> {
   // Image
   src?: string;
   styles?: Partial<
-    Record<SemanticName, CSSProperties> & {
+    Record<ImgSemanticName, CSSProperties> & {
       popup?: Partial<Record<PreviewSemanticName, CSSProperties>>;
     }
   >;

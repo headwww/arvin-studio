@@ -109,8 +109,8 @@ export const QRCodeCanvas = defineComponent<QRPropsCanvas>({
             // eslint-disable-next-line unicorn/no-array-fill-with-reference-type
             ctx.fill(new Path2D(generatePath(cellsToDraw, margin)));
           } else {
-            cells.forEach((row: any, rdx: any) => {
-              row.forEach((cell: any, cdx: any) => {
+            cells.forEach((row, rdx) => {
+              row.forEach((cell, cdx) => {
                 if (cell) {
                   ctx.fillRect(cdx + margin, rdx + margin, 1, 1);
                 }

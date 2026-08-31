@@ -6,6 +6,7 @@
 import type { InjectionKey, Ref } from 'vue';
 
 import type { TransferLocale as TransferLocaleForEmpty } from '../empty';
+import type { ModalLocale } from '../modal/interface';
 import type { PopconfirmLocale } from '../popconfirm/PurePanel';
 
 import { computed, defineComponent, inject, provide, ref } from 'vue';
@@ -35,6 +36,7 @@ export interface Locale {
   };
   /** 语言标识符，如 `zh-CN`、`en-US` */
   locale: string;
+  Modal?: ModalLocale;
   Popconfirm?: PopconfirmLocale;
 }
 

@@ -308,7 +308,7 @@ const Descriptions = defineComponent<
     };
   },
   {
-    name: 'ADescriptions',
+    name: 'AsDescriptions',
     inheritAttrs: false,
   },
 );

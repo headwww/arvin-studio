@@ -39,12 +39,9 @@ interface SpinToken extends FullToken<'Spin'> {
   spinDotDefault: string;
 }
 
-const antSpinMove = new Keyframes('antSpinMove', {
-  to: { opacity: 1 },
-});
-
-const antRotate = new Keyframes('antRotate', {
-  to: { transform: 'rotate(405deg)' },
+// 经典圆环：整体匀速旋转一周（方案 A）
+const antSpinRotate = new Keyframes('antSpinRotate', {
+  to: { transform: 'rotate(360deg)' },
 });
 
 // =============================== Spin ===============================
@@ -168,8 +165,6 @@ const genIndicatorStyle: GenerateStyle<SpinToken, CSSObject> = (token) => {
   return {
     [componentCls]: {
       [varName('dot-holder-size')]: token.dotSize,
-      [varName('dot-item-size')]:
-        `calc((${varRef('dot-holder-size')} - ${token.marginXXS} / 2) / 2)`,
 
       [`${componentCls}-dot`]: {
         // >>> holder
@@ -190,62 +185,21 @@ const genIndicatorStyle: GenerateStyle<SpinToken, CSSObject> = (token) => {
           },
         },
 
-        // >>> holder > dot
+        // >>> holder > dot（经典圆环）
         position: 'relative',
         display: 'inline-block',
         fontSize: varRef('dot-holder-size'),
         width: '1em',
         height: '1em',
-
-        '&-spin': {
-          transform: 'rotate(45deg)',
-          animationName: antRotate,
-          animationDuration: '1.2s',
-          animationIterationCount: 'infinite',
-          animationTimingFunction: 'linear',
-        },
-
-        // >>> holder > dot > item
-        '&-item': {
-          position: 'absolute',
-          display: 'block',
-          width: varRef('dot-item-size'),
-          height: varRef('dot-item-size'),
-          background: 'currentColor',
-          borderRadius: '100%',
-          transform: 'scale(0.75)',
-          transformOrigin: '50% 50%',
-          opacity: 0.3,
-          animationName: antSpinMove,
-          animationDuration: '1s',
-          animationIterationCount: 'infinite',
-          animationTimingFunction: 'linear',
-          animationDirection: 'alternate',
-
-          '&:nth-child(1)': {
-            top: 0,
-            insetInlineStart: 0,
-            animationDelay: '0s',
-          },
-
-          '&:nth-child(2)': {
-            top: 0,
-            insetInlineEnd: 0,
-            animationDelay: '0.4s',
-          },
-
-          '&:nth-child(3)': {
-            insetInlineEnd: 0,
-            bottom: 0,
-            animationDelay: '0.8s',
-          },
-
-          '&:nth-child(4)': {
-            bottom: 0,
-            insetInlineStart: 0,
-            animationDelay: '1.2s',
-          },
-        },
+        borderRadius: '50%',
+        borderWidth: 'calc(' + varRef('dot-holder-size') + ' / 6)',
+        borderStyle: 'solid',
+        borderColor: token.colorFillSecondary,
+        borderTopColor: token.colorPrimary,
+        animationName: antSpinRotate,
+        animationDuration: '0.9s',
+        animationIterationCount: 'infinite',
+        animationTimingFunction: 'linear',
 
         // ========================= Progress =========================
         '&-progress': {

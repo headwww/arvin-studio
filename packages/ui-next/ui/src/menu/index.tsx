@@ -78,7 +78,7 @@ const Menu = defineComponent<
     };
   },
   {
-    name: 'AMenu',
+    name: 'AsMenu',
     inheritAttrs: false,
   },
 );

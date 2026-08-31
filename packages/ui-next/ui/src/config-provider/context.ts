@@ -85,6 +85,15 @@ export interface WaveConfig {
   triggerType?: TriggerType;
 }
 
+export interface Theme {
+  errorColor?: string;
+  infoColor?: string;
+  primaryColor?: string;
+  processingColor?: string;
+  successColor?: string;
+  warningColor?: string;
+}
+
 export interface ConfigConsumerProps extends ConfigComponentProps {
   csp?: CSPConfig;
   direction?: DirectionType;
@@ -137,9 +146,9 @@ export function useBaseConfig<K extends string>(
   return {
     // TODO
     // result: computed(() => config.value?.result),
-    // modal: computed(() => config.value?.modal),
+    modal: computed(() => config.value?.modal),
     // timeline: computed(() => config.value?.timeline),
-    // notification: computed(() => config.value?.notification),
+    notification: computed(() => config.value?.notification),
     getPrefixCls: (suffixCls?: string, prefixCls?: string) =>
       config.value?.getPrefixCls(suffixCls, prefixCls),
     prefixCls: computed(() => {

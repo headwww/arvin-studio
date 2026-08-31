@@ -23,11 +23,7 @@ export const Looper = defineComponent<IndicatorProps>(
             {...attrs}
             class={clsx(holderClassName, percent > 0 && hideClassName)}
           >
-            <span class={clsx(dotClassName, `${prefixCls}-dot-spin`)}>
-              {[1, 2, 3, 4].map((i) => (
-                <i class={`${prefixCls}-dot-item`} key={i} />
-              ))}
-            </span>
+            <span class={dotClassName} />
           </span>
           <Progress percent={percent} prefixCls={prefixCls} />
         </>

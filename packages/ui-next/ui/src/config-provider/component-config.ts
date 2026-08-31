@@ -15,17 +15,27 @@ import type { DrawerProps } from '../drawer';
 import type { EmptyProps } from '../empty';
 import type { FlexProps } from '../flex';
 import type { FloatButtonGroupProps, FloatButtonProps } from '../float-button';
-import type { ImageProps } from '../image';
-import type { OTPProps, SearchProps, TextAreaProps } from '../input';
+import type { ImageProps } from '../image/index';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
-import type { MasonryProps } from '../masonry';
+import type { OTPProps } from '../input/OTP';
+import type { SearchProps } from '../input/Search';
+import type { TextAreaProps } from '../input/TextArea';
+import type { MasonryProps } from '../masonry/Masonry';
 import type { MenuProps } from '../menu';
+import type { ModalProps } from '../modal/interface.ts';
+import type { ArgsProps as NotificationProps } from '../notification';
 import type { PopconfirmProps } from '../popconfirm';
 import type { PopoverProps } from '../popover';
-import type { RadioProps } from '../radio';
+import type { ProgressProps } from '../progress';
+import type { QRCodeProps } from '../qrcode';
+import type { RadioProps } from '../radio/interface.ts';
+import type { ResultProps } from '../result';
+import type { SegmentedProps } from '../segmented';
+import type { SelectProps } from '../select';
 import type { SkeletonProps } from '../skeleton';
 import type { SpaceProps } from '../space';
+import type { SpinProps } from '../spin';
 import type { SwitchProps } from '../switch';
 import type {
   AliasToken,
@@ -121,6 +131,9 @@ export interface ThemeConfig {
   zeroRuntime?: boolean;
 }
 
+export type SpaceConfig = ComponentStyleConfig &
+  Pick<SpaceProps, 'classes' | 'size' | 'styles'>;
+
 export type ButtonConfig = ComponentStyleConfig &
   Pick<
     ButtonProps,
@@ -129,43 +142,57 @@ export type ButtonConfig = ComponentStyleConfig &
     loadingIcon?: VueNode;
   };
 
-export type SpaceConfig = ComponentStyleConfig &
-  Pick<SpaceProps, 'classes' | 'size' | 'styles'>;
+export type FlexConfig = ComponentStyleConfig & Pick<FlexProps, 'vertical'>;
 
-export type InputConfig = ComponentStyleConfig &
+export type AlertConfig = ComponentStyleConfig &
   Pick<
-    InputProps,
-    | 'allowClear'
-    | 'autoComplete'
-    | 'autocomplete'
-    | 'changeOnComposing'
-    | 'classes'
-    | 'styles'
-    | 'variant'
-  >;
+    AlertProps,
+    'classes' | 'closable' | 'closeIcon' | 'styles' | 'variant'
+  > & {
+    errorIcon?: VueNode;
+    infoIcon?: VueNode;
+    successIcon?: VueNode;
+    warningIcon?: VueNode;
+  };
 
-export type InputSearchConfig = ComponentStyleConfig &
-  Pick<SearchProps, 'classes' | 'searchIcon' | 'styles'>;
+export type BadgeConfig = ComponentStyleConfig &
+  Pick<BadgeProps, 'classes' | 'styles'>;
 
-export type OTPConfig = ComponentStyleConfig &
-  Pick<OTPProps, 'classes' | 'styles' | 'variant'>;
+export type EmptyConfig = ComponentStyleConfig &
+  Pick<EmptyProps, 'classes' | 'image' | 'styles'>;
 
-export type TextAreaConfig = ComponentStyleConfig &
-  Pick<
-    TextAreaProps,
-    'allowClear' | 'changeOnComposing' | 'classes' | 'styles' | 'variant'
-  >;
+export type SpinConfig = ComponentStyleConfig & Pick<SpinProps, 'indicator'>;
 
-export type InputNumberConfig = ComponentStyleConfig &
-  Pick<InputNumberProps, 'classes' | 'styles' | 'variant'>;
+export type DescriptionsConfig = ComponentStyleConfig &
+  Pick<DescriptionsProps, 'classes' | 'styles'>;
 
-export type CheckboxConfig = ComponentStyleConfig &
-  Pick<CheckboxProps, 'classes' | 'styles'>;
+export type CollapseConfig = ComponentStyleConfig &
+  Pick<CollapseProps, 'expandIcon'>;
 
-export type RadioConfig = ComponentStyleConfig &
-  Pick<RadioProps, 'classes' | 'styles'>;
-export type SwitchStyleConfig = ComponentStyleConfig &
-  Pick<SwitchProps, 'classes' | 'styles'>;
+export type QRcodeConfig = ComponentStyleConfig &
+  Pick<QRCodeProps, 'classes' | 'styles'>;
+
+export type ResultConfig = ComponentStyleConfig &
+  Pick<ResultProps, 'classes' | 'styles'>;
+
+export type AnchorStyleConfig = ComponentStyleConfig &
+  Pick<AnchorProps, 'classes' | 'styles'>;
+
+export type DividerConfig = ComponentStyleConfig &
+  Pick<DividerProps, 'classes' | 'styles'>;
+
+export type SkeletonConfig = ComponentStyleConfig &
+  Pick<SkeletonProps, 'classes' | 'styles'>;
+
+export type FloatButtonConfig = ComponentStyleConfig &
+  Pick<FloatButtonProps, 'classes' | 'styles'> & {
+    backTopIcon?: VueNode;
+  };
+
+export type FloatButtonGroupConfig = ComponentStyleConfig &
+  Pick<FloatButtonGroupProps, 'classes' | 'styles'> & {
+    closeIcon?: VueNode;
+  };
 
 export type TooltipConfig = {
   /**
@@ -183,41 +210,56 @@ export type PopoverConfig = ComponentStyleConfig &
 export type PopconfirmConfig = ComponentStyleConfig &
   Pick<PopconfirmProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
 
-export type AlertConfig = ComponentStyleConfig &
+export type SegmentedConfig = ComponentStyleConfig &
+  Pick<SegmentedProps, 'classes' | 'styles'>;
+
+export type MenuConfig = ComponentStyleConfig &
+  Pick<MenuProps, 'classes' | 'expandIcon' | 'styles'>;
+
+export type NotificationConfig = ComponentStyleConfig &
+  Pick<NotificationProps, 'classes' | 'closeIcon' | 'styles'>;
+
+export type MasonryConfig = ComponentStyleConfig &
+  Pick<MasonryProps, 'classes' | 'styles'>;
+
+export type RadioConfig = ComponentStyleConfig &
+  Pick<RadioProps, 'classes' | 'styles'>;
+
+export type CheckboxConfig = ComponentStyleConfig &
+  Pick<CheckboxProps, 'classes' | 'styles'>;
+
+export type SwitchStyleConfig = ComponentStyleConfig &
+  Pick<SwitchProps, 'classes' | 'styles'>;
+
+export type InputConfig = ComponentStyleConfig &
   Pick<
-    AlertProps,
-    'classes' | 'closable' | 'closeIcon' | 'styles' | 'variant'
-  > & {
-    errorIcon?: VueNode;
-    infoIcon?: VueNode;
-    successIcon?: VueNode;
-    warningIcon?: VueNode;
-  };
+    InputProps,
+    | 'allowClear'
+    | 'autoComplete'
+    | 'autocomplete'
+    | 'changeOnComposing'
+    | 'classes'
+    | 'styles'
+    | 'variant'
+  >;
 
-export type AnchorStyleConfig = ComponentStyleConfig &
-  Pick<AnchorProps, 'classes' | 'styles'>;
+export type InputNumberConfig = ComponentStyleConfig &
+  Pick<InputNumberProps, 'classes' | 'styles' | 'variant'>;
 
-export type BadgeConfig = ComponentStyleConfig &
-  Pick<BadgeProps, 'classes' | 'styles'>;
+export type TextAreaConfig = ComponentStyleConfig &
+  Pick<
+    TextAreaProps,
+    'allowClear' | 'changeOnComposing' | 'classes' | 'styles' | 'variant'
+  >;
 
-export type RibbonConfig = ComponentStyleConfig &
-  Pick<RibbonProps, 'classes' | 'styles'>;
+export type MentionsConfig = ComponentStyleConfig &
+  Pick<TextAreaProps, 'allowClear' | 'classes' | 'styles' | 'variant'>;
 
-export type CollapseConfig = ComponentStyleConfig &
-  Pick<CollapseProps, 'expandIcon'>;
+export type InputSearchConfig = ComponentStyleConfig &
+  Pick<SearchProps, 'classes' | 'searchIcon' | 'styles'>;
 
-export interface ComponentStyleConfig {
-  class?: string;
-  classes?: unknown;
-  style?: CSSProperties;
-  styles?: unknown;
-}
-
-export type DescriptionsConfig = ComponentStyleConfig &
-  Pick<DescriptionsProps, 'classes' | 'styles'>;
-
-export type DividerConfig = ComponentStyleConfig &
-  Pick<DividerProps, 'classes' | 'styles'>;
+export type OTPConfig = ComponentStyleConfig &
+  Pick<OTPProps, 'classes' | 'styles' | 'variant'>;
 
 export type DrawerConfig = ComponentStyleConfig &
   Pick<
@@ -225,22 +267,23 @@ export type DrawerConfig = ComponentStyleConfig &
     'classes' | 'closable' | 'closeIcon' | 'mask' | 'styles'
   > & { focusable?: any };
 
-export type SkeletonConfig = ComponentStyleConfig &
-  Pick<SkeletonProps, 'classes' | 'styles'>;
-
-export type EmptyConfig = ComponentStyleConfig &
-  Pick<EmptyProps, 'classes' | 'image' | 'styles'>;
-
-export type FlexConfig = ComponentStyleConfig & Pick<FlexProps, 'vertical'>;
-
-export type FloatButtonConfig = ComponentStyleConfig &
-  Pick<FloatButtonProps, 'classes' | 'styles'> & {
-    backTopIcon?: VueNode;
-  };
-
-export type FloatButtonGroupConfig = ComponentStyleConfig &
-  Pick<FloatButtonGroupProps, 'classes' | 'styles'> & {
-    closeIcon?: VueNode;
+export type ModalConfig = ComponentStyleConfig &
+  Pick<
+    ModalProps,
+    | 'cancelButtonProps'
+    | 'centered'
+    | 'classes'
+    | 'closable'
+    | 'closeIcon'
+    | 'mask'
+    | 'okButtonProps'
+    | 'styles'
+  > & {
+    errorIcon?: any;
+    focusable?: any;
+    infoIcon?: any;
+    successIcon?: any;
+    warningIcon?: any;
   };
 
 export type ImageConfig = ComponentStyleConfig &
@@ -250,20 +293,34 @@ export type ImageConfig = ComponentStyleConfig &
       Pick<ImageProps, 'classes' | 'styles'> & { mask?: MaskType };
   };
 
-export type MasonryConfig = ComponentStyleConfig &
-  Pick<MasonryProps, 'classes' | 'styles'>;
+export type RibbonConfig = ComponentStyleConfig &
+  Pick<RibbonProps, 'classes' | 'styles'>;
 
-export type MentionsConfig = ComponentStyleConfig &
-  Pick<TextAreaProps, 'allowClear' | 'classes' | 'styles' | 'variant'>;
+export type ProgressConfig = ComponentStyleConfig &
+  Pick<ProgressProps, 'classes' | 'styles'>;
 
-export type MenuConfig = ComponentStyleConfig &
-  Pick<MenuProps, 'classes' | 'expandIcon' | 'styles'>;
-
+export type SelectConfig = ComponentStyleConfig &
+  Pick<
+    SelectProps,
+    | 'allowClear'
+    | 'classes'
+    | 'removeIcon'
+    | 'showSearch'
+    | 'styles'
+    | 'suffixIcon'
+    | 'variant'
+  > & {
+    clearIcon?: any;
+    loadingIcon?: any;
+    menuItemSelectedIcon?: any;
+  };
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
+  app?: ComponentStyleConfig;
   avatar?: ComponentStyleConfig;
   badge?: BadgeConfig;
+  borderBeam?: ComponentStyleConfig;
   button?: ButtonConfig;
   carousel?: ComponentStyleConfig;
   checkbox?: CheckboxConfig;
@@ -283,15 +340,24 @@ export interface ConfigComponentProps {
   masonry?: MasonryConfig;
   mentions?: MentionsConfig;
   menu?: MenuConfig;
+  message?: ComponentStyleConfig;
+  modal?: ModalConfig;
+  notification?: NotificationConfig;
   otp?: OTPConfig;
   popconfirm?: PopconfirmConfig;
   popover?: PopoverConfig;
+  progress?: ProgressConfig;
+  qrcode?: QRcodeConfig;
   radio?: RadioConfig;
+  rate?: ComponentStyleConfig;
+  result?: ResultConfig;
   ribbon?: RibbonConfig;
+  segmented?: SegmentedConfig;
+  select?: SelectConfig;
   skeleton?: SkeletonConfig;
   space?: SpaceConfig;
+  spin?: SpinConfig;
   switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;
-  theme?: ThemeConfig;
   tooltip?: TooltipConfig;
 }

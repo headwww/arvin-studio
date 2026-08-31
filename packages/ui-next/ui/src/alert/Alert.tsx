@@ -434,7 +434,7 @@ const Alert = defineComponent<
     };
   },
   {
-    name: 'AAlert',
+    name: 'AsAlert',
     inheritAttrs: false,
   },
 );

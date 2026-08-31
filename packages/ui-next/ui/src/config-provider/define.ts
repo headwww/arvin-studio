@@ -25,6 +25,7 @@ import type {
   PopconfirmConfig,
   PopoverConfig,
   RadioConfig,
+  SelectConfig,
   SkeletonConfig,
   TextAreaConfig,
   ThemeConfig,
@@ -79,6 +80,7 @@ export interface ConfigProviderProps {
   radio?: RadioConfig;
   /** 自定义全局空状态 */
   renderEmpty?: RenderEmptyHandler;
+  select?: SelectConfig;
   skeleton?: SkeletonConfig;
   textArea?: TextAreaConfig;
   theme?: ThemeConfig;

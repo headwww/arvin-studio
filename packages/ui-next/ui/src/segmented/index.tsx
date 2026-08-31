@@ -1,0 +1,365 @@
+import type { App, CSSProperties, PublicProps, SlotsType } from 'vue';
+
+import type {
+  SegmentedLabeledOption as RcSegmentedLabeledOption,
+  SegmentedProps as RCSegmentedProps,
+  SegmentedValue as RcSegmentedValue,
+  SegmentedRawOption,
+} from '@arvin-studio/headless';
+
+import type { VueNode } from '../_util';
+import type {
+  Orientation,
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { SizeType } from '../config-provider/size-context';
+import type { TooltipProps } from '../tooltip';
+
+import { computed, defineComponent, useId } from 'vue';
+
+import {
+  filterEmpty,
+  removeUndefined,
+  Segmented as VcSegmented,
+} from '@arvin-studio/headless';
+import { clsx } from '@arvin-studio/kit';
+
+import {
+  pureAttrs,
+  useMergeSemantic,
+  useOrientation,
+  useSemanticRootStyle,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { getSlotPropsFnRun, toPropsRefs } from '../_util/tools';
+import { useComponentBaseConfig } from '../config-provider/context';
+import { useSize } from '../config-provider/hooks/useSize';
+import Tooltip from '../tooltip';
+import useStyle from './style';
+
+export type SegmentedSemanticName = keyof SegmentedSemanticClassNames &
+  keyof SegmentedSemanticStyles;
+
+export interface SegmentedSemanticClassNames {
+  icon?: string;
+  item?: string;
+  label?: string;
+  root?: string;
+}
+
+export interface SegmentedSemanticStyles {
+  icon?: CSSProperties;
+  item?: CSSProperties;
+  label?: CSSProperties;
+  root?: CSSProperties;
+}
+interface SegmentedLabeledOptionWithoutIcon<
+  ValueType = RcSegmentedValue,
+> extends RcSegmentedLabeledOption<ValueType> {
+  label: RcSegmentedLabeledOption['label'];
+  tooltip?: string | TooltipProps;
+}
+
+interface SegmentedLabeledOptionWithIcon<
+  ValueType = RcSegmentedValue,
+> extends Omit<RcSegmentedLabeledOption<ValueType>, 'label'> {
+  /** Set icon for Segmented item */
+  icon?: VueNode;
+  label?: RcSegmentedLabeledOption['label'];
+  tooltip?: string | TooltipProps;
+}
+
+function isSegmentedLabeledOptionWithIcon(
+  option:
+    | SegmentedLabeledOptionWithIcon
+    | SegmentedLabeledOptionWithoutIcon
+    | SegmentedRawOption,
+  iconFromSlot?: any[],
+): option is SegmentedLabeledOptionWithIcon {
+  return (
+    typeof option === 'object' &&
+    !!((option as SegmentedLabeledOptionWithIcon)?.icon || iconFromSlot?.length)
+  );
+}
+
+export type SegmentedLabeledOption<ValueType = RcSegmentedValue> =
+  | SegmentedLabeledOptionWithIcon<ValueType>
+  | SegmentedLabeledOptionWithoutIcon<ValueType>;
+
+export type SegmentedOptions<T = SegmentedRawOption> = (
+  | SegmentedLabeledOption<T>
+  | T
+)[];
+
+export type SegmentedClassNamesType = SemanticClassNamesType<
+  SegmentedProps,
+  SegmentedSemanticClassNames
+>;
+
+export type SegmentedStylesType = SemanticStylesType<
+  SegmentedProps,
+  SegmentedSemanticStyles
+>;
+
+export interface SegmentedProps<
+  ValueType extends RcSegmentedValue = RcSegmentedValue,
+>
+  extends
+    Omit<
+      RCSegmentedProps,
+      | 'classNames'
+      | 'defaultValue'
+      | 'itemRender'
+      | 'onChange'
+      | 'options'
+      | 'size'
+      | 'styles'
+      | 'value'
+    >,
+    /* @vue-ignore */
+    SegmentedEmitsProps<ValueType> {
+  /** Option to fit width to its parent's width */
+  block?: boolean;
+  classes?: SegmentedClassNamesType;
+  defaultValue?: ValueType;
+  iconRender?: (option: SegmentedLabeledOption<ValueType>) => any;
+  labelRender?: (option: SegmentedLabeledOption<ValueType>) => any;
+  options: SegmentedOptions<ValueType>;
+  orientation?: Orientation;
+  rootClass?: string;
+  shape?: 'default' | 'round';
+  /** Option to control the display size */
+  size?: SizeType;
+  styles?: SegmentedStylesType;
+  value?: ValueType;
+  vertical?: boolean;
+}
+
+export interface SegmentedEmits<
+  ValueType extends RcSegmentedValue = RcSegmentedValue,
+> {
+  change: (value: ValueType) => void;
+  'update:value': (value: ValueType) => void;
+}
+export interface SegmentedEmitsProps<
+  ValueType extends RcSegmentedValue = RcSegmentedValue,
+> {
+  onChange?: SegmentedEmits<ValueType>['change'];
+  'onUpdate:value'?: SegmentedEmits<ValueType>['update:value'];
+}
+
+export interface SegmentedSlots<
+  ValueType extends RcSegmentedValue = RcSegmentedValue,
+> {
+  // itemRender: (option: SegmentedLabeledOption | SegmentedRawOption, checked: boolean) => VueNode
+  iconRender: (option: SegmentedLabeledOption<ValueType>) => any;
+  labelRender: (option: SegmentedLabeledOption<ValueType>) => any;
+}
+
+const defaults = {
+  size: 'middle',
+  shape: 'default',
+} as any;
+
+const InternalSegmented = defineComponent<
+  SegmentedProps,
+  SegmentedEmits,
+  string,
+  SlotsType<SegmentedSlots>
+>(
+  (props = defaults, { attrs, emit, slots }) => {
+    const defaultName = useId();
+    const {
+      prefixCls,
+      direction,
+      class: contextClassName,
+      style: contextStyle,
+      classes: contextClassNames,
+      styles: contextStyles,
+    } = useComponentBaseConfig('segmented');
+    const {
+      classes,
+      styles,
+      size: customSize,
+      orientation,
+      vertical,
+    } = toPropsRefs(
+      props,
+      'classes',
+      'styles',
+      'size',
+      'orientation',
+      'vertical',
+    );
+    const name = computed(() => props?.name ?? defaultName);
+
+    // =========== Merged Props for Semantic ==========
+    const mergedProps = computed(() => {
+      return props;
+    });
+
+    const contextStyleRoot = useSemanticRootStyle(contextStyle);
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      SegmentedClassNamesType,
+      SegmentedStylesType,
+      SegmentedProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, contextStyleRoot as any, styles),
+      useToProps(mergedProps),
+    );
+
+    // Style
+    const [hashId, cssVarCls] = useStyle(prefixCls);
+
+    // ===================== Size =====================
+    const mergedSize = useSize(customSize);
+
+    const [, mergedVertical] = useOrientation(orientation, vertical);
+    // syntactic sugar to support `icon` for Segmented Item
+    const extendedOptions = computed(() => {
+      return props?.options?.map((option) => {
+        const iconRender = slots.iconRender || props.iconRender;
+        const _option = typeof option === 'object' ? option : { value: option };
+        let iconFromSlot = iconRender ? iconRender(_option) : null;
+        iconFromSlot = filterEmpty(
+          Array.isArray(iconFromSlot) ? iconFromSlot : [iconFromSlot],
+        ).filter(Boolean);
+        const labelRender = slots.labelRender || props.labelRender;
+        let labelFromSlot = labelRender ? labelRender(_option) : null;
+        labelFromSlot = filterEmpty(
+          Array.isArray(labelFromSlot) ? labelFromSlot : [labelFromSlot],
+        ).filter(Boolean);
+        const hasIcon = isSegmentedLabeledOptionWithIcon(option, iconFromSlot);
+        const hasCustomLabel = labelFromSlot.length > 0;
+        // Only wrap the option when it actually carries an icon or a custom label,
+        // otherwise keep the raw option so we don't render an empty icon wrapper.
+        if (hasIcon || hasCustomLabel) {
+          const {
+            label,
+            icon: _icon,
+            ...restOption
+          } = _option as SegmentedLabeledOptionWithIcon;
+          const mergedLabel = labelFromSlot.length > 0 ? labelFromSlot : label;
+          const showLabel = labelFromSlot.length > 0 || !!label;
+          const icon = getSlotPropsFnRun({}, option, 'icon') ?? iconFromSlot;
+          return {
+            ...restOption,
+            label: (
+              <>
+                {hasIcon && (
+                  <span
+                    class={clsx(
+                      `${prefixCls.value}-item-icon`,
+                      mergedClassNames.value?.icon,
+                    )}
+                    style={mergedStyles.value?.icon}
+                  >
+                    {icon}
+                  </span>
+                )}
+                {showLabel && <span>{mergedLabel}</span>}
+              </>
+            ),
+          };
+        } else {
+          return option;
+        }
+      });
+    });
+    return () => {
+      // oxlint-disable-next-line no-unused-vars
+      const { rootClass, block, shape, classes, ...restProps } = props;
+      const cls = clsx(
+        (attrs as any).class,
+        rootClass,
+        contextClassName.value,
+        mergedClassNames.value?.root,
+        {
+          [`${prefixCls.value}-block`]: block,
+          [`${prefixCls.value}-sm`]: mergedSize.value === 'small',
+          [`${prefixCls.value}-lg`]: mergedSize.value === 'large',
+          [`${prefixCls.value}-vertical`]: mergedVertical.value,
+          [`${prefixCls.value}-shape-${shape}`]: shape === 'round',
+        },
+        hashId.value,
+        cssVarCls.value,
+      );
+      const mergedStyle: CSSProperties = {
+        ...mergedStyles?.value?.root,
+      };
+
+      const itemRender = (
+        node: any,
+        { item }: { item: SegmentedLabeledOption },
+      ) => {
+        if (!item.tooltip) {
+          return node;
+        }
+        const tooltipProps =
+          typeof item.tooltip === 'object'
+            ? item.tooltip
+            : { title: item.tooltip };
+        return <Tooltip {...tooltipProps}>{node}</Tooltip>;
+      };
+      return (
+        <VcSegmented
+          {...pureAttrs(attrs)}
+          {...removeUndefined(restProps)}
+          class={[cls]}
+          classNames={mergedClassNames.value}
+          direction={direction.value}
+          itemRender={itemRender}
+          name={name.value}
+          onChange={(value: any) => {
+            emit('update:value', value);
+            emit('change', value);
+          }}
+          options={extendedOptions.value}
+          prefixCls={prefixCls.value}
+          style={[mergedStyle, (attrs as any).style]}
+          styles={mergedStyles.value}
+          vertical={mergedVertical.value}
+        />
+      );
+    };
+  },
+  {
+    name: 'AsSegmented',
+    inheritAttrs: false,
+  },
+);
+
+interface SegmentedInstance<
+  ValueType extends RcSegmentedValue = RcSegmentedValue,
+> {
+  $emit: {
+    (event: 'change', value: ValueType): void;
+    (event: 'update:value', value: ValueType): void;
+  };
+  $props: PublicProps & SegmentedProps<ValueType>;
+  $slots: SegmentedSlots<ValueType>;
+}
+
+export interface SegmentedConstructor {
+  new <ValueType extends RcSegmentedValue = RcSegmentedValue>(
+    props: SegmentedProps<ValueType>,
+  ): SegmentedInstance<ValueType>;
+  /**
+   * Non-generic fallback signature. TypeScript infers from the last overload,
+   * so this keeps render-function usage like `h(Segmented, props)` resolvable
+   * against Vue's `Constructor<P>` overload of `h` (see #634), while the
+   * generic signature above still drives template/Volar inference.
+   */
+  new (props: SegmentedProps<any>): SegmentedInstance<any>;
+  install: (app: App) => void;
+}
+
+const Segmented = InternalSegmented as unknown as SegmentedConstructor;
+
+Segmented.install = (app: App) => {
+  app.component(InternalSegmented.name, Segmented);
+};
+export default Segmented;

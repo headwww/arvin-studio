@@ -123,7 +123,7 @@ export const NoCompactStyle = defineComponent(
     };
   },
   {
-    name: 'ASpaceNoCompactStyle',
+    name: 'AsSpaceNoCompactStyle',
     inheritAttrs: false,
   },
 );

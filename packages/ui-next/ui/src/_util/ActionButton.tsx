@@ -141,7 +141,7 @@ const ActionButton = defineComponent<
     };
   },
   {
-    name: 'AActionButton',
+    name: 'AsActionButton',
     inheritAttrs: false,
   },
 );

@@ -77,7 +77,7 @@ export const QRCodeSVG = defineComponent<QRPropsSVG>({
             // and the canvas cannot be exported to an image
             crossOrigin={calculatedImageSettings?.crossOrigin}
             height={calculatedImageSettings.h}
-            href={imageSettings!.src}
+            href={imageSettings?.src}
             opacity={calculatedImageSettings.opacity}
             preserveAspectRatio="none"
             width={calculatedImageSettings.w}

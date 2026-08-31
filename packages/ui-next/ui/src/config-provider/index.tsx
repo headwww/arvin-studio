@@ -1,22 +1,27 @@
-import type { App, SlotsType } from 'vue';
+import type { App, AppContext, SlotsType, VNodeChild } from 'vue';
 
 import type { Locale } from '../locale';
 import type { ThemeConfig } from './component-config';
-import type { ConfigConsumerProps } from './context';
+import type { ConfigConsumerProps, Theme } from './context';
 import type {
   ConfigProviderProps as BaseConfigProviderProps,
   ConfigProviderEmits,
   ConfigProviderSlots,
 } from './define';
 
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent, shallowReactive } from 'vue';
 
 import { createTheme } from '@arvin-studio/cssinjs';
 
 import { AS_MARK, LocaleProvider, useLocaleContext } from '../locale';
 import { defaultTheme, DesignTokenProvider } from '../theme/context';
 import defaultSeedToken from '../theme/themes/seed';
-import { defaultIconPrefixCls, useConfig, useConfigProvider } from './context';
+import {
+  defaultIconPrefixCls,
+  defaultPrefixCls,
+  useConfig,
+  useConfigProvider,
+} from './context';
 import { DisabledContextProvider } from './disabled-context';
 import { useTheme } from './hooks/useTheme';
 import { SizeProvider } from './size-context';
@@ -287,7 +292,7 @@ const ConfigProvider = defineComponent<
     };
   },
   {
-    name: 'AConfigProvider',
+    name: 'AsConfigProvider',
     inheritAttrs: false,
   },
 );
@@ -297,3 +302,63 @@ const ConfigProvider = defineComponent<
 };
 
 export default ConfigProvider as typeof ConfigProvider;
+
+type holderRenderType = (children: VNodeChild) => VNodeChild;
+
+let globalPrefixCls: string = defaultPrefixCls;
+let globalIconPrefixCls: string = defaultIconPrefixCls;
+let globalTheme: Theme | ThemeConfig = {};
+// eslint-disable-next-line no-undef-init
+let globalHolderRender: holderRenderType | undefined = undefined;
+export interface GlobalConfigProps {
+  appContext?: AppContext;
+  holderRender?: holderRenderType;
+  iconPrefixCls?: string;
+  locale?: Locale;
+  prefixCls?: string;
+  theme?: Theme | ThemeConfig;
+}
+
+const globalConfigData = shallowReactive<GlobalConfigProps>({});
+
+export function globalConfig() {
+  return {
+    getPrefixCls: (suffixCls?: string, customizePrefixCls?: string) => {
+      if (customizePrefixCls) {
+        return customizePrefixCls;
+      }
+      return suffixCls
+        ? `${getGlobalPrefixCls()}-${suffixCls}`
+        : getGlobalPrefixCls();
+    },
+    getIconPrefixCls: getGlobalIconPrefixCls,
+    getRootPrefixCls: () => {
+      // If Global prefixCls provided, use this
+      if (globalConfigData.prefixCls || globalPrefixCls) {
+        return globalConfigData.prefixCls || globalPrefixCls;
+      }
+
+      // Fallback to default prefixCls
+      return getGlobalPrefixCls();
+    },
+    getTheme: () => globalTheme,
+    theme: computed(() => globalConfigData.theme || globalTheme),
+    locale: globalConfigData.locale,
+    holderRender: globalHolderRender,
+    get appContext() {
+      return globalConfigData.appContext;
+    },
+  };
+}
+
+function getGlobalPrefixCls() {
+  return globalConfigData.prefixCls || globalPrefixCls || defaultPrefixCls;
+}
+
+function getGlobalIconPrefixCls() {
+  return (
+    globalConfigData.iconPrefixCls ||
+    globalIconPrefixCls ||
+    defaultIconPrefixCls
+  );
+}

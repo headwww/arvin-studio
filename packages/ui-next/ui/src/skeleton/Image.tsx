@@ -37,7 +37,7 @@ const SkeletonImage = defineComponent<SkeletonImageProps>(
     };
   },
   {
-    name: 'ASkeletonImage',
+    name: 'AsSkeletonImage',
     inheritAttrs: false,
   },
 );

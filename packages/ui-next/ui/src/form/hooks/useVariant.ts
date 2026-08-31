@@ -34,10 +34,10 @@ type VariantComponents = keyof Pick<
   // | 'cascader'
   // | 'datePicker'
   | 'mentions'
-  | 'textArea'
+  | 'select'
   // | 'rangePicker'
-  // | 'select'
-  // | 'textArea'
+  | 'textArea'
+  | 'textArea'
   // | 'timePicker'
   // | 'treeSelect'
 >;

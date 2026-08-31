@@ -1,4 +1,4 @@
-export interface RGB {
+export interface FastRGB {
   a: number;
   b: number;
   g: number;
@@ -22,7 +22,7 @@ export interface HSV {
 export type OptionalA<T extends { a: number }> = Omit<T, 'a'> & { a?: number };
 
 export type ColorInput =
+  | OptionalA<FastRGB>
   | OptionalA<HSL>
   | OptionalA<HSV>
-  | OptionalA<RGB>
   | string;

@@ -31,7 +31,7 @@ export const GroupContextProvider = defineComponent<{
     return () => slots.default?.();
   },
   {
-    name: 'AFloatButtonGroupContextProvider',
+    name: 'AsFloatButtonGroupContextProvider',
     inheritAttrs: false,
     props: ['value'],
   },

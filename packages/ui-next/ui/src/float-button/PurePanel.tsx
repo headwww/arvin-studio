@@ -55,7 +55,7 @@ const PureFloatButton = defineComponent<PureFloatButtonProps>(
     };
   },
   {
-    name: 'AFloatButtonPure',
+    name: 'AsFloatButtonPure',
     inheritAttrs: false,
   },
 );

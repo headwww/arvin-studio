@@ -1,33 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { Anchor, ConfigProvider } from '@arvin-studio/ui';
+import { Anchor, App, ConfigProvider } from '@arvin-studio/ui';
 
-import DemoAlert from './demos/DemoAlert.vue';
-import DemoAvatar from './demos/DemoAvatar.vue';
-import DemoBadge from './demos/DemoBadge.vue';
-import DemoButton from './demos/DemoButton.vue';
-import DemoCheckbox from './demos/DemoCheckbox.vue';
-import DemoCollapse from './demos/DemoCollapse.vue';
-import DemoDescriptions from './demos/DemoDescriptions.vue';
-import DemoDivider from './demos/DemoDivider.vue';
-import DemoDrawer from './demos/DemoDrawer.vue';
-import DemoEmpty from './demos/DemoEmpty.vue';
-import DemoFloatButton from './demos/DemoFloatButton.vue';
-import DemoImage from './demos/DemoImage.vue';
-import DemoInput from './demos/DemoInput.vue';
-import DemoInputNumber from './demos/DemoInputNumber.vue';
-import DemoMasonry from './demos/DemoMasonry.vue';
-import DemoMentions from './demos/DemoMentions.vue';
-import DemoMenu from './demos/DemoMenu.vue';
-import DemoPopconfirm from './demos/DemoPopconfirm.vue';
-import DemoPopover from './demos/DemoPopover.vue';
-import DemoRadio from './demos/DemoRadio.vue';
-import DemoSkeleton from './demos/DemoSkeleton.vue';
-import DemoSpace from './demos/DemoSpace.vue';
-import DemoSpin from './demos/DemoSpin.vue';
-import DemoTooltip from './demos/DemoTooltip.vue';
-import DemoWatermark from './demos/DemoWatermark.vue';
+import DemoSelect from './demos/DemoSelect.vue';
 
 /** 全局 Anchor 导航：按组件分组指向各演示区块 */
 const demoItems: any = [
@@ -65,6 +41,20 @@ const demoItems: any = [
   { key: 'demo-mentions', href: '#demo-mentions', title: 'Mentions' },
   { key: 'demo-menu', href: '#demo-menu', title: 'Menu' },
   { key: 'demo-spin', href: '#demo-spin', title: 'Spin' },
+  { key: 'demo-app', href: '#demo-app', title: 'App' },
+  { key: 'demo-message', href: '#demo-message', title: 'Message' },
+  { key: 'demo-modal', href: '#demo-modal', title: 'Modal' },
+  {
+    key: 'demo-notification',
+    href: '#demo-notification',
+    title: 'Notification',
+  },
+  { key: 'demo-progress', href: '#demo-progress', title: 'Progress' },
+  { key: 'demo-qrcode', href: '#demo-qrcode', title: 'QRCode' },
+  { key: 'demo-rate', href: '#demo-rate', title: 'Rate' },
+  { key: 'demo-result', href: '#demo-result', title: 'Result' },
+  { key: 'demo-segmented', href: '#demo-segmented', title: 'Segmented' },
+  { key: 'demo-select', href: '#demo-select', title: 'Select' },
 ] as const;
 
 /** Anchor 当前高亮链接（演示 change 事件） */
@@ -76,7 +66,8 @@ const onAnchorChange = (link: string) => {
 
 <template>
   <ConfigProvider>
-    <!-- <SpaceCompact>
+    <App>
+      <!-- <SpaceCompact>
       <Button type="primary"> Button </Button>
       <SpaceAddon> $ </SpaceAddon>
     </SpaceCompact>
@@ -84,27 +75,27 @@ const onAnchorChange = (link: string) => {
       <Button color="pink" :loading="false" variant="solid">按钮</Button>
       <Button color="pink" :loading="false" variant="solid">按钮</Button>
     </Space> -->
-    <!-- <Input :maxlength="1" />
+      <!-- <Input :maxlength="1" />
     <InputPassword />
     <InputOTP />
     <InputSearch /> -->
 
-    <!-- ==================== 全局 Anchor 导航 ==================== -->
-    <div class="demo-anchor-nav">
-      <Anchor
-        :items="demoItems"
-        direction="horizontal"
-        :offset-top="16"
-        :target-offset="120"
-        @change="onAnchorChange"
-      >
-        <template #item="{ title }">
-          <span>📍 {{ title }}</span>
-        </template>
-      </Anchor>
-    </div>
+      <!-- ==================== 全局 Anchor 导航 ==================== -->
+      <div class="demo-anchor-nav">
+        <Anchor
+          :items="demoItems"
+          direction="horizontal"
+          :offset-top="16"
+          :target-offset="120"
+          @change="onAnchorChange"
+        >
+          <template #item="{ title }">
+            <span>📍 {{ title }}</span>
+          </template>
+        </Anchor>
+      </div>
 
-    <DemoTooltip />
+      <!-- <DemoTooltip />
     <DemoPopover />
     <DemoPopconfirm />
     <DemoAlert />
@@ -129,6 +120,17 @@ const onAnchorChange = (link: string) => {
     <DemoMentions />
     <DemoMenu />
     <DemoSpin />
+    <DemoApp />
+    <DemoMessage />
+    <DemoModal />
+    <DemoNotification />
+    <DemoProgress />
+    <DemoQRCode />
+    <DemoRate />
+    <DemoResult />
+    <DemoSegmented /> -->
+      <DemoSelect />
+    </App>
   </ConfigProvider>
 </template>
 

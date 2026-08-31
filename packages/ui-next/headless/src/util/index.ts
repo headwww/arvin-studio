@@ -4,6 +4,7 @@ export * from './Dom';
 export * from './EventInterface';
 export * from './FastColor';
 export * from './getScrollBarSize';
+export { default as useId } from './hooks/useId';
 export * from './isEqual';
 export * from './KeyCode';
 export * from './mini-decimal';

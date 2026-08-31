@@ -343,7 +343,7 @@ const Watermark = defineComponent<WatermarkProps>(
     };
   },
   {
-    name: 'AWatermark',
+    name: 'AsWatermark',
     inheritAttrs: false,
   },
 );

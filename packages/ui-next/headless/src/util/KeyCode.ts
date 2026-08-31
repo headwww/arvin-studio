@@ -513,6 +513,7 @@ const KeyCode = {
 };
 
 export default KeyCode;
+export { KeyCode };
 export const KeyCodeStr = {
   Enter: 'Enter',
   Backspace: 'Backspace',

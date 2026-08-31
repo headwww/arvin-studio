@@ -1,0 +1,370 @@
+import type {
+  Key,
+  MaybeRef,
+  NotificationAPI,
+  NotificationConfig as VcNotificationConfig,
+} from '@arvin-studio/headless';
+
+import type { NotificationConfig as CPNotificationConfig } from '../config-provider/context';
+import type {
+  ArgsProps,
+  NotificationClassNamesType,
+  NotificationConfig,
+  NotificationInstance,
+  NotificationPlacement,
+  NotificationSemanticClassNames,
+  NotificationSemanticStyles,
+  NotificationStylesType,
+} from './interface';
+
+import { computed, defineComponent, shallowRef, unref } from 'vue';
+
+import {
+  useNotificationProvider,
+  useNotification as useVcNotification,
+} from '@arvin-studio/headless';
+import { clsx } from '@arvin-studio/kit';
+
+import {
+  mergeClassNames,
+  mergeStyles,
+  resolveStyleOrClass,
+  useMergeSemantic,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { computeClosable, pickClosable } from '../_util/hooks/useClosable';
+import { isRenderable } from '../_util/is';
+import { toPropsRefs } from '../_util/tools';
+import { devUseWarning } from '../_util/warning';
+import {
+  useBaseConfig,
+  useComponentBaseConfig,
+} from '../config-provider/context';
+import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
+import { useToken } from '../theme/internal';
+import {
+  getCloseIcon,
+  getIconWrapperClassName,
+  resolveIconNode,
+} from './PurePanel';
+import useStyle from './style';
+import { getCloseIconConfig, getMotion, getPlacementStyle } from './util';
+
+const DEFAULT_OFFSET = 24;
+const DEFAULT_DURATION = 4.5;
+const DEFAULT_PLACEMENT: NotificationPlacement = 'topRight';
+
+// ==============================================================================
+// ==                                  Holder                                  ==
+// ==============================================================================
+type HolderProps = NotificationConfig & {
+  onAllRemoved?: VoidFunction;
+};
+
+interface HolderRef extends NotificationAPI {
+  classNames: NotificationSemanticClassNames;
+  notification?: CPNotificationConfig;
+  prefixCls: string;
+  styles: NotificationSemanticStyles;
+}
+
+const Wrapper = defineComponent<{
+  prefixCls: string;
+}>((props, { slots }) => {
+  const prefixCls = computed(() => props.prefixCls);
+  const rootCls = useCSSVarCls(prefixCls);
+  const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
+
+  useNotificationProvider(
+    computed(() => {
+      return {
+        classNames: {
+          list: clsx(hashId.value, cssVarCls.value, rootCls.value),
+        },
+      };
+    }) as any,
+  );
+  return () => {
+    return slots?.default?.();
+  };
+});
+
+const renderNotifications: VcNotificationConfig['renderNotifications'] = (
+  node,
+  { prefixCls, key },
+) => {
+  return (
+    <Wrapper key={key} prefixCls={prefixCls}>
+      {node}
+    </Wrapper>
+  );
+};
+
+const holderDefaultProps = {
+  duration: DEFAULT_DURATION,
+  pauseOnHover: true,
+} as any;
+
+const Holder = defineComponent<HolderProps>(
+  (props = holderDefaultProps, { expose }) => {
+    const { getPrefixCls, getPopupContainer, notification, direction } =
+      useBaseConfig('notification');
+
+    const { classes: contextClassNames, styles: contextStyles } =
+      useComponentBaseConfig('notification', props);
+    const { classes, styles } = toPropsRefs(props, 'classes', 'styles');
+    const [, token] = useToken();
+    const prefixCls = computed(
+      () => props.prefixCls || getPrefixCls('notification'),
+    );
+    const mergedDuration = computed(() => {
+      return typeof props.duration === 'number' && props.duration > 0
+        ? props.duration
+        : false;
+    });
+    // =============================== Style ===============================
+    const getStyle = (placement: NotificationPlacement) => {
+      return getPlacementStyle(
+        placement,
+        props?.top ?? DEFAULT_OFFSET,
+        props?.bottom ?? DEFAULT_DURATION,
+      );
+    };
+    const getClassName = () =>
+      clsx({
+        [`${prefixCls.value}-rtl`]: props.rtl ?? direction.value === 'rtl',
+      });
+
+    // ============================== Motion ===============================
+    const getNotificationMotion = () => getMotion(prefixCls.value);
+
+    // ============================== Origin ===============================
+    const vcConfig = computed(() => ({
+      prefixCls: prefixCls.value,
+      style: getStyle,
+      className: getClassName,
+      motion: getNotificationMotion,
+      closable: { closeIcon: getCloseIcon(prefixCls.value) },
+      duration: mergedDuration.value,
+      getContainer: () =>
+        props?.getContainer?.() || getPopupContainer?.() || document.body,
+      maxCount: props?.maxCount,
+      pauseOnHover: props?.pauseOnHover,
+      showProgress: props?.showProgress,
+      onAllRemoved: props.onAllRemoved,
+      renderNotifications,
+      stack:
+        props.stack === false
+          ? false
+          : {
+              threshold:
+                typeof props.stack === 'object'
+                  ? props.stack.threshold
+                  : undefined,
+              offset: 8,
+              gap: token.value?.margin,
+            },
+    }));
+    const [api, holder] = useVcNotification(vcConfig as any);
+
+    const mergedProps = computed(() => props);
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      NotificationClassNamesType,
+      NotificationStylesType,
+      HolderProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, styles),
+      useToProps(mergedProps),
+    );
+
+    // ================================ Ref ================================
+    expose({
+      ...api,
+      prefixCls,
+      notification,
+      classNames: mergedClassNames,
+      styles: mergedStyles,
+    });
+    return () => {
+      return holder?.() as any;
+    };
+  },
+  {
+    name: 'NotificationHolder',
+    inheritAttrs: false,
+  },
+);
+
+// ==============================================================================
+// ==                                   Hook                                   ==
+// ==============================================================================
+export function useInternalNotification(
+  notificationConfig?: MaybeRef<HolderProps>,
+) {
+  const holderRef = shallowRef<HolderRef>();
+  const warning = devUseWarning('Notification');
+
+  const { notification: notificationContext } = useBaseConfig('notification');
+  // ================================ API ================================
+  const wrapAPIFn = () => {
+    // Wrap with notification content
+    // >>> Open
+    const open = (config: ArgsProps) => {
+      if (!holderRef.value) {
+        warning(
+          false,
+          'usage',
+          'You are calling notice in render which will break in React 18 concurrent mode. Please trigger in effect instead.',
+        );
+        return;
+      }
+      const {
+        open: originOpen,
+        prefixCls,
+        notification,
+        classNames: originClassNames,
+        styles: originStyles,
+      } = holderRef.value;
+      const contextClassName = notification?.class || {};
+      const contextStyle = notification?.style || {};
+      const noticePrefixCls = `${prefixCls}-notice`;
+
+      const {
+        title,
+        description,
+        icon,
+        type,
+        actions,
+        class: className,
+        style,
+        role = 'alert',
+        closeIcon,
+        closable,
+        classes: configClassNames = {},
+        styles = {},
+        ...restConfig
+      } = config;
+      const mergedTitle = title;
+      // An empty title still renders a title node, which would cancel the
+      // closable padding on the adjacent description (antd #58096).
+      const hasTitle =
+        isRenderable(mergedTitle) && (mergedTitle as unknown) !== '';
+      const mergedActions = actions;
+
+      const realCloseIcon = getCloseIcon(
+        noticePrefixCls,
+        getCloseIconConfig(closeIcon, unref(notificationConfig), notification),
+      );
+
+      const [rawClosable, mergedCloseIcon, , ariaProps] = computeClosable(
+        pickClosable(
+          computed(() => ({ ...unref(notificationConfig), ...config })),
+        ) as any,
+        pickClosable(notificationContext as any) as any,
+        computed(() => ({
+          closable: true,
+          closeIcon: realCloseIcon,
+        })),
+      );
+
+      const mergedClosable = rawClosable
+        ? {
+            onClose:
+              closable && typeof closable === 'object'
+                ? closable.onClose
+                : undefined,
+            closeIcon: mergedCloseIcon,
+            ...ariaProps,
+          }
+        : false;
+
+      const semanticClassNames = resolveStyleOrClass(configClassNames, {
+        props: config,
+      });
+      const semanticStyles = resolveStyleOrClass(styles, { props: config });
+
+      const mergedClassNames = mergeClassNames(
+        undefined,
+        originClassNames,
+        semanticClassNames,
+      );
+
+      const mergedStyles = mergeStyles(originStyles, semanticStyles);
+      const iconNode = resolveIconNode(icon, type);
+      const iconWrapperClass = clsx(
+        getIconWrapperClassName(noticePrefixCls, type),
+        mergedClassNames.icon,
+      );
+      return originOpen({
+        // use placement from props instead of hard-coding "topRight"
+        placement: unref(notificationConfig)?.placement ?? DEFAULT_PLACEMENT,
+        ...restConfig,
+        icon: iconNode,
+        title: hasTitle ? mergedTitle : null,
+        description,
+        actions: mergedActions,
+        role,
+        classNames: {
+          icon: iconWrapperClass,
+          title: mergedClassNames.title,
+          description: mergedClassNames.description,
+          actions: mergedClassNames.actions,
+        },
+        styles: {
+          icon: mergedStyles.icon,
+          title: mergedStyles.title,
+          description: mergedStyles.description,
+          actions: mergedStyles.actions,
+        },
+        class: clsx(
+          { [`${noticePrefixCls}-${type}`]: type },
+          { [`${noticePrefixCls}-with-icon`]: !!iconNode },
+          className,
+          contextClassName,
+          mergedClassNames.root,
+        ),
+        style: { ...contextStyle, ...mergedStyles.root, ...style } as any,
+        closable: mergedClosable,
+      } as any);
+    };
+
+    // >>> destroy
+    const destroy = (key?: Key) => {
+      if (key === undefined) {
+        holderRef.value?.destroy();
+      } else {
+        holderRef.value?.close(key);
+      }
+    };
+    const clone = {
+      open,
+      destroy,
+    } as NotificationInstance;
+
+    const keys = ['success', 'info', 'warning', 'error'] as const;
+
+    keys.forEach((type) => {
+      clone[type] = (config) => open({ ...config, type });
+    });
+    return clone;
+  };
+  const holderContext = () => {
+    return (
+      <Holder
+        key="notificaion-holder"
+        {...unref(notificationConfig)}
+        ref={holderRef}
+      ></Holder>
+    );
+  };
+  // ============================== Return ===============================
+  return [wrapAPIFn(), holderContext] as const;
+}
+
+export default function useNotification(
+  notificationConfig?: MaybeRef<NotificationConfig>,
+) {
+  return useInternalNotification(notificationConfig);
+}

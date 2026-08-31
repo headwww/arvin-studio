@@ -14,6 +14,8 @@ export type {
   AnchorProps,
   AnchorSlots,
 } from './anchor';
+export { default as App } from './app';
+export type { AppProps } from './app';
 export { default as Avatar, AvatarGroup } from './avatar';
 export type {
   AvatarEmits,
@@ -45,7 +47,6 @@ export type {
   CarouselRef,
   CarouselSlots,
 } from './carousel';
-
 export { default as Checkbox, CheckboxGroup } from './checkbox';
 export type {
   CheckboxEmits,
@@ -64,7 +65,6 @@ export type {
 } from './collapse';
 export { default as ConfigProvider } from './config-provider';
 export { default as Descriptions, DescriptionsItem } from './descriptions';
-
 export type {
   DescriptionsItemProps,
   DescriptionsItemSlots,
@@ -95,6 +95,8 @@ export type {
   FloatButtonProps,
   FloatButtonRef,
 } from './float-button';
+export { Col, Row } from './grid';
+export type { ColProps, ColSize, RowProps } from './grid';
 export { default as Image, ImagePreviewGroup } from './image';
 export type {
   ImageEmits,
@@ -134,7 +136,6 @@ export type {
   InputNumberStepContext,
   ValueType as InputNumberValueType,
 } from './input-number';
-
 export {
   default as Layout,
   LayoutContent,
@@ -179,6 +180,10 @@ export type {
   MenuSlots,
   SubMenuProps,
 } from './menu';
+export { default as message, useMessage } from './message';
+export { default as Modal, useModal } from './modal';
+export type { ModalEmits, ModalProps, ModalSlots } from './modal';
+export { default as notification, useNotification } from './notification';
 export { default as Popconfirm } from './popconfirm';
 export type {
   PopconfirmEmits,
@@ -192,6 +197,10 @@ export type {
   PopoverRef,
   PopoverSlots,
 } from './popover';
+export type { ProgressProps } from './progress';
+export { default as Progress } from './progress/progress';
+export { default as QRCode } from './qrcode';
+export type { QRCodeEmits, QRCodeProps } from './qrcode';
 export { default as Radio, RadioButton, RadioGroup } from './radio';
 export type {
   RadioChangeEvent,
@@ -204,6 +213,24 @@ export type {
   RadioProps,
   RadioSlots,
 } from './radio';
+export { default as Rate } from './rate';
+export type { RateEmits, RateProps } from './rate';
+export { default as Result } from './result';
+export type { ResultProps, ResultSlots, ResultStatusType } from './result';
+export { default as Segmented } from './segmented';
+export type {
+  SegmentedEmits,
+  SegmentedOptions,
+  SegmentedProps,
+  SegmentedSlots,
+} from './segmented';
+export { default as Select, SelectOptGroup, SelectOption } from './select';
+export type {
+  SelectEmits,
+  SelectProps,
+  SelectSlots,
+  SelectValue,
+} from './select';
 export {
   default as Skeleton,
   SkeletonAvatar,
@@ -216,10 +243,7 @@ export type { SkeletonProps } from './skeleton';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
 export { default as Spin } from './spin';
-export type {
-  SpinProps,
-  SpinSlots,
-} from './spin';
+export type { SpinProps, SpinSlots } from './spin';
 export { default as Switch } from './switch';
 export type {
   SwitchEmits,

@@ -163,7 +163,7 @@ const defaults = {
   motionName: 'thumb-motion',
   itemRender: (node: VueNode) => node,
 } as any;
-const Segmented = defineComponent<SegmentedProps>(
+export const Segmented = defineComponent<SegmentedProps>(
   (props = defaults, { attrs }) => {
     const containerRef = ref<HTMLDivElement>();
     const segmentedOptions = computed(() => {
@@ -341,4 +341,3 @@ const Segmented = defineComponent<SegmentedProps>(
     name: 'Segmented',
   },
 );
-export default Segmented;

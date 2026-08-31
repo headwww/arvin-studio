@@ -38,7 +38,7 @@ const DescriptionsItem = defineComponent<
     return () => null;
   },
   {
-    name: 'ADescriptionsItem',
+    name: 'AsDescriptionsItem',
     inheritAttrs: false,
   },
 );

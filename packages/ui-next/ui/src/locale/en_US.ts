@@ -13,6 +13,11 @@ const localeValues: Locale = {
     okText: 'OK',
     cancelText: 'Cancel',
   },
+  Modal: {
+    okText: 'OK',
+    cancelText: 'Cancel',
+    justOkText: 'OK',
+  },
   Empty: {
     description: 'No data',
   },

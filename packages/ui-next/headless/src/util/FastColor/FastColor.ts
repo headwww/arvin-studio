@@ -1,4 +1,4 @@
-import type { ColorInput, HSL, HSV, OptionalA, RGB } from './types';
+import type { ColorInput, FastRGB, HSL, HSV, OptionalA } from './types';
 
 import presetColors from './presetColors';
 
@@ -152,11 +152,11 @@ export class FastColor {
       this._l = input._l;
       this._v = input._v;
     } else if (matchFormat('rgb')) {
-      this.r = limitRange((input as RGB).r);
-      this.g = limitRange((input as RGB).g);
-      this.b = limitRange((input as RGB).b);
+      this.r = limitRange((input as FastRGB).r);
+      this.g = limitRange((input as FastRGB).g);
+      this.b = limitRange((input as FastRGB).b);
       this.a =
-        typeof input.a === 'number' ? limitRange((input as RGB).a, 1) : 1;
+        typeof input.a === 'number' ? limitRange((input as FastRGB).a, 1) : 1;
     } else if (matchFormat('hsl')) {
       this.fromHsl(input as HSL);
     } else if (matchFormat('hsv')) {
@@ -431,7 +431,7 @@ export class FastColor {
     };
   }
 
-  toRgb(): RGB {
+  toRgb(): FastRGB {
     return {
       r: this.r,
       g: this.g,

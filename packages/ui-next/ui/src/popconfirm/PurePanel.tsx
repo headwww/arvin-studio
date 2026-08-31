@@ -143,7 +143,7 @@ export const Overlay = defineComponent<OverlayProps>(
     };
   },
   {
-    name: 'APopconfirmOverlay',
+    name: 'AsPopconfirmOverlay',
     inheritAttrs: false,
   },
 );

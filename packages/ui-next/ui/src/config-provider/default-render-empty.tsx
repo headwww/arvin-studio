@@ -59,7 +59,7 @@ export const DefaultRenderEmpty = defineComponent<EmptyProps>(
     };
   },
   {
-    name: 'ADefaultRenderEmpty',
+    name: 'AsDefaultRenderEmpty',
     inheritAttrs: false,
   },
 );

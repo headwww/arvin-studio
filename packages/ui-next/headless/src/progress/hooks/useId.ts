@@ -21,7 +21,7 @@ function getUUID(): number | string {
 
 const useId = (id?: string) => {
   const innerId = ref<string>();
-  innerId.value = `vc_progress_${getUUID()}`;
+  innerId.value = `as_progress_${getUUID()}`;
   return id || innerId.value;
 };
 export default useId;

@@ -7,3 +7,4 @@ export * from './focus';
 export * from './focusBoundary';
 export * from './isVisible';
 export * from './shadow';
+export * from './styleChecker';

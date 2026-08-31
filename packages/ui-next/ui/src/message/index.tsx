@@ -1,0 +1,395 @@
+import type { Key } from '@arvin-studio/headless';
+
+import type {
+  ArgsProps,
+  ConfigOptions,
+  MessageInstance,
+  MessageType,
+  NoticeType,
+  TypeOpen,
+} from './interface';
+
+import {
+  createVNode,
+  defineComponent,
+  getCurrentInstance,
+  onMounted,
+  render,
+  shallowRef,
+  watch,
+} from 'vue';
+
+import { useAppConfig } from '../app/context';
+import ConfigProvider, { globalConfig } from '../config-provider';
+import { useBaseConfig } from '../config-provider/context';
+import PureList from './PureList';
+import PurePanel from './PurePanel';
+import useMessage, { useInternalMessage } from './useMessage';
+import { wrapPromiseFn } from './util';
+
+export type { ArgsProps } from './interface';
+
+interface GlobalMessage {
+  fragment: DocumentFragment;
+  instance?: MessageInstance | null;
+  sync?: VoidFunction;
+}
+
+interface GlobalHolderRef {
+  instance: MessageInstance;
+  sync: () => void;
+}
+
+interface OpenTask {
+  config: ArgsProps;
+  resolve: VoidFunction;
+  setCloseFn: (closeFn: MessageType) => void;
+  skipped?: boolean;
+  type: 'open';
+}
+
+interface TypeTask {
+  args: Parameters<TypeOpen>;
+  resolve: VoidFunction;
+  setCloseFn: (closeFn: MessageType) => void;
+  skipped?: boolean;
+  type: NoticeType;
+}
+
+type Task =
+  | OpenTask
+  | TypeTask
+  | {
+      key?: Key;
+      skipped?: boolean;
+      type: 'destroy';
+    };
+
+let message: GlobalMessage | null = null;
+let taskQueue: Task[] = [];
+let defaultGlobalConfig: ConfigOptions = {};
+let act: (callback: VoidFunction) => Promise<void> | void = (callback) =>
+  callback();
+
+function getGlobalContext() {
+  const { getContainer, duration, rtl, maxCount, top, pauseOnHover } =
+    defaultGlobalConfig;
+  const mergedContainer = getContainer?.() || document.body;
+
+  let appContext = defaultGlobalConfig.appContext;
+  const instance = getCurrentInstance();
+  if (instance && !appContext) {
+    appContext = instance.appContext;
+  } else if (!appContext) {
+    appContext = globalConfig().appContext;
+  }
+  return {
+    getContainer: () => mergedContainer,
+    duration,
+    rtl,
+    maxCount,
+    top,
+    pauseOnHover,
+    appContext,
+  };
+}
+
+const GlobalHolder = defineComponent<{
+  messageConfig: ConfigOptions;
+  sync: () => void;
+}>((props, { expose }) => {
+  const { messageConfig, sync } = props;
+  const { getPrefixCls } = useBaseConfig();
+  const prefixCls = defaultGlobalConfig.prefixCls || getPrefixCls('message');
+  const appConfig = useAppConfig();
+  const [api, holder] = useInternalMessage({
+    ...messageConfig,
+    prefixCls,
+    ...appConfig.message,
+  });
+
+  onMounted(() => {
+    sync?.();
+  });
+
+  const instance = {
+    ...api,
+  };
+
+  Object.keys(instance).forEach((method) => {
+    (instance as any)[method as keyof MessageInstance] = (...args: any[]) => {
+      sync();
+      return (api as any)[method](...args);
+    };
+  });
+
+  expose({
+    instance,
+    sync,
+  });
+
+  return () => {
+    if (typeof holder === 'function') {
+      return holder?.();
+    }
+    return holder as any;
+  };
+});
+
+const GlobalHolderWrapper = defineComponent<{
+  onReady?: (holder: GlobalHolderRef) => void;
+}>((props) => {
+  const messageConfig = shallowRef<ConfigOptions>(getGlobalContext());
+  const holderRef = shallowRef<GlobalHolderRef>();
+  const sync = () => {
+    messageConfig.value = getGlobalContext();
+  };
+
+  onMounted(sync);
+
+  let filled = false;
+  watch(
+    () => holderRef.value,
+    (holder) => {
+      if (!holder || filled) {
+        return;
+      }
+
+      filled = true;
+      props.onReady?.({
+        instance: holder.instance,
+        sync,
+      });
+    },
+    { immediate: true },
+  );
+  const global = globalConfig();
+
+  return () => {
+    const holderNode = (
+      <GlobalHolder
+        messageConfig={messageConfig.value}
+        ref={holderRef as any}
+        sync={sync}
+      />
+    );
+    const configHolderNode = (
+      <ConfigProvider
+        iconPrefixCls={global.getIconPrefixCls()}
+        prefixCls={global.getRootPrefixCls()}
+        theme={global.theme.value as any}
+      >
+        {holderNode}
+      </ConfigProvider>
+    );
+    return global.holderRender
+      ? global.holderRender(configHolderNode)
+      : configHolderNode;
+  };
+});
+
+function flushMessageQueue() {
+  if (!message) {
+    const holderFragment = document.createDocumentFragment();
+    const newMessage: GlobalMessage = {
+      fragment: holderFragment,
+    };
+    message = newMessage;
+
+    act(() => {
+      const vnode = createVNode(GlobalHolderWrapper, {
+        onReady: (node: GlobalHolderRef) => {
+          Promise.resolve().then(() => {
+            if (newMessage.instance || !node?.instance) {
+              return;
+            }
+
+            newMessage.instance = node.instance;
+            newMessage.sync = node.sync;
+            flushMessageQueue();
+          });
+        },
+      });
+
+      const globalContext = getGlobalContext();
+      if (globalContext.appContext) {
+        vnode.appContext = globalContext.appContext;
+      }
+      render(vnode, holderFragment as any);
+    });
+    return;
+  }
+
+  if (!message.instance) {
+    return;
+  }
+
+  taskQueue.forEach((task) => {
+    const { type, skipped } = task;
+    if (skipped) {
+      return;
+    }
+
+    switch (type) {
+      case 'destroy': {
+        act(() => {
+          message?.instance!.destroy(task.key);
+        });
+        break;
+      }
+      case 'open': {
+        act(() => {
+          const closeFn = message!.instance!.open({
+            ...defaultGlobalConfig,
+            ...task.config,
+          });
+          closeFn?.then(task.resolve);
+          task.setCloseFn(closeFn);
+        });
+        break;
+      }
+      default: {
+        act(() => {
+          const closeFn = (message!.instance as any)[type](...task.args);
+          closeFn?.then(task.resolve);
+          task.setCloseFn(closeFn);
+        });
+      }
+    }
+  });
+
+  taskQueue = [];
+}
+
+function setMessageGlobalConfig(config: ConfigOptions) {
+  defaultGlobalConfig = {
+    ...defaultGlobalConfig,
+    ...config,
+  };
+
+  act(() => {
+    message?.sync?.();
+  });
+}
+
+function open(config: ArgsProps): MessageType {
+  const result = wrapPromiseFn((resolve) => {
+    let closeFn: MessageType | undefined;
+
+    const task: OpenTask = {
+      type: 'open',
+      config,
+      resolve,
+      setCloseFn: (fn) => {
+        closeFn = fn;
+      },
+    };
+    taskQueue.push(task);
+
+    return () => {
+      if (closeFn) {
+        act(() => {
+          closeFn?.();
+        });
+      } else {
+        task.skipped = true;
+      }
+    };
+  });
+
+  flushMessageQueue();
+
+  return result;
+}
+
+function typeOpen(type: NoticeType, args: Parameters<TypeOpen>): MessageType {
+  const result = wrapPromiseFn((resolve) => {
+    let closeFn: MessageType | undefined;
+
+    const task: TypeTask = {
+      type,
+      args,
+      resolve,
+      setCloseFn: (fn) => {
+        closeFn = fn;
+      },
+    };
+
+    taskQueue.push(task);
+
+    return () => {
+      if (closeFn) {
+        act(() => {
+          closeFn?.();
+        });
+      } else {
+        task.skipped = true;
+      }
+    };
+  });
+
+  flushMessageQueue();
+
+  return result;
+}
+
+function destroy(key?: Key) {
+  taskQueue.push({ type: 'destroy', key });
+  flushMessageQueue();
+}
+
+interface BaseMethods {
+  /** @private Internal Component. Do not use in your production. */
+  _InternalListDoNotUseOrYouWillBeFired: typeof PureList;
+  /** @private Internal Component. Do not use in your production. */
+  _InternalPanelDoNotUseOrYouWillBeFired: typeof PurePanel;
+  config: (config: ConfigOptions) => void;
+  destroy: (key?: Key) => void;
+  open: (config: ArgsProps) => MessageType;
+  useMessage: typeof useMessage;
+}
+
+interface MessageMethods {
+  error: TypeOpen;
+  info: TypeOpen;
+  loading: TypeOpen;
+  success: TypeOpen;
+  warning: TypeOpen;
+}
+
+const methods: (keyof MessageMethods)[] = [
+  'success',
+  'info',
+  'warning',
+  'error',
+  'loading',
+];
+
+const baseStaticMethods: BaseMethods = {
+  open,
+  destroy,
+  config: setMessageGlobalConfig,
+  useMessage,
+  _InternalPanelDoNotUseOrYouWillBeFired: PurePanel,
+  _InternalListDoNotUseOrYouWillBeFired: PureList,
+};
+
+const staticMethods = baseStaticMethods as BaseMethods & MessageMethods;
+
+methods.forEach((type: keyof MessageMethods) => {
+  staticMethods[type] = (...args: Parameters<TypeOpen>) => typeOpen(type, args);
+});
+
+function noop() {}
+
+let _actWrapper: (wrapper: any) => void = noop;
+const actWrapper = _actWrapper;
+export { actWrapper };
+
+let _actDestroy = noop;
+const actDestroy = _actDestroy;
+export { actDestroy };
+
+export default staticMethods;
+
+export { useMessage };

@@ -1,3 +1,4 @@
+// oxlint-disable eqeqeq
 // Part logic is from `qrcode.react`. (ISC License)
 // https://github.com/zpao/qrcode.react
 
@@ -119,26 +120,27 @@ export function getImageSettings(
   x: number;
   y: number;
 } {
-  if (imageSettings === null) {
+  if (imageSettings == null) {
     return null;
   }
   const numCells = cells.length + margin * 2;
   const defaultSize = Math.floor(size * DEFAULT_IMG_SCALE);
   const scale = numCells / size;
-  const w = (imageSettings!.width || defaultSize) * scale;
-  const h = (imageSettings!.height || defaultSize) * scale;
+  const w = (imageSettings.width || defaultSize) * scale;
+  const h = (imageSettings.height || defaultSize) * scale;
   const x =
-    imageSettings!.x === null
+    imageSettings.x == null
       ? cells.length / 2 - w / 2
-      : imageSettings!.x! * scale;
+      : imageSettings.x * scale;
   const y =
-    imageSettings!.y === null
+    imageSettings.y == null
       ? cells.length / 2 - h / 2
-      : imageSettings!.y! * scale;
-  const opacity = imageSettings!.opacity ?? 1;
+      : imageSettings.y * scale;
+  // eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary
+  const opacity = imageSettings.opacity == null ? 1 : imageSettings.opacity;
 
   let excavation = null;
-  if (imageSettings!.excavate) {
+  if (imageSettings.excavate) {
     const floorX = Math.floor(x);
     const floorY = Math.floor(y);
     const ceilW = Math.ceil(w + x - floorX);
@@ -146,7 +148,7 @@ export function getImageSettings(
     excavation = { x: floorX, y: floorY, w: ceilW, h: ceilH };
   }
 
-  const crossOrigin = imageSettings!.crossOrigin;
+  const crossOrigin = imageSettings.crossOrigin;
 
   return { x, y, h, w, excavation, opacity, crossOrigin };
 }
@@ -158,8 +160,8 @@ export function getImageSettings(
  * @returns
  */
 export function getMarginSize(needMargin: boolean, marginSize?: number) {
-  if (marginSize !== null) {
-    return Math.max(Math.floor(marginSize!), 0);
+  if (marginSize != null) {
+    return Math.max(Math.floor(marginSize), 0);
   }
   return needMargin ? SPEC_MARGIN_SIZE : DEFAULT_MARGIN_SIZE;
 }
