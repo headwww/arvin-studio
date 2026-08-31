@@ -36,8 +36,12 @@ import type { ComponentToken as ResultComponentToken } from '../../result/style'
 import type { ComponentToken as SegmentedComponentToken } from '../../segmented/style';
 import type { ComponentToken as SelectComponentToken } from '../../select/style';
 import type { ComponentToken as SkeletonComponentToken } from '../../skeleton/style';
+import type { ComponentToken as SliderComponentToken } from '../../slider/style';
 import type { ComponentToken as SpaceComponentToken } from '../../space/style';
 import type { ComponentToken as SpinComponentToken } from '../../spin/style';
+import type { ComponentToken as SplitterComponentToken } from '../../splitter/style';
+import type { ComponentToken as StatisticComponentToken } from '../../statistic/style';
+import type { ComponentToken as StepsComponentToken } from '../../steps/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
 import type { ComponentToken as TooltipComponentToken } from '../../tooltip/style';
 
@@ -79,8 +83,12 @@ export interface ComponentTokenMap {
   Segmented?: SegmentedComponentToken;
   Select?: SelectComponentToken;
   Skeleton?: SkeletonComponentToken;
+  Slider?: SliderComponentToken;
   Space?: SpaceComponentToken;
   Spin?: SpinComponentToken;
+  Splitter?: SplitterComponentToken;
+  Statistic?: StatisticComponentToken;
+  Steps?: StepsComponentToken;
   Switch?: SwitchComponentToken;
   Tooltip?: TooltipComponentToken;
   Wave?: WaveToken;

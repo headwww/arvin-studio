@@ -20,6 +20,8 @@ export * from './resize-observer';
 export * from './segmented';
 export * from './select';
 export * from './slick';
+export * from './slider';
+export * from './steps';
 export * from './switch';
 export * from './textarea';
 export * from './tooltip';

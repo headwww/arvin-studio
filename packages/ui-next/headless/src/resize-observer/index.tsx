@@ -1,11 +1,11 @@
 import { defineComponent } from 'vue';
 
-import { filterEmpty } from '../util';
+import { filterEmpty, warning } from '../util';
 import { Collection } from './Collection';
 import SingleObserver from './SingleObserver';
 
 export { default as useResizeObserver } from './useResizeObserver';
-const INTERNAL_PREFIX_KEY = 'headless-observer-key';
+const INTERNAL_PREFIX_KEY = 'as-observer-key';
 
 export interface SizeInfo {
   height: number;
@@ -28,6 +28,21 @@ const ResizeObserver = defineComponent<ResizeObserverProps>({
   setup(props, { slots }) {
     return () => {
       const childNodes = filterEmpty(slots.default?.() ?? []).filter(Boolean);
+      // @ts-expect-error this is a global variable which injected by babel plugin
+      // eslint-disable-next-line n/prefer-global/process
+      if (process.env.NODE_ENV !== 'production') {
+        if (childNodes.length > 1) {
+          warning(
+            false,
+            'Find more than one child node with `children` in ResizeObserver. Please use ResizeObserver.Collection instead.',
+          );
+        } else if (childNodes.length === 0) {
+          warning(
+            false,
+            '`children` of ResizeObserver is empty. Nothing is in observe.',
+          );
+        }
+      }
       return childNodes.map((child, index) => {
         const key = child?.key || `${INTERNAL_PREFIX_KEY}-${index}`;
         return (
@@ -47,5 +62,3 @@ export default ResizeObserver as typeof ResizeObserver & {
 };
 
 export { ResizeObserver };
-
-export { _rs } from './utils/observerUtil';

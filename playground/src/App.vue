@@ -4,6 +4,9 @@ import { ref } from 'vue';
 import { Anchor, App, ConfigProvider } from '@arvin-studio/ui';
 
 import DemoSelect from './demos/DemoSelect.vue';
+import DemoSplitter from './demos/DemoSplitter.vue';
+import DemoStatistic from './demos/DemoStatistic.vue';
+import DemoSteps from './demos/DemoSteps.vue';
 
 /** 全局 Anchor 导航：按组件分组指向各演示区块 */
 const demoItems: any = [
@@ -55,6 +58,9 @@ const demoItems: any = [
   { key: 'demo-result', href: '#demo-result', title: 'Result' },
   { key: 'demo-segmented', href: '#demo-segmented', title: 'Segmented' },
   { key: 'demo-select', href: '#demo-select', title: 'Select' },
+  { key: 'demo-splitter', href: '#demo-splitter', title: 'Splitter' },
+  { key: 'demo-statistic', href: '#demo-statistic', title: 'Statistic' },
+  { key: 'demo-steps', href: '#demo-steps', title: 'Steps' },
 ] as const;
 
 /** Anchor 当前高亮链接（演示 change 事件） */
@@ -130,6 +136,9 @@ const onAnchorChange = (link: string) => {
     <DemoResult />
     <DemoSegmented /> -->
       <DemoSelect />
+    <DemoSplitter />
+    <DemoStatistic />
+    <DemoSteps />
     </App>
   </ConfigProvider>
 </template>

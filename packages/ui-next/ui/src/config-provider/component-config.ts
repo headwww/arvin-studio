@@ -34,8 +34,12 @@ import type { ResultProps } from '../result';
 import type { SegmentedProps } from '../segmented';
 import type { SelectProps } from '../select';
 import type { SkeletonProps } from '../skeleton';
+import type { SliderProps } from '../slider';
 import type { SpaceProps } from '../space';
 import type { SpinProps } from '../spin';
+import type { SplitterProps } from '../splitter';
+import type { StatisticProps } from '../statistic';
+import type { StepsProps } from '../steps';
 import type { SwitchProps } from '../switch';
 import type {
   AliasToken,
@@ -299,6 +303,9 @@ export type RibbonConfig = ComponentStyleConfig &
 export type ProgressConfig = ComponentStyleConfig &
   Pick<ProgressProps, 'classes' | 'styles'>;
 
+export type SliderConfig = ComponentStyleConfig &
+  Pick<SliderProps, 'classes' | 'styles'>;
+
 export type SelectConfig = ComponentStyleConfig &
   Pick<
     SelectProps,
@@ -314,6 +321,16 @@ export type SelectConfig = ComponentStyleConfig &
     loadingIcon?: any;
     menuItemSelectedIcon?: any;
   };
+
+export type SplitterConfig = ComponentStyleConfig &
+  Pick<SplitterProps, 'classes' | 'styles'>;
+
+export type StatisticConfig = ComponentStyleConfig &
+  Pick<StatisticProps, 'classes' | 'styles'>;
+
+export type StepsConfig = ComponentStyleConfig &
+  Pick<StepsProps, 'classes' | 'styles'>;
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -355,8 +372,12 @@ export interface ConfigComponentProps {
   segmented?: SegmentedConfig;
   select?: SelectConfig;
   skeleton?: SkeletonConfig;
+  slider?: SliderConfig;
   space?: SpaceConfig;
   spin?: SpinConfig;
+  splitter?: SplitterConfig;
+  statistic?: StatisticConfig;
+  steps?: StepsConfig;
   switch?: SwitchStyleConfig;
   textArea?: TextAreaConfig;
   tooltip?: TooltipConfig;

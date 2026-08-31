@@ -33,8 +33,7 @@ export const Collection = defineComponent<CollectionProps>({
       const resizeId = resizeIdRef.value + 1;
       resizeIdRef.value = resizeId;
       resizeInfosRef.value.push({ size, element, data });
-      void (async () => {
-        await Promise.resolve();
+      Promise.resolve().then(() => {
         if (resizeIdRef.value !== resizeId) {
           return;
         }
@@ -42,7 +41,7 @@ export const Collection = defineComponent<CollectionProps>({
         const resizeInfos = resizeInfosRef.value;
         resizeInfosRef.value = [];
         props.onBatchResize?.(resizeInfos);
-      })();
+      });
       onCollectionResize?.(size, element, data);
     };
 

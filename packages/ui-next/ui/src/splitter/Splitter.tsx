@@ -1,0 +1,361 @@
+import type { CSSProperties, SlotsType } from 'vue';
+
+import type { SizeInfo } from '@arvin-studio/headless';
+
+import type {
+  SplitterClassNamesType,
+  SplitterEmits,
+  SplitterProps,
+  SplitterSemanticDraggerClassNames,
+  SplitterSlots,
+  SplitterStylesType,
+} from './interface';
+
+import { computed, defineComponent, Fragment, shallowRef } from 'vue';
+
+import { ResizeObserver } from '@arvin-studio/headless';
+import { clsx, omit } from '@arvin-studio/kit';
+
+import {
+  getAttrStyleAndClass,
+  useMergeSemantic,
+  useOrientation,
+  useSemanticRootStyle,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { toPropsRefs } from '../_util/tools';
+import { devUseWarning, isDev } from '../_util/warning';
+import { useComponentBaseConfig } from '../config-provider/context';
+import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
+import { convertChildrenToItems } from './hooks/useItems';
+import useResizable from './hooks/useResizable';
+import useResize from './hooks/useResize';
+import useSizes from './hooks/useSizes';
+import { InternalPanel } from './Panel';
+import SplitBar from './SplitBar';
+import useStyle from './style';
+
+export interface InternalSplitterProps /* @vue-ignore */
+  extends SplitterEmitsProps, SplitterProps {}
+
+export interface SplitterEmitsProps {}
+
+const Splitter = defineComponent<
+  InternalSplitterProps,
+  SplitterEmits,
+  string,
+  SlotsType<SplitterSlots>
+>(
+  (props, { slots, attrs }) => {
+    const {
+      prefixCls,
+      rootPrefixCls,
+      direction,
+      class: contextClassName,
+      style: contextStyle,
+      classes: contextClassNames,
+      styles: contextStyles,
+    } = useComponentBaseConfig('splitter', props);
+    const { classes, styles, orientation, layout, vertical } = toPropsRefs(
+      props,
+      'classes',
+      'styles',
+      'orientation',
+      'layout',
+      'vertical',
+    );
+    const rootCls = useCSSVarCls(prefixCls);
+    const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
+
+    // ======================== Direct ========================
+    const [mergedOrientation, isVertical] = useOrientation(
+      orientation,
+      vertical,
+    );
+    const isRTL = computed(() => direction.value === 'rtl');
+    const reverse = computed(() => !isVertical.value && isRTL.value);
+
+    // ====================== Items Data ======================
+    const items = shallowRef<ReturnType<typeof convertChildrenToItems>>([]);
+
+    // >>> Warning for uncontrolled
+
+    if (isDev) {
+      const warning = devUseWarning('Splitter');
+      const existSize = items.value.some((item) => item.size !== undefined);
+      const existUndefinedSize = items.value.some(
+        (item) => item.size === undefined,
+      );
+      if (existSize && existUndefinedSize) {
+        warning(
+          false,
+          'usage',
+          'When part of `Splitter.Panel` has `size`, `onResize` is required or change `size` to `defaultSize`.',
+        );
+      }
+
+      warning.deprecated(!layout.value, 'layout', 'orientation');
+      warning.deprecated(
+        !props.collapsibleIcon,
+        'collapsibleIcon',
+        'collapsible.icon',
+      );
+    }
+
+    // ====================== Container =======================
+    const containerSize = shallowRef<number>();
+    const onContainerResize = (size: SizeInfo) => {
+      const { offsetWidth, offsetHeight } = size;
+      const _containerSize = isVertical.value ? offsetHeight : offsetWidth;
+      // Skip when container has no size, Such as nested in a hidden tab panel
+      // to fix: https://github.com/ant-design/ant-design/issues/51106
+      if (_containerSize === 0) {
+        return;
+      }
+      containerSize.value = _containerSize;
+    };
+
+    // ========================= Size =========================
+    const [
+      panelSizes,
+      itemPxSizes,
+      itemPtgSizes,
+      itemPtgMinSizes,
+      itemPtgMaxSizes,
+      updateSizes,
+    ] = useSizes(items, containerSize as any);
+
+    // ====================== Resizable =======================
+    const resizableInfos = useResizable(items, itemPxSizes, reverse);
+    const [
+      onOffsetStart,
+      onOffsetUpdate,
+      onOffsetEnd,
+      onCollapse,
+      movingIndex,
+    ] = useResize(
+      items,
+      resizableInfos,
+      itemPtgSizes,
+      containerSize,
+      updateSizes,
+      isRTL,
+    );
+
+    // ======================== Events ========================
+
+    const onInternalResizeStart = (index: number) => {
+      onOffsetStart(index);
+      props?.onResizeStart?.(itemPxSizes.value);
+    };
+
+    const onInternalResizeUpdate = (
+      index: number,
+      offset: number,
+      lazyEnd?: boolean,
+    ) => {
+      const nextSizes = onOffsetUpdate(index, offset);
+      if (lazyEnd) {
+        props?.onResizeEnd?.(nextSizes);
+      } else {
+        props?.onResize?.(nextSizes);
+      }
+    };
+
+    const onInternalResizeEnd = (lazyEnd?: boolean) => {
+      onOffsetEnd();
+      if (!lazyEnd) {
+        props?.onResizeEnd?.(itemPxSizes.value);
+      }
+    };
+
+    const onInternalCollapse = (index: number, type: 'end' | 'start') => {
+      const nextSizes = onCollapse(index, type);
+      props?.onResize?.(nextSizes);
+      props?.onResizeEnd?.(nextSizes);
+      const collapsed = nextSizes.map(
+        (size) => Math.abs(size) < Number.EPSILON,
+      );
+      props?.onCollapse?.(collapsed, nextSizes);
+      props?.['onUpdate:collapse']?.(collapsed);
+    };
+
+    // =========== Merged Props for Semantic ==========
+    const mergedProps = computed(() => {
+      return {
+        ...props,
+        vertical: isVertical.value,
+        orientation: mergedOrientation.value,
+      } as SplitterProps;
+    });
+
+    // ======================== Styles ========================
+    const contextStyleRoot = useSemanticRootStyle(contextStyle);
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      SplitterClassNamesType,
+      SplitterStylesType,
+      SplitterProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, contextStyleRoot as any, styles),
+      useToProps(mergedProps),
+      computed(() => ({
+        // Convert `classNames.dragger: 'a'` to
+        // `classNames.dragger: { default: 'a' }`
+        dragger: {
+          _default: 'default',
+        },
+      })),
+    );
+
+    const stackSizes = computed(() => {
+      const mergedSizes: number[] = [];
+      let stack = 0;
+      const len = items.value.length;
+      for (let i = 0; i < len; i += 1) {
+        stack += itemPtgSizes.value[i]!;
+        mergedSizes.push(stack);
+      }
+      return mergedSizes;
+    });
+    return () => {
+      const { rootClass, lazy, draggerIcon, collapsible, collapsibleIcon } =
+        props;
+      const mergedCollapsibleIcon = collapsible?.icon ?? collapsibleIcon;
+
+      // Update items from slots in render function for reactivity
+      items.value = convertChildrenToItems(slots?.default?.() ?? []);
+      const { className, style, restAttrs } = getAttrStyleAndClass(attrs);
+      const containerClassName = clsx(
+        prefixCls.value,
+        className,
+        `${prefixCls.value}-${mergedOrientation.value}`,
+        {
+          [`${prefixCls.value}-rtl`]: isRTL.value,
+        },
+        rootClass,
+        mergedClassNames.value.root,
+        contextClassName.value,
+        cssVarCls.value,
+        rootCls.value,
+        hashId.value,
+      );
+
+      // ======================== Render ========================
+      const maskCls = `${prefixCls.value}-mask`;
+
+      const mergedStyle = {
+        ...mergedStyles.value.root,
+        ...style,
+      };
+      return (
+        <ResizeObserver onResize={onContainerResize}>
+          <div {...restAttrs} class={containerClassName} style={mergedStyle}>
+            {items.value?.map?.((item, idx) => {
+              const panelProps = {
+                ...omit(item, ['_$slots']),
+                class: clsx(mergedClassNames.value.panel, item.class),
+                style: { ...mergedStyles.value.panel, ...item.style },
+              };
+              // Panel
+              const panel = (
+                <InternalPanel
+                  {...panelProps}
+                  prefixCls={prefixCls.value}
+                  size={panelSizes.value[idx]}
+                >
+                  {item._$slots?.default?.()}
+                </InternalPanel>
+              );
+              // Split Bar
+              let splitBar: any | null = null;
+
+              const resizableInfo = resizableInfos.value[idx];
+              if (resizableInfo) {
+                const prevStackSize = Number.isFinite(stackSizes.value[idx - 1])
+                  ? stackSizes.value[idx - 1]!
+                  : 0;
+                const nextStackSize = Number.isFinite(stackSizes.value[idx + 1])
+                  ? stackSizes.value[idx + 1]!
+                  : 1;
+                const ariaMinStart =
+                  prevStackSize + itemPtgMinSizes.value[idx]!;
+                const ariaMinEnd =
+                  nextStackSize - itemPtgMaxSizes.value[idx + 1]!;
+
+                const ariaMaxStart =
+                  prevStackSize + itemPtgMaxSizes.value[idx]!;
+                const ariaMaxEnd =
+                  nextStackSize - itemPtgMinSizes.value[idx + 1]!;
+
+                splitBar = (
+                  <SplitBar
+                    active={movingIndex.value === idx}
+                    ariaMax={Math.min(ariaMaxStart, ariaMaxEnd) * 100}
+                    ariaMin={Math.max(ariaMinStart, ariaMinEnd) * 100}
+                    ariaNow={stackSizes.value![idx]! * 100}
+                    collapsibleIcon={mergedCollapsibleIcon}
+                    containerSize={containerSize.value || 0}
+                    draggerClassName={
+                      mergedClassNames.value
+                        .dragger as SplitterSemanticDraggerClassNames
+                    }
+                    draggerIcon={draggerIcon}
+                    draggerStyle={mergedStyles.value.dragger as CSSProperties}
+                    endCollapsible={resizableInfo.endCollapsible}
+                    index={idx}
+                    lazy={lazy}
+                    onCollapse={onInternalCollapse}
+                    onDraggerDoubleClick={props?.onDraggerDoubleClick}
+                    onOffsetEnd={onInternalResizeEnd}
+                    onOffsetStart={onInternalResizeStart}
+                    onOffsetUpdate={(index, offsetX, offsetY, lazyEnd) => {
+                      let offset = isVertical.value ? offsetY : offsetX;
+                      if (reverse.value) {
+                        offset = -offset;
+                      }
+
+                      onInternalResizeUpdate(index, offset, lazyEnd);
+                    }}
+                    prefixCls={prefixCls.value}
+                    resizable={resizableInfo.resizable}
+                    rootPrefixCls={rootPrefixCls.value}
+                    showEndCollapsibleIcon={
+                      resizableInfo.showEndCollapsibleIcon
+                    }
+                    showStartCollapsibleIcon={
+                      resizableInfo.showStartCollapsibleIcon
+                    }
+                    startCollapsible={resizableInfo.startCollapsible}
+                    v-slots={slots}
+                    vertical={isVertical.value}
+                  />
+                );
+              }
+              return (
+                <Fragment key={`split-panel-${idx}`}>
+                  {panel}
+                  {splitBar}
+                </Fragment>
+              );
+            })}
+            {/* Fake mask for cursor */}
+            {typeof movingIndex.value === 'number' && (
+              <div
+                aria-hidden
+                class={clsx(maskCls, `${maskCls}-${mergedOrientation.value}`)}
+              />
+            )}
+          </div>
+        </ResizeObserver>
+      );
+    };
+  },
+  {
+    name: 'ASplitter',
+    inheritAttrs: false,
+  },
+);
+
+export default Splitter;

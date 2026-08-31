@@ -27,6 +27,10 @@ import type {
   RadioConfig,
   SelectConfig,
   SkeletonConfig,
+  SliderConfig,
+  SplitterConfig,
+  StatisticConfig,
+  StepsConfig,
   TextAreaConfig,
   ThemeConfig,
   TooltipConfig,
@@ -82,6 +86,10 @@ export interface ConfigProviderProps {
   renderEmpty?: RenderEmptyHandler;
   select?: SelectConfig;
   skeleton?: SkeletonConfig;
+  slider?: SliderConfig;
+  splitter?: SplitterConfig;
+  statistic?: StatisticConfig;
+  steps?: StepsConfig;
   textArea?: TextAreaConfig;
   theme?: ThemeConfig;
   tooltip?: TooltipConfig;

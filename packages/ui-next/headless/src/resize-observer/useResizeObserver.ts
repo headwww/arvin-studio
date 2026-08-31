@@ -64,10 +64,9 @@ export default function useResizeObserver(
       onSyncResize?.(sizeInfo, target);
 
       // defer the callback but not defer to next frame
-      void (async () => {
-        await Promise.resolve();
+      Promise.resolve().then(() => {
         onDelayResize?.(sizeInfo, target);
-      })();
+      });
     }
   };
 

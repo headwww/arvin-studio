@@ -12,13 +12,16 @@ function onResize(entities: ResizeObserverEntry[]) {
   });
 }
 
+// Note: ResizeObserver polyfill not support option to measure border-box resize
 const resizeObserver = new ResizeObserver(onResize);
 
+// Dev env only
+
 export const _el =
-  // @ts-expect-error this is a valid check
+  // @ts-expect-error this is a global variable which injected by babel plugin
   // eslint-disable-next-line n/prefer-global/process
   process.env.NODE_ENV === 'production' ? null : elementListeners;
-// @ts-expect-error this is a valid check
+// @ts-expect-error this is a global variable which injected by babel plugin
 // eslint-disable-next-line n/prefer-global/process
 export const _rs = process.env.NODE_ENV === 'production' ? null : onResize;
 

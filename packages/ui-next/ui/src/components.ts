@@ -240,10 +240,18 @@ export {
   SkeletonNode,
 } from './skeleton';
 export type { SkeletonProps } from './skeleton';
+export { default as Slider } from './slider';
+export type { SliderEmits, SliderProps } from './slider';
 export { default as Space, SpaceAddon, SpaceCompact } from './space';
 export type { SpaceProps, SpaceSize, SpaceSlots } from './space';
 export { default as Spin } from './spin';
 export type { SpinProps, SpinSlots } from './spin';
+export { default as Splitter, SplitterPanel } from './splitter';
+export type { SplitterEmits, SplitterProps, SplitterSlots } from './splitter';
+export { default as Statistic, StatisticTimer } from './statistic';
+export type { StatisticProps, StatisticTimerProps } from './statistic';
+export { default as Steps } from './steps';
+export type { StepItem, StepsEmits, StepsProps, StepsSlots } from './steps';
 export { default as Switch } from './switch';
 export type {
   SwitchEmits,
