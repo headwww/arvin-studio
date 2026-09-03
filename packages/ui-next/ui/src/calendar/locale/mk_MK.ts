@@ -1,3 +1,1 @@
-import mkMK from '../../date-picker/locale/mk_MK'
-
-export default mkMK
+export { default } from '../../date-picker/locale/mk_MK';

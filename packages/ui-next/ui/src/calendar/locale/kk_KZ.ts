@@ -1,3 +1,1 @@
-import kkKZ from '../../date-picker/locale/kk_KZ'
-
-export default kkKZ
+export { default } from '../../date-picker/locale/kk_KZ';

@@ -1,3 +1,1 @@
-import ptPT from '../../date-picker/locale/pt_PT'
-
-export default ptPT
+export { default } from '../../date-picker/locale/pt_PT';

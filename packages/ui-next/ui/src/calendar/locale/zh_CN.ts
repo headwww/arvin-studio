@@ -1,3 +1,1 @@
-import zhCN from '../../date-picker/locale/zh_CN'
-
-export default zhCN
+export { default } from '../../date-picker/locale/zh_CN';

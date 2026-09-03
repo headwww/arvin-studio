@@ -1,3 +1,1 @@
-import kmrIQ from '../../date-picker/locale/kmr_IQ'
-
-export default kmrIQ
+export { default } from '../../date-picker/locale/kmr_IQ';

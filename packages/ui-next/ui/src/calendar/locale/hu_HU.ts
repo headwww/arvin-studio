@@ -1,3 +1,1 @@
-import huHU from '../../date-picker/locale/hu_HU'
-
-export default huHU
+export { default } from '../../date-picker/locale/hu_HU';

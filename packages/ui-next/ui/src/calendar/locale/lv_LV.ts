@@ -1,3 +1,1 @@
-import lvLV from '../../date-picker/locale/lv_LV'
-
-export default lvLV
+export { default } from '../../date-picker/locale/lv_LV';

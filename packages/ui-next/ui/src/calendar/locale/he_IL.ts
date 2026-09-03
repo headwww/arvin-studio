@@ -1,3 +1,1 @@
-import heIL from '../../date-picker/locale/he_IL'
-
-export default heIL
+export { default } from '../../date-picker/locale/he_IL';

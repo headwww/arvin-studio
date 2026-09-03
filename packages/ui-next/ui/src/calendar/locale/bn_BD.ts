@@ -1,3 +1,1 @@
-import bnBD from '../../date-picker/locale/bn_BD'
-
-export default bnBD
+export { default } from '../../date-picker/locale/bn_BD';

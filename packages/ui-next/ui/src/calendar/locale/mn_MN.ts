@@ -1,3 +1,1 @@
-import mnMN from '../../date-picker/locale/mn_MN'
-
-export default mnMN
+export { default } from '../../date-picker/locale/mn_MN';

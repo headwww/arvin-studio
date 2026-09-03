@@ -1,3 +1,1 @@
-import tkTK from '../../date-picker/locale/tk_TK'
-
-export default tkTK
+export { default } from '../../date-picker/locale/tk_TK';

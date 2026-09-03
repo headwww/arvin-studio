@@ -1,3 +1,1 @@
-import esUS from '../../date-picker/locale/es_US'
-
-export default esUS
+export { default } from '../../date-picker/locale/es_US';

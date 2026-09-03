@@ -1,3 +1,1 @@
-import gaIE from '../../date-picker/locale/ga_IE'
-
-export default gaIE
+export { default } from '../../date-picker/locale/ga_IE';

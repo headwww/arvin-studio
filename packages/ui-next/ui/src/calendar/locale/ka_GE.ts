@@ -1,3 +1,1 @@
-import kaGE from '../../date-picker/locale/ka_GE'
-
-export default kaGE
+export { default } from '../../date-picker/locale/ka_GE';

@@ -1,3 +1,1 @@
-import mrIN from '../../date-picker/locale/mr_IN'
-
-export default mrIN
+export { default } from '../../date-picker/locale/mr_IN';

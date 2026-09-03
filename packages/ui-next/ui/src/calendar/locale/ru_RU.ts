@@ -1,3 +1,1 @@
-import ruRU from '../../date-picker/locale/ru_RU'
-
-export default ruRU
+export { default } from '../../date-picker/locale/ru_RU';

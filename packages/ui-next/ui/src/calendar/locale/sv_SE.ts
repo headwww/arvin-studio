@@ -1,3 +1,1 @@
-import svSE from '../../date-picker/locale/sv_SE'
-
-export default svSE
+export { default } from '../../date-picker/locale/sv_SE';

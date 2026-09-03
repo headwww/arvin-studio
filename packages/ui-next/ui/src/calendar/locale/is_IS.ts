@@ -1,3 +1,1 @@
-import isIS from '../../date-picker/locale/is_IS'
-
-export default isIS
+export { default } from '../../date-picker/locale/is_IS';

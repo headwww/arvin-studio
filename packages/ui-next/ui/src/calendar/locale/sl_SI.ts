@@ -1,3 +1,1 @@
-import slSI from '../../date-picker/locale/sl_SI'
-
-export default slSI
+export { default } from '../../date-picker/locale/sl_SI';
