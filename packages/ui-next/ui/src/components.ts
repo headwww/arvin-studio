@@ -142,8 +142,6 @@ export type {
   RangePickerProps,
   WeekPickerProps,
 } from './date-picker';
-export { default as Demo } from './demo';
-export type { DemoProps } from './demo';
 export { default as Descriptions, DescriptionsItem } from './descriptions';
 export type {
   DescriptionsItemProps,
