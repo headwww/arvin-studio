@@ -357,7 +357,7 @@ const Select = defineComponent<
       direction,
     );
 
-    const [variant, enableVariantCls] = useVariants(
+    const [variant, enableVariasCls] = useVariants(
       'select',
       customizeVariant,
       bordered,
@@ -592,7 +592,7 @@ const Select = defineComponent<
           [`${prefixCls.value}-lg`]: mergedSize.value === 'large',
           [`${prefixCls.value}-sm`]: mergedSize.value === 'small',
           [`${prefixCls.value}-rtl`]: direction.value === 'rtl',
-          [`${prefixCls.value}-${variant.value}`]: enableVariantCls.value,
+          [`${prefixCls.value}-${variant.value}`]: enableVariasCls.value,
           [`${prefixCls.value}-in-form-item`]: isFormItemInput,
         },
         getStatusClassNames(prefixCls.value, mergedStatus, hasFeedback),

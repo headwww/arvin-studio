@@ -1,6 +1,5 @@
-import type { Key, DataNode as TreeDataNode } from '../tree';
-
-export type { Key };
+import type { DataNode as TreeDataNode } from '../tree';
+import type { Key } from '../util';
 
 export type SafeKey = Key;
 

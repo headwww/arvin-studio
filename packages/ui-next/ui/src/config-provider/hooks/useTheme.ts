@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 
 import type { OverrideToken } from '../../theme/interface';
-import type { ThemeConfig } from '../component-config.ts';
+import type { ThemeConfig } from '../context';
 
 import { computed } from 'vue';
 

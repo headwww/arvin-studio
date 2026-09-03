@@ -1,3 +1,3 @@
 export type { TourProps, TourStepInfo, TourStepProps } from './interface';
 
-export { default } from './Tour';
+export { default as Tour } from './Tour';

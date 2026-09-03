@@ -1,6 +1,7 @@
 import type { RefOptionListProps } from '../select';
 import type { DataEntity, TreeRef } from '../tree';
-import type { DataNode, Key } from './interface';
+import type { Key } from '../util';
+import type { DataNode } from './interface';
 
 import {
   computed,
@@ -12,7 +13,7 @@ import {
 } from 'vue';
 
 import { useBaseProps } from '../select';
-import Tree, { UnstableContextKey } from '../tree';
+import Tree, { UnstableTreeContextKey } from '../tree';
 import KeyCode from '../util/KeyCode';
 import { useLegacyContext } from './LegacyContext';
 import { useTreeSelectContext } from './TreeSelectContext';
@@ -221,7 +222,7 @@ const OptionList = defineComponent({
       return false;
     };
 
-    provide(UnstableContextKey, { nodeDisabled });
+    provide(UnstableTreeContextKey, { nodeDisabled });
 
     // ========================== Get First Selectable Node ==========================
     const getFirstMatchingNode = (nodes: DataNode[]): DataNode | null => {

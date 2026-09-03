@@ -271,7 +271,7 @@ const InternalInput = defineComponent<
       getMergedStatus(contextStatus.value, customStatus.value),
     );
 
-    const [mergedVariant, enableVariantCls] = useVariant(
+    const [mergedVariant, enableVariasCls] = useVariant(
       'input',
       customVariant,
       bordered,
@@ -396,7 +396,7 @@ const InternalInput = defineComponent<
 
       const variantClassName = clsx(
         {
-          [`${prefixCls.value}-${mergedVariant.value}`]: enableVariantCls.value,
+          [`${prefixCls.value}-${mergedVariant.value}`]: enableVariasCls.value,
         },
         getStatusClassNames(prefixCls.value, mergedStatus.value),
       );
@@ -436,7 +436,7 @@ const InternalInput = defineComponent<
               mergedSize.value === 'large',
             [`${prefixCls.value}-group-wrapper-rtl`]: direction.value === 'rtl',
             [`${prefixCls.value}-group-wrapper-${mergedVariant.value}`]:
-              enableVariantCls.value,
+              enableVariasCls.value,
           },
           getStatusClassNames(
             `${prefixCls.value}-group-wrapper`,

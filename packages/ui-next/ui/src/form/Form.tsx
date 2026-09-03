@@ -1,0 +1,927 @@
+import type { CSSProperties, HTMLAttributes, SlotsType } from 'vue';
+
+import type {
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { ComponentBaseProps, Variant } from '../config-provider/context';
+import type { SizeType } from '../config-provider/size-context';
+import type { ColProps } from '../grid';
+import type { FormContextProps, FormFieldRegister } from './context';
+import type { FeedbackIcons } from './FormItem';
+import type { FormTooltipProps } from './FormItemLabel';
+import type { FormHookEntry } from './hooks/useForm';
+import type { FormLabelAlign, ScrollFocusOptions } from './interface';
+import type {
+  FieldData,
+  InternalNamePath,
+  NamePath,
+  RulesMap,
+  ValidateErrorEntity,
+  ValidateMessages,
+  ValidateOptions,
+} from './types';
+
+import {
+  computed,
+  defineComponent,
+  getCurrentInstance,
+  inject,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  shallowRef,
+  watch,
+} from 'vue';
+
+import { get, getDOM, set } from '@arvin-studio/headless';
+import { clsx, pick } from '@arvin-studio/kit';
+
+import scrollIntoView from 'scroll-into-view-if-needed';
+
+import {
+  getAttrStyleAndClass,
+  useMergeSemantic,
+  useSemanticRootStyle,
+  useToArr,
+  useToProps,
+} from '../_util/hooks';
+import { toPropsRefs } from '../_util/tools';
+import warning from '../_util/warning';
+import { useComponentBaseConfig } from '../config-provider/context';
+import {
+  useDisabledContext,
+  useDisabledContextProvider,
+} from '../config-provider/disabled-context';
+import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
+import { useSize } from '../config-provider/hooks/useSize';
+import { useSizeProvider } from '../config-provider/size-context';
+import useLocale from '../locale/useLocale';
+import {
+  NoFormStyle,
+  useFormContextProvider,
+  useVariantContextProvider,
+} from './context';
+import { FormHookRegistryKey, FormInstanceContextKey } from './hooks/useForm';
+import useStyle from './style';
+import { getFieldId, toArray, toNamePathStr } from './util';
+import { allPromiseFinish } from './utils/asyncUtil';
+import { defaultValidateMessages } from './utils/messages';
+import {
+  cloneByNamePathList,
+  containsNamePath,
+  getNamePath,
+  setValue,
+} from './utils/valueUtil';
+import {
+  useValidateMessagesContext,
+  useValidateMessagesProvider,
+} from './validateMessagesContext';
+
+export type RequiredMark =
+  | 'optional'
+  | ((labelNode: any, info: { required: boolean }) => any)
+  | boolean;
+export type FormLayout = 'horizontal' | 'inline' | 'vertical';
+export type FormItemLayout = 'horizontal' | 'vertical';
+
+export type { ScrollFocusOptions };
+
+export type FormSemanticName = keyof FormSemanticClassNames &
+  keyof FormSemanticStyles;
+
+export interface FormSemanticClassNames {
+  content?: string;
+  extra?: string;
+  help?: string;
+  helpItem?: string;
+  label?: string;
+  root?: string;
+}
+
+export interface FormSemanticStyles {
+  content?: CSSProperties;
+  extra?: CSSProperties;
+  help?: CSSProperties;
+  helpItem?: CSSProperties;
+  label?: CSSProperties;
+  root?: CSSProperties;
+}
+
+export type FormClassNamesType = SemanticClassNamesType<
+  FormProps,
+  FormSemanticClassNames
+>;
+
+export type FormStylesType = SemanticStylesType<FormProps, FormSemanticStyles>;
+
+export interface FormProps
+  extends
+    ComponentBaseProps,
+    /* @vue-ignore */
+    FormEmitsProps {
+  autoComplete?: string | undefined;
+  autocomplete?: string | undefined;
+  classes?: FormClassNamesType;
+  clearOnDestroy?: boolean;
+  colon?: boolean;
+  disabled?: boolean;
+  feedbackIcons?: FeedbackIcons;
+  labelAlign?: FormLabelAlign;
+  labelCol?: ColProps & Partial<HTMLAttributes>;
+  labelWrap?: boolean;
+  layout?: FormLayout;
+  model?: Record<string, any>;
+  name?: string;
+  preserve?: boolean;
+  requiredMark?: RequiredMark;
+  rules?: RulesMap;
+  scrollToFirstError?: boolean | ScrollFocusOptions;
+  size?: SizeType;
+  styles?: FormStylesType;
+  tooltip?: FormTooltipProps;
+  validateMessages?: ValidateMessages;
+  validateOnRuleChange?: boolean;
+  validateTrigger?: false | string | string[];
+  variant?: Variant;
+  wrapperCol?: ColProps & Partial<HTMLAttributes>;
+}
+
+export interface FormEmits {
+  fieldsChange: (changedFields: FieldData[], allFields: FieldData[]) => void;
+  finish: (values: Record<string, any>) => void;
+  finishFailed: (errorInfo: ValidateErrorEntity) => void;
+  reset: (e: Event) => void;
+  submit: (e: Event) => void;
+  validate: (
+    name: InternalNamePath,
+    status: boolean,
+    errors: any[] | null,
+  ) => void;
+  valuesChange: (
+    changedValues: Record<string, any>,
+    values: Record<string, any>,
+  ) => void;
+}
+export interface FormEmitsProps {
+  onFieldsChange?: FormEmits['fieldsChange'];
+  onFinish?: FormEmits['finish'];
+  onFinishFailed?: FormEmits['finishFailed'];
+  onReset?: FormEmits['reset'];
+  onSubmit?: FormEmits['submit'];
+  onValidate?: FormEmits['validate'];
+  onValuesChange?: FormEmits['valuesChange'];
+}
+
+export interface FormSlots {
+  default: () => any;
+}
+
+export interface FormInstance {
+  clearValidate: (nameList?: InternalNamePath[] | NamePath[]) => void;
+  focusField: (fieldName: NamePath) => void;
+  getFieldError: (name: NamePath) => string[];
+  getFieldInstance: (name: NamePath) => any;
+  getFieldsError: (
+    nameList?: NamePath[],
+  ) => { errors: string[]; name: InternalNamePath; warnings: string[] }[];
+  getFieldsValue: (nameList?: NamePath[] | true) => Record<string, any>;
+  getFieldValue: (name: NamePath) => any;
+  getFieldWarning: (name: NamePath) => string[];
+  isFieldsTouched: (
+    nameList?: boolean | NamePath[],
+    allFieldsTouched?: boolean,
+  ) => boolean;
+  isFieldsValidating: (nameList?: NamePath[]) => boolean;
+  isFieldTouched: (name: NamePath) => boolean;
+  isFieldValidating: (name: NamePath) => boolean;
+  nativeElement: HTMLFormElement | undefined;
+  resetFields: (nameList?: InternalNamePath[] | NamePath[]) => void;
+  scrollToField: (
+    fieldName: NamePath,
+    options?: boolean | ScrollFocusOptions,
+  ) => void;
+  setFields: (data: FieldData[]) => void;
+  setFieldsValue: (values: Record<string, any>) => void;
+  setFieldValue: (name: NamePath, value: any) => void;
+  submit: () => void;
+  validate: (
+    nameList?: NamePath[] | ValidateOptions,
+    options?: ValidateOptions,
+  ) => Promise<Record<string, any>>;
+  validateFields: (
+    nameList?: NamePath[] | ValidateOptions,
+    options?: ValidateOptions,
+  ) => Promise<Record<string, any>>;
+}
+const defaults = {
+  layout: 'horizontal',
+} as any;
+const InternalForm = defineComponent<
+  FormProps,
+  FormEmits,
+  string,
+  SlotsType<FormSlots>
+>(
+  (props = defaults, { slots, expose, emit, attrs }) => {
+    const contextDisabled = useDisabledContext();
+    const {
+      prefixCls,
+      direction,
+      requiredMark: contextRequiredMark,
+      colon: contextColon,
+      scrollToFirstError: contextScrollToFirstError,
+      autoComplete: contextAutoComplete,
+      autocomplete: contextAutocomplete,
+      class: contextClassName,
+      style: contextStyle,
+      styles: contextStyles,
+      classes: contextClassNames,
+      tooltip: contextTooltip,
+      labelAlign: contextLabelAlign,
+      labelWrap: contextLabelWrap,
+    } = useComponentBaseConfig('form', props, [
+      'scrollToFirstError',
+      'colon',
+      'requiredMark',
+      'tooltip',
+      'autoComplete',
+      'autocomplete',
+      'labelAlign',
+      'labelWrap',
+    ]);
+    const {
+      size,
+      styles,
+      classes,
+      variant,
+      model,
+      rules,
+      validateTrigger,
+      validateMessages,
+      feedbackIcons,
+    } = toPropsRefs(
+      props,
+      'size',
+      'classes',
+      'styles',
+      'variant',
+      'model',
+      'rules',
+      'validateTrigger',
+      'validateMessages',
+      'feedbackIcons',
+    );
+    const mergedSize = useSize(size);
+    const disabled = computed(() => props?.disabled ?? contextDisabled.value);
+    const contextValidateMessages = useValidateMessagesContext();
+    const [formLocale] = useLocale('Form');
+
+    const mergedRequiredMark = computed(() => {
+      if (props.requiredMark !== undefined) {
+        return props.requiredMark;
+      }
+      if (contextRequiredMark.value !== undefined) {
+        return contextRequiredMark.value;
+      }
+      return true;
+    });
+
+    const mergedColon = computed(() => props.colon ?? contextColon.value);
+    const mergedLabelAlign = computed(
+      () => props.labelAlign ?? contextLabelAlign.value,
+    );
+    const mergedLabelWrap = computed(
+      () => props.labelWrap ?? contextLabelWrap.value,
+    );
+    const mergedAutoComplete = computed(
+      () =>
+        props.autoComplete ??
+        props.autocomplete ??
+        contextAutoComplete.value ??
+        contextAutocomplete.value,
+    );
+    const mergedTooltip = computed(() => {
+      return {
+        ...contextTooltip.value,
+        ...props.tooltip,
+      };
+    });
+    const mergedValidateMessages = computed(() => ({
+      ...defaultValidateMessages,
+      ...formLocale?.value?.defaultValidateMessages,
+      ...contextValidateMessages?.value,
+      ...validateMessages.value,
+    }));
+    useValidateMessagesProvider(mergedValidateMessages);
+
+    // Style
+    const rootCls = useCSSVarCls(prefixCls);
+    const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
+
+    // =========== Merged Props for Semantic ===========
+    const mergedProps = computed(() => {
+      return {
+        ...props,
+        size: mergedSize.value,
+        colon: mergedColon.value,
+        requiredMark: mergedRequiredMark.value,
+        labelAlign: mergedLabelAlign.value,
+        labelWrap: mergedLabelWrap.value,
+      } as FormProps;
+    });
+
+    const contextStyleRoot = useSemanticRootStyle(contextStyle);
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      FormClassNamesType,
+      FormStylesType,
+      FormProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, contextStyleRoot as any, styles),
+      useToProps(mergedProps),
+    );
+
+    const fields = shallowRef<Record<string, FormFieldRegister>>({});
+    const lastValidatePromise = shallowRef<Promise<any>>();
+
+    const addField = (eventKey: string, field: FormFieldRegister) => {
+      fields.value[eventKey] = field;
+    };
+
+    const removeField = (eventKey: string) => {
+      delete fields.value[eventKey];
+    };
+
+    // `items` tracks the rendered control instance of each Form.Item, keyed by
+    // the joined name path (`toNamePathStr`). It is intentionally separate from
+    // `fields`, which holds the internal validation bookkeeping of each field.
+    // A `Map` is used because the key comes from the user supplied field name,
+    // and inherited `Object` keys such as `__proto__` would otherwise be written
+    // to the prototype rather than stored as own entries.
+    const items = new Map<string, any>();
+
+    const addItem = (namePathStr: string, instance: any) => {
+      items.set(namePathStr, instance);
+    };
+
+    const removeItem = (namePathStr: string) => {
+      items.delete(namePathStr);
+    };
+
+    const getFieldInstance = (name: NamePath) => {
+      return items.get(toNamePathStr(getNamePath(name)));
+    };
+
+    const getFieldsByNameList = (
+      namePathList?: InternalNamePath[],
+      partialMatch = false,
+    ) => {
+      const mergedNamePathList = namePathList?.length
+        ? namePathList
+        : undefined;
+      const fieldList = Object.values(fields.value);
+      if (!mergedNamePathList) {
+        return fieldList;
+      }
+      return fieldList.filter((field) =>
+        containsNamePath(mergedNamePathList, field.namePath(), partialMatch),
+      );
+    };
+
+    const getFieldValue = (namePath: InternalNamePath) => {
+      return get(model.value ?? {}, namePath as any);
+    };
+
+    const getFieldsValue = (nameList: InternalNamePath[] | true = true) => {
+      if (nameList === true) {
+        const allNameList = Object.values(fields.value).map((field) =>
+          field.namePath(),
+        );
+        return cloneByNamePathList(model.value ?? {}, allNameList);
+      }
+      return cloneByNamePathList(model.value ?? {}, nameList);
+    };
+
+    const getFields = (namePathList?: InternalNamePath[]): FieldData[] => {
+      const fieldList = getFieldsByNameList(namePathList);
+      return fieldList.map((field) => {
+        const meta = field.getMeta();
+        return {
+          ...meta,
+          name: field.namePath(),
+          value: field.getValue(),
+        };
+      });
+    };
+
+    const triggerFieldsChange = (namePathList?: InternalNamePath[]) => {
+      emit('fieldsChange', getFields(namePathList), getFields());
+    };
+
+    const triggerValuesChange = (namePath: InternalNamePath, value: any) => {
+      if (model.value) {
+        const changedValues = setValue({}, namePath, value);
+        emit('valuesChange', changedValues, model.value);
+      }
+      triggerFieldsChange([namePath]);
+    };
+
+    const onValidate = (
+      name: InternalNamePath,
+      status: boolean,
+      errors: any[] | null,
+    ) => {
+      emit('validate', name, status, errors);
+    };
+
+    const resetFields = (nameList?: InternalNamePath[] | NamePath[]) => {
+      const targetList = nameList ? nameList.map(getNamePath) : undefined;
+      getFieldsByNameList(targetList).forEach((field) => field.resetField());
+    };
+
+    const clearValidate = (nameList?: InternalNamePath[] | NamePath[]) => {
+      const targetList = nameList ? nameList.map(getNamePath) : undefined;
+      getFieldsByNameList(targetList).forEach((field) => field.clearValidate());
+    };
+
+    const validateFields = (
+      arg1?: NamePath[] | ValidateOptions,
+      arg2?: ValidateOptions,
+    ) => {
+      let nameList: NamePath[] | undefined;
+      let options: ValidateOptions;
+      if (
+        Array.isArray(arg1) ||
+        typeof arg1 === 'string' ||
+        typeof arg2 === 'string'
+      ) {
+        nameList = arg1 as NamePath[];
+        options = (arg2 as ValidateOptions) || {};
+      } else {
+        options = (arg1 as ValidateOptions) || {};
+      }
+
+      const provideNameList = !!(nameList && toArray(nameList).length > 0);
+      const namePathList: InternalNamePath[] = provideNameList
+        ? toArray(nameList).map(getNamePath)
+        : [];
+
+      const promiseList: Promise<{
+        errors: string[];
+        name: InternalNamePath;
+        warnings: string[];
+      }>[] = [];
+
+      const { recursive, dirty } = options;
+
+      getFieldsByNameList(
+        provideNameList ? namePathList : undefined,
+        recursive,
+      ).forEach((field) => {
+        if (!provideNameList) {
+          namePathList.push(field.namePath());
+        }
+        if (!field.rules || !field.rules()?.length) {
+          return;
+        }
+        // Skip if only validate dirty field
+        if (dirty && !field.isFieldDirty?.()) {
+          return;
+        }
+        const promise = field
+          .validateRules(options)
+          .then(() => ({ name: field.namePath(), errors: [], warnings: [] }))
+          .catch((error: any[]) => {
+            const mergedErrors: string[] = [];
+            const mergedWarnings: string[] = [];
+            error?.forEach(({ rule: { warningOnly }, errors }: any) => {
+              if (warningOnly) {
+                mergedWarnings.push(...errors);
+              } else {
+                mergedErrors.push(...errors);
+              }
+            });
+
+            if (mergedErrors.length > 0) {
+              // oxlint-disable-next-line no-throw-literal
+              throw {
+                name: field.namePath(),
+                errors: mergedErrors,
+                warnings: mergedWarnings,
+              };
+            }
+            return {
+              name: field.namePath(),
+              errors: mergedErrors,
+              warnings: mergedWarnings,
+            };
+          });
+        promiseList.push(promise);
+      });
+
+      const summaryPromise = allPromiseFinish(promiseList);
+      lastValidatePromise.value = summaryPromise;
+
+      const returnPromise = summaryPromise
+        .then(() => {
+          if (lastValidatePromise.value === summaryPromise) {
+            return getFieldsValue(namePathList);
+          }
+
+          // oxlint-disable-next-line no-throw-literal
+          throw [];
+        })
+        .catch((error) => {
+          const errorList = error.filter(
+            // eslint-disable-next-line unicorn/explicit-length-check
+            (result: any) => result && result.errors.length,
+          );
+          const errorMessage = errorList[0]?.errors?.[0];
+
+          // oxlint-disable-next-line no-throw-literal
+          throw {
+            message: errorMessage,
+            values: getFieldsValue(namePathList),
+            errorFields: errorList,
+            outOfDate: lastValidatePromise.value !== summaryPromise,
+          };
+        });
+
+      returnPromise.catch((error) => error);
+      return returnPromise;
+    };
+
+    const formContextValue = computed(() => {
+      return {
+        ...pick(props, ['name', 'labelCol', 'wrapperCol', 'layout']),
+        labelAlign: mergedLabelAlign.value,
+        labelWrap: mergedLabelWrap.value,
+        colon: mergedColon.value,
+        requiredMark: mergedRequiredMark.value,
+        classes: mergedClassNames.value,
+        styles: mergedStyles.value,
+        rules: rules.value,
+        model: model.value,
+        validateTrigger: validateTrigger.value,
+        tooltip: mergedTooltip.value,
+        validateMessages: mergedValidateMessages.value,
+        feedbackIcons: feedbackIcons.value,
+        addField,
+        removeField,
+        addItem,
+        removeItem,
+        onValidate,
+        triggerValuesChange,
+        triggerFieldsChange,
+        getFieldValue,
+        getFieldsValue,
+      } as FormContextProps;
+    });
+
+    const nativeElementRef = shallowRef<HTMLFormElement>();
+
+    const scrollToField = (
+      fieldName: InternalNamePath,
+      options: boolean | ScrollFocusOptions = {},
+    ) => {
+      let defaultScrollToFirstError: ScrollFocusOptions = { block: 'nearest' };
+      if (typeof options === 'object') {
+        defaultScrollToFirstError = {
+          ...defaultScrollToFirstError,
+          ...options,
+        };
+      }
+      const targetId = getFieldId(fieldName, props.name);
+      // eslint-disable-next-line unicorn/prefer-query-selector
+      const node = targetId ? document.getElementById(targetId) : null;
+      if (node) {
+        // @ts-expect-error this is fine
+        scrollIntoView(node, defaultScrollToFirstError);
+        if (defaultScrollToFirstError.focus !== false) {
+          try {
+            node.focus();
+          } catch {
+            // ignore focus error
+          }
+        }
+      }
+    };
+
+    const onInternalFinishFailed = (errorInfo: ValidateErrorEntity) => {
+      emit('finishFailed', errorInfo);
+      if (errorInfo.errorFields?.length) {
+        const fieldName = errorInfo.errorFields?.[0]?.name;
+        if (props.scrollToFirstError !== undefined) {
+          scrollToField(fieldName!, props.scrollToFirstError);
+        } else if (contextScrollToFirstError.value !== undefined) {
+          scrollToField(fieldName!, contextScrollToFirstError.value);
+        }
+      }
+    };
+
+    const updateModelValue = (namePath: InternalNamePath, value: any) => {
+      if (!model.value) return;
+      const newStore = set(model.value, namePath, value);
+      Object.assign(model.value, newStore);
+    };
+
+    const setFieldValue = (name: NamePath, value: any) => {
+      const namePath = getNamePath(name);
+      updateModelValue(namePath, value);
+      triggerValuesChange(namePath, value);
+    };
+
+    const setFieldsValue = (values: Record<string, any>) => {
+      if (!model.value) return;
+      Object.keys(values || {}).forEach((key) => {
+        updateModelValue(getNamePath(key as any), values[key]);
+      });
+      triggerFieldsChange();
+    };
+
+    const getFieldError = (name: NamePath) => {
+      const namePath = getNamePath(name);
+      const field = getFields([namePath])[0];
+      return field?.errors || [];
+    };
+
+    const getFieldWarning = (name: NamePath) => {
+      const namePath = getNamePath(name);
+      const field = getFields([namePath])[0];
+      return field?.warnings || [];
+    };
+
+    const getFieldsError = (nameList?: NamePath[]) => {
+      const namePathList = nameList?.length
+        ? nameList.map(getNamePath)
+        : undefined;
+      return getFields(namePathList).map((field) => ({
+        name: field.name,
+        errors: field.errors,
+        warnings: field.warnings,
+      }));
+    };
+
+    const isFieldTouched = (name: NamePath) => {
+      const namePath = getNamePath(name);
+      const field = getFields([namePath])[0];
+      return !!field?.touched;
+    };
+
+    const isFieldsTouched = (
+      nameList?: boolean | NamePath[],
+      allFieldsTouched?: boolean,
+    ) => {
+      const arrNameList =
+        typeof nameList === 'boolean' || nameList === undefined
+          ? undefined
+          : nameList.map(getNamePath);
+      const fieldsData = getFields(arrNameList);
+      if (nameList === false) {
+        return false;
+      }
+      if (fieldsData.length === 0) {
+        return false;
+      }
+      if (allFieldsTouched) {
+        return fieldsData.every((field) => field.touched);
+      }
+      return fieldsData.some((field) => field.touched);
+    };
+
+    const isFieldValidating = (name: NamePath) => {
+      const namePath = getNamePath(name);
+      const field = getFields([namePath])[0];
+      return !!field?.validating;
+    };
+
+    const isFieldsValidating = (nameList?: NamePath[]) => {
+      const namePathList = nameList?.length
+        ? nameList.map(getNamePath)
+        : undefined;
+      return getFields(namePathList).some((field) => field.validating);
+    };
+
+    const setFields = (data: FieldData[]) => {
+      data.forEach((item) => {
+        const namePath = getNamePath(item.name as NamePath);
+        const target = Object.values(fields.value).find((field) =>
+          containsNamePath([field.namePath()], namePath),
+        );
+        if (target?.setFieldState) {
+          target.setFieldState({
+            errors: item.errors || [],
+            warnings: item.warnings || [],
+            touched: item.touched ?? target.getMeta().touched,
+            validating: item.validating ?? target.getMeta().validating,
+          });
+        }
+        if (Object.prototype.hasOwnProperty.call(item, 'value')) {
+          updateModelValue(namePath, item.value);
+        }
+      });
+      triggerFieldsChange();
+    };
+
+    const submit = () => {
+      const syntheticEvent = new Event('submit');
+      handleSubmit(syntheticEvent as any);
+    };
+
+    useFormContextProvider(formContextValue);
+    useVariantContextProvider(variant);
+    useDisabledContextProvider(disabled);
+    useSizeProvider(mergedSize);
+
+    const formInstance = {
+      getFieldValue: (name: NamePath) => getFieldValue(getNamePath(name)),
+      getFieldsValue,
+      getFieldError,
+      getFieldsError,
+      getFieldWarning,
+      isFieldsTouched,
+      isFieldTouched,
+      isFieldValidating,
+      isFieldsValidating,
+      resetFields,
+      clearValidate,
+      setFields,
+      setFieldValue,
+      setFieldsValue,
+      validateFields,
+      validate: validateFields,
+      submit,
+      get nativeElement() {
+        return nativeElementRef.value;
+      },
+      get el() {
+        return nativeElementRef.value;
+      },
+      scrollToField: (
+        name: NamePath,
+        options: boolean | ScrollFocusOptions = {},
+      ) => {
+        scrollToField(getNamePath(name), options);
+      },
+      focusField: (name: NamePath) => {
+        // Prefer the control instance so custom components can expose their own
+        // `focus`, and fall back to the rendered DOM node.
+        const instance = getFieldInstance(name);
+        if (typeof instance?.focus === 'function') {
+          try {
+            instance.focus();
+          } finally {
+            // ignore focus error
+          }
+          return;
+        }
+        const targetId = getFieldId(getNamePath(name), props.name);
+        const node =
+          getDOM(instance) ??
+          // eslint-disable-next-line unicorn/prefer-query-selector
+          (targetId ? document.getElementById(targetId) : null);
+        if (node) {
+          try {
+            node.focus?.();
+          } finally {
+            // ignore focus error
+          }
+        }
+      },
+      getFieldInstance,
+    } as unknown as FormInstance;
+
+    expose(formInstance);
+    provide(FormInstanceContextKey, formInstance);
+
+    // Connect `useForm()` hook instances from ancestor components.
+    const hookRegistry = inject(FormHookRegistryKey, null);
+    const vm = getCurrentInstance();
+    let boundEntry: FormHookEntry | undefined;
+
+    onMounted(() => {
+      if (!hookRegistry || !vm) {
+        return;
+      }
+      const entries = hookRegistry.entries;
+      // Template refs are set before mounted hooks flush. If this form is already
+      // explicitly bound to a hook instance, do not consume another entry.
+      const isSelf = (val: any) =>
+        !!val && (val === formInstance || val.$ === vm);
+      if (entries.some((entry) => isSelf(entry.instanceRef.value))) {
+        return;
+      }
+      let entry: FormHookEntry | undefined;
+      if (props.name) {
+        entry = entries.find(
+          (item) => item.boundBy === undefined && item.name === props.name,
+        );
+      }
+      if (!entry) {
+        entry = entries.find(
+          (item) => item.boundBy === undefined && item.name === undefined,
+        );
+      }
+      if (entry) {
+        if (
+          !entry.name &&
+          entries.filter((item) => item.name === undefined).length > 1
+        ) {
+          warning(
+            false,
+            'Form',
+            'Multiple unnamed `useForm` instances are connected by declaration order, which is fragile. Bind explicitly via template ref or a matching `name`.',
+          );
+        }
+        entry.boundBy = vm.uid;
+        entry.instanceRef.value = formInstance;
+        boundEntry = entry;
+      }
+    });
+
+    onBeforeUnmount(() => {
+      if (!(boundEntry && vm && boundEntry.boundBy === vm.uid)) {
+        return;
+      }
+
+      boundEntry.boundBy = undefined;
+      boundEntry.instanceRef.value = undefined;
+      boundEntry = undefined;
+    });
+
+    watch(
+      () => rules.value,
+      () => {
+        if (props.validateOnRuleChange) {
+          validateFields();
+        }
+      },
+      { deep: true },
+    );
+
+    function handleSubmit(e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+      emit('submit', e);
+      if (props.model) {
+        validateFields()
+          .then((values) => {
+            emit('finish', values);
+          })
+          .catch((error) => {
+            onInternalFinishFailed(error);
+          });
+      }
+    }
+
+    const handleReset = (e: Event) => {
+      e.preventDefault();
+      emit('reset', e);
+      resetFields();
+    };
+
+    return () => {
+      const { layout, rootClass, name } = props;
+      const { className, style, restAttrs } = getAttrStyleAndClass(attrs);
+      const formClassName = clsx(
+        prefixCls.value,
+        `${prefixCls.value}-${layout}`,
+        {
+          [`${prefixCls.value}-hide-required-mark`]:
+            mergedRequiredMark.value === false, // todo: remove in next major version
+          [`${prefixCls.value}-rtl`]: direction.value === 'rtl',
+          [`${prefixCls.value}-${mergedSize.value}`]: mergedSize.value,
+        },
+        cssVarCls.value,
+        rootCls.value,
+        hashId.value,
+        contextClassName.value,
+        className,
+        rootClass,
+        mergedClassNames.value.root,
+      );
+      return (
+        <form
+          id={name}
+          {...restAttrs}
+          autocomplete={mergedAutoComplete.value}
+          class={formClassName}
+          name={name}
+          onReset={handleReset}
+          onSubmit={handleSubmit}
+          ref={nativeElementRef}
+          style={[mergedStyles.value.root, style]}
+        >
+          <NoFormStyle status>{slots?.default?.()}</NoFormStyle>
+        </form>
+      );
+    };
+  },
+  {
+    name: 'AsForm',
+    inheritAttrs: false,
+  },
+);
+
+export default InternalForm;

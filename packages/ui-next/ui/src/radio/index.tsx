@@ -25,7 +25,7 @@ export const RadioButton = Button;
 
 (Radio as any).Button = Button;
 (Radio as any).Group = Group;
-(Radio as any).__ANT_RADIO = true;
+(Radio as any).__AS_RADIO = true;
 
 (Radio as any).install = (app: App) => {
   app.component(Radio.name, Radio);

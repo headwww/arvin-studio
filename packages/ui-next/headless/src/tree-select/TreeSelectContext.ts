@@ -1,7 +1,8 @@
 import type { Ref } from 'vue';
 
 import type { DataEntity, ExpandAction } from '../tree';
-import type { DataNode, FieldNames, Key, SelectSource } from './interface';
+import type { Key } from '../util';
+import type { DataNode, FieldNames, SelectSource } from './interface';
 import type { TreeSelectProps } from './TreeSelect';
 
 import { inject, provide, ref } from 'vue';

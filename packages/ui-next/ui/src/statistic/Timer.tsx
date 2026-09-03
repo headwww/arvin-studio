@@ -123,7 +123,7 @@ const StatisticTimer = defineComponent<
     };
   },
   {
-    name: 'AStatisticTimer',
+    name: 'AsStatisticTimer',
     inheritAttrs: false,
   },
 );

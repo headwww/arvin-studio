@@ -339,7 +339,7 @@ const InternalSearch = defineComponent<
       const enterButtonNode = buttonChildren;
       const isButtonVNode = isVNode(enterButtonNode);
       const isAntdButton =
-        isButtonVNode && Boolean((enterButtonNode.type as any)?.__ANT_BUTTON);
+        isButtonVNode && Boolean((enterButtonNode.type as any)?.__AS_BUTTON);
       const isNativeButton =
         isButtonVNode && (enterButtonNode.type as any) === 'button';
       if (isAntdButton || isNativeButton) {

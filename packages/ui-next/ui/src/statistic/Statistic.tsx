@@ -264,7 +264,7 @@ const Statistic = defineComponent<
     };
   },
   {
-    name: 'AStatistic',
+    name: 'AsStatistic',
     inheritAttrs: false,
   },
 );

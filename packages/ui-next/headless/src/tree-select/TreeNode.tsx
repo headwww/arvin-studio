@@ -1,4 +1,5 @@
-import type { DataNode, Key } from './interface';
+import type { Key } from '../util';
+import type { DataNode } from './interface';
 
 import { defineComponent } from 'vue';
 

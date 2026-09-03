@@ -1,0 +1,790 @@
+import type { App, CSSProperties, PublicProps, SlotsType } from 'vue';
+
+import type {
+  CascaderDefaultOptionType as DefaultOptionType,
+  CascaderFieldNames as FieldNames,
+  CascaderSearchConfig as SearchConfig,
+  CascaderProps as VcCascaderProps,
+} from '@arvin-studio/headless';
+
+import type { VueNode } from '../_util';
+import type {
+  SemanticClassNamesType,
+  SemanticStylesType,
+} from '../_util/hooks';
+import type { SelectCommonPlacement } from '../_util/motion';
+import type { InputStatus } from '../_util/statusUtils';
+import type { Variant } from '../config-provider/context';
+import type { SizeType } from '../config-provider/size-context';
+import type {
+  SelectPopupSemanticClassNames,
+  SelectPopupSemanticStyles,
+} from '../select';
+
+import { computed, defineComponent, shallowRef } from 'vue';
+
+import {
+  getTransitionName,
+  SHOW_CHILD,
+  SHOW_PARENT,
+  ExportCascader as VcCascader,
+} from '@arvin-studio/headless';
+import { clsx, omit } from '@arvin-studio/kit';
+
+import {
+  getAttrStyleAndClass,
+  useMergeSemantic,
+  useSemanticRootStyle,
+  useToArr,
+  useToProps,
+  useZIndex,
+} from '../_util/hooks';
+import genPurePanel from '../_util/PurePanel';
+import { getMergedStatus, getStatusClassNames } from '../_util/statusUtils';
+import { getSlotPropsFnRun, toPropsRefs } from '../_util/tools';
+import { devUseWarning, isDev } from '../_util/warning';
+import { useComponentBaseConfig } from '../config-provider/context';
+import { DefaultRenderEmpty } from '../config-provider/default-render-empty';
+import { useDisabledContext } from '../config-provider/disabled-context';
+import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
+import { useSize } from '../config-provider/hooks/useSize';
+import { useFormItemInputContext } from '../form/context';
+import { useVariants } from '../form/hooks/useVariant';
+import mergedBuiltinPlacements from '../select/mergedBuiltinPlacements';
+import useSelectStyle from '../select/style';
+import useSelectIcons from '../select/useIcons';
+import usePopupRender from '../select/usePopupRender';
+import useShowArrow from '../select/useShowArrow';
+import { useCompactItemContext } from '../space/Compact';
+import useBase from './hooks/useBase';
+import useCheckable from './hooks/useCheckable';
+import useIcons from './hooks/useIcons';
+import CascaderPanel from './Panel';
+import useStyle from './style';
+
+export type FieldNamesType = FieldNames;
+
+export type FilledFieldNamesType = Required<FieldNamesType>;
+
+export type CascaderSemanticName = keyof CascaderSemanticClassNames &
+  keyof CascaderSemanticStyles;
+
+export interface CascaderSemanticClassNames {
+  content?: string;
+  input?: string;
+  item?: string;
+  itemContent?: string;
+  itemRemove?: string;
+  placeholder?: string;
+  prefix?: string;
+  root?: string;
+  suffix?: string;
+}
+
+export interface CascaderSemanticStyles {
+  content?: CSSProperties;
+  input?: CSSProperties;
+  item?: CSSProperties;
+  itemContent?: CSSProperties;
+  itemRemove?: CSSProperties;
+  placeholder?: CSSProperties;
+  prefix?: CSSProperties;
+  root?: CSSProperties;
+  suffix?: CSSProperties;
+}
+
+function highlightKeyword(
+  str: string,
+  lowerKeyword: string,
+  prefixCls?: string,
+) {
+  const cells = str
+    .toLowerCase()
+    .split(lowerKeyword)
+    .reduce<string[]>(
+      (list, cur, index) =>
+        index === 0 ? [cur] : [...list, lowerKeyword, cur],
+      [],
+    );
+  const fillCells: any[] = [];
+  let start = 0;
+
+  cells.forEach((cell, index) => {
+    const end = start + cell.length;
+    let originWorld: any = str.slice(start, end);
+    start = end;
+
+    if (index % 2 === 1) {
+      originWorld = (
+        <span
+          class={`${prefixCls}-menu-item-keyword`}
+          key={`separator-${index}`}
+        >
+          {originWorld}
+        </span>
+      );
+    }
+
+    fillCells.push(originWorld);
+  });
+
+  return fillCells;
+}
+
+const defaultSearchRender: SearchConfig['render'] = (
+  inputValue,
+  path,
+  prefixCls,
+  fieldNames,
+) => {
+  const optionList: any[] = [];
+
+  // We do lower here to save perf
+  const lower = inputValue.toLowerCase();
+
+  path.forEach((node: any, index: any) => {
+    if (index !== 0) {
+      optionList.push(' / ');
+    }
+
+    let label = node[fieldNames.label!];
+    const type = typeof label;
+    if (type === 'string' || type === 'number') {
+      label = highlightKeyword(String(label), lower, prefixCls);
+    }
+
+    optionList.push(label);
+  });
+  return optionList;
+};
+
+export type CascaderClassNamesType = SemanticClassNamesType<
+  CascaderProps,
+  CascaderSemanticClassNames,
+  { popup?: SelectPopupSemanticClassNames }
+>;
+
+export type CascaderStylesType = SemanticStylesType<
+  CascaderProps,
+  CascaderSemanticStyles,
+  { popup?: SelectPopupSemanticStyles }
+>;
+
+export interface CascaderProps<
+  OptionType extends DefaultOptionType = DefaultOptionType,
+  ValueField extends keyof OptionType = keyof OptionType,
+  Multiple extends boolean = boolean,
+> /* @vue-ignore */
+  extends
+    CascaderEmitsProps<OptionType, ValueField, Multiple>,
+    Omit<
+      VcCascaderProps<OptionType, ValueField, Multiple>,
+      | 'checkable'
+      | 'className'
+      | 'classNames'
+      | 'multiple'
+      | 'onChange'
+      | 'onPopupVisibleChange'
+      | 'onSearch'
+      | 'style'
+      | 'styles'
+      | 'value'
+    > {
+  /** @deprecated Use `variant` instead. */
+  bordered?: boolean;
+  classes?: CascaderClassNamesType;
+  disabled?: boolean;
+  /** @deprecated Please use `classNames.popup.root` instead */
+  dropdownClassName?: string;
+  /** @deprecated Please use `popupMenuColumnStyle` instead */
+  dropdownMenuColumnStyle?: CSSProperties;
+  /** @deprecated Please use `popupRender` instead */
+  dropdownRender?: (menu: any) => any;
+  /** @deprecated Please use `styles.popup.root` instead */
+  dropdownStyle?: CSSProperties;
+  multiple?: boolean;
+  options?: OptionType[];
+  placement?: SelectCommonPlacement;
+
+  /** @deprecated Please use `classNames.popup.root` instead */
+  popupClassName?: string;
+  popupMenuColumnStyle?: CSSProperties;
+  popupRender?: (menu: any) => any;
+  rootClass?: string;
+  /**
+   * @deprecated `showArrow` is deprecated which will be removed in next major version. It will be a
+   *   default behavior, you can hide it by setting `suffixIcon` to null.
+   */
+  showArrow?: boolean;
+  size?: SizeType;
+  status?: InputStatus;
+  styles?: CascaderStylesType;
+  suffixIcon?: VueNode;
+  value?: any;
+  /**
+   * @since 5.13.0
+   * @default "outlined"
+   */
+  variant?: Variant;
+}
+
+export interface CascaderSlots<
+  OptionType extends DefaultOptionType = DefaultOptionType,
+> {
+  default?: () => any;
+  displayRender?: (data: {
+    labels: string[];
+    selectedOptions?: OptionType[];
+  }) => any;
+  expandIcon?: () => any;
+  notFoundContent?: () => any;
+  optionRender?: (option: OptionType) => any;
+  popupRender?: (menu: any) => any;
+  suffixIcon?: () => any;
+}
+
+export interface CascaderEmits<
+  OptionType extends DefaultOptionType = DefaultOptionType,
+  ValueField extends keyof OptionType = keyof OptionType,
+  Multiple extends boolean = boolean,
+> {
+  change: NonNullable<
+    VcCascaderProps<OptionType, ValueField, Multiple>['onChange']
+  >;
+  dropdownVisibleChange: (visible: boolean) => void;
+  openChange: (visible: boolean) => void;
+  popupVisibleChange: (visible: boolean) => void;
+  search: NonNullable<
+    VcCascaderProps<OptionType, ValueField, Multiple>['onSearch']
+  >;
+  'update:value': (value: any) => void;
+}
+export interface CascaderEmitsProps<
+  OptionType extends DefaultOptionType = DefaultOptionType,
+  ValueField extends keyof OptionType = keyof OptionType,
+  Multiple extends boolean = boolean,
+> {
+  onChange?: CascaderEmits<OptionType, ValueField, Multiple>['change'];
+  onDropdownVisibleChange?: CascaderEmits<
+    OptionType,
+    ValueField,
+    Multiple
+  >['dropdownVisibleChange'];
+  onOpenChange?: CascaderEmits<OptionType, ValueField, Multiple>['openChange'];
+  onPopupVisibleChange?: CascaderEmits<
+    OptionType,
+    ValueField,
+    Multiple
+  >['popupVisibleChange'];
+  onSearch?: CascaderEmits<OptionType, ValueField, Multiple>['search'];
+  'onUpdate:value'?: CascaderEmits<
+    OptionType,
+    ValueField,
+    Multiple
+  >['update:value'];
+}
+
+const InternalCascader = defineComponent<
+  CascaderProps,
+  CascaderEmits,
+  string,
+  SlotsType<CascaderSlots>
+>(
+  (props, { attrs, emit, slots, expose }) => {
+    const {
+      getPopupContainer: getContextPopupContainer,
+      popupOverflow,
+      class: contextClassName,
+      style: contextStyle,
+      classes: contextClassNames,
+      styles: contextStyles,
+      getPrefixCls,
+      expandIcon: contextExpandIcon,
+      loadingIcon: contextLoadingIcon,
+      searchIcon: _contextSearchIcon,
+      clearIcon: contextClearIcon,
+      removeIcon: contextRemoveIcon,
+      suffixIcon: contextSuffixIcon,
+    } = useComponentBaseConfig('cascader', props, [
+      'expandIcon',
+      'loadingIcon',
+      'searchIcon',
+      'clearIcon',
+      'removeIcon',
+      'suffixIcon',
+    ]);
+    // contextSearchIcon is consumed downstream by useShowSearch; reserved for future inline search icon wiring
+    void _contextSearchIcon;
+    const {
+      prefixCls: customizePrefixCls,
+      direction: propDirection,
+      variant: customizeVariant,
+      bordered,
+      size: customizeSize,
+      disabled: customDisabled,
+      status: customStatus,
+      classes,
+      styles,
+    } = toPropsRefs(
+      props,
+      'prefixCls',
+      'direction',
+      'variant',
+      'bordered',
+      'size',
+      'disabled',
+      'status',
+      'classes',
+      'styles',
+    );
+
+    const {
+      prefixCls,
+      cascaderPrefixCls,
+      direction: mergedDirection,
+      renderEmpty,
+    } = useBase(customizePrefixCls, propDirection);
+    const isRtl = computed(() => mergedDirection.value === 'rtl');
+    const rootPrefixCls = computed(() => getPrefixCls());
+
+    const rootCls = useCSSVarCls(prefixCls);
+    const cascaderRootCls = useCSSVarCls(cascaderPrefixCls);
+    const [hashId, cssVarCls] = useSelectStyle(prefixCls, rootCls);
+    useStyle(cascaderPrefixCls, cascaderRootCls);
+
+    const { compactSize, compactItemClassnames } = useCompactItemContext(
+      prefixCls,
+      mergedDirection,
+    );
+    const mergedBordered = computed(() => bordered.value ?? true);
+    const [variant, enableVariasCls] = useVariants(
+      'cascader',
+      customizeVariant,
+      mergedBordered,
+    );
+
+    const mergedSize = useSize(
+      (ctx) => customizeSize.value ?? compactSize.value ?? ctx,
+    );
+
+    const disabled = useDisabledContext();
+    const mergedDisabled = computed(
+      () => customDisabled.value ?? disabled.value,
+    );
+
+    const formItemInputContext = useFormItemInputContext();
+    const mergedStatus = computed(() =>
+      getMergedStatus(formItemInputContext.value?.status, customStatus.value),
+    );
+
+    const mergedProps = computed(() => {
+      return {
+        ...props,
+        variant: variant.value,
+        size: mergedSize.value,
+        status: mergedStatus.value,
+        disabled: mergedDisabled.value,
+      } as CascaderProps;
+    });
+
+    const contextStyleRoot = useSemanticRootStyle(contextStyle);
+    const [mergedClassNames, mergedStyles] = useMergeSemantic<
+      CascaderClassNamesType,
+      CascaderStylesType,
+      CascaderProps
+    >(
+      useToArr(contextClassNames, classes),
+      useToArr(contextStyles, contextStyleRoot as any, styles),
+      useToProps(mergedProps),
+      computed(() => {
+        return {
+          popup: {
+            _default: 'root',
+          },
+        };
+      }),
+    );
+
+    if (isDev) {
+      const warning = devUseWarning('Cascader');
+      const deprecatedProps = {
+        popupClassName: 'classNames.popup.root',
+        dropdownClassName: 'classNames.popup.root',
+        dropdownStyle: 'styles.popup.root',
+        dropdownRender: 'popupRender',
+        dropdownMenuColumnStyle: 'popupMenuColumnStyle',
+        bordered: 'variant',
+      };
+
+      Object.entries(deprecatedProps).forEach(([oldProp, newProp]) => {
+        warning.deprecated(
+          (props as any)[oldProp] === undefined,
+          oldProp,
+          newProp,
+        );
+      });
+
+      warning(
+        props.showArrow === undefined,
+        'deprecated',
+        '`showArrow` is deprecated which will be removed in next major version. It will be a default behavior, you can hide it by setting `suffixIcon` to null.',
+      );
+    }
+
+    const mergedPopupStyle = computed(() => {
+      const { popupStyle, dropdownStyle } = props;
+      return {
+        ...mergedStyles.value.popup?.root,
+        ...(popupStyle ?? dropdownStyle),
+      };
+    });
+
+    const [zIndex] = useZIndex(
+      'SelectLike',
+      computed(
+        () =>
+          (mergedStyles.value?.popup?.root?.zIndex as number) ??
+          (mergedPopupStyle.value?.zIndex as number),
+      ),
+    );
+
+    const mergedShowSearch = computed(() => {
+      if (!props.showSearch) {
+        return props.showSearch;
+      }
+
+      let searchConfig: SearchConfig = {
+        render: defaultSearchRender,
+        onSearch: (
+          ...args: Parameters<NonNullable<SearchConfig['onSearch']>>
+        ) => {
+          emit('search', ...args);
+        },
+      };
+
+      if (typeof props.showSearch === 'object') {
+        const { onSearch } = props.showSearch;
+        searchConfig = {
+          ...searchConfig,
+          ...props.showSearch,
+          onSearch: (
+            ...args: Parameters<NonNullable<SearchConfig['onSearch']>>
+          ) => {
+            emit('search', ...args);
+            onSearch?.(...args);
+          },
+        };
+      }
+
+      return searchConfig;
+    });
+
+    const memoPlacement = computed<SelectCommonPlacement>(() => {
+      if (props.placement !== undefined) {
+        return props.placement;
+      }
+      return isRtl.value ? 'bottomRight' : 'bottomLeft';
+    });
+
+    const onPopupVisibleChange = (open: boolean) => {
+      emit('openChange', open);
+      emit('dropdownVisibleChange', open);
+      emit('popupVisibleChange', open);
+    };
+
+    const cascaderRef = shallowRef();
+    expose({
+      focus: () => cascaderRef.value?.focus?.(),
+      blur: () => cascaderRef.value?.blur?.(),
+    });
+
+    return () => {
+      const {
+        popupClassName,
+        dropdownClassName,
+        rootClass,
+        dropdownRender,
+        popupRender,
+        dropdownMenuColumnStyle,
+        popupMenuColumnStyle,
+        showArrow,
+        allowClear,
+        expandIcon,
+        transitionName,
+        choiceTransitionName,
+        builtinPlacements,
+        getPopupContainer,
+        displayRender,
+        optionRender,
+        multiple,
+        prefixCls: _prefixCls,
+        direction: _direction,
+        size: _size,
+        disabled: _disabled,
+        status: _status,
+        bordered: _bordered,
+        variant: _variant,
+        classes: _classes,
+        styles: _styles,
+        ...rest
+      } = props;
+      const { className, style, restAttrs } = getAttrStyleAndClass(attrs);
+      const mergedSuffixIcon =
+        getSlotPropsFnRun(slots, props, 'suffixIcon', false) ??
+        contextSuffixIcon.value;
+      const showSuffixIcon = useShowArrow(mergedSuffixIcon, showArrow);
+      const { hasFeedback, isFormItemInput, feedbackIcon } =
+        formItemInputContext.value || {};
+      const { suffixIcon, removeIcon, clearIcon } = useSelectIcons({
+        ...rest,
+        multiple,
+        hasFeedback,
+        feedbackIcon,
+        showSuffixIcon,
+        suffixIcon: mergedSuffixIcon,
+        removeIcon: (rest as any).removeIcon ?? contextRemoveIcon.value,
+        clearIcon:
+          ((rest as any).allowClear &&
+            typeof (rest as any).allowClear === 'object' &&
+            (rest as any).allowClear.clearIcon) ||
+          contextClearIcon.value,
+        prefixCls: prefixCls.value,
+        componentName: 'Cascader',
+      } as any);
+
+      const mergedAllowClear =
+        (allowClear ?? true) === true ? { clearIcon } : allowClear;
+
+      const mergedPopupRender = usePopupRender(
+        (slots.popupRender ?? popupRender) || dropdownRender,
+      );
+      const mergedPopupMenuColumnStyle =
+        popupMenuColumnStyle ?? dropdownMenuColumnStyle;
+
+      const customExpandIcon =
+        getSlotPropsFnRun(slots, props, 'expandIcon', false) ?? expandIcon;
+      const { expandIcon: mergedExpandIcon, loadingIcon: mergedLoadingIcon } =
+        useIcons({
+          contextExpandIcon: contextExpandIcon.value,
+          contextLoadingIcon: contextLoadingIcon.value,
+          expandIcon: customExpandIcon,
+          loadingIcon: undefined,
+          isRtl: isRtl.value,
+        });
+
+      const checkable = useCheckable(cascaderPrefixCls.value, multiple);
+
+      const slotNotFound = getSlotPropsFnRun(
+        slots,
+        props,
+        'notFoundContent',
+        false,
+      );
+      let mergedNotFoundContent = slotNotFound;
+      // eslint-disable-next-line unicorn/prefer-ternary
+      if (slotNotFound === undefined) {
+        mergedNotFoundContent = renderEmpty.value?.('Cascader') || (
+          <DefaultRenderEmpty componentName="Cascader" />
+        );
+      }
+
+      const mergedDisplayRender = slots.displayRender
+        ? (labels: string[], selectedOptions?: DefaultOptionType[]) =>
+            slots.displayRender?.({ labels, selectedOptions })
+        : displayRender;
+      const mergedOptionRender = slots.optionRender
+        ? (option: DefaultOptionType) => slots.optionRender?.(option)
+        : optionRender;
+
+      const mergedPopupClassName = clsx(
+        popupClassName || dropdownClassName,
+        `${cascaderPrefixCls.value}-dropdown`,
+        {
+          [`${cascaderPrefixCls.value}-dropdown-rtl`]: isRtl.value,
+        },
+        rootClass,
+        mergedClassNames.value?.popup?.root,
+        cssVarCls.value,
+        rootCls.value,
+        cascaderRootCls.value,
+        hashId.value,
+      );
+
+      const mergedClassName = clsx(
+        !customizePrefixCls.value && cascaderPrefixCls.value,
+        {
+          [`${prefixCls.value}-lg`]: mergedSize.value === 'large',
+          [`${prefixCls.value}-sm`]: mergedSize.value === 'small',
+          [`${prefixCls.value}-rtl`]: isRtl.value,
+          [`${prefixCls.value}-${variant.value}`]: enableVariasCls.value,
+          [`${prefixCls.value}-in-form-item`]: isFormItemInput,
+        },
+        getStatusClassNames(prefixCls.value, mergedStatus.value, hasFeedback),
+        compactItemClassnames.value,
+        contextClassName.value,
+        rootClass,
+        mergedClassNames.value?.root,
+        rootCls.value,
+        cascaderRootCls.value,
+        hashId.value,
+        cssVarCls.value,
+        className,
+      );
+      return (
+        <VcCascader
+          {...(restAttrs as any)}
+          {...omit(rest, ['suffixIcon'])}
+          allowClear={mergedAllowClear}
+          builtinPlacements={mergedBuiltinPlacements(
+            builtinPlacements,
+            popupOverflow.value,
+          )}
+          checkable={checkable}
+          choiceTransitionName={getTransitionName(
+            rootPrefixCls.value,
+            '',
+            choiceTransitionName,
+          )}
+          className={mergedClassName}
+          classNames={mergedClassNames.value}
+          direction={mergedDirection.value}
+          disabled={mergedDisabled.value}
+          displayRender={mergedDisplayRender}
+          expandIcon={mergedExpandIcon}
+          getPopupContainer={getPopupContainer || getContextPopupContainer}
+          loadingIcon={mergedLoadingIcon}
+          notFoundContent={mergedNotFoundContent}
+          onChange={(value: any, selectOptions: any) => {
+            emit('change', value, selectOptions);
+            emit('update:value', value);
+          }}
+          onPopupVisibleChange={onPopupVisibleChange}
+          optionRender={mergedOptionRender}
+          placement={memoPlacement.value}
+          popupClassName={mergedPopupClassName}
+          popupMenuColumnStyle={mergedPopupMenuColumnStyle}
+          popupPrefixCls={customizePrefixCls.value || cascaderPrefixCls.value}
+          popupRender={mergedPopupRender}
+          popupStyle={{ ...mergedPopupStyle.value, zIndex: zIndex.value }}
+          prefixCls={prefixCls.value}
+          ref={cascaderRef}
+          removeIcon={removeIcon}
+          showSearch={mergedShowSearch.value}
+          style={{ ...mergedStyles.value.root, ...style }}
+          styles={mergedStyles.value as any}
+          suffixIcon={suffixIcon}
+          transitionName={getTransitionName(
+            rootPrefixCls.value,
+            'slide-up',
+            transitionName,
+          )}
+          v-slots={{
+            default: slots?.default,
+          }}
+        />
+      );
+    };
+  },
+  {
+    name: 'AsCascader',
+    inheritAttrs: false,
+  },
+);
+
+interface CascaderInstance<
+  OptionType extends DefaultOptionType = DefaultOptionType,
+  ValueField extends keyof OptionType = keyof OptionType,
+  Multiple extends boolean = boolean,
+> {
+  $emit: {
+    (
+      event: 'openChange',
+      ...args: Parameters<CascaderEmits['openChange']>
+    ): void;
+    (
+      event: 'dropdownVisibleChange',
+      ...args: Parameters<CascaderEmits['dropdownVisibleChange']>
+    ): void;
+    (
+      event: 'popupVisibleChange',
+      ...args: Parameters<CascaderEmits['popupVisibleChange']>
+    ): void;
+    (
+      event: 'change',
+      ...args: Parameters<
+        CascaderEmits<OptionType, ValueField, Multiple>['change']
+      >
+    ): void;
+    (
+      event: 'update:value',
+      ...args: Parameters<CascaderEmits['update:value']>
+    ): void;
+    (
+      event: 'search',
+      ...args: Parameters<
+        CascaderEmits<OptionType, ValueField, Multiple>['search']
+      >
+    ): void;
+  };
+  $props: CascaderProps<OptionType, ValueField, Multiple> & PublicProps;
+  $slots: CascaderSlots<OptionType>;
+  blur: () => void;
+  focus: () => void;
+}
+
+type CascaderLooseProps = Omit<CascaderProps<any, any, any>, 'showSearch'> & {
+  showSearch?: boolean | Record<string, any>;
+};
+
+export interface CascaderConstructor {
+  new <
+    OptionType extends DefaultOptionType = DefaultOptionType,
+    ValueField extends keyof OptionType = keyof OptionType,
+    Multiple extends boolean = boolean,
+  >(
+    props: CascaderProps<OptionType, ValueField, Multiple>,
+  ): CascaderInstance<OptionType, ValueField, Multiple>;
+  /**
+   * Non-generic fallback signature. TypeScript infers from the last overload,
+   * so this keeps render-function usage like `h(Cascader, props)` resolvable
+   * against Vue's `Constructor<P>` overload of `h` (see #634), while the
+   * generic signature above still drives template/Volar inference.
+   * Only `showSearch` is loosened: `ValueField extends keyof OptionType` makes
+   * every concrete instantiation fail contravariant checks on
+   * `showSearch.filter`'s `FieldNames` parameter. Every other field keeps its
+   * `any`-instantiated type so callbacks like `displayRender` still get
+   * contextual parameter types inside `h()`.
+   */
+  new (props: CascaderLooseProps): Omit<
+    CascaderInstance<any, any, any>,
+    '$props'
+  > & {
+    $props: CascaderLooseProps;
+  };
+  _InternalPanelDoNotUseOrYouWillBeFired: any;
+  install: (app: App) => void;
+  Panel: typeof CascaderPanel;
+  SHOW_CHILD: typeof SHOW_CHILD;
+  SHOW_PARENT: typeof SHOW_PARENT;
+}
+
+const Cascader = InternalCascader as unknown as CascaderConstructor;
+
+Cascader.Panel = CascaderPanel;
+Cascader.SHOW_PARENT = SHOW_PARENT;
+Cascader.SHOW_CHILD = SHOW_CHILD;
+
+Cascader.install = (app: App) => {
+  app.component(InternalCascader.name, Cascader);
+  app.component(CascaderPanel.name, CascaderPanel);
+};
+
+// We don't care debug panel
+/* istanbul ignore next */
+const PurePanel = genPurePanel(Cascader, 'popupAlign', (props: any) =>
+  omit(props, ['visible']),
+);
+Cascader._InternalPanelDoNotUseOrYouWillBeFired = PurePanel;
+
+export { CascaderPanel, SHOW_CHILD, SHOW_PARENT };
+export default Cascader;

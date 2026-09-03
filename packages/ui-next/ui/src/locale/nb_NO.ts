@@ -1,0 +1,131 @@
+import type { Locale } from '.';
+
+import { Pagination_nb_No as Pagination } from '@arvin-studio/headless';
+import Calendar from '../calendar/locale/nb_NO';
+import DatePicker from '../date-picker/locale/nb_NO';
+import TimePicker from '../time-picker/locale/nb_NO';
+
+const typeTemplate = '${label} er ikke et gyldig ${type}';
+
+const localeValues: Locale = {
+  locale: 'nb',
+  Pagination,
+  DatePicker,
+  TimePicker,
+  Calendar,
+  global: {
+    placeholder: 'Vennligst velg',
+    close: 'Lukk',
+    sortable: 'sorterbar',
+  },
+  Tour: {
+    Next: 'Neste',
+    Previous: 'Forrige',
+    Finish: 'Avslutt',
+  },
+  Modal: {
+    okText: 'OK',
+    cancelText: 'Avbryt',
+    justOkText: 'OK',
+  },
+  Popconfirm: {
+    okText: 'OK',
+    cancelText: 'Avbryt',
+  },
+  Transfer: {
+    titles: ['', ''],
+    searchPlaceholder: 'Søk her',
+    itemUnit: 'element',
+    itemsUnit: 'elementer',
+    remove: 'Fjern',
+    selectCurrent: 'Velg gjeldende side',
+    removeCurrent: 'Fjern gjeldende side',
+    selectAll: 'Velg all data',
+    deselectAll: 'Opphev valg av all data',
+    removeAll: 'Fjern all data',
+    selectInvert: 'Inverter gjeldende side',
+  },
+  Upload: {
+    uploading: 'Laster opp...',
+    removeFile: 'Fjern fil',
+    uploadError: 'Feil ved opplastning',
+    previewFile: 'Forhåndsvisning',
+    downloadFile: 'Last ned fil',
+  },
+  Empty: {
+    description: 'Ingen data',
+  },
+  Icon: {
+    icon: 'ikon',
+  },
+  Text: {
+    edit: 'Rediger',
+    copy: 'Kopier',
+    copied: 'Kopiert',
+    expand: 'Utvid',
+    collapse: 'Skjul',
+  },
+  Form: {
+    optional: '(valgfritt)',
+    defaultValidateMessages: {
+      default: 'Feltvalideringsfeil ${label}',
+      required: 'Vennligst skriv inn ${label}',
+      enum: '${label} må være en av [${enum}]',
+      whitespace: '${label} kan ikke være et blankt tegn',
+      date: {
+        format: '${label} datoformatet er ugyldig',
+        parse: '${label} kan ikke konverteres til en dato',
+        invalid: '${label} er en ugyldig dato',
+      },
+      types: {
+        string: typeTemplate,
+        method: typeTemplate,
+        array: typeTemplate,
+        object: typeTemplate,
+        number: typeTemplate,
+        date: typeTemplate,
+        boolean: typeTemplate,
+        integer: typeTemplate,
+        float: typeTemplate,
+        regexp: typeTemplate,
+        email: typeTemplate,
+        url: typeTemplate,
+        hex: typeTemplate,
+      },
+      string: {
+        len: '${label} må være ${len} tegn',
+        min: '${label} må minst ha ${min} tegn',
+        max: '${label} opp til ${max} tegn',
+        range: '${label} må være mellom ${min}-${max} tegn',
+      },
+      number: {
+        len: '${label} må være lik ${len}',
+        min: '${label} minimumsverdien er ${min}',
+        max: '${label} maksimumsverdien er ${max}',
+        range: '${label} må være mellom ${min}-${max}',
+      },
+      array: {
+        len: 'Må være ${len} ${label}',
+        min: 'Må være minst ${min} ${label}',
+        max: 'På det meste ${max} ${label}',
+        range: 'Totalt av ${label} må være mellom ${min}-${max}',
+      },
+      pattern: {
+        mismatch: '${label} stemmer ikke overens med mønsteret ${pattern}',
+      },
+    },
+  },
+  QRCode: {
+    expired: 'QR-koden er utløpt',
+    refresh: 'Oppdater',
+    scanned: 'Skannet',
+  },
+  ColorPicker: {
+    presetEmpty: 'Tom',
+    transparent: 'Gjennomsiktig',
+    singleColor: 'Ensfarget',
+    gradientColor: 'Gradient',
+  },
+};
+
+export default localeValues;

@@ -1,0 +1,21 @@
+import type { TransferKey } from '../transfer/interface';
+
+export function groupKeysMap(keys: TransferKey[]) {
+  const map = new Map<TransferKey, number>();
+  keys.forEach((key, index) => {
+    map.set(key, index);
+  });
+  return map;
+}
+
+export function groupDisabledKeysMap<
+  RecordType extends { disabled?: boolean; key?: TransferKey },
+>(dataSource: RecordType[]) {
+  const map = new Map<TransferKey, number>();
+  dataSource.forEach(({ disabled, key }, index) => {
+    if (disabled && key !== undefined) {
+      map.set(key, index);
+    }
+  });
+  return map;
+}

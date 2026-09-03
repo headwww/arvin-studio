@@ -1,0 +1,784 @@
+import type { SlotsType } from 'vue';
+
+import type { ComponentBaseProps } from '../../config-provider/context';
+import type { FormItemLayout } from '../Form';
+import type { FormItemInputProps } from '../FormItemInput';
+import type { FormItemLabelProps } from '../FormItemLabel';
+import type {
+  InternalNamePath,
+  Meta,
+  NamePath,
+  Rule,
+  RuleError,
+  RuleObject,
+  TriggerType,
+  ValidateOptions,
+} from '../types';
+import type { ItemHolderProps } from './ItemHolder';
+
+import {
+  computed,
+  createVNode,
+  defineComponent,
+  isVNode,
+  onBeforeUnmount,
+  shallowRef,
+  watch,
+} from 'vue';
+
+import { filterEmpty } from '@arvin-studio/headless';
+import { clsx } from '@arvin-studio/kit';
+
+import { getSlotPropsFnRun } from '../../_util/tools';
+import { checkRenderNode } from '../../_util/vueNode';
+import { useComponentBaseConfig } from '../../config-provider/context';
+import useCSSVarCls from '../../config-provider/hooks/useCSSVarCls';
+import {
+  useFormContext,
+  useFormItemProvider,
+  useNoStyleItemContext,
+} from '../context';
+import useStyle from '../style';
+import {
+  getFieldId,
+  initialValueFormat,
+  toArray,
+  toNamePathStr,
+} from '../util';
+import { validateRules } from '../utils/validateUtil';
+import { getNamePath, getValue, setValue } from '../utils/valueUtil';
+import ItemHolder from './ItemHolder';
+import StatusProvider from './StatusProvider';
+
+const NAME_SPLIT = '__SPLIT__';
+
+interface FieldError {
+  errors: string[];
+  warnings: string[];
+}
+
+const _ValidateStatuses = [
+  'success',
+  'warning',
+  'error',
+  'validating',
+  '',
+] as const;
+export type ValidateStatus = (typeof _ValidateStatuses)[number];
+
+export type FeedbackIcons = (itemStatus: {
+  errors?: any[];
+  status: ValidateStatus;
+  warnings?: any[];
+}) => { [key in ValidateStatus]?: any };
+
+export interface BaseFormItemProps {
+  name?: NamePath;
+  rules?: Rule[];
+  trigger?: TriggerType | TriggerType[];
+  validateDebounce?: number;
+  validateFirst?: 'parallel' | boolean;
+  validateTrigger?: false | TriggerType | TriggerType[];
+}
+
+export type FormItemProps = BaseFormItemProps &
+  ComponentBaseProps &
+  FormItemInputProps &
+  Omit<FormItemLabelProps, 'requiredMark'> & {
+    hasFeedback?: boolean | { icons: FeedbackIcons };
+    hidden?: boolean;
+    id?: string;
+    layout?: FormItemLayout;
+    messageVariables?: Record<string, string>;
+    noStyle?: boolean;
+    required?: boolean;
+    validateStatus?: ValidateStatus;
+  };
+
+export interface FormItemEmits {}
+export interface FormItemEmitsProps {}
+
+export interface FormItemSlots {
+  default: () => any;
+  extra?: () => any;
+  help?: () => any;
+  label?: () => any;
+  tooltip?: (tooltip?: FormItemLabelProps['tooltip']) => any;
+}
+
+function genEmptyMeta(): Meta {
+  return {
+    errors: [],
+    warnings: [],
+    touched: false,
+    validating: false,
+    name: [],
+    validated: false,
+  };
+}
+
+interface InternalFormItemProps /* @vue-ignore */
+  extends FormItemEmitsProps, FormItemProps {}
+
+const InternalFormItem = defineComponent<
+  InternalFormItemProps,
+  FormItemEmits,
+  string,
+  SlotsType<FormItemSlots>
+>(
+  (props, { slots, attrs }) => {
+    const formContext = useFormContext();
+    const mergedValidateTrigger = computed<false | TriggerType | TriggerType[]>(
+      () => {
+        const { trigger, validateTrigger } = props;
+        return (
+          validateTrigger === undefined
+            ? trigger === undefined
+              ? formContext.value?.validateTrigger
+              : trigger
+            : validateTrigger
+        ) as false | TriggerType | TriggerType[];
+      },
+    );
+    const { prefixCls } = useComponentBaseConfig('form', props);
+    const notifyParentMetaChange = useNoStyleItemContext();
+    const hasName = computed(
+      () => !(props.name === undefined || props.name === null),
+    );
+    const namePath = computed<InternalNamePath>(() =>
+      hasName.value ? getNamePath(props.name!) : [],
+    );
+    const fieldId = computed(() =>
+      getFieldId(namePath.value, formContext.value?.name),
+    );
+    // Style
+    const rootCls = useCSSVarCls(prefixCls);
+    const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
+
+    const meta = shallowRef<Meta>({ ...genEmptyMeta(), name: namePath.value });
+    watch(namePath, (val, prev) => {
+      // In array/list-style fields, index shifts can change the path without unmounting.
+      // Notify parent noStyle aggregator to remove stale error buckets keyed by the old path.
+      const pathChanged = !!(
+        props.noStyle &&
+        notifyParentMetaChange &&
+        prev?.length &&
+        (prev.length !== val.length ||
+          prev.some((seg, index) => seg !== val[index]))
+      );
+      if (pathChanged) {
+        notifyParentMetaChange(
+          { ...meta.value, name: prev, destroy: true } as Meta & {
+            destroy: boolean;
+          },
+          prev,
+        );
+      }
+      const nextMeta = { ...meta.value, name: val };
+      meta.value = nextMeta;
+      if (pathChanged) {
+        // Re-register current validation state under the new path immediately,
+        // otherwise existing errors/warnings can disappear until the next meta update.
+        notifyParentMetaChange!(nextMeta, val);
+      }
+    });
+
+    const errors = shallowRef<any[]>([]);
+    const warnings = shallowRef<any[]>([]);
+    const validateDisabled = shallowRef(false);
+    const subFieldErrors = shallowRef<Record<string, FieldError>>({});
+    // 获取初始值的类型，如果是单个的值，直接复制，如果是个对象，就需要进行深拷贝
+    const initialValue = shallowRef<any>(
+      initialValueFormat(formContext.value?.getFieldValue?.(namePath.value)),
+    );
+
+    const mergedRules = computed<RuleObject[]>(() => {
+      const collectedRules: (Rule | RuleObject)[] = [];
+      const formRules = formContext.value?.rules
+        ? getValue(formContext.value.rules, namePath.value)
+        : undefined;
+      if (formRules) {
+        collectedRules.push(
+          ...(Array.isArray(formRules) ? formRules : [formRules]),
+        );
+      }
+      if (props.rules) {
+        collectedRules.push(...props.rules);
+      }
+      if (props.required !== undefined) {
+        // 继承已有规则中的 type，避免 InputNumber 等组件的类型验证冲突
+        let ruleType = (
+          collectedRules.find((r) => (r as RuleObject).type) as any
+        )?.type;
+        // 如果没有已定义的 type，则根据当前值的类型推断
+        if (!ruleType) {
+          const currentValue = hasName.value
+            ? (formContext.value?.getFieldValue?.(namePath.value) ??
+              getValue(formContext.value?.model ?? {}, namePath.value))
+            : undefined;
+          if (typeof currentValue === 'number') {
+            ruleType = 'number';
+          } else if (typeof currentValue === 'boolean') {
+            ruleType = 'boolean';
+          } else if (Array.isArray(currentValue)) {
+            ruleType = 'array';
+          }
+        }
+        const requiredRule: RuleObject = {
+          required: !!props.required,
+          ...(ruleType && { type: ruleType }),
+        };
+        if (mergedValidateTrigger.value !== undefined) {
+          requiredRule.validateTrigger = (mergedValidateTrigger.value ||
+            []) as any;
+        }
+        collectedRules.push(requiredRule);
+      }
+      return collectedRules as RuleObject[];
+    });
+
+    const isRequired = computed(() =>
+      mergedRules.value.some(
+        (rule) =>
+          (rule as RuleObject)?.required && !(rule as RuleObject)?.warningOnly,
+      ),
+    );
+
+    const messageVariables = computed(() => {
+      let variables: Record<string, string> = {};
+      if (typeof props.label === 'string') {
+        variables.label = props.label;
+      } else if (props.name) {
+        variables.label = Array.isArray(props.name)
+          ? props.name.join('.')
+          : String(props.name);
+      }
+      if (props.messageVariables) {
+        variables = { ...variables, ...props.messageVariables };
+      }
+      return variables;
+    });
+
+    const fieldValue = computed<any>(() => {
+      if (!hasName.value) return undefined;
+      if (formContext.value?.getFieldValue) {
+        return formContext.value.getFieldValue(namePath.value);
+      }
+      return getValue(formContext.value?.model ?? {}, namePath.value);
+    });
+
+    const updateMeta = (state: Partial<Meta>) => {
+      // Skip no-op updates (e.g. repeated `touched: true` on every focus/blur),
+      // otherwise each event re-renders children and can reset their internal state.
+      const prev = meta.value as Record<string, any>;
+      if (
+        Object.keys(state).every(
+          (key) => (state as Record<string, any>)[key] === prev[key],
+        )
+      ) {
+        return;
+      }
+      meta.value = { ...meta.value, ...state };
+      if (props.noStyle && notifyParentMetaChange) {
+        notifyParentMetaChange(meta.value, meta.value.name);
+      }
+    };
+
+    const getRuleTrigger = (
+      rule: RuleObject,
+    ): false | TriggerType | TriggerType[] | undefined => {
+      const ruleTrigger =
+        (rule as any).validateTrigger ?? (rule as any).trigger;
+      if (ruleTrigger !== undefined) {
+        return ruleTrigger;
+      }
+      if (mergedValidateTrigger.value !== undefined) {
+        return mergedValidateTrigger.value;
+      }
+      return 'change';
+    };
+
+    const getRuleTriggerList = (rule: RuleObject) => {
+      const ruleTrigger = getRuleTrigger(rule);
+      if (ruleTrigger === false) {
+        return [];
+      }
+      return toArray(ruleTrigger);
+    };
+
+    const validateRulesInner = (
+      options: ValidateOptions & { triggerName?: TriggerType } = {},
+    ) => {
+      if (namePath.value.length === 0) {
+        return Promise.resolve();
+      }
+      let filteredRules = mergedRules.value;
+      const { triggerName, validateOnly = false } = options;
+      if (triggerName) {
+        filteredRules =
+          mergedValidateTrigger.value === false
+            ? []
+            : filteredRules.filter((rule) => {
+                const triggerList = getRuleTriggerList(rule);
+                return triggerList.includes(triggerName);
+              });
+      }
+
+      if (filteredRules.length === 0) {
+        if (validateOnly) {
+          return Promise.resolve();
+        }
+        errors.value = [];
+        warnings.value = [];
+        updateMeta({
+          errors: [],
+          warnings: [],
+          validating: false,
+          validated: true,
+        });
+        formContext.value?.onValidate?.(namePath.value, true, null);
+        formContext.value?.triggerFieldsChange?.([namePath.value]);
+        return Promise.resolve();
+      }
+
+      if (!validateOnly) {
+        updateMeta({ validating: true, validated: true });
+      }
+
+      const promise = validateRules(
+        namePath.value,
+        fieldValue.value,
+        filteredRules as RuleObject[],
+        {
+          validateMessages: formContext.value?.validateMessages,
+          ...options,
+        },
+        props.validateFirst ?? false,
+        messageVariables.value,
+      );
+
+      // Validate only and not trigger UI and Field status update
+      if (validateOnly) {
+        return promise
+          .catch((error) => error)
+          .then((results: RuleError[] = []) => {
+            const hasError = results.some(
+              ({ rule: { warningOnly }, errors: ruleErrors }) =>
+                // eslint-disable-next-line unicorn/explicit-length-check
+                !warningOnly && ruleErrors.length,
+            );
+            if (hasError) {
+              throw results;
+            }
+            return results;
+          });
+      }
+
+      return promise
+        .catch((error) => error)
+        .then((results: RuleError[] = []) => {
+          const mergedErrors: any[] = [];
+          const mergedWarnings: any[] = [];
+
+          results.forEach(({ rule: { warningOnly }, errors: ruleErrors }) => {
+            if (warningOnly) {
+              mergedWarnings.push(...ruleErrors);
+            } else {
+              mergedErrors.push(...ruleErrors);
+            }
+          });
+
+          errors.value = mergedErrors;
+          warnings.value = mergedWarnings;
+
+          updateMeta({
+            errors: mergedErrors,
+            warnings: mergedWarnings,
+            validating: false,
+            validated: true,
+            touched: meta.value.touched,
+          });
+          formContext.value?.onValidate?.(
+            namePath.value,
+            mergedErrors.length === 0,
+            mergedErrors.length > 0 ? mergedErrors : null,
+          );
+          formContext.value?.triggerFieldsChange?.([namePath.value]);
+
+          if (mergedErrors.length > 0) {
+            throw results;
+          }
+          return results;
+        });
+    };
+    const triggerValidate = (triggerName: TriggerType) => {
+      if (mergedValidateTrigger.value === false) {
+        return;
+      }
+      const hasMatchedRule = mergedRules.value.some((rule) =>
+        getRuleTriggerList(rule).includes(triggerName),
+      );
+      if (!hasMatchedRule) {
+        return;
+      }
+
+      validateRulesInner({ triggerName }).catch((error) => error);
+    };
+
+    const clearValidate = () => {
+      errors.value = [];
+      warnings.value = [];
+      updateMeta({
+        errors: [],
+        warnings: [],
+        validating: false,
+      });
+    };
+
+    const resetField = () => {
+      validateDisabled.value = true;
+      errors.value = [];
+      warnings.value = [];
+      updateMeta({
+        errors: [],
+        warnings: [],
+        validating: false,
+        touched: false,
+        validated: false,
+      });
+      if (hasName.value && formContext.value?.model) {
+        const newStore = setValue(
+          formContext.value.model,
+          namePath.value,
+          initialValueFormat(initialValue.value),
+        );
+        Object.assign(formContext.value.model, newStore);
+      }
+    };
+
+    const onFieldBlur = () => {
+      updateMeta({ touched: true });
+      triggerValidate('blur');
+    };
+
+    const onFieldChange = () => {
+      updateMeta({ touched: true });
+      triggerValidate('change');
+    };
+
+    const onFieldFocus = () => {
+      updateMeta({ touched: true });
+      triggerValidate('focus');
+    };
+
+    watch(
+      fieldValue,
+      (val, prev) => {
+        if (!hasName.value) return;
+        if (validateDisabled.value) {
+          validateDisabled.value = false;
+          return;
+        }
+        if (!meta.value.touched && val !== prev) {
+          updateMeta({ touched: true });
+        }
+        formContext.value?.triggerValuesChange?.(namePath.value, val);
+        triggerValidate('change');
+      },
+      { immediate: false },
+    );
+
+    const onSubItemMetaChange: ItemHolderProps['onSubItemMetaChange'] = (
+      subMeta,
+      uniqueKeys,
+    ) => {
+      const clone: Record<string, FieldError> = { ...subFieldErrors.value };
+      const mergedNamePath = [...subMeta.name.slice(0, -1), ...uniqueKeys];
+      const mergedNameKey = mergedNamePath.join(NAME_SPLIT);
+      if ((subMeta as any).destroy) {
+        delete clone[mergedNameKey];
+      } else {
+        clone[mergedNameKey] = subMeta;
+      }
+      subFieldErrors.value = clone;
+    };
+
+    const mergedErrorList = computed(() => {
+      const errorList: any[] = [...errors.value];
+      const warningList: any[] = [...warnings.value];
+
+      Object.values(subFieldErrors.value).forEach((subFieldError) => {
+        errorList.push(...(subFieldError.errors || []));
+        warningList.push(...(subFieldError.warnings || []));
+      });
+      return {
+        errors: errorList,
+        warnings: warningList,
+      };
+    });
+
+    const rootClassName = computed(() =>
+      clsx(cssVarCls.value, rootCls.value, hashId.value, props.rootClass),
+    );
+
+    const eventKey = computed(
+      () =>
+        `form-item-${fieldId.value || namePath.value.join('-') || Math.random().toString(36).slice(2)}`,
+    );
+
+    // Register the rendered control instance under the joined name path so the
+    // form instance can hand it back through `getFieldInstance`.
+    let itemInstanceKey: string | undefined;
+    let itemInstance: any = null;
+
+    const setItemInstance = (instance: any) => {
+      itemInstance = instance;
+      if (!hasName.value) {
+        return;
+      }
+      const nextKey = toNamePathStr(namePath.value);
+      if (itemInstanceKey && itemInstanceKey !== nextKey) {
+        formContext.value?.removeItem?.(itemInstanceKey);
+      }
+      itemInstanceKey = nextKey;
+      if (instance) {
+        formContext.value?.addItem?.(nextKey, instance);
+      } else {
+        formContext.value?.removeItem?.(nextKey);
+      }
+    };
+
+    // Keep the registration in sync when the field is renamed while mounted.
+    watch(
+      [namePath, hasName],
+      () => {
+        if (itemInstanceKey) {
+          formContext.value?.removeItem?.(itemInstanceKey);
+          itemInstanceKey = undefined;
+        }
+        if (itemInstance) {
+          setItemInstance(itemInstance);
+        }
+      },
+      { flush: 'post' },
+    );
+    watch(
+      hasName,
+      (val, _, onCleanup) => {
+        if (val && formContext.value?.addField) {
+          formContext.value.addField(eventKey.value, {
+            onFieldBlur,
+            namePath: () => namePath.value,
+            getValue: () => fieldValue.value,
+            getMeta: () => meta.value,
+            rules: () => mergedRules.value,
+            // Touched or validated or has initialValue
+            isFieldDirty: () =>
+              meta.value.touched ||
+              meta.value.validated ||
+              initialValue.value !== undefined,
+            // @ts-expect-error this
+            validateRules: (options?: ValidateOptions) =>
+              validateRulesInner(options),
+            resetField,
+            clearValidate,
+            setFieldState: (
+              state: Partial<Meta> & { errors?: any[]; warnings?: any[] },
+            ) => {
+              if (state.errors) errors.value = state.errors;
+              if (state.warnings) warnings.value = state.warnings;
+              updateMeta({
+                ...meta.value,
+                ...state,
+                errors: state.errors ?? meta.value.errors,
+                warnings: state.warnings ?? meta.value.warnings,
+              });
+            },
+          });
+          onCleanup(() => {
+            formContext.value?.removeField?.(eventKey.value);
+          });
+        } else {
+          formContext.value?.removeField?.(eventKey.value);
+        }
+      },
+      { immediate: true },
+    );
+
+    onBeforeUnmount(() => {
+      if (props.noStyle && notifyParentMetaChange) {
+        notifyParentMetaChange(
+          { ...meta.value, destroy: true } as Meta & { destroy: boolean },
+          meta.value.name,
+        );
+      }
+      formContext.value?.removeField?.(eventKey.value);
+      if (itemInstanceKey) {
+        formContext.value?.removeItem?.(itemInstanceKey);
+        itemInstanceKey = undefined;
+      }
+    });
+
+    useFormItemProvider({
+      fieldId,
+      triggerBlur: onFieldBlur,
+      triggerChange: onFieldChange,
+      clearValidate,
+      triggerFocus: onFieldFocus,
+    });
+    return () => {
+      const children: any = checkRenderNode(
+        filterEmpty(slots.default?.() ?? []),
+      );
+      return renderLayout(children, fieldId.value, isRequired.value);
+    };
+
+    function renderLayout(
+      baseChildren: any,
+      currentFieldId?: string,
+      isRequiredMark?: boolean,
+    ) {
+      // 判断children是否为单一的元素，如果是则塞入onBlur用以触发校验
+      if (
+        (Array.isArray(baseChildren) &&
+          baseChildren.length === 1 &&
+          isVNode(baseChildren[0])) ||
+        isVNode(baseChildren)
+      ) {
+        const child = isVNode(baseChildren) ? baseChildren : baseChildren[0];
+        const childProps = child.props || {};
+        const _onBlur = childProps.onBlur;
+        const _onFocus = childProps.onFocus;
+        if (_onBlur) {
+          delete child.props.onBlur;
+        }
+        if (_onFocus) {
+          delete child.props.onFocus;
+        }
+        const newChildProps = {
+          id: childProps.id || currentFieldId,
+          onBlur: (...args: any[]) => {
+            onFieldBlur();
+            if (_onBlur) {
+              // 判断可能是不是数组的情况
+              if (Array.isArray(_onBlur)) {
+                _onBlur.forEach((fn) => {
+                  if (typeof fn === 'function') {
+                    fn(...args);
+                  }
+                });
+              } else {
+                _onBlur?.(...args);
+              }
+            }
+          },
+          onFocus: (...args: any[]) => {
+            onFieldFocus();
+            // 判断可能是不是数组的情况
+            if (_onFocus) {
+              if (Array.isArray(_onFocus)) {
+                _onFocus.forEach((fn) => {
+                  if (typeof fn === 'function') {
+                    fn(...args);
+                  }
+                });
+              } else {
+                _onFocus?.(...args);
+              }
+            }
+          },
+          // Track the rendered control so `form.getFieldInstance(name)` can reach
+          // it. `createVNode(vnode, props)` merges refs, so a user supplied `ref`
+          // on the control still fires.
+          ref: setItemInstance,
+        };
+        baseChildren = createVNode(child, newChildProps);
+      }
+      if (props.noStyle && !props.hidden) {
+        return (
+          <StatusProvider
+            errors={mergedErrorList.value.errors}
+            hasFeedback={props.hasFeedback}
+            meta={meta.value}
+            name={props.name}
+            noStyle
+            prefixCls={prefixCls.value}
+            validateStatus={props.validateStatus}
+            warnings={mergedErrorList.value.warnings}
+          >
+            {baseChildren}
+          </StatusProvider>
+        );
+      }
+
+      const tooltipSlotValue = getSlotPropsFnRun(
+        slots,
+        props,
+        'tooltip',
+        false,
+        props.tooltip,
+      );
+      let mergedTooltip = props.tooltip;
+      if (tooltipSlotValue !== undefined) {
+        const isTooltipOptions = !!(
+          props.tooltip &&
+          typeof props.tooltip === 'object' &&
+          !Array.isArray(props.tooltip) &&
+          !isVNode(props.tooltip)
+        );
+        if (isTooltipOptions) {
+          const isSlotOptions = !!(
+            tooltipSlotValue &&
+            typeof tooltipSlotValue === 'object' &&
+            !Array.isArray(tooltipSlotValue) &&
+            !isVNode(tooltipSlotValue)
+          );
+          mergedTooltip = isSlotOptions
+            ? { ...(props.tooltip as any), ...(tooltipSlotValue as any) }
+            : { ...(props.tooltip as any), title: tooltipSlotValue as any };
+        } else {
+          mergedTooltip = tooltipSlotValue as any;
+        }
+      }
+
+      return (
+        <ItemHolder
+          {...props}
+          extra={getSlotPropsFnRun(slots, props, 'extra')}
+          help={getSlotPropsFnRun(slots, props, 'help')}
+          label={getSlotPropsFnRun(slots, props, 'label')}
+          tooltip={mergedTooltip}
+          {...attrs}
+          errors={mergedErrorList.value.errors}
+          fieldId={currentFieldId}
+          isRequired={isRequiredMark}
+          layout={props.layout}
+          meta={meta.value}
+          name={props.name}
+          onSubItemMetaChange={onSubItemMetaChange}
+          prefixCls={prefixCls.value}
+          rootClass={rootClassName.value}
+          warnings={mergedErrorList.value.warnings}
+        >
+          <StatusProvider
+            errors={mergedErrorList.value.errors}
+            hasFeedback={props.hasFeedback}
+            meta={meta.value}
+            name={props.name}
+            prefixCls={prefixCls.value}
+            validateStatus={props.validateStatus}
+            warnings={mergedErrorList.value.warnings}
+          >
+            {baseChildren}
+          </StatusProvider>
+        </ItemHolder>
+      );
+    }
+  },
+  {
+    name: 'AFormItem',
+    inheritAttrs: false,
+  },
+);
+
+export default InternalFormItem;

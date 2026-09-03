@@ -1,0 +1,26 @@
+import type { PickerLocale } from '../generatePicker';
+
+import { Picker_az_Az as CalendarLocale } from '@arvin-studio/headless';
+
+import TimePickerLocale from '../../time-picker/locale/az_AZ';
+
+const locale: PickerLocale = {
+  lang: {
+    placeholder: 'Tarix seçin',
+    rangePlaceholder: ['Başlama tarixi', 'Bitmə tarixi'],
+    yearPlaceholder: 'İl seçin',
+    quarterPlaceholder: 'Rüb seçin',
+    monthPlaceholder: 'Ay seçin',
+    weekPlaceholder: 'Həftə seçin',
+    rangeYearPlaceholder: ['Başlama il', 'Bitmə il'],
+    rangeQuarterPlaceholder: ['Başlama rüb', 'Bitmə rüb'],
+    rangeMonthPlaceholder: ['Başlama ay', 'Bitmə ay'],
+    rangeWeekPlaceholder: ['Başlama həftə', 'Bitmə həftə'],
+    ...CalendarLocale,
+  },
+  timePickerLocale: {
+    ...TimePickerLocale,
+  },
+};
+
+export default locale;

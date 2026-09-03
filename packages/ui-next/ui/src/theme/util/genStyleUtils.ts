@@ -89,7 +89,7 @@ export const { genComponentStyleHook, genStyleHooks, genSubStyleComponent } =
 /**
  * 生成 CSS 变量名和引用，用于组件内部的样式变量（区别于全局 token 的 CSS 变量）。
  *
- * @param antCls - as 根类名，如 ".as"
+ * @param asCls - as 根类名，如 ".as"
  * @param component - 组件名，如 "btn"
  * @returns [varName, varRef]
  *   - varName('text-color') → "--as-btn-text-color"

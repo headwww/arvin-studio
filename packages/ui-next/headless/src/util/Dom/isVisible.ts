@@ -18,3 +18,5 @@ const isVisible = (element: Element): boolean => {
   return false;
 };
 export default isVisible;
+
+export { isVisible };

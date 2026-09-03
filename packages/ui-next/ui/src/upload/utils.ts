@@ -1,0 +1,147 @@
+import type { InternalUploadFile, UploadFile, VcFile } from './interface';
+
+export function file2Obj(file: VcFile): InternalUploadFile {
+  return {
+    ...file,
+    lastModified: file.lastModified,
+    lastModifiedDate: file.lastModifiedDate,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    uid: file.uid,
+    percent: 0,
+    originFileObj: file,
+  };
+}
+
+/** Upload fileList. Replace file if exist or just push into it. */
+export function updateFileList(
+  file: UploadFile,
+  fileList: (Readonly<UploadFile> | UploadFile)[],
+) {
+  const nextFileList = [...fileList];
+  const fileIndex = nextFileList.findIndex(({ uid }) => uid === file.uid);
+  if (fileIndex === -1) {
+    nextFileList.push(file);
+  } else {
+    nextFileList[fileIndex] = file;
+  }
+  return nextFileList;
+}
+
+export function getFileItem(
+  file: VcFile,
+  fileList: (Readonly<UploadFile> | UploadFile)[],
+) {
+  const matchKey = file.uid === undefined ? 'name' : 'uid';
+  return fileList.find((item) => item[matchKey] === file[matchKey]);
+}
+
+export function removeFileItem(
+  file: UploadFile,
+  fileList: (Readonly<UploadFile> | UploadFile)[],
+) {
+  const matchKey = file.uid === undefined ? 'name' : 'uid';
+  const removed = fileList.filter((item) => item[matchKey] !== file[matchKey]);
+  if (removed.length === fileList.length) {
+    return null;
+  }
+  return removed;
+}
+
+// ==================== Default Image Preview ====================
+function extname(url = '') {
+  const temp = url.split('/');
+  const filename = temp[temp.length - 1];
+  const filenameWithoutSuffix = filename!.split(/#|\?/, 1)[0];
+  return (/\.[^./\\]*$/.exec(filenameWithoutSuffix!) || [''])[0];
+}
+
+const isImageFileType = (type: string): boolean => type.startsWith('image/');
+
+export function isImageUrl(file: UploadFile): boolean {
+  if (file.type && !file.thumbUrl) {
+    return isImageFileType(file.type);
+  }
+  const url = file.thumbUrl || file.url || '';
+  // ant-design #58484: fall back to file.name so failed uploads still get a file icon.
+  const extension = extname(url || file.name);
+  if (
+    url.startsWith('data:image/') ||
+    // ant-design 6.4.0 #57287: detect avif/tif/tiff in addition to the legacy list.
+    /(avif|webp|svg|png|gif|jpg|jpeg|jfif|bmp|dpg|ico|heic|heif|tiff?)$/i.test(
+      extension,
+    )
+  ) {
+    return true;
+  }
+  if (url.startsWith('data:')) {
+    // other file types of base64
+    return false;
+  }
+  if (extension) {
+    // other file types which have extension
+    return false;
+  }
+  return true;
+}
+
+const MEASURE_SIZE = 200;
+
+export function previewImage(file: Blob | File): Promise<string> {
+  return new Promise<string>((resolve) => {
+    if (!file.type || !isImageFileType(file.type)) {
+      resolve('');
+      return;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = MEASURE_SIZE;
+    canvas.height = MEASURE_SIZE;
+    canvas.style.cssText = `position: fixed; left: 0; top: 0; width: ${MEASURE_SIZE}px; height: ${MEASURE_SIZE}px; z-index: 9999; display: none;`;
+    document.body.append(canvas);
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+
+      let drawWidth = MEASURE_SIZE;
+      let drawHeight = MEASURE_SIZE;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (width > height) {
+        drawHeight = height * (MEASURE_SIZE / width);
+        offsetY = -(drawHeight - drawWidth) / 2;
+      } else {
+        drawWidth = width * (MEASURE_SIZE / height);
+        offsetX = -(drawWidth - drawHeight) / 2;
+      }
+
+      ctx!.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      const dataURL = canvas.toDataURL();
+      canvas.remove();
+      window.URL.revokeObjectURL(img.src);
+      resolve(dataURL);
+    };
+    img.crossOrigin = 'anonymous';
+    if (file.type.startsWith('image/svg+xml')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result && typeof reader.result === 'string') {
+          img.src = reader.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('image/gif')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result) {
+          resolve(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      img.src = window.URL.createObjectURL(file);
+    }
+  });
+}

@@ -309,7 +309,7 @@ const InputNumber = defineComponent<
       () => formItemInputContext.value.feedbackIcon,
     );
 
-    const [mergedVariant, enableVariantCls] = useVariant(
+    const [mergedVariant, enableVariasCls] = useVariant(
       'inputNumber',
       customVariant,
       bordered,
@@ -382,7 +382,7 @@ const InputNumber = defineComponent<
           hasFeedback.value,
         ),
         {
-          [`${prefixCls.value}-${mergedVariant.value}`]: enableVariantCls.value,
+          [`${prefixCls.value}-${mergedVariant.value}`]: enableVariasCls.value,
           [`${prefixCls.value}-lg`]: mergedSize.value === 'large',
           [`${prefixCls.value}-sm`]: mergedSize.value === 'small',
           [`${prefixCls.value}-rtl`]: direction.value === 'rtl',

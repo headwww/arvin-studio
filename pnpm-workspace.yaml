@@ -24,6 +24,7 @@ catalog:
   csstype: ^3.2.3
   cz-git: ^1.13.1
   czg: ^1.13.1
+  dayjs: ^1.11.23
   dom-zindex: ^1.0.7
   eslint: ^10.7.0
   eslint-plugin-better-tailwindcss: ^4.7.0

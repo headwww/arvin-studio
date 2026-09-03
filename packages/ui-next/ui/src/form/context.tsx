@@ -1,103 +1,221 @@
-/**
- * Form 相关注入上下文（provide / inject）
- *
- * 按用途分为三组：
- * 1. Variant 上下文：Form 把 variant 下发给子树内的所有表单控件，
- *    控件通过 useVariant hook 的优先级链消费；
- * 2. FormItem 状态上下文：Form.Item 把校验状态（status / hasFeedback / 反馈图标等）
- *    下发给内部输入控件，用于渲染错误/成功样式与反馈图标；
- * 3. FormItem 命令式上下文：Form.Item 把 triggerChange / clearValidate 等命令式
- *    方法暴露给内部输入控件，控件在事件回调中调用以联动 Form.Item。
- *
- * 每组都采用「Provider 注入 / useXxx 读取」配对导出：
- * 组件树上层（Form / Form.Item）调用 Provider，输入类控件调用 useXxx。
- */
 import type { InjectionKey, Ref } from 'vue';
 
-import type { ValidateStatus } from '../_util/statusUtils';
+import type { Key } from '@arvin-studio/headless';
+
+import type { SemanticClassNames, SemanticStyles } from '../_util/hooks';
 import type { Variant } from '../config-provider/context';
-import type { NamePath } from './types';
+import type { FormLayout, FormSemanticName, RequiredMark } from './Form';
+import type { FeedbackIcons, ValidateStatus } from './FormItem';
+import type { ColPropsWithClass, FormTooltipProps } from './FormItemLabel';
+import type { FormLabelAlign } from './interface';
+import type {
+  InternalNamePath,
+  Meta,
+  NamePath,
+  Rule,
+  RulesMap,
+  ValidateMessages,
+} from './types.ts';
 
-import { inject, provide, ref } from 'vue';
+import { computed, defineComponent, inject, provide, ref } from 'vue';
 
-// ---------- 1. Variant 上下文：Form 下发 variant 给子树内所有表单控件 ----------
+/** Form Context. Set top form style and pass to Form Item usage. */
+export interface FormFieldRegister {
+  clearValidate: () => void;
+  getMeta: () => Meta;
+  getValue: () => any;
+  isFieldDirty?: () => boolean;
+  namePath: () => InternalNamePath;
+  resetField: () => void;
+  rules?: () => Rule[];
+  setFieldState?: (
+    state: Partial<Meta> & { errors?: any[]; value?: any; warnings?: any[] },
+  ) => void;
+  validateRules: (options?: Record<string, any>) => Promise<void>;
+}
+
+export interface FormContextProps {
+  addField?: (eventKey: string, field: FormFieldRegister) => void;
+  addItem?: (namePathStr: string, instance: any) => void;
+  classes?: SemanticClassNames<FormSemanticName>;
+  clearOnDestroy?: boolean;
+  colon?: boolean;
+  feedbackIcons?: FeedbackIcons;
+  getFieldsValue?: (nameList?: InternalNamePath[] | true) => any;
+  getFieldValue?: (namePath: InternalNamePath) => any;
+  labelAlign?: FormLabelAlign;
+  labelCol?: ColPropsWithClass;
+  labelWrap?: boolean;
+  layout: FormLayout;
+  model?: Record<string, any>;
+  name?: string;
+  onValidate?: (
+    name: InternalNamePath,
+    status: boolean,
+    errors: any[] | null,
+  ) => void;
+  preserve?: boolean;
+  removeField?: (eventKey: string) => void;
+  removeItem?: (namePathStr: string) => void;
+  requiredMark?: RequiredMark;
+  rules?: RulesMap;
+  styles?: SemanticStyles<FormSemanticName>;
+  tooltip?: FormTooltipProps;
+  triggerFieldsChange?: (namePathList?: InternalNamePath[]) => void;
+  triggerValuesChange?: (namePath: InternalNamePath, value: any) => void;
+  validateMessages?: ValidateMessages;
+  validateTrigger?: false | string | string[];
+  wrapperCol?: ColPropsWithClass;
+}
+
+const FormContextKey: InjectionKey<Ref<FormContextProps>> =
+  Symbol('FormContextKey');
+
+export function useFormContextProvider(value: Ref<FormContextProps>) {
+  provide(FormContextKey, value);
+}
+
+export function useFormContext() {
+  return inject(
+    FormContextKey,
+    ref<FormContextProps>({
+      labelAlign: 'right',
+      layout: 'horizontal',
+    }),
+  ) as Ref<FormContextProps>;
+}
+
+const FormItemPrefixContextKey: InjectionKey<Ref<FormItemPrefixContextProps>> =
+  Symbol('FormItemPrefixContextKey');
+
+/** Used for ErrorList only */
+export interface FormItemPrefixContextProps {
+  prefixCls: string;
+  status?: ValidateStatus;
+}
+
+export function useFormItemPrefixContextProvider(
+  value: Ref<FormItemPrefixContextProps>,
+) {
+  provide(FormItemPrefixContextKey, value);
+}
+
+export const FormItemPrefixContextProvider =
+  defineComponent<FormItemPrefixContextProps>((props, { slots }) => {
+    useFormItemPrefixContextProvider(computed(() => props));
+    return () => {
+      return slots?.default?.();
+    };
+  });
+
+export function useFormItemPrefixContext() {
+  return inject(
+    FormItemPrefixContextKey,
+    ref({
+      prefixCls: '',
+    }),
+  );
+}
 
 const VariantContextKey: InjectionKey<Ref<undefined | Variant>> =
   Symbol('VariantContextKey');
-
-/** 注入 variant 上下文：Form 组件调用，把当前 variant 下发给子树 */
 export function useVariantContextProvider(variant: Ref<undefined | Variant>) {
   provide(VariantContextKey, variant);
 }
 
-/** 读取 variant 上下文：输入控件调用，未设置时返回 ref(undefined)（走组件默认值） */
 export function useVariantContext() {
   return inject(VariantContextKey, ref(undefined));
 }
 
-// ---------- 2. FormItem 状态上下文：Form.Item 把校验状态下发给内部输入控件 ----------
-
 export interface FormItemStatusContextProps {
-  /** 校验错误信息列表 */
   errors?: any[];
-  /** 自定义反馈图标节点（校验通过/失败时的图标） */
   feedbackIcon?: any;
-  /** 是否展示反馈图标 */
   hasFeedback?: boolean;
-  /** 是否为 Form.Item 内部的实际输入元素（用于区分 addon 等辅助节点） */
   isFormItemInput?: boolean;
   name?: NamePath;
-  // TODO name?: NamePath;
-  /** 校验状态（success / warning / error 等），决定输入框的错误/成功样式 */
   status?: ValidateStatus;
-  /** 校验警告信息列表 */
   warnings?: any[];
 }
 
 const FormItemInputContextKey: InjectionKey<Ref<FormItemStatusContextProps>> =
   Symbol('FormItemInputContextKey');
 
-/** 注入 FormItem 状态上下文：Form.Item 调用，把校验状态下发给内部输入控件 */
 export function useFormItemInputContextProvider(
   value: Ref<FormItemStatusContextProps>,
 ) {
   provide(FormItemInputContextKey, value);
 }
-
-/** 读取 FormItem 状态上下文：输入控件（Input / TextArea / InputNumber 等）调用 */
 export function useFormItemInputContext() {
   return inject(FormItemInputContextKey, ref({} as FormItemStatusContextProps));
 }
 
-// ---------- 3. FormItem 命令式上下文：Form.Item 把命令式方法暴露给内部输入控件 ----------
+/** `noStyle` Form Item Context. Used for error collection */
+export type ReportMetaChange = (meta: Meta, uniqueKeys: Key[]) => void;
+const NoStyleItemContextKey: InjectionKey<null | ReportMetaChange> = Symbol(
+  'NoStyleItemContextKey',
+);
+
+export function useNoStyleItemContextProvider(value: ReportMetaChange) {
+  provide(NoStyleItemContextKey, value);
+}
+
+export const NoStyleItemContextProvider = defineComponent<{
+  value: ReportMetaChange;
+}>(
+  (props, { slots }) => {
+    useNoStyleItemContextProvider(props.value);
+    return () => {
+      return slots?.default?.();
+    };
+  },
+  {
+    name: 'NoStyleItemContext',
+  },
+);
+
+export function useNoStyleItemContext() {
+  return inject(NoStyleItemContextKey, null);
+}
+
+export const NoFormStyle = defineComponent<{
+  override?: boolean;
+  status?: boolean;
+}>((props, { slots }) => {
+  const formItemInputContext = useFormItemInputContext();
+  const newFormItemInputContext = computed(() => {
+    const { override, status } = props;
+    const newContext = { ...formItemInputContext.value };
+    if (override) {
+      delete newContext.isFormItemInput;
+    }
+    if (status) {
+      delete newContext.status;
+      delete newContext.hasFeedback;
+      delete newContext.feedbackIcon;
+    }
+    return newContext;
+  });
+  useFormItemInputContextProvider(newFormItemInputContext);
+  return () => {
+    return slots?.default?.();
+  };
+});
 
 export interface FormItemProviderProps {
-  /** 清空该校验项的校验状态 */
   clearValidate: () => void;
-  /** Form.Item 生成的表单项 id，用于 label 与输入框的关联 */
   fieldId: Ref<string | undefined>;
-  /** 触发 Form.Item 的失焦联动（如触发校验） */
   triggerBlur: () => void;
-  /** 触发 Form.Item 的值变更联动（如触发校验） */
   triggerChange: () => void;
-  /** 触发 Form.Item 的聚焦联动 */
   triggerFocus: () => void;
 }
 
 const FormItemProviderContextKey: InjectionKey<FormItemProviderProps> = Symbol(
   'FormItemProviderContextKey',
 );
-
-/** 注入命令式上下文：Form.Item 调用，把联动方法暴露给内部输入控件 */
 export function useFormItemProvider(value: FormItemProviderProps) {
   provide(FormItemProviderContextKey, value);
 }
 
-/**
- * 读取命令式上下文：输入控件调用。
- * @param rest 为 true 时先注入一份空实现（useFormItemProviderRest），
- *             用于输入控件不在 Form.Item 内的场景，保证调用不报空指针
- */
 export function useFormItemContext(rest = false) {
   if (rest) {
     useFormItemProviderRest();
@@ -105,7 +223,6 @@ export function useFormItemContext(rest = false) {
   return inject(FormItemProviderContextKey, undefined);
 }
 
-/** 注入一份空实现（no-op）的命令式上下文，作为非 Form.Item 场景的兜底 */
 export function useFormItemProviderRest() {
   return provide(FormItemProviderContextKey, {
     fieldId: ref(undefined),

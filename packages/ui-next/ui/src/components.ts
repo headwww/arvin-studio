@@ -16,6 +16,19 @@ export type {
 } from './anchor';
 export { default as App } from './app';
 export type { AppProps } from './app';
+export {
+  default as AutoComplete,
+  Option as AutoCompleteOption,
+} from './auto-complete';
+export type {
+  AutoCompleteClassNamesType,
+  AutoCompleteEmits,
+  AutoCompleteProps,
+  AutoCompleteSlots,
+  AutoCompleteStylesType,
+  DataSourceItemObject,
+  DataSourceItemType,
+} from './auto-complete';
 export { default as Avatar, AvatarGroup } from './avatar';
 export type {
   AvatarEmits,
@@ -26,6 +39,24 @@ export type {
 export { default as Badge, BadgeRibbon } from './badge';
 export type { BadgeProps, BadgeSlots } from './badge';
 export type { RibbonProps as BadgeRibbonProps } from './badge/Ribbon';
+export { default as BorderBeam } from './border-beam';
+export type {
+  BorderBeamColor,
+  BorderBeamGradient,
+  BorderBeamProps,
+} from './border-beam';
+export {
+  default as Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+} from './breadcrumb';
+export type {
+  BreadcrumbEmits,
+  BreadcrumbItemProps,
+  BreadcrumbItemType,
+  BreadcrumbProps,
+  BreadcrumbSlots,
+} from './breadcrumb';
 export { default as Button } from './button';
 export type {
   ButtonColorType,
@@ -40,6 +71,18 @@ export type {
   ButtonVariantType,
   LegacyButtonType,
 } from './button';
+export { default as Calendar } from './calendar';
+export type { CalendarMode, CalendarProps } from './calendar';
+export { default as Card, CardGrid, CardMeta } from './card';
+export type {
+  CardEmits,
+  CardGridProps,
+  CardMetaProps,
+  CardProps,
+  CardSize,
+  CardSlots,
+  CardTabListType,
+} from './card';
 export { default as Carousel } from './carousel';
 export type {
   CarouselEmits,
@@ -47,6 +90,13 @@ export type {
   CarouselRef,
   CarouselSlots,
 } from './carousel';
+export { default as Cascader, CascaderPanel } from './cascader';
+export type { CascaderEmits, CascaderProps, CascaderSlots } from './cascader';
+export type {
+  CascaderPanelEmits,
+  CascaderPanelProps,
+  CascaderPanelSlots,
+} from './cascader/Panel';
 export { default as Checkbox, CheckboxGroup } from './checkbox';
 export type {
   CheckboxEmits,
@@ -63,7 +113,37 @@ export type {
   CollapsePanelSlots,
   CollapseProps,
 } from './collapse';
-export { default as ConfigProvider } from './config-provider';
+export { default as ColorPicker } from './color-picker';
+export type {
+  Color,
+  ColorPickerEmits,
+  ColorPickerProps,
+  ColorPickerSlots,
+  ColorValueType,
+} from './color-picker';
+export {
+  default as ConfigProvider,
+  useExportConfig as useConfig,
+} from './config-provider';
+export type { ConfigProviderProps } from './config-provider';
+export {
+  DateMonthPicker,
+  default as DatePicker,
+  DateQuarterPicker,
+  DateRangePicker,
+  DateWeekPicker,
+  DateYearPicker,
+} from './date-picker';
+export type {
+  DatePickerEmits,
+  DatePickerProps,
+  DatePickerSlots,
+  MonthPickerProps,
+  RangePickerProps,
+  WeekPickerProps,
+} from './date-picker';
+export { default as Demo } from './demo';
+export type { DemoProps } from './demo';
 export { default as Descriptions, DescriptionsItem } from './descriptions';
 export type {
   DescriptionsItemProps,
@@ -81,6 +161,13 @@ export type {
   DrawerResizableConfig,
   DrawerSlots,
 } from './drawer';
+export { default as Dropdown } from './dropdown';
+export type {
+  DropdownArrowOptions,
+  DropdownEmits,
+  DropdownProps,
+  DropdownSlots,
+} from './dropdown';
 export { default as Empty } from './empty';
 export type { EmptyProps, EmptySlots } from './empty';
 export { default as Flex } from './flex';
@@ -95,6 +182,21 @@ export type {
   FloatButtonProps,
   FloatButtonRef,
 } from './float-button';
+export { default as Form, FormItem, useForm, useFormInstance } from './form';
+export type {
+  FormEmits,
+  FormHookInstance,
+  FormInstance,
+  FormItemEmits,
+  FormItemProps,
+  FormItemSlots,
+  FormProps,
+  FormSlots,
+  Rule,
+  RuleObject,
+  RuleRender,
+  RuleType,
+} from './form';
 export { Col, Row } from './grid';
 export type { ColProps, ColSize, RowProps } from './grid';
 export { default as Image, ImagePreviewGroup } from './image';
@@ -184,6 +286,17 @@ export { default as message, useMessage } from './message';
 export { default as Modal, useModal } from './modal';
 export type { ModalEmits, ModalProps, ModalSlots } from './modal';
 export { default as notification, useNotification } from './notification';
+export { default as Pagination } from './pagination';
+export type {
+  PaginationClassNamesType,
+  PaginationConfig,
+  PaginationEmits,
+  PaginationLocale,
+  PaginationPosition,
+  PaginationProps,
+  PaginationSlots,
+  PaginationStylesType,
+} from './pagination';
 export { default as Popconfirm } from './popconfirm';
 export type {
   PopconfirmEmits,
@@ -259,6 +372,32 @@ export type {
   SwitchSize,
   SwitchSlots,
 } from './switch';
+export { TabPane, default as Tabs } from './tabs';
+export type {
+  TabPaneProps,
+  TabsEmits,
+  TabsProps,
+  TabsRef,
+  TabsSlots,
+} from './tabs';
+export { CheckableTag, CheckableTagGroup, default as Tag } from './tag';
+export type { CheckableTagProps, TagProps, TagSlots } from './tag';
+export { default as TimePicker, TimeRangePicker } from './time-picker';
+export type {
+  TimePickerEmits,
+  TimePickerLocale,
+  TimePickerProps,
+  TimePickerSlots,
+  TimeRangePickerEmits,
+  TimeRangePickerProps,
+} from './time-picker';
+export { default as Timeline, TimelineItem } from './timeline';
+export type {
+  TimelineItemProps,
+  TimelineItemSlots,
+  TimelineItemType,
+  TimelineProps,
+} from './timeline';
 export { default as Tooltip, UniqueProvider } from './tooltip';
 export type {
   TooltipAlignConfig,
@@ -268,5 +407,91 @@ export type {
   TooltipRef,
   TooltipSlots,
 } from './tooltip';
+export { default as Tour } from './tour';
+export type {
+  TourEmits,
+  TourLocale,
+  TourProps,
+  TourSlots,
+  TourStepItem,
+  TourStylesType,
+} from './tour';
+export { default as Transfer } from './transfer';
+export type {
+  KeyWise,
+  KeyWiseTransferItem,
+  ListStyle,
+  RenderResult,
+  RenderResultObject,
+  SelectAllLabel,
+  TransferClassNamesType,
+  TransferCustomListBodyProps,
+  TransferDirection,
+  TransferEmits,
+  TransferItem,
+  TransferKey,
+  TransferListBodyProps,
+  TransferListProps,
+  TransferLocale,
+  TransferOperationProps,
+  PaginationType as TransferPaginationType,
+  TransferProps,
+  TransferRender,
+  TransferSearchEmits,
+  TransferSearchOption,
+  TransferSearchProps,
+  TransferSearchSlots,
+  TransferSlots,
+  TransferStylesType,
+} from './transfer';
+export { DirectoryTree, default as Tree } from './tree';
+export type {
+  AsdTreeNodeAttribute,
+  AsTreeNode,
+  AsTreeNodeCheckedEvent,
+  AsTreeNodeExpandedEvent,
+  AsTreeNodeMouseEvent,
+  AsTreeNodeProps,
+  AsTreeNodeSelectedEvent,
+  BasicDataNode,
+  DirectoryTreeEmits,
+  DirectoryTreeExpandAction,
+  DirectoryTreeProps,
+  DirectoryTreeSlots,
+  DataNode as TreeDataNode,
+  TreeEmits,
+  TreeProps,
+  TreeSlots,
+} from './tree';
+export { default as TreeSelect } from './tree-select';
+export type {
+  TreeSelectEmits,
+  TreeSelectNode,
+  TreeSelectProps,
+  TreeSelectSlots,
+} from './tree-select';
+export {
+  default as Typography,
+  TypographyLink,
+  TypographyParagraph,
+  TypographyText,
+  TypographyTitle,
+} from './typography';
+export type {
+  BlockProps as TypographyBaseProps,
+  LinkProps as TypographyLinkProps,
+  ParagraphProps as TypographyParagraphProps,
+  TextProps as TypographyTextProps,
+  TitleProps as TypographyTitleProps,
+} from './typography';
+export { default as Upload, UploadDragger } from './upload';
+export type {
+  UploadChangeParam,
+  DraggerProps as UploadDraggerProps,
+  UploadEmits,
+  UploadFile,
+  UploadProps,
+  UploadSlots,
+} from './upload';
 export { default as Watermark } from './watermark';
 export type { WatermarkProps } from './watermark';

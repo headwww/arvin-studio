@@ -12,6 +12,7 @@ export default defineConfig({
     'typescript/no-useless-default-assignment': 'off',
     'no-prototype-builtins': 'off',
     'array-callback-return': 'off',
+    'no-template-curly-in-string': 'off',
   },
   ignorePatterns: [
     'packages/icons/**',

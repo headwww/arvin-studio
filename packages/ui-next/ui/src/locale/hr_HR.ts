@@ -1,0 +1,132 @@
+import type { Locale } from '.';
+
+import { Pagination_hr_Hr as Pagination } from '@arvin-studio/headless';
+
+import Calendar from '../calendar/locale/hr_HR';
+import DatePicker from '../date-picker/locale/hr_HR';
+import TimePicker from '../time-picker/locale/hr_HR';
+
+const typeTemplate = '${label} nije valjan ${type}';
+
+const localeValues: Locale = {
+  locale: 'hr',
+  Pagination,
+  DatePicker,
+  TimePicker,
+  Calendar,
+  global: {
+    placeholder: 'Molimo označite',
+    close: 'Zatvori',
+    sortable: 'sortibilan',
+  },
+  Tour: {
+    Next: 'Slijedeći',
+    Previous: 'Prethodni',
+    Finish: 'Završi',
+  },
+  Modal: {
+    okText: 'OK',
+    cancelText: 'Odustani',
+    justOkText: 'OK',
+  },
+  Popconfirm: {
+    okText: 'OK',
+    cancelText: 'Odustani',
+  },
+  Transfer: {
+    titles: ['', ''],
+    searchPlaceholder: 'Pretraži ovdje',
+    itemUnit: 'stavka',
+    itemsUnit: 'stavke',
+    remove: 'Ukloniti',
+    selectCurrent: 'Odaberite trenutnu stranicu',
+    removeCurrent: 'Ukloni trenutnu stranicu',
+    selectAll: 'Odaberite sve podatke',
+    removeAll: 'Uklonite sve podatke',
+    selectInvert: 'Obrni trenutnu stranicu',
+    deselectAll: 'Poništi odabir svih podataka',
+  },
+  Upload: {
+    uploading: 'Upload u tijeku...',
+    removeFile: 'Makni datoteku',
+    uploadError: 'Greška kod uploada',
+    previewFile: 'Pogledaj datoteku',
+    downloadFile: 'Preuzmi datoteku',
+  },
+  Empty: {
+    description: 'Nema podataka',
+  },
+  Icon: {
+    icon: 'ikona',
+  },
+  Text: {
+    edit: 'Uredi',
+    copy: 'Kopiraj',
+    copied: 'Kopiranje uspješno',
+    expand: 'Proširi',
+    collapse: 'Sažimanje',
+  },
+  Form: {
+    optional: '(neobavezno)',
+    defaultValidateMessages: {
+      default: 'Pogreška provjere valjanosti polja za ${label}',
+      required: 'Molimo unesite ${label}',
+      enum: '${label} mora biti jedan od [${enum}]',
+      whitespace: '${label} ne može biti prazan znak',
+      date: {
+        format: '${label} format datuma je nevažeći',
+        parse: '${label} ne može se pretvoriti u datum',
+        invalid: '${label} je nevažeći datum',
+      },
+      types: {
+        string: typeTemplate,
+        method: typeTemplate,
+        array: typeTemplate,
+        object: typeTemplate,
+        number: typeTemplate,
+        date: typeTemplate,
+        boolean: typeTemplate,
+        integer: typeTemplate,
+        float: typeTemplate,
+        regexp: typeTemplate,
+        email: typeTemplate,
+        url: typeTemplate,
+        hex: typeTemplate,
+      },
+      string: {
+        len: '${label} mora biti ${len} slova',
+        min: '${label} mora biti najmanje ${min} slova',
+        max: '${label} mora biti do ${max} slova',
+        range: '${label} mora biti između ${min}-${max} slova',
+      },
+      number: {
+        len: '${label} mora biti jednak ${len}',
+        min: '${label} mora biti minimalano ${min}',
+        max: '${label} mora biti maksimalano ${max}',
+        range: '${label} mora biti između ${min}-${max}',
+      },
+      array: {
+        len: 'Mora biti ${len} ${label}',
+        min: 'Najmanje ${min} ${label}',
+        max: 'Najviše ${max} ${label}',
+        range: 'Količina ${label} mora biti između ${min}-${max}',
+      },
+      pattern: {
+        mismatch: '${label} ne odgovara obrascu ${pattern}',
+      },
+    },
+  },
+  QRCode: {
+    expired: 'QR kod je istekao',
+    refresh: 'Osvježi',
+    scanned: 'Skenirano',
+  },
+  ColorPicker: {
+    presetEmpty: 'Prazna',
+    transparent: 'Prozirno',
+    singleColor: 'Jedna boja',
+    gradientColor: 'Gradijent boje',
+  },
+};
+
+export default localeValues;

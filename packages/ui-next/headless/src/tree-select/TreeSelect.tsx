@@ -6,12 +6,11 @@ import type {
   BaseSelectSemanticName,
 } from '../select';
 import type { ExpandAction, IconType } from '../tree';
-import type { VueNode } from '../util';
+import type { Key, VueNode } from '../util';
 import type {
   DataNode,
   DefaultValueType,
   FieldNames,
-  Key,
   LabeledValueType,
   SafeKey,
   SelectSource,

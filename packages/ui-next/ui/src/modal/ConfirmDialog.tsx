@@ -1,7 +1,7 @@
 import type { CSSProperties, SlotsType } from 'vue';
 
 import type { EmptyEmit } from '../_util';
-import type { ThemeConfig } from '../config-provider/component-config';
+import type { ThemeConfig } from '../config-provider/context';
 import type { ModalFuncProps, ModalLocale } from './interface';
 
 import { computed, defineComponent } from 'vue';

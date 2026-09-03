@@ -4,4 +4,4 @@ export {
   type UploadRequestOption,
   type VcFile,
 } from './interface';
-export { default } from './Upload';
+export { default as Upload } from './Upload';

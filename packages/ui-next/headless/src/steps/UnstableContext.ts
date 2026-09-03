@@ -19,6 +19,6 @@ export function useUnstableContext(): UnstableContextProps {
   } as UnstableContextProps);
 }
 
-export function useUnstableProvider(value: UnstableContextProps) {
+export function useStepsUnstableProvider(value: UnstableContextProps) {
   provide(UnstableContextKey, value);
 }

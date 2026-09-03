@@ -57,6 +57,9 @@ catalogs:
     czg:
       specifier: ^1.13.1
       version: 1.13.1
+    dayjs:
+      specifier: ^1.11.23
+      version: 1.11.23
     dom-zindex:
       specifier: ^1.0.7
       version: 1.0.7
@@ -589,6 +592,9 @@ importers:
       '@vueuse/core':
         specifier: 'catalog:'
         version: 14.4.0(vue@3.5.40(typescript@6.0.3))
+      dayjs:
+        specifier: 'catalog:'
+        version: 1.11.23
       scroll-into-view-if-needed:
         specifier: 'catalog:'
         version: 3.1.0

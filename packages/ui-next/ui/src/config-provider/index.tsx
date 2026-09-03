@@ -1,8 +1,7 @@
 import type { App, AppContext, SlotsType, VNodeChild } from 'vue';
 
 import type { Locale } from '../locale';
-import type { ThemeConfig } from './component-config';
-import type { ConfigConsumerProps, Theme } from './context';
+import type { ConfigConsumerProps, Theme, ThemeConfig } from './context';
 import type {
   ConfigProviderProps as BaseConfigProviderProps,
   ConfigProviderEmits,
@@ -11,11 +10,14 @@ import type {
 
 import { computed, defineComponent, shallowReactive } from 'vue';
 
-import { createTheme } from '@arvin-studio/cssinjs';
+import { createTheme, useStyleContext } from '@arvin-studio/cssinjs';
+import { IconContextProvider } from '@arvin-studio/icons';
 
+import { useWarningProvider } from '../_util/warning';
 import { AS_MARK, LocaleProvider, useLocaleContext } from '../locale';
 import { defaultTheme, DesignTokenProvider } from '../theme/context';
 import defaultSeedToken from '../theme/themes/seed';
+import { UniqueProvider } from '../tooltip';
 import {
   defaultIconPrefixCls,
   defaultPrefixCls,
@@ -23,6 +25,7 @@ import {
   useConfigProvider,
 } from './context';
 import { DisabledContextProvider } from './disabled-context';
+import { useExportConfig } from './hooks/useConfig';
 import { useTheme } from './hooks/useTheme';
 import { SizeProvider } from './size-context';
 import useStyle from './style';
@@ -42,12 +45,143 @@ interface ProviderChildrenProps
   parentContext: ConfigConsumerProps;
 }
 
+// 需要从 ConfigProvider props 直接透传到 context 的组件级配置字段。
+// 这些字段不由 baseConfig 覆盖，而是直接从 props 合并到 config 中，
+// 让子组件通过 useComponentConfig('button') 等 hook 消费。
 const PASSED_PROPS: Exclude<
   keyof ConfigConsumerProps,
   'getPrefixCls' | 'rootPrefixCls' | 'warning'
->[] = ['button'];
+>[] = [
+  'getTargetContainer',
+  'getPopupContainer',
+  'renderEmpty',
+  'wave',
+  'input',
+  'pagination',
+  'transfer',
+  'splitter',
+  'mentions',
+  'form',
+  'select',
+  'treeSelect',
+  'button',
+  'alert',
+  'cascader',
+  'borderBeam',
+  'progress',
+  'modal',
+  'switch',
+  'dropdown',
+  'colorPicker',
+  'checkbox',
+  'radio',
+  'tag',
+  'avatar',
+  'badge',
+  'card',
+  'drawer',
+  'empty',
+  'floatButton',
+  'floatButtonGroup',
+  'image',
+  'inputNumber',
+  'layout',
+  'menu',
+  'message',
+  'notification',
+  'popconfirm',
+  'popover',
+  'qrcode',
+  'rangePicker',
+  'rate',
+  'result',
+  'segmented',
+  'skeleton',
+  'slider',
+  'spin',
+  'statistic',
+  'steps',
+  'tabs',
+  'textArea',
+  'timeline',
+  'timePicker',
+  'tooltip',
+  'tour',
+  'tree',
+  'upload',
+  'datePicker',
+  'breadcrumb',
+  'masonry',
+  'descriptions',
+  'divider',
+  'flex',
+  'typography',
+  'collapse',
+  'otp',
+  'anchor',
+];
 
+const providerDefaultProps: any = {
+  componentDisabled: undefined,
+};
+
+type holderRenderType = (children: VNodeChild) => VNodeChild;
 type WrappedLocale = Locale & { default?: Locale };
+
+let globalPrefixCls: string = defaultPrefixCls;
+let globalIconPrefixCls: string = defaultIconPrefixCls;
+let globalTheme: Theme | ThemeConfig = {};
+// eslint-disable-next-line no-undef-init
+let globalHolderRender: holderRenderType | undefined = undefined;
+export interface GlobalConfigProps {
+  appContext?: AppContext;
+  holderRender?: holderRenderType;
+  iconPrefixCls?: string;
+  locale?: Locale;
+  prefixCls?: string;
+  theme?: Theme | ThemeConfig;
+}
+
+const globalConfigData = shallowReactive<GlobalConfigProps>({});
+
+function getGlobalPrefixCls() {
+  return globalConfigData.prefixCls || globalPrefixCls || defaultPrefixCls;
+}
+
+function getGlobalIconPrefixCls() {
+  return (
+    globalConfigData.iconPrefixCls ||
+    globalIconPrefixCls ||
+    defaultIconPrefixCls
+  );
+}
+
+function setGlobalConfig(props: GlobalConfigProps) {
+  const { prefixCls, iconPrefixCls, theme, locale, holderRender, appContext } =
+    props;
+  if (prefixCls !== undefined) {
+    globalPrefixCls = prefixCls;
+    globalConfigData.prefixCls = prefixCls;
+  }
+  if (iconPrefixCls !== undefined) {
+    globalIconPrefixCls = iconPrefixCls;
+    globalConfigData.iconPrefixCls = iconPrefixCls;
+  }
+  if (appContext) {
+    globalConfigData.appContext = appContext;
+  }
+  if ('holderRender' in props) {
+    globalHolderRender = holderRender;
+    globalConfigData.holderRender = holderRender;
+  }
+  if (theme) {
+    globalTheme = theme;
+    globalConfigData.theme = theme;
+  }
+  if ('locale' in props) {
+    globalConfigData.locale = locale;
+  }
+}
 
 // 兼容 ES Module 的 default 导出包装。
 // 用户通过 `import * as zhCN from 'xxx'` 引入语言包时，拿到的是 `{ default: locale对象 }`，
@@ -64,10 +198,6 @@ function unwrapLocale(locale?: Locale): Locale | undefined {
   }
   return locale;
 }
-
-const providerDefaultProps: any = {
-  componentDisabled: undefined,
-};
 
 const ProviderChildren = defineComponent<
   ProviderChildrenProps,
@@ -129,9 +259,9 @@ const ProviderChildren = defineComponent<
         theme: mergedTheme.value,
         direction: props.direction,
         locale: locale.value || props.legacyLocale,
-        // TODO space: props.space,
+        space: props.space,
         variant: props.variant,
-      } as ConfigConsumerProps;
+      } as unknown as ConfigConsumerProps;
 
       //  先全盘继承父级
       const config: ConfigConsumerProps = {
@@ -157,15 +287,15 @@ const ProviderChildren = defineComponent<
       return config;
     });
 
-    // const styleContext = useStyleContext();
-    // const layer = computed(() => styleContext.value.layer);
+    const styleContext = useStyleContext();
+    const layer = computed(() => styleContext.value.layer);
 
-    // const memoIconContextValue = computed(() => ({
-    //   prefixCls: iconPrefixCls.value,
-    //   csp: csp.value,
-    //   layer: layer.value ? 'as' : undefined,
-    //   zeroRuntime: !!layer.value || mergedTheme.value?.zeroRuntime,
-    // }));
+    const memoIconContextValue = computed(() => ({
+      prefixCls: iconPrefixCls.value,
+      csp: csp.value,
+      layer: layer.value ? 'as' : undefined,
+      zeroRuntime: !!layer.value || mergedTheme.value?.zeroRuntime,
+    }));
 
     // ================================ Dynamic theme ================================
     const memoTheme = computed(() => {
@@ -218,7 +348,10 @@ const ProviderChildren = defineComponent<
 
     useConfigProvider(memoedConfig);
 
-    // TODO 控制开发环境下废弃 API 的警告策略。
+    const strict = computed(() => memoedConfig.value?.warning?.strict);
+    useWarningProvider({
+      strict,
+    });
 
     return () => {
       let childNode = slots?.default?.();
@@ -231,11 +364,11 @@ const ProviderChildren = defineComponent<
       }
 
       if (iconPrefixCls.value || csp.value) {
-        // TODO childNode = (
-        //   <IconContextProvider {...memoIconContextValue.value}>
-        //     {childNode}
-        //   </IconContextProvider>
-        // );
+        childNode = (
+          <IconContextProvider {...memoIconContextValue.value}>
+            {childNode}
+          </IconContextProvider>
+        );
       }
 
       if (props.componentSize) {
@@ -243,8 +376,9 @@ const ProviderChildren = defineComponent<
           <SizeProvider size={props.componentSize}>{childNode}</SizeProvider>
         );
       }
-      // TODO Tooltip Unique
-
+      if (props?.tooltip?.unique) {
+        childNode = <UniqueProvider>{childNode}</UniqueProvider>;
+      }
       if (props.theme) {
         childNode = (
           <DesignTokenProvider value={memoTheme.value}>
@@ -297,29 +431,19 @@ const ConfigProvider = defineComponent<
   },
 );
 
+(ConfigProvider as any).config = setGlobalConfig;
+(ConfigProvider as any).useConfig = useExportConfig;
+
 (ConfigProvider as any).install = (app: App) => {
   app.component(ConfigProvider.name, ConfigProvider);
 };
 
-export default ConfigProvider as typeof ConfigProvider;
+export default ConfigProvider as typeof ConfigProvider & {
+  config: (props: GlobalConfigProps) => void;
+  useConfig: typeof useExportConfig;
+};
 
-type holderRenderType = (children: VNodeChild) => VNodeChild;
-
-let globalPrefixCls: string = defaultPrefixCls;
-let globalIconPrefixCls: string = defaultIconPrefixCls;
-let globalTheme: Theme | ThemeConfig = {};
-// eslint-disable-next-line no-undef-init
-let globalHolderRender: holderRenderType | undefined = undefined;
-export interface GlobalConfigProps {
-  appContext?: AppContext;
-  holderRender?: holderRenderType;
-  iconPrefixCls?: string;
-  locale?: Locale;
-  prefixCls?: string;
-  theme?: Theme | ThemeConfig;
-}
-
-const globalConfigData = shallowReactive<GlobalConfigProps>({});
+export type ConfigProviderProps = InternalConfigProviderProps;
 
 export function globalConfig() {
   return {
@@ -351,14 +475,4 @@ export function globalConfig() {
   };
 }
 
-function getGlobalPrefixCls() {
-  return globalConfigData.prefixCls || globalPrefixCls || defaultPrefixCls;
-}
-
-function getGlobalIconPrefixCls() {
-  return (
-    globalConfigData.iconPrefixCls ||
-    globalIconPrefixCls ||
-    defaultIconPrefixCls
-  );
-}
+export { useConfig, useExportConfig };

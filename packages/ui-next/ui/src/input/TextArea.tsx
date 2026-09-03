@@ -251,7 +251,7 @@ const InternalTextArea = defineComponent<
       () => formItemInputContext.value.feedbackIcon,
     );
 
-    const [mergedVariant, enableVariantCls] = useVariant(
+    const [mergedVariant, enableVariasCls] = useVariant(
       'textArea',
       customVariant,
       bordered,
@@ -365,7 +365,7 @@ const InternalTextArea = defineComponent<
         variant: clsx(
           {
             [`${prefixCls.value}-${mergedVariant.value}`]:
-              enableVariantCls.value,
+              enableVariasCls.value,
           },
           getStatusClassNames(prefixCls.value, mergedStatus.value),
         ),

@@ -353,7 +353,7 @@ class Schema {
           }
         }
         if (res && (res as Promise<void>).then) {
-          // eslint-disable-next-line unicorn/prefer-await, unicorn/prefer-then-catch
+          // eslint-disable-next-line unicorn/prefer-then-catch
           (res as Promise<void>).then(
             () => cb(),
             (error) => cb(error),
@@ -369,3 +369,5 @@ class Schema {
 }
 
 export default Schema;
+
+export const AsyncValidator = Schema;

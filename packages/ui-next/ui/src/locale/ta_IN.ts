@@ -1,0 +1,135 @@
+import type { Locale } from '.';
+
+import { Pagination_ta_In as Pagination } from '@arvin-studio/headless';
+
+import Calendar from '../calendar/locale/ta_IN';
+import DatePicker from '../date-picker/locale/ta_IN';
+import TimePicker from '../time-picker/locale/ta_IN';
+
+const typeTemplate = '${label} is not a valid ${type}';
+
+const localeValues: Locale = {
+  locale: 'ta',
+  Pagination,
+  DatePicker,
+  TimePicker,
+  Calendar,
+  // locales for all comoponents
+  global: {
+    placeholder: 'தேதியைத் தேர்ந்தெடுக்கவும்',
+    close: 'மூடு',
+    sortable: 'வரிசைப்படுத்தக்கூடிய',
+  },
+  Tour: {
+    Next: 'அடுத்தது',
+    Previous: 'முந்தையது',
+    Finish: 'முடிக்கவும்',
+  },
+  Modal: {
+    okText: 'சரி',
+    cancelText: 'ரத்து செய்யவும்',
+    justOkText: 'பரவாயில்லை, சரி',
+  },
+  Popconfirm: {
+    okText: 'சரி',
+    cancelText: 'ரத்து செய்யவும்',
+  },
+  Transfer: {
+    titles: ['', ''],
+    notFoundContent: 'உள்ளடக்கம் கிடைக்கவில்லை',
+    searchPlaceholder: 'இங்கு தேடவும்',
+    itemUnit: 'தகவல்',
+    itemsUnit: 'தகவல்கள்',
+    remove: 'அகற்று',
+    selectAll: 'எல்லா தரவையும் தேர்ந்தெடுக்கவும்',
+    deselectAll: 'எல்லா தரவையும் தேர்வுநீக்கவும்',
+    selectCurrent: 'தற்போதைய பக்கத்தைத் தேர்ந்தெடுக்கவும்',
+    selectInvert: 'தற்போதைய பக்கத்தை மாற்றவும்',
+    removeAll: 'எல்லா தரவையும் அகற்று',
+    removeCurrent: 'தற்போதைய பக்கத்தை அகற்று',
+  },
+  Upload: {
+    uploading: 'பதிவேற்றுகிறது...',
+    removeFile: 'கோப்பை அகற்று',
+    uploadError: 'பதிவேற்றுவதில் பிழை',
+    previewFile: 'கோப்பை முன்னோட்டமிடுங்கள்',
+    downloadFile: 'பதிவிறக்க கோப்பு',
+  },
+  Empty: {
+    description: 'தகவல் இல்லை',
+  },
+  Icon: {
+    icon: 'உருவம்',
+  },
+  Text: {
+    edit: 'திருத்து',
+    copy: 'நகல் எடு',
+    copied: 'நகல் எடுக்கப்பட்டது',
+    expand: 'விரிவாக்கவும்',
+    collapse: 'சுருக்கு',
+  },
+  Form: {
+    optional: '(optional)',
+    defaultValidateMessages: {
+      default: '${label}க்கான புல சரிபார்ப்பு பிழை',
+      required: '${label} ஐ உள்ளிடவும்',
+      enum: '${label} கண்டிப்பாக [${enum}] இல் ஒன்றாக இருக்க வேண்டும்',
+      whitespace: '${label} வெற்று எழுத்தாக இருக்கக்கூடாது',
+      date: {
+        format: '${label} தேதி வடிவம் தவறானது',
+        parse: '${label}ஐ தேதியாக மாற்ற முடியாது',
+        invalid: '${label} என்பது தவறான தேதி',
+      },
+      types: {
+        string: typeTemplate,
+        method: typeTemplate,
+        array: typeTemplate,
+        object: typeTemplate,
+        number: typeTemplate,
+        date: typeTemplate,
+        boolean: typeTemplate,
+        integer: typeTemplate,
+        float: typeTemplate,
+        regexp: typeTemplate,
+        email: typeTemplate,
+        url: typeTemplate,
+        hex: typeTemplate,
+      },
+      string: {
+        len: '${label} கண்டிப்பாக ${len} எழுத்துகளாக இருக்க வேண்டும்',
+        min: '${label} குறைந்தது ${min} எழுத்துகளாக இருக்க வேண்டும்',
+        max: '${label} ${max} எழுத்துகள் வரை இருக்க வேண்டும்',
+        range:
+          '${label} கண்டிப்பாக ${min}-${max} எழுத்துகளுக்கு இடையில் இருக்க வேண்டும்',
+      },
+      number: {
+        len: '${label} கண்டிப்பாக ${len}க்கு சமமாக இருக்க வேண்டும்',
+        min: '${label} குறைந்தபட்சம் ${min} ஆக இருக்க வேண்டும்',
+        max: '${label} அதிகபட்சம் ${max} ஆக இருக்க வேண்டும்',
+        range: '${label} கண்டிப்பாக ${min}-${max} இடையே இருக்க வேண்டும்',
+      },
+      array: {
+        len: '${len} ${label} ஆக இருக்க வேண்டும்',
+        min: 'குறைந்தது ${min} ${label}',
+        max: 'அதிகபட்சம் ${max} ${label}',
+        range: '${label} இன் தொகை கண்டிப்பாக ${min}-${max} இடையே இருக்க வேண்டும்',
+      },
+      pattern: {
+        mismatch: '${label} ஆனது ${pattern} வடிவத்துடன் பொருந்தவில்லை',
+      },
+    },
+  },
+  QRCode: {
+    expired: 'QR குறியீடு காலாவதியானது',
+    refresh: 'புதுப்பிப்பு',
+    scanned: 'ஸ்கேன் செய்யப்பட்டது',
+  },
+  ColorPicker: {
+    presetEmpty: 'காலி',
+    transparent: 'வெளிப்படையானது',
+    singleColor: 'ஒற்றை நிறம்',
+    gradientColor: 'சாய்வு நிறம்',
+  },
+};
+
+export default localeValues;

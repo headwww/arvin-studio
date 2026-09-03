@@ -5,16 +5,25 @@ import type { ComponentToken as AnchorComponentToken } from '../../anchor/style'
 import type { ComponentToken as AppComponentToken } from '../../app/style';
 import type { ComponentToken as AvatarComponentToken } from '../../avatar/style';
 import type { ComponentToken as BadgeComponentToken } from '../../badge/style';
+import type { ComponentToken as BorderBeamComponentToken } from '../../border-beam/style';
+import type { ComponentToken as BreadcrumbComponentToken } from '../../breadcrumb/style';
 import type { ComponentToken as ButtonComponentToken } from '../../button/style';
+import type { ComponentToken as CalendarComponentToken } from '../../calendar/style';
+import type { ComponentToken as CardComponentToken } from '../../card/style';
 import type { ComponentToken as CarouselComponentToken } from '../../carousel/style';
+import type { ComponentToken as CascaderComponentToken } from '../../cascader/style';
 import type { ComponentToken as CheckboxComponentToken } from '../../checkbox/style';
 import type { ComponentToken as CollapseComponentToken } from '../../collapse/style';
+import type { ComponentToken as ColorPickerComponentToken } from '../../color-picker/style';
+import type { ComponentToken as DatePickerComponentToken } from '../../date-picker/style';
 import type { ComponentToken as DescriptionsComponentToken } from '../../descriptions/style';
 import type { ComponentToken as DividerComponentToken } from '../../divider/style';
 import type { ComponentToken as DrawerComponentToken } from '../../drawer/style';
+import type { ComponentToken as DropdownComponentToken } from '../../dropdown/style';
 import type { ComponentToken as EmptyComponentToken } from '../../empty/style';
 import type { ComponentToken as FlexComponentToken } from '../../flex/style';
 import type { ComponentToken as FloatButtonComponentToken } from '../../float-button/style';
+import type { ComponentToken as FormComponentToken } from '../../form/style';
 import type { ComponentToken as GridComponentToken } from '../../grid/style';
 import type { ComponentToken as ImageComponentToken } from '../../image/style';
 import type { ComponentToken as InputNumberComponentToken } from '../../input-number/style';
@@ -26,6 +35,7 @@ import type { ComponentToken as MenuComponentToken } from '../../menu/style';
 import type { ComponentToken as MessageComponentToken } from '../../message/style';
 import type { ComponentToken as ModalComponentToken } from '../../modal/style';
 import type { ComponentToken as NotificationComponentToken } from '../../notification/style';
+import type { ComponentToken as PaginationComponentToken } from '../../pagination/style';
 import type { ComponentToken as PopconfirmComponentToken } from '../../popconfirm/style';
 import type { ComponentToken as PopoverComponentToken } from '../../popover/style';
 import type { ComponentToken as ProgressComponentToken } from '../../progress/style';
@@ -43,7 +53,16 @@ import type { ComponentToken as SplitterComponentToken } from '../../splitter/st
 import type { ComponentToken as StatisticComponentToken } from '../../statistic/style';
 import type { ComponentToken as StepsComponentToken } from '../../steps/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
+import type { ComponentToken as TabsComponentToken } from '../../tabs/style';
+import type { ComponentToken as TagComponentToken } from '../../tag/style';
+import type { ComponentToken as TimelineComponentToken } from '../../timeline/style';
 import type { ComponentToken as TooltipComponentToken } from '../../tooltip/style';
+import type { ComponentToken as TourComponentToken } from '../../tour/style';
+import type { ComponentToken as TransferComponentToken } from '../../transfer/style';
+import type { ComponentToken as TreeSelectComponentToken } from '../../tree-select/style';
+import type { ComponentToken as TreeComponentToken } from '../../tree/style';
+import type { ComponentToken as TypographyComponentToken } from '../../typography/style';
+import type { ComponentToken as UploadComponentToken } from '../../upload/style';
 
 export interface ComponentTokenMap {
   Affix?: AffixComponentToken;
@@ -52,16 +71,25 @@ export interface ComponentTokenMap {
   App?: AppComponentToken;
   Avatar?: AvatarComponentToken;
   Badge?: BadgeComponentToken;
+  BorderBeam?: BorderBeamComponentToken;
+  Breadcrumb?: BreadcrumbComponentToken;
   Button?: ButtonComponentToken;
+  Calendar?: CalendarComponentToken;
+  Card?: CardComponentToken;
   Carousel?: CarouselComponentToken;
+  Cascader?: CascaderComponentToken;
   Checkbox?: CheckboxComponentToken;
   Collapse?: CollapseComponentToken;
+  ColorPicker?: ColorPickerComponentToken;
+  DatePicker?: DatePickerComponentToken;
   Descriptions?: DescriptionsComponentToken;
   Divider?: DividerComponentToken;
   Drawer?: DrawerComponentToken;
+  Dropdown?: DropdownComponentToken;
   Empty?: EmptyComponentToken;
   Flex?: FlexComponentToken;
   FloatButton?: FloatButtonComponentToken;
+  Form?: FormComponentToken;
   Grid?: GridComponentToken;
   Image?: ImageComponentToken;
   Input?: InputComponentToken;
@@ -73,6 +101,7 @@ export interface ComponentTokenMap {
   Message?: MessageComponentToken;
   Modal?: ModalComponentToken;
   Notification?: NotificationComponentToken;
+  Pagination?: PaginationComponentToken;
   Popconfirm?: PopconfirmComponentToken;
   Popover?: PopoverComponentToken;
   Progress?: ProgressComponentToken;
@@ -90,6 +119,17 @@ export interface ComponentTokenMap {
   Statistic?: StatisticComponentToken;
   Steps?: StepsComponentToken;
   Switch?: SwitchComponentToken;
+  Tabs?: TabsComponentToken;
+  Tag?: TagComponentToken;
+  Timeline?: TimelineComponentToken;
   Tooltip?: TooltipComponentToken;
+  Tour?: TourComponentToken;
+  Transfer?: TransferComponentToken;
+  Tree?: TreeComponentToken;
+  TreeSelect?: TreeSelectComponentToken;
+  Typography?: TypographyComponentToken;
+  Upload?: UploadComponentToken;
+  //
+  /** @private Internal TS definition. Do not use. */
   Wave?: WaveToken;
 }

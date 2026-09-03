@@ -23,6 +23,7 @@
     "@arvin-studio/icons": "workspace:*",
     "@arvin-studio/kit": "workspace:*",
     "@vueuse/core": "catalog:",
+    "dayjs": "catalog:",
     "scroll-into-view-if-needed": "catalog:",
     "throttle-debounce": "catalog:"
   }

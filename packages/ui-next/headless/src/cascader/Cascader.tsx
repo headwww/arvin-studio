@@ -6,7 +6,7 @@ import type {
   BaseSelectRef,
   BaseSelectSemanticName,
   DisplayValueType,
-  Placement,
+  SelectPlacement as Placement,
 } from '../select';
 import type { BuildInPlacements } from '../trigger';
 import type { VueNode } from '../util';

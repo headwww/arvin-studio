@@ -39,9 +39,7 @@ function getDefaultTarget() {
   return typeof window === 'undefined' ? null : window;
 }
 
-// Affix
-export interface AffixProps /* @vue-ignore */
-  extends AffixEmitsProps, ComponentBaseProps {
+export interface AffixProps extends AffixEmitsProps, ComponentBaseProps {
   /** Triggered when the specified offset is reached from the bottom of the window */
   offsetBottom?: number;
   /** Triggered when the specified offset is reached from the top of the window */
