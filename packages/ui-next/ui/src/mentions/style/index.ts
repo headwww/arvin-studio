@@ -265,7 +265,6 @@ const genMentionsStyle: GenerateStyle<MentionsToken, CSSObject> = (token) => {
           columnGap: token.marginXS,
 
           [`${componentCls}-clear-icon`]: {
-            // https://github.com/ant-design/ant-design/pull/18151
             // https://codesandbox.io/s/wizardly-sun-u10br
             cursor: 'pointer',
             border: 0,

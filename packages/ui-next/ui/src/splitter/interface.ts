@@ -56,7 +56,7 @@ export type SplitterStylesType = SemanticStylesType<
 export interface SplitterProps extends ComponentBaseProps {
   classes?: SplitterClassNamesType;
   /**
-   * Collapse configuration. ant-design 6.4.0 PR #57044.
+   * Collapse configuration.
    */
   collapsible?: {
     icon?: {
@@ -113,10 +113,6 @@ export interface PanelProps {
         start?: boolean;
       };
   defaultSize?: number | string;
-  /**
-   * Keep the panel mounted when collapsed but hidden via CSS.
-   * ant-design 6.4.0 PR #56772.
-   */
   destroyOnHidden?: boolean;
   max?: number | string;
   min?: number | string;

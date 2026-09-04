@@ -410,7 +410,6 @@ const genBaseStyle: GenerateStyle<DropdownToken> = (token) => {
               },
             },
 
-          // https://github.com/ant-design/ant-design/issues/19264
           [`${menuCls}-submenu-selected ${componentCls}-menu-submenu-title`]: {
             color: token.colorPrimary,
           },

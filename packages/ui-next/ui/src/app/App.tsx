@@ -58,7 +58,6 @@ const App = defineComponent<AppProps>(
     });
 
     // Expose imperative API so consumers can call e.g. ref.value.message.success().
-    // Mirrors ant-design 6.4.0 PR #56951.
     expose({
       message: messageApi,
       notification: notificationApi,

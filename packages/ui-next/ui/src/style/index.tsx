@@ -61,14 +61,12 @@ const loadingCircle = new Keyframes('loadingCircle', {
 
 export function clearFix(): CSSObject {
   return {
-    // https://github.com/ant-design/ant-design/issues/21301#issuecomment-583955229
     '&::before': {
       display: 'table',
       content: '""',
     },
 
     '&::after': {
-      // https://github.com/ant-design/ant-design/issues/21864
       display: 'table',
       clear: 'both',
       content: '""',
@@ -99,7 +97,6 @@ export const genLinkStyle: GenerateStyle<AliasToken, CSSObject> = (token) => ({
       outline: 0,
     },
 
-    // https://github.com/ant-design/ant-design/issues/22503
     '&:focus': {
       textDecoration: token.linkFocusDecoration,
       outline: 0,
@@ -133,6 +130,7 @@ export function genCommonStyle(
 
   let resetFontStyle: CSSObject = {};
 
+  // eslint-disable-next-line unicorn/prefer-ternary
   if (resetFont !== false) {
     resetFontStyle = {
       fontFamily: token.fontFamily,

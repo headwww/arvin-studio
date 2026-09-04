@@ -151,7 +151,6 @@ const genPickerStyle: GenerateStyle<PickerToken> = (token) => {
             flex: 'auto',
 
             // Fix Firefox flex not correct:
-            // https://github.com/ant-design/ant-design/pull/20023#issuecomment-564389553
             minWidth: 1,
             height: 'auto',
             padding: 0,
@@ -329,7 +328,6 @@ const genPickerStyle: GenerateStyle<PickerToken> = (token) => {
           pointerEvents: 'none',
           position: 'absolute',
           // Fix incorrect position of picker popup
-          // https://github.com/ant-design/ant-design/issues/35590
           top: -9999,
           left: {
             _skip_check_: true,
@@ -385,7 +383,6 @@ const genPickerStyle: GenerateStyle<PickerToken> = (token) => {
               animationName: slideUpIn,
             },
 
-          // https://github.com/ant-design/ant-design/issues/48727
           [`&${asCls}-slide-up-leave ${componentCls}-panel-container`]: {
             pointerEvents: 'none',
           },

@@ -701,7 +701,6 @@ const genPickerPanelStyle: GenerateStyle<PickerToken, CSSObject> = (token) => {
           color: token.colorTextDisabled,
         },
 
-        // https://github.com/ant-design/ant-design/issues/23687
         [`${componentCls}-preset > ${asCls}-tag-blue`]: {
           color: colorPrimary,
           background: cellActiveWithRangeBg,

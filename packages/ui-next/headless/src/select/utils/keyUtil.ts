@@ -4,7 +4,6 @@ import KeyCode from '../../util/KeyCode';
 export function isValidateOpenKey(currentKeyCode: number): boolean {
   return (
     // Undefined for Edge bug:
-    // https://github.com/ant-design/ant-design/issues/51292
     !!currentKeyCode &&
     // Other keys
     ![

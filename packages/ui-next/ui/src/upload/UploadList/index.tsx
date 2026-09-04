@@ -76,7 +76,7 @@ const UploadList = defineComponent<
     );
     const isPictureType = computed(() => listType.value.startsWith('picture'));
 
-    const prefixCls = computed(() => props.prefixCls ?? 'ant-upload');
+    const prefixCls = computed(() => props.prefixCls ?? 'as-upload');
     const mergedPreviewFile = computed(() => props.previewFile ?? previewImage);
     const mergedIsImageUrl = computed(() => props.isImageUrl ?? isImageUrl);
 

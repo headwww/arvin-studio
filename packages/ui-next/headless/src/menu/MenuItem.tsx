@@ -50,7 +50,6 @@ const LegacyMenuItem = defineComponent<{
       // Here the props are eventually passed to the DOM element.
       // React does not recognize non-standard attributes.
       // Therefore, remove the props that is not used here.
-      // ref: https://github.com/ant-design/ant-design/issues/41395
       const passedProps = omit(restProps, [
         'eventKey',
         'popupClassName',

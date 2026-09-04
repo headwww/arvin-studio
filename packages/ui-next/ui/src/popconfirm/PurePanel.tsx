@@ -51,7 +51,7 @@ export const Overlay = defineComponent<OverlayProps>(
   (props) => {
     const config = useConfig();
     const btnPrefixCls = computed(
-      () => config.value?.getPrefixCls?.('btn') ?? 'ant-btn',
+      () => config.value?.getPrefixCls?.('btn') ?? 'as-btn',
     );
     const [contextLocale] = useLocale('Popconfirm', defaultLocale.Popconfirm);
 

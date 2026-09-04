@@ -160,8 +160,6 @@ const genBaseStyle: GenerateStyle<SliderToken, CSSObject> = (token) => {
       padding: 0,
       cursor: 'pointer',
       touchAction: 'none',
-      // https://github.com/ant-design/ant-design/issues/55686
-      // Prevent text selection on adjacent content when dragging the handle in Safari.
       userSelect: 'none',
 
       '&-vertical': {
@@ -447,7 +445,6 @@ function genDirectionStyle(token: SliderToken, horizontal: boolean): CSSObject {
       // Reset all
       insetInlineStart: 0,
       top: 0,
-      // https://github.com/ant-design/ant-design/issues/43731
       [markInset]: calc(railSize)
         .mul(3)
         .add(horizontal ? 0 : marginFull)

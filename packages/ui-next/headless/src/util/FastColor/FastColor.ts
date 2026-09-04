@@ -162,9 +162,7 @@ export class FastColor {
     } else if (matchFormat('hsv')) {
       this.fromHsv(input as HSV);
     } else {
-      throw new Error(
-        `@ant-design/fast-color: unsupported input ${JSON.stringify(input)}`,
-      );
+      throw new Error(`unsupported input ${JSON.stringify(input)}`);
     }
   }
 

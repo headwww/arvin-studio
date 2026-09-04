@@ -209,7 +209,6 @@ const SelectInput = defineComponent<SelectInputProps>(
       if (!disabled.value) {
         const inputDOM = getDOM(inputRef.value?.input);
 
-        // https://github.com/ant-design/ant-design/issues/56002
         // Tell `useSelectTriggerControl` to ignore this event
         // When icon is dynamic render, the parentNode will miss
         // so we need to mark the event directly

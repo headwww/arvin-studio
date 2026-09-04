@@ -56,7 +56,7 @@ const items: MenuItemType[] = [
     label: h(
       'a',
       {
-        href: 'https://ant.design',
+        href: 'https://as.design',
         target: '_blank',
         rel: 'noopener noreferrer',
       },

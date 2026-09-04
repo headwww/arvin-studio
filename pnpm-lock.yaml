@@ -629,6 +629,12 @@ importers:
       vue:
         specifier: 'catalog:'
         version: 3.5.40(typescript@6.0.3)
+      vxe-pc-ui:
+        specifier: 4.17.29
+        version: 4.17.29(vue@3.5.40(typescript@6.0.3))
+      vxe-table:
+        specifier: 4.21.5
+        version: 4.21.5
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.2.4
@@ -2415,6 +2421,11 @@ packages:
     resolution: {integrity: sha512-JRgY90Sz8DDtPMsaDflvPMp9xYk69JZAmbuDvAquUVXKr2gEjqtzGNTTthLfckH0BzBqvnu31gb4a8TGLRe79g==}
     peerDependencies:
       vue: ^3.5.0
+
+  '@vxe-ui/core@4.4.21':
+    resolution: {integrity: sha512-xaKGhQxrSU3G7+cQbxMBSzNXiWliRDgtR5GmD/FD9f5tl8e9SuZLe2SfODjItp6oBvBkKI2TXBZiCx502WftyA==}
+    peerDependencies:
+      vue: ^3.2.0
 
   '@yuku-codegen/binding-darwin-arm64@0.8.0':
     resolution: {integrity: sha512-7cSJH6PaKLRBdCfiB4pM6EukvgOk5xV4tyuLOIOEqrHsbnV7brtyff7CjhZbeGozdIHoOnKOi5R7rrmCWN3QSw==}
@@ -5627,6 +5638,12 @@ packages:
       typescript:
         optional: true
 
+  vxe-pc-ui@4.17.29:
+    resolution: {integrity: sha512-zUr8ttbvH9l9Yo+jsCpHYtlUIBbjzt3Ovr7ZTUKgNWS5jHYe9qmGMbrBkJ7VNmwXCfX+USHcDeXtypKDDaJ5Zg==}
+
+  vxe-table@4.21.5:
+    resolution: {integrity: sha512-/jbJ5JZJ27nW84rQ65Xrxm7atn3f+kaSjY2TE//L2fTT/5q9/VJ9t/qg8UbceUERHi+TmxXOr7V1C9aUud79JQ==}
+
   w3c-xmlserializer@5.0.0:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
@@ -5697,6 +5714,9 @@ packages:
   write-file-atomic@7.0.1:
     resolution: {integrity: sha512-OTIk8iR8/aCRWBqvxrzxR0hgxWpnYBblY1S5hDWBQfk/VFmJwzmJgQFN3WsoUKHISv2eAwe+PpbUzyL1CKTLXg==}
     engines: {node: ^20.17.0 || >=22.9.0}
+
+  xe-utils@4.0.13:
+    resolution: {integrity: sha512-hIxQ3LQv/WF0DyeNsZ7VclX5+n5CKoUJ3DG76GFtuAnVQ/NaSv3MKmyZ6MD73wfSdzZBcziV8wcas8GRNSYMwg==}
 
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
@@ -7262,6 +7282,12 @@ snapshots:
   '@vueuse/shared@14.4.0(vue@3.5.40(typescript@6.0.3))':
     dependencies:
       vue: 3.5.40(typescript@6.0.3)
+
+  '@vxe-ui/core@4.4.21(vue@3.5.40(typescript@6.0.3))':
+    dependencies:
+      dom-zindex: 1.0.7
+      vue: 3.5.40(typescript@6.0.3)
+      xe-utils: 4.0.13
 
   '@yuku-codegen/binding-darwin-arm64@0.8.0':
     optional: true
@@ -10637,6 +10663,14 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
+  vxe-pc-ui@4.17.29(vue@3.5.40(typescript@6.0.3)):
+    dependencies:
+      '@vxe-ui/core': 4.4.21(vue@3.5.40(typescript@6.0.3))
+    transitivePeerDependencies:
+      - vue
+
+  vxe-table@4.21.5: {}
+
   w3c-xmlserializer@5.0.0:
     dependencies:
       xml-name-validator: 5.0.0
@@ -10730,6 +10764,8 @@ snapshots:
   write-file-atomic@7.0.1:
     dependencies:
       signal-exit: 4.1.0
+
+  xe-utils@4.0.13: {}
 
   xml-name-validator@5.0.0: {}
 

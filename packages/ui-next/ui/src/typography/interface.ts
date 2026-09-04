@@ -93,7 +93,6 @@ export interface EllipsisConfig {
 
 /**
  * 操作区（expand/edit/copy 按钮容器）配置
- * @since 1.3.0 (mirrors ant-design 6.4 ActionsConfig)
  */
 export interface ActionsConfig {
   /** 操作区位置：文本前（start）或文本后（end，默认） */

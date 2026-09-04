@@ -66,8 +66,6 @@ const generateConfig: GenerateConfig<DateTime> = {
   getNow: () => {
     /**
      * The current time that can respond to tz settings is required. like `dayjs().tz()`.
-     * @see: https://github.com/ant-design/ant-design/issues/51282
-     *       https://github.com/react-component/picker/pull/878
      */
     return DateTime.now();
   },

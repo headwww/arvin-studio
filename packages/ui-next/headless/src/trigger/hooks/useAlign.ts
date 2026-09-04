@@ -58,15 +58,6 @@ interface SelfTransform {
   translateY: number;
 }
 
-/**
- * Extract the scale/translate applied by the popup element's OWN computed
- * transform. Scale compensation in `_onAlign` exists for ancestor transforms
- * (e.g. a zoomed container), which scale the rect while the element's computed
- * `transform` stays `none`. A motion keyframe mid-flight (ant-slide-up holds
- * `scaleY(0.8)` at frame 0) also shrinks the rect, but shows up in the
- * element's computed transform — it must NOT be compensated, otherwise every
- * offset is divided by the motion scale and the popup lands off by that ratio.
- */
 function getSelfTransform(transform: string | undefined): null | SelfTransform {
   if (!transform || transform === 'none') {
     return null;
@@ -382,13 +373,6 @@ export default function useAlign(
       // Get popup dimensions from getBoundingClientRect and computedStyle
       const { height, width } = popupComputedStyle;
 
-      // React aligns in rc-motion's prepare phase, before motion start classes
-      // apply their transform, and React re-renders interrupted motions back
-      // to a clean className. Vue's <Transition> mutates classes imperatively,
-      // so the popup may carry its motion transform (e.g. ant-slide-up's
-      // scaleY(0.8) keyframe, or classes stuck by an interrupted enter) while
-      // we measure. Map the rects back to layout space so only ancestor
-      // transforms remain in the scale compensation below.
       const selfTransform = getSelfTransform(popupComputedStyle.transform);
       let popupRect: Rect = {
         x: rawPopupRect.x ?? (rawPopupRect as DOMRect).left,
@@ -872,7 +856,7 @@ export default function useAlign(
     const id = alignCountRef.value;
 
     // Merge all align requirement into one frame
-    // eslint-disable-next-line unicorn/prefer-promise-try, unicorn/prefer-await
+
     Promise.resolve().then(() => {
       if (alignCountRef.value === id) {
         onAlign(cache);

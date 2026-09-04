@@ -63,7 +63,6 @@ export default function useOptions<
         if (!option[optionsKey] || isChildren) {
           valueOptions.set(option[valueKey] as RawValueType, option);
           setLabelOptions(labelOptions, option, labelKey);
-          // https://github.com/ant-design/ant-design/issues/35304
           setLabelOptions(labelOptions, option, optionFilterProp.value);
           setLabelOptions(labelOptions, option, optionLabelProp.value);
         } else {

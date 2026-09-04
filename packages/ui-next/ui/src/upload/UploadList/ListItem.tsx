@@ -234,7 +234,6 @@ const ListItem = defineComponent<
       );
 
       const listItemNameClass = clsx(`${prefixCls}-list-item-name`);
-      // ant-design #58092: make the non-link file name keyboard-accessible.
       const onPreviewKeyDown = (e: KeyboardEvent) => {
         if (!(e.key === 'Enter' || e.key === ' ')) {
           return;

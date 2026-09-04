@@ -68,7 +68,6 @@ export interface TransferSearchOption {
 }
 
 /**
- * @since 1.3.0 (mirrors ant-design#57101)
  * Per-side semantic overrides applied on top of the shared keys.
  */
 export interface TransferSectionSemanticClassNames {

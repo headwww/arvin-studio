@@ -23,7 +23,6 @@ export default function useRegisterImage(
   });
 
   // Keep order start
-  // Resolve https://github.com/ant-design/ant-design/issues/28881
   // Only need unRegister when component unMount
   let unRegister: undefined | VoidFunction;
 

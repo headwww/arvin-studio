@@ -172,7 +172,7 @@ export interface TriggerProps {
   // ==================== Open =====================
   /** 受控显隐（传了则组件进入受控模式，开合由外部驱动） */
   popupVisible?: boolean;
-  /** 弹层类名前缀（消费方用它拼样式，如 ant-tooltip） */
+  /** 弹层类名前缀 */
   prefixCls?: string;
   /** 打开动作白名单（与 action 二选一细化） */
   showAction?: ActionType[];

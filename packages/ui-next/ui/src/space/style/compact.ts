@@ -4,10 +4,8 @@ import type { FullToken, GenerateStyle } from '../../theme/internal';
 
 import { genStyleHooks } from '../../theme/internal';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ComponentToken {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface SpaceToken extends FullToken<'Space'> {}
 
 const genSpaceCompactStyle: GenerateStyle<SpaceToken, CSSObject> = (token) => {
@@ -38,8 +36,6 @@ export default genStyleHooks(
   genSpaceCompactStyle,
   () => ({}),
   {
-    // Space component don't apply extra font style
-    // https://github.com/ant-design/ant-design/issues/40315
     resetStyle: false,
   },
 );

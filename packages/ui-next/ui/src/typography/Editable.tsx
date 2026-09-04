@@ -34,7 +34,6 @@ export interface EditableProps {
   autoSize?: any;
   /**
    * Semantic class names. `root` applies to the wrapper div, `textarea`
-   * applies to the TextArea. Mirrors ant-design 6.4 Editable.
    */
   /** 语义化类名：root 作用于外层 div，textarea 作用于 TextArea */
   classes?: TypographySemanticClassNames;

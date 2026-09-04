@@ -85,11 +85,6 @@ export interface AlertProps /* @vue-ignore */
   /** Type of Alert styles, options:`success`, `info`, `warning`, `error` */
   type?: 'error' | 'info' | 'success' | 'warning';
 
-  /**
-   * Visual variant. `filled` keeps the existing solid background, `outlined`
-   * renders with the colored border style introduced in ant-design 6.4.0.
-   * @default 'filled'
-   */
   variant?: AlertVariant;
 }
 
@@ -352,9 +347,9 @@ const Alert = defineComponent<
       return (
         <Transition
           appear={false}
-          leaveActiveClass="ant-alert-motion-leave ant-alert-motion-leave-active"
-          leaveFromClass="ant-alert-motion-leave"
-          leaveToClass="ant-alert-motion-leave ant-alert-motion-leave-active"
+          leaveActiveClass="as-alert-motion-leave as-alert-motion-leave-active"
+          leaveFromClass="as-alert-motion-leave"
+          leaveToClass="as-alert-motion-leave as-alert-motion-leave-active"
           name={`${prefixCls.value}-motion`}
           onAfterLeave={() => props?.afterClose?.()}
           onBeforeLeave={handleBeforeLeave}

@@ -302,7 +302,6 @@ export const genInputGroupStyle: GenerateStyle<InputToken, CSSObject> = (
         borderInlineEndWidth: token.lineWidth,
       },
 
-      // Undo float for .ant-input-group .ant-input
       [componentCls]: {
         float: 'none',
       },

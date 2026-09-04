@@ -62,7 +62,7 @@ const getColumnsStyle: GenerateStyle<CascaderToken, CSSInterpolation> = (
           overflow: 'auto',
           verticalAlign: 'top',
           listStyle: 'none',
-          '-ms-overflow-style': '-ms-autohiding-scrollbar', // https://github.com/ant-design/ant-design/issues/11857
+          '-ms-overflow-style': '-ms-autohiding-scrollbar',
 
           '&:not(:last-child)': {
             borderInlineEnd: `${unit(token.lineWidth)} ${token.lineType} ${token.colorSplit}`,

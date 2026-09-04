@@ -107,7 +107,6 @@ function parseNoMatchNotice() {
   // zombieJ:
   // When user typing, its always miss match format.
   // This check is meaningless.
-  // https://github.com/ant-design/ant-design/issues/51839
   // noteOnce(false, 'Not match any format. Please help to fire a issue about this.');
 }
 
@@ -115,7 +114,6 @@ const generateConfig: GenerateConfig<Dayjs> = {
   // get
   getNow: () => {
     const now = dayjs();
-    // https://github.com/ant-design/ant-design/discussions/50934
     if ('tz' in now && typeof now.tz === 'function') {
       return now.tz(); // use default timezone
     }

@@ -87,7 +87,6 @@ const MenuItem = defineComponent<
         );
 
         // inline-collapsed.md demo 依赖 span 来隐藏文字,有 icon 属性，则内部包裹一个 span
-        // ref: https://github.com/ant-design/ant-design/pull/23456
         const _children = children?.[0];
         if (
           (!icon || (isVNode(_children) && _children.type === 'span')) &&
@@ -116,7 +115,6 @@ const MenuItem = defineComponent<
       if (!siderCollapsed?.value && !isInlineCollapsed) {
         tooltipProps.title = null;
         // Reset `open` to fix control mode tooltip display not correct
-        // ref: https://github.com/ant-design/ant-design/issues/16742
         tooltipProps.open = false;
       }
       const childrenLength = children.length;

@@ -46,7 +46,7 @@ export interface ErrorListProps {
   errors?: any[];
   fieldId?: string;
   help?: VueNode;
-  /** ant-design 6.4 #57607: per-item class for each help/error line. */
+  /** Per-item class for each help/error line. */
   helpItemClassName?: string;
   helpItemStyle?: CSSProperties;
   helpStatus?: ValidateStatus;
@@ -65,7 +65,6 @@ const ErrorList = defineComponent<ErrorListProps>(
     const [hashId, cssVarCls] = useStyle(prefixCls, rootCls);
 
     // We have to debounce here again since somewhere use ErrorList directly still need no shaking
-    // ref: https://github.com/ant-design/ant-design/issues/36336
     return () => {
       const { fieldId, errors, warnings, helpStatus } = props;
       const help = getSlotPropsFnRun({}, props, 'help');

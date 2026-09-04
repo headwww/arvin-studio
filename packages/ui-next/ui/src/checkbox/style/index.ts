@@ -88,7 +88,6 @@ export const genCheckboxStyle: GenerateStyle<CheckboxToken> = (token) => {
         cursor: 'pointer',
 
         // To make alignment right when `controlHeight` is changed
-        // Ref: https://github.com/ant-design/ant-design/issues/41564
         alignSelf: 'center',
 
         // Styles moved from inner
@@ -129,7 +128,6 @@ export const genCheckboxStyle: GenerateStyle<CheckboxToken> = (token) => {
           position: 'absolute',
           // Since baseline align will get additional space offset,
           // we need to move input to top to make it align with text.
-          // Ref: https://github.com/ant-design/ant-design/issues/38926#issuecomment-1486137799
           inset: `calc(-1 * (${lineWidth}))`,
           zIndex: 1,
           cursor: 'pointer',
@@ -214,7 +212,6 @@ export const genCheckboxStyle: GenerateStyle<CheckboxToken> = (token) => {
           },
 
           [hoverMediaQuery]: {
-            // https://github.com/ant-design/ant-design/issues/50074
             [`&:not(${checkboxCls}-disabled):hover`]: {
               backgroundColor: token.colorBgContainer,
               borderColor: token.colorPrimary,
@@ -237,7 +234,6 @@ export const genCheckboxStyle: GenerateStyle<CheckboxToken> = (token) => {
         [`&, ${checkboxCls}-input`]: {
           cursor: 'not-allowed',
           // Disabled for native input to enable Tooltip event handler
-          // ref: https://github.com/ant-design/ant-design/issues/39822#issuecomment-1365075901
           pointerEvents: 'none',
         },
 

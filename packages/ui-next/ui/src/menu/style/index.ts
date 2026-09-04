@@ -668,7 +668,6 @@ const getBaseStyle: GenerateStyle<MenuToken> = (token) => {
             ...textEllipsis,
           },
 
-          // https://github.com/ant-design/ant-design/issues/41143
           [[
             `> ${asCls}-typography-ellipsis-single-line`,
             `> ${componentCls}-item-label > ${asCls}-typography-ellipsis-single-line`,
@@ -704,7 +703,6 @@ const getBaseStyle: GenerateStyle<MenuToken> = (token) => {
         },
 
         // Removed a Badge related style seems it's safe
-        // https://github.com/ant-design/ant-design/issues/19809
 
         // >>>>> Divider
         [`${componentCls}-item-divider`]: {
@@ -749,7 +747,6 @@ const getBaseStyle: GenerateStyle<MenuToken> = (token) => {
               background: 'transparent',
             },
 
-            // https://github.com/ant-design/ant-design/issues/13955
             '&::before': {
               position: 'absolute',
               inset: 0,

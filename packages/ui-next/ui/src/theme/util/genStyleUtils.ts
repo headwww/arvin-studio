@@ -99,8 +99,6 @@ export const { genComponentStyleHook, genStyleHooks, genSubStyleComponent } =
  * // button/style/variant.ts
  * const [varName, varRef] = genCssVar(asCls, 'btn')
  * {
- *   [varName('border-width')]: lineWidth,             // --ant-btn-border-width: 1px
- *   border: [varRef('border-width'), ...].join(' '),   // 引用 var(--ant-btn-border-width)
  * }
  */
 export function genCssVar(

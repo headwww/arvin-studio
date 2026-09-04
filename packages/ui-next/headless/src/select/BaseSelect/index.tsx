@@ -402,11 +402,6 @@ export const BaseSelect = defineComponent<BaseSelectProps>(
       );
     });
 
-    /**
-     * ant-design#57391 / rc-select#1220: when `tokenSeparators` is a
-     * function, defer the split decision to the user callback. Otherwise
-     * fall back to the static-string-array behaviour via getSeparatedContent.
-     */
     const splitByTokenSeparators = (
       input: string,
       end?: number,

@@ -232,7 +232,6 @@ const genInputNumberStyles: GenerateStyle<InputNumberToken> = (token) => {
 
             // Fix input number inside Menu makes icon too large
             // We arise the selector priority by nest selector here
-            // https://github.com/ant-design/ant-design/issues/14367
             [`${componentCls}-action`]: {
               display: 'flex',
               alignItems: 'center',

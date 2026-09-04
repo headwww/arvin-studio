@@ -10,7 +10,6 @@ import { FastColor } from '@arvin-studio/headless';
 import seedToken from '../themes/seed';
 import getAlphaColor from './getAlphaColor';
 
-/** Raw merge of `@ant-design/cssinjs` token. Which need additional process */
 type RawMergedToken = MapToken &
   OverrideToken & { override: Partial<AliasToken> };
 

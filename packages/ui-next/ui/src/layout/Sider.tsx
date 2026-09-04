@@ -178,7 +178,6 @@ const Sider = defineComponent<
     const { classes, styles } = toPropsRefs(props, 'classes', 'styles');
     // Semantic callbacks must see the effective collapsed state, not the raw
     // `props.collapsed` (which stays undefined in uncontrolled/responsive mode).
-    // Mirror ant-design's `semanticProps` that overrides `collapsed`. sync ant-design#57938
     const mergedProps = computed(() => ({
       ...props,
       collapsed: collapsed.value,
@@ -228,7 +227,7 @@ const Sider = defineComponent<
       },
     );
 
-    const uniqueId = generateId('ant-sider-');
+    const uniqueId = generateId('as-sider-');
     siderHook.addSider(uniqueId);
     onBeforeUnmount(() => {
       siderHook.removeSider(uniqueId);
@@ -299,7 +298,7 @@ const Sider = defineComponent<
       const divStyle: CSSProperties = {
         flex: `0 0 ${siderWidth.value}`,
         maxWidth: `${siderWidth.value}`, // Fix width transition bug in IE11
-        minWidth: `${siderWidth.value}`, // https://github.com/ant-design/ant-design/issues/6349
+        minWidth: `${siderWidth.value}`,
         width: `${siderWidth.value}`,
       };
 

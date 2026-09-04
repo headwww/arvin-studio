@@ -13,10 +13,6 @@ export interface AnchorLinkBaseProps extends ComponentBaseProps {
   href: string;
   replace?: boolean;
   target?: string;
-  /**
-   * Per-link scroll offset. Falls back to Anchor.targetOffset / offsetTop
-   * when omitted. ant-design 6.4.0 #57521.
-   */
   targetOffset?: number;
   title: VueNode;
 }

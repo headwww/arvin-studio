@@ -1,5 +1,3 @@
-// Ported from ant-design/components/border-beam/util.ts (6.4.0).
-
 export interface BorderBeamGradientItem {
   color: string;
   percent: number;

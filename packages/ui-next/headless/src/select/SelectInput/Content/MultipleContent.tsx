@@ -246,7 +246,6 @@ const MultipleContent = defineComponent<SharedContentProps>(
     };
 
     const renderRest = (omittedValues: DisplayValueType[]) => {
-      // https://github.com/ant-design/ant-design/issues/48930
       if (displayValues.value.length === 0) {
         return null;
       }

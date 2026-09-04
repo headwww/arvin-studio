@@ -1,21 +1,20 @@
 // GENERATE BY ./scripts/gen-icons.ts
 // DON NOT EDIT IT MANUALLY
 
-import type { AsIconProps } from '../components/AsIcon'
-import AntCloudOutlinedSvg from '@arvin-studio/icons-svg/es/asn/AntCloudOutlined.js'
-import { defineComponent } from 'vue'
-import AsIcon from '../components/AsIcon'
+import type { AsIconProps } from '../components/AsIcon';
+import AntCloudOutlinedSvg from '@arvin-studio/icons-svg/es/asn/AntCloudOutlined.js';
+import { defineComponent } from 'vue';
+import AsIcon from '../components/AsIcon';
 
- /**![ant-cloud](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNjYWNhY2EiIHZpZXdCb3g9IjY0IDY0IDg5NiA4OTYiIGZvY3VzYWJsZT0iZmFsc2UiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTM3OC45IDczOGMtMy4xIDAtNi4xLS41LTguOC0xLjVsNC40IDMwLjdoMjYuM2wtMTUuNS0yOS45Yy0yLjEuNS00LjIuNy02LjQuN200MjEtMjkxLjJjLTEyLjYgMC0yNC44IDEuNS0zNi41IDQuMi0yMS40LTM4LjQtNjIuMy02NC4zLTEwOS4zLTY0LjMtNi45IDAtMTMuNi42LTIwLjIgMS42LTM1LjQtNzcuNC0xMTMuNC0xMzEuMS0yMDMuOS0xMzEuMS0xMTIuMyAwLTIwNS4zIDgyLjYtMjIxLjYgMTkwLjRDMTI3LjMgNDU1LjUgNjQgNTIzLjggNjQgNjA3YzAgODguNCA3MS42IDE2MC4xIDE2MCAxNjAuMmg1MGwxMy4yLTI3LjZjLTI2LjItOC4zLTQzLjMtMjktMzkuMS00OC44IDQuNi0yMS42IDMyLjgtMzMuOSA2My4xLTI3LjUgMjIuOSA0LjkgNDAuNCAxOS4xIDQ1LjUgMzUuMWEyNi4xIDI2LjEgMCAwIDEgMjIuMS0xMi40aC4ycS0xLjItNC44LTEuMi05LjljMC0yMC4xIDE0LjgtMzYuNyAzNC4xLTM5LjZ2LTI1LjRjMC00LjQgMy42LTggOC04czggMy42IDggOHYyNi4zYzQuNiAxLjIgOC44IDMuMiAxMi42IDUuOGwxOS41LTIxLjRjMy0zLjMgOC0zLjUgMTEuMy0uNXMzLjUgOCAuNSAxMS4zbC0yMCAyMi0uMi4yYTQwIDQwIDAgMCAxLTQ2LjkgNTkuMmMtLjQgNS42LTIuNiAxMC43LTYgMTQuOGwyMCAzOC40SDgwNHYtLjFjODYuNS0yLjIgMTU2LTczIDE1Ni0xNjAuMSAwLTg4LjUtNzEuNy0xNjAuMi0xNjAuMS0xNjAuMk0zMzguMiA3MzcuMmwtNC4zIDMwaDI0LjRsLTUuOS00MS41Yy0zLjUgNC42LTguMyA4LjUtMTQuMiAxMS41TTc5Ny41IDMwNWE0OCA0OCAwIDEgMCA5NiAwIDQ4IDQ4IDAgMSAwLTk2IDBtLTY1LjcgNjEuM2EyNCAyNCAwIDEgMCA0OCAwIDI0IDI0IDAgMSAwLTQ4IDBNMzAzLjQgNzQyLjlsLTExLjYgMjQuM2gyNmwzLjUtMjQuN2MtNS43LjgtMTEuNyAxLTE3LjkuNCIgLz48L3N2Zz4=) */ 
 const AntCloudOutlined = defineComponent<AsIconProps>(
   (props) => {
     return () => {
-      return <AsIcon {...props} icon={AntCloudOutlinedSvg} />
-    }
+      return <AsIcon {...props} icon={AntCloudOutlinedSvg} />;
+    };
   },
   {
     name: 'AntCloudOutlined',
   },
-)
+);
 
-export default AntCloudOutlined
+export default AntCloudOutlined;

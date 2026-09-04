@@ -424,10 +424,6 @@ const Transfer = defineComponent<
       useToProps(mergedProps),
     );
 
-    // ant-design 6.4 #57101: merge per-side (source/target) overrides on top
-    // of the shared classes/styles. The merged result is what gets handed to
-    // each <Section>, so callers can override either both sides at once via
-    // top-level `section`/`header`/… or per side via `source`/`target`.
     const SECTION_SEMANTIC_KEYS = [
       'section',
       'header',

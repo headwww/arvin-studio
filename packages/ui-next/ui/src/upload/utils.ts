@@ -64,11 +64,9 @@ export function isImageUrl(file: UploadFile): boolean {
     return isImageFileType(file.type);
   }
   const url = file.thumbUrl || file.url || '';
-  // ant-design #58484: fall back to file.name so failed uploads still get a file icon.
   const extension = extname(url || file.name);
   if (
     url.startsWith('data:image/') ||
-    // ant-design 6.4.0 #57287: detect avif/tif/tiff in addition to the legacy list.
     /(avif|webp|svg|png|gif|jpg|jpeg|jfif|bmp|dpg|ico|heic|heif|tiff?)$/i.test(
       extension,
     )

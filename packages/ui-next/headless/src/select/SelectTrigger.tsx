@@ -101,7 +101,6 @@ const SelectTrigger = defineComponent<SelectTriggerProps>(
     const stretch = computed(() => {
       // A numeric `popupMatchSelectWidth` should stretch the popup to at least the
       // trigger width (`minWidth`) rather than leave it unstretched (`null`).
-      // sync ant-design#58511 / rc-select
       return props.popupMatchSelectWidth === false || isNumberPopupWidth.value
         ? 'minWidth'
         : 'width';

@@ -213,7 +213,6 @@ const AsSpace = defineComponent<
       );
       // 剔除空 vnode / 空片段后的有效子项
       const childNodes = filterEmpty(slots?.default?.());
-      // 子项统一类名：ant-space-item + 语义化 item 类
       const itemClassName = clsx(
         `${prefixCls.value}-item`,
         mergedClassNames.value.item,

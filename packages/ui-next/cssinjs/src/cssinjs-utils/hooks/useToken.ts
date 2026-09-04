@@ -16,7 +16,7 @@
  *   realToken  — 原始 token，值是真实的数字/字符串（用于计算派生值）
  *   theme      — Theme 实例，可调用 theme.getDerivativeToken() 派生新 token
  *   hashId     — 样式隔离的 hash 类名（如 "css-abc123"）
- *   cssVar     — CSS 变量配置（prefix: "ant", key: "css-var-root"）
+ *   cssVar     — CSS 变量配置（prefix: "as", key: "css-var-root"）
  *   zeroRuntime — 是否跳过运行时样式生成（构建工具预生成 CSS 文件时用）
  */
 import type { Ref } from 'vue';
@@ -57,7 +57,7 @@ export interface UseTokenReturn<
   components?: Ref<TokenMapWithTheme<CompTokenMap, DesignToken, AliasToken>>;
   /**
    * CSS 变量配置。
-   * prefix: CSS 变量名前缀（如 "ant" → --as-color-primary）
+   * prefix: CSS 变量名前缀（如 "as" → --as-color-primary）
    * key: CSS 变量作用域的 key（如 "css-var-root"）
    */
   cssVar?: Ref<{

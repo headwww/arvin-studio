@@ -128,9 +128,6 @@ const ActionNode = defineComponent<{
     return (
       <ul class={actionClasses} style={actionStyle}>
         {actions.map((action, index) => {
-          // Move this out since eslint not allow index key
-          // And eslint-disable makes conflict with rollup
-          // ref https://github.com/ant-design/ant-design/issues/46022
           const key = `action-${index}`;
           return (
             <li key={key} style={{ width: `${100 / actions.length}%` }}>

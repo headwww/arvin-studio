@@ -67,7 +67,7 @@ export interface ComponentToken extends TreeSharedToken {
 }
 
 // ============================ Keyframes =============================
-const treeNodeFX = new Keyframes('ant-tree-node-fx-do-not-use', {
+const treeNodeFX = new Keyframes('as-tree-node-fx-do-not-use', {
   '0%': {
     opacity: 0,
   },
@@ -142,7 +142,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
   return {
     [treeCls]: {
       ...resetComponent(token),
-      // fix https://github.com/ant-design/ant-design/issues/50316
       ['--rc-virtual-list-scrollbar-bg' as const]: token.colorSplit,
       background: token.colorBgContainer,
       borderRadius: token.borderRadius,
@@ -232,7 +231,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
           },
 
         // we can not set pointer-events to none for checkbox in tree
-        // ref: https://github.com/ant-design/ant-design/issues/39822#issuecomment-2605234058
         [`${treeCls}-checkbox-disabled`]: {
           pointerEvents: 'unset',
         },
@@ -260,7 +258,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
           cursor: 'grab',
 
           [`${treeCls}-draggable-icon`]: {
-            // https://github.com/ant-design/ant-design/issues/41915
             flexShrink: 0,
             width: switcherSize,
             textAlign: 'center',
@@ -299,7 +296,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
       },
 
       // >>> Checkbox
-      // https://github.com/ant-design/ant-design/issues/56957
       [`${treeCls}-checkbox`]: {
         flexShrink: 0,
         // When the title spans multiple lines, the checkbox aligns vertically centered with other elements
@@ -363,7 +359,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
           width: '100%',
           height: '100%',
 
-          // https://github.com/ant-design/ant-design/issues/31884
           '&:before': {
             position: 'absolute',
             top: 0,
@@ -429,7 +424,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
         },
       },
 
-      // https://github.com/ant-design/ant-design/issues/28217
       [`${treeCls}-unselectable ${treeCls}-node-content-wrapper:hover`]: {
         backgroundColor: 'transparent',
       },
@@ -464,7 +458,6 @@ export function genBaseStyle(prefixCls: string, token: TreeToken): CSSObject {
           background: 'transparent',
 
           '&-line-icon': {
-            // https://github.com/ant-design/ant-design/issues/32813
             verticalAlign: '-0.15em',
           },
         },

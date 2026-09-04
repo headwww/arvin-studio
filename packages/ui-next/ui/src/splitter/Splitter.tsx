@@ -108,8 +108,6 @@ const Splitter = defineComponent<
     const onContainerResize = (size: SizeInfo) => {
       const { offsetWidth, offsetHeight } = size;
       const _containerSize = isVertical.value ? offsetHeight : offsetWidth;
-      // Skip when container has no size, Such as nested in a hidden tab panel
-      // to fix: https://github.com/ant-design/ant-design/issues/51106
       if (_containerSize === 0) {
         return;
       }

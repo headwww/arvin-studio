@@ -139,7 +139,6 @@ const Col = defineComponent<ColProps>(
       if (flex || flex === 0) {
         mergedStyle.flex = parseFlex(flex);
         // Hack for Firefox to avoid size issue
-        // https://github.com/ant-design/ant-design/pull/20023#issuecomment-564389553
         if (wrap?.value === false && !mergedStyle.minWidth) {
           mergedStyle.minWidth = 0;
         }

@@ -39,7 +39,6 @@ export const InternalPanel = defineComponent<InternalPanelProps>(
             flexGrow: hasSize ? 0 : 1,
           }}
         >
-          {/* ant-design 6.4.0 #56772: optionally drop slot content when collapsed. */}
           {isHidden && destroyOnHidden ? null : slots?.default?.()}
         </div>
       );

@@ -53,6 +53,7 @@ import type { ComponentToken as SplitterComponentToken } from '../../splitter/st
 import type { ComponentToken as StatisticComponentToken } from '../../statistic/style';
 import type { ComponentToken as StepsComponentToken } from '../../steps/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
+import type { ComponentToken as TableComponentToken } from '../../table/style';
 import type { ComponentToken as TabsComponentToken } from '../../tabs/style';
 import type { ComponentToken as TagComponentToken } from '../../tag/style';
 import type { ComponentToken as TimelineComponentToken } from '../../timeline/style';
@@ -63,7 +64,6 @@ import type { ComponentToken as TreeSelectComponentToken } from '../../tree-sele
 import type { ComponentToken as TreeComponentToken } from '../../tree/style';
 import type { ComponentToken as TypographyComponentToken } from '../../typography/style';
 import type { ComponentToken as UploadComponentToken } from '../../upload/style';
-
 export interface ComponentTokenMap {
   Affix?: AffixComponentToken;
   Alert?: AlertComponentToken;
@@ -119,8 +119,10 @@ export interface ComponentTokenMap {
   Statistic?: StatisticComponentToken;
   Steps?: StepsComponentToken;
   Switch?: SwitchComponentToken;
+  Tab?: TagComponentToken;
+  Table?: TableComponentToken;
   Tabs?: TabsComponentToken;
-  Tag?: TagComponentToken;
+  Tagle?: TableComponentToken;
   Timeline?: TimelineComponentToken;
   Tooltip?: TooltipComponentToken;
   Tour?: TourComponentToken;
@@ -129,7 +131,6 @@ export interface ComponentTokenMap {
   TreeSelect?: TreeSelectComponentToken;
   Typography?: TypographyComponentToken;
   Upload?: UploadComponentToken;
-  //
   /** @private Internal TS definition. Do not use. */
   Wave?: WaveToken;
 }

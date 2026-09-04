@@ -446,7 +446,6 @@ export const genFilledGroupStyle: GenerateStyle<InputToken, CSSObject> = (
 });
 
 /* ============== Underlined ============== */
-// https://github.com/ant-design/ant-design/issues/51379
 export function genBaseUnderlinedStyle(
   token: InputToken,
   options: {

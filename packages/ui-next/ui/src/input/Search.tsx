@@ -104,7 +104,7 @@ export interface SearchProps
   on?: never;
   /**
    * Custom search icon shown inside the trigger button when enterButton is a
-   * boolean. Mirrors ant-design 6.4.0 PR #57256.
+   * boolean.
    */
   searchIcon?: VueNode;
   size?: SizeType;

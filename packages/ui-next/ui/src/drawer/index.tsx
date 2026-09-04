@@ -192,7 +192,6 @@ const Drawer = defineComponent<
     });
 
     // ============================ Refs ============================
-    // Select `ant-drawer-content` by `panelRef`
     const innerPanelRef = usePanelRef();
     const panelRef = shallowRef();
 
@@ -308,26 +307,26 @@ const Drawer = defineComponent<
               maskClosable={mergedMaskClosable.value}
               maskMotion={maskMotion}
               motion={panelMotion}
-              onClick={(e) => {
+              onClick={(e: MouseEvent) => {
                 emit('click', e);
               }}
-              onClose={(e) => {
+              onClose={(e: KeyboardEvent | MouseEvent) => {
                 emit('update:open', false);
                 emit('close', e);
               }}
-              onKeyDown={(e) => {
+              onKeyDown={(e: KeyboardEvent) => {
                 emit('keydown', e);
               }}
-              onKeyUp={(e) => {
+              onKeyUp={(e: KeyboardEvent) => {
                 emit('keyup', e);
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: MouseEvent) => {
                 emit('mouseenter', e);
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: MouseEvent) => {
                 emit('mouseleave', e);
               }}
-              onMouseOver={(e) => {
+              onMouseOver={(e: MouseEvent) => {
                 emit('mouseover', e);
               }}
               open={open}

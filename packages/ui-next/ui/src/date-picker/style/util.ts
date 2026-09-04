@@ -114,7 +114,6 @@ export function genOverflowStyle(
       '&-item': {
         flex: 'none',
         alignSelf: 'center',
-        // https://github.com/ant-design/ant-design/issues/54179
         maxWidth: 'calc(100% - 4px)',
         display: 'inline-flex',
       },

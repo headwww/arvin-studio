@@ -113,7 +113,6 @@ export default genStyleHooks(
   () => ({}),
   {
     // Space component don't apply extra font style
-    // https://github.com/ant-design/ant-design/issues/40315
     resetStyle: false,
   },
 );

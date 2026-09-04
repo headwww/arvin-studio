@@ -386,7 +386,6 @@ const Select = defineComponent<SelectProps>({
 
     const displayValues = computed(() => {
       // `null` need show as placeholder instead
-      // https://github.com/ant-design/ant-design/issues/25057
       if (!props.mode && mergedValues.value.length === 1) {
         const firstValue = mergedValues.value[0];
         if (

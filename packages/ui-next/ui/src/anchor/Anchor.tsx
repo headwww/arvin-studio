@@ -264,7 +264,6 @@ const Anchor = defineComponent<
       if (activeLinkRef.value === link) {
         return;
       }
-      // https://github.com/ant-design/ant-design/issues/30584
       const getCurrentAnchor = props.getCurrentAnchor;
       const newLink =
         typeof getCurrentAnchor === 'function' ? getCurrentAnchor(link) : link;

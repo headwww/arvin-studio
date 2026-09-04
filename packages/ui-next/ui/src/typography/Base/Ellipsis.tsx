@@ -299,7 +299,6 @@ const Ellipsis = defineComponent<
         ) {
           const content = slots?.default?.(nodeList.value, false);
           // Limit the max line count to avoid scrollbar blink unless no need ellipsis
-          // https://github.com/ant-design/ant-design/issues/42958
           // 测量中限制最大行数，避免滚动条闪烁（无需省略时不受限）
           if (
             [STATUS_MEASURE_NO_NEED_ELLIPSIS, STATUS_MEASURE_NONE].includes(

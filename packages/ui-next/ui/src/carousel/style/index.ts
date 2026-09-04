@@ -94,7 +94,6 @@ const genCarouselStyle: GenerateStyle<CarouselToken, CSSObject> = (token) => {
         '.slick-slide': {
           pointerEvents: 'none',
 
-          // https://github.com/ant-design/ant-design/issues/23294
           [`input${asCls}-radio-input, input${asCls}-checkbox-input`]: {
             visibility: 'hidden',
           },
@@ -107,9 +106,6 @@ const genCarouselStyle: GenerateStyle<CarouselToken, CSSObject> = (token) => {
             },
           },
 
-          // fix Carousel content height not match parent node
-          // when children is empty node
-          // https://github.com/ant-design/ant-design/issues/25878
           '> div > div': {
             verticalAlign: 'bottom',
           },

@@ -123,8 +123,6 @@ export function genListItemSharedStyle(
 
     // ============================= Icon =============================
     // Icon & color style in different selector level
-    // https://github.com/ant-design/ant-design/issues/16503
-    // https://github.com/ant-design/ant-design/issues/15512
     [`${noticeCls}-icon`]: {
       flex: 'none',
       fontSize: varRef('icon-font-size'),
@@ -208,9 +206,8 @@ function genNotificationItemStyle(token: NotificationToken): CSSObject {
     },
 
     // Without a title, the close button overlaps the description text.
-    // Mirrors ant-design#57821: pad the description for closable, then
-    // cancel when title is adjacent so the description aligns with the
-    // already-padded title.
+    // Pad the description for closable, then cancel when a title is adjacent
+    // so the description aligns with the already-padded title.
     [`${noticeCls}-closable ${noticeCls}-description`]: {
       paddingInlineEnd: paddingLG,
     },

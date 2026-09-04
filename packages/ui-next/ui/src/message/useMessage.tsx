@@ -128,7 +128,7 @@ const Holder = defineComponent<HolderProps>(
     // Surface position via the --notification-top CSS variable so the new
     // placement.ts `inset` calc (--notification-top - --notification-margin-edge)
     // works correctly and the holder doesn't take a full-height strip at the
-    // top of the page. Mirrors ant-design 6.4.0 getPlacementOffsetStyle.
+    // top of the page.
     const getStyle = () => getPlacementOffsetStyle(mergedTop.value);
 
     const getClassName = () =>
@@ -280,7 +280,7 @@ export function useInternalMessage(messageConfig?: MaybeRef<HolderProps>) {
           placement: 'top',
           icon: iconNode,
           // v2 semantic: content goes in the title slot, type modifier on the
-          // wrapper (not on a content div). Mirrors ant-design 6.4 useMessage.
+          // wrapper (not on a content div).
           title: content,
           classNames: {
             wrapper: clsx(

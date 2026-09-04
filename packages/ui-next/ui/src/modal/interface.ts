@@ -19,9 +19,6 @@ export type ModalSemanticName = keyof ModalSemanticClassNames &
 
 export interface ModalSemanticClassNames {
   body?: string;
-  /**
-   * @since 1.3.0 (mirrors ant-design#57264)
-   */
   close?: string;
   container?: string;
   footer?: string;

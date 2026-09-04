@@ -49,7 +49,7 @@ export const TypeIcon: Record<NoticeType, any> = {
 };
 
 /**
- * Mirrors ant-design 6.4 `getMessageIcon`. Returns a renderable icon vnode for
+ * Returns a renderable icon vnode for
  * the type, allowing a custom `icon` to take precedence. The notice element
  * wraps it with `${prefixCls}-notice-icon`, so the returned vnode does NOT
  * need the `${prefixCls}-icon` class anymore.

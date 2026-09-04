@@ -151,12 +151,9 @@ export const genModalMaskStyle: GenerateStyle<
             transform: 'none',
             opacity: 0,
             animationDuration: token.motionDurationSlow,
-            // https://github.com/ant-design/ant-design/issues/11777
             userSelect: 'none',
           },
 
-        // https://github.com/ant-design/ant-design/issues/37329
-        // https://github.com/ant-design/ant-design/issues/40272
         [`${componentCls}${asCls}-zoom-leave ${componentCls}-container`]: {
           pointerEvents: 'none',
         },

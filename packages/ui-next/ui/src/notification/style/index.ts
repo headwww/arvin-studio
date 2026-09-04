@@ -136,8 +136,6 @@ function prepareComponentToken(token: AliasToken) {
     width: 384,
     progressBg: `linear-gradient(90deg, ${token.colorPrimaryBorderHover}, ${token.colorPrimary})`,
     // Fix notification background color issue
-    // https://github.com/ant-design/ant-design/issues/55649
-    // https://github.com/ant-design/ant-design/issues/56055
     colorSuccessBg: undefined,
     colorErrorBg: undefined,
     colorInfoBg: undefined,

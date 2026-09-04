@@ -140,7 +140,6 @@ function genLoopGridColumnsStyle(
       };
     } else {
       gridColumnsStyle[`${componentCls}${sizeCls}-${i}`] = [
-        // https://github.com/ant-design/ant-design/issues/44456
         // Form set `display: flex` on Col which will override `display: block`.
         // Let's get it from css variable to support override.
         {

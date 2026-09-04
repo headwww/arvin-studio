@@ -331,7 +331,6 @@ const genTransferListStyle: GenerateStyle<TransferToken, CSSObject> = (
         borderTop: `${unit(lineWidth)} ${lineType} ${colorSplit}`,
       },
 
-      // fix: https://github.com/ant-design/ant-design/issues/44489
       '&-checkbox': {
         lineHeight: 1,
       },

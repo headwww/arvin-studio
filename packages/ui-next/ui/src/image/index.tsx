@@ -75,7 +75,7 @@ export interface ImagePopupSemanticClassNames {
   actions?: string;
   body?: string;
   /**
-   * ant-design 6.4.0 #57263: close-button class names.
+   * Close-button class names.
    * Matches `@v-c/image` Preview's `classNames.close`, which is what the
    * VcPreviewGroup forwards through.
    */

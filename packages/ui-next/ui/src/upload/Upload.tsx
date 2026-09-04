@@ -554,10 +554,6 @@ const InternalUpload = defineComponent<
       delete rcUploadProps.className;
       delete rcUploadProps.style;
 
-      // Remove id to avoid open by label when trigger is hidden
-      // !children: https://github.com/ant-design/ant-design/issues/14298
-      // disabled: https://github.com/ant-design/ant-design/issues/16478
-      //           https://github.com/ant-design/ant-design/issues/24197
       if (!hasChildren || mergedDisabled.value) {
         delete rcUploadProps.id;
       }

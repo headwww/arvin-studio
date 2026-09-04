@@ -37,7 +37,6 @@ const genBaseStyle: GenerateStyle<SelectToken, CSSObject> = (token) => {
         userSelect: 'none',
         ...textEllipsis,
 
-        // https://github.com/ant-design/ant-design/issues/40421
         [`> ${asCls}-typography`]: {
           display: 'inline',
         },
@@ -72,7 +71,6 @@ const genBaseStyle: GenerateStyle<SelectToken, CSSObject> = (token) => {
           .map((prop) => `${prop} ${motionDurationMid} ease`)
           .join(', '),
         textRendering: 'auto',
-        // https://github.com/ant-design/ant-design/issues/54205
         // Force GPU compositing on Safari to prevent flickering on opacity/transform transitions
         transform: 'translateZ(0)',
 

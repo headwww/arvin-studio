@@ -217,7 +217,6 @@ const genFormItemStyle: GenerateStyle<FormToken, CSSObject> = (token) => {
 
       [`&-hidden,
         &-hidden${asCls}-row`]: {
-        // https://github.com/ant-design/ant-design/issues/26141
         display: 'none',
       },
 
@@ -346,7 +345,6 @@ const genFormItemStyle: GenerateStyle<FormToken, CSSObject> = (token) => {
             flex: 'auto',
             maxWidth: '100%',
 
-            // Fix https://github.com/ant-design/ant-design/issues/54042
             // Remove impact of whitespaces
             [`&:has(> ${asCls}-switch:only-child, > ${asCls}-rate:only-child)`]:
               {
@@ -442,7 +440,6 @@ const makeVerticalLayoutLabel: GenerateStyle<FormToken, CSSObject> = (
     margin: 0,
 
     '&::after': {
-      // https://github.com/ant-design/ant-design/issues/43538
       visibility: 'hidden',
     },
   },

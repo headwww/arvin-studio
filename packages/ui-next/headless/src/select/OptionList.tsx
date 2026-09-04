@@ -77,7 +77,6 @@ const OptionList = defineComponent({
       );
     };
 
-    // https://github.com/ant-design/ant-design/issues/34975
     const isSelected = (value: RawValueType): boolean => {
       if (baseProps.value?.mode === 'combobox') {
         return false;
@@ -163,7 +162,6 @@ const OptionList = defineComponent({
       { immediate: true },
     );
 
-    // https://github.com/ant-design/ant-design/issues/48036
     const isAriaSelected = (value: RawValueType): boolean => {
       if (baseProps.value?.mode === 'combobox') {
         return (
@@ -496,12 +494,10 @@ const OptionList = defineComponent({
                   typeof menuItemSelectedIcon === 'function' ||
                   selected;
 
-                // https://github.com/ant-design/ant-design/issues/34145
                 const content =
                   typeof mergedLabel === 'number'
                     ? mergedLabel
                     : mergedLabel || value;
-                // https://github.com/ant-design/ant-design/issues/26717
                 let optionTitle = isTitleType(content)
                   ? content.toString()
                   : undefined;

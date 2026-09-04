@@ -167,7 +167,6 @@ const genSegmentedStyle: GenerateStyle<SegmentedToken, CSSObject> = (token) => {
         transition: `color ${motionDurationMid}`,
         borderRadius: token.borderRadiusSM,
         // Fix Safari render bug
-        // https://github.com/ant-design/ant-design/issues/45250
         transform: 'translateZ(0)',
 
         '&-selected': {
@@ -188,7 +187,6 @@ const genSegmentedStyle: GenerateStyle<SegmentedToken, CSSObject> = (token) => {
           borderRadius: 'inherit',
           opacity: 0,
           // This is mandatory to make it not clickable or hoverable
-          // Ref: https://github.com/ant-design/ant-design/issues/40888
           pointerEvents: 'none',
           transition: ['opacity', 'background-color']
             .map((prop) => `${prop} ${motionDurationMid}`)

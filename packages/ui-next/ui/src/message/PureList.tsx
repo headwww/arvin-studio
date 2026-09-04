@@ -37,7 +37,6 @@ export interface PureListSlots {
 
 /**
  * @private Internal component. Do not use in production.
- * Mirrors ant-design 6.4 `message._InternalListDoNotUseOrYouWillBeFired`.
  */
 const PureList = defineComponent<
   PureListProps,

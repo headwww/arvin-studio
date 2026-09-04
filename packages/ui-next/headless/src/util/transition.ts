@@ -205,12 +205,12 @@ export interface CSSMotionProps extends Partial<TransitionProps> {
  *         → onLeave 在 setTimeout(0) 后收为 0（同样先渲染起始帧再变）
  *   结束：onAfterEnter / onAfterLeave 清空内联样式，恢复 CSS 默认值
  *
- * @param name 过渡类名前缀（默认 `ant-motion-collapse`）
+ * @param name 过渡类名前缀（默认 `as-motion-collapse`）
  * @param style 外部持有的内联样式 ref，过渡期间由本函数写入
  * @param className 外部持有的类名 ref，过渡期间挂上 name 类（用于样式定位）
  */
 function collapseMotion(
-  name = 'ant-motion-collapse',
+  name = 'as-motion-collapse',
   style: Ref<CSSProperties>,
   className: Ref<string>,
 ): CSSMotionProps {
@@ -258,7 +258,7 @@ function collapseMotion(
 /**
  * 生成组件过渡类名
  * - 显式传入 transitionName 时优先使用
- * - 否则由「根前缀 + 动画名」拼接，如 ('ant', 'slide-up') → 'ant-slide-up'
+ * - 否则由「根前缀 + 动画名」拼接，如 ('as', 'slide-up') → 'ant-slide-up'
  */
 function getTransitionName(
   rootPrefixCls: string,

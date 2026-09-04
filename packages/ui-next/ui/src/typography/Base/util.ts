@@ -34,9 +34,6 @@ export function getNode(dom: VueNode, defaultNode: VueNode, needDom?: boolean) {
  * 检测元素是否真的发生了 CSS 省略（溢出）
  * 原理：往元素内临时插入一个 <em>，对比其与元素本身的位置关系，
  * 若子元素任何一侧超出父元素边界 → 说明内容被裁切（省略生效）。
- * ref:
- * - https://github.com/ant-design/ant-design/issues/50143
- * - https://github.com/ant-design/ant-design/issues/50414
  */
 export function isEleEllipsis(ele: HTMLElement): boolean {
   // Create a new div to get the size
@@ -47,7 +44,7 @@ export function isEleEllipsis(ele: HTMLElement): boolean {
   // For test case
   // 测试场景加标记类名
   if (isDev) {
-    childDiv.className = 'ant-typography-css-ellipsis-content-measure';
+    childDiv.className = 'as-typography-css-ellipsis-content-measure';
   }
 
   const rect = ele.getBoundingClientRect();

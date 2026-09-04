@@ -7,7 +7,7 @@ import type { NotificationConfig as CPNotificationConfig } from '../config-provi
 import type { NotificationConfig, NotificationPlacement } from './interface';
 
 /**
- * Mirror ant-design 6.4.0 getPlacementOffsetStyle: surface positioning via
+ * Surface positioning via
  * the --notification-top / --notification-bottom CSS variables that the
  * new placement.ts style file consumes. Setting inline `top: Npx` would
  * defeat the holder's `inset` calc and force the holder to occupy the

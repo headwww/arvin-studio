@@ -31,7 +31,6 @@ export function getCircleStyle(
 
   let strokeDashoffset = ((100 - percent) / 100) * perimeterWithoutGap;
   // Fix percent accuracy when strokeLinecap is round
-  // https://github.com/ant-design/ant-design/issues/35009
   if (strokeLinecap === 'round' && percent !== 100) {
     strokeDashoffset += strokeWidth / 2;
     // when percent is small enough (<= 1%), keep smallest value to avoid it's disappearance

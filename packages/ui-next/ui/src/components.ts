@@ -1,4 +1,5 @@
 export { default as Affix } from './affix';
+
 export type { AffixEmits, AffixProps, AffixRef } from './affix';
 export { default as Alert } from './alert';
 export type {
@@ -370,6 +371,7 @@ export type {
   SwitchSize,
   SwitchSlots,
 } from './switch';
+export { default as Table } from './table';
 export { TabPane, default as Tabs } from './tabs';
 export type {
   TabPaneProps,

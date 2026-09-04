@@ -388,7 +388,6 @@ export const prepareComponentToken: GetDefaultToken<'Splitter'> = (token) => {
   const splitBarSize = token.splitBarSize || 2;
   const splitTriggerSize = token.splitTriggerSize || 6;
 
-  // https://github.com/ant-design/ant-design/pull/51223
   const resizeSpinnerSize = token.resizeSpinnerSize || 20;
   const splitBarDraggableSize =
     token.splitBarDraggableSize ?? resizeSpinnerSize;

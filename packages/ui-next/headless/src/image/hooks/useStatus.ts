@@ -24,9 +24,7 @@ export default function useStatus(options: {
   watchEffect((onCleanup) => {
     let isCurrentSrc = true;
 
-    // eslint-disable-next-line unicorn/prefer-await
     isImageValid(src.value || '').then((isValid) => {
-      // https://github.com/ant-design/ant-design/issues/44948
       // If src changes, the previous setStatus should not be triggered
       if (!isValid && isCurrentSrc) {
         status.value = 'error';

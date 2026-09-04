@@ -42,7 +42,6 @@ function getTitleStyle(
   };
 }
 
-/** h1~h5 的标题样式：同时覆盖原生 hN、div.ant-typography-hN 及编辑态 textarea */
 export const getTitleStyles: GenerateStyle<TypographyToken, CSSObject> = (
   token,
 ) => {
@@ -364,7 +363,6 @@ export function getEllipsisStyles(): CSSObject {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         verticalAlign: 'bottom',
-        // https://github.com/ant-design/ant-design/issues/45953
         boxSizing: 'content-box',
       },
     },

@@ -55,9 +55,6 @@ const genSingleStyle: GenerateStyle<SelectToken> = (token) => {
         padding: token.paddingXXS,
         overflow: 'hidden',
         fontSize: token.fontSize,
-        // Fix select render lag of long text in chrome
-        // https://github.com/ant-design/ant-design/issues/11456
-        // https://github.com/ant-design/ant-design/issues/11843
         fontVariant: 'initial',
         backgroundColor: token.colorBgElevated,
         borderRadius: token.borderRadiusLG,
@@ -165,7 +162,6 @@ const genSingleStyle: GenerateStyle<SelectToken> = (token) => {
           },
         },
 
-        // https://github.com/ant-design/ant-design/pull/46646
         [`${selectedItemCls}:has(+ ${selectedItemCls})`]: {
           borderEndStartRadius: 0,
           borderEndEndRadius: 0,

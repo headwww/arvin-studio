@@ -140,7 +140,6 @@ const FormItemLabel = defineComponent<
         );
       }
 
-      // https://github.com/ant-design/ant-design/pull/52950#discussion_r1980880316
       let markType: string | undefined;
       if (hideRequiredMark) {
         markType = 'hidden';

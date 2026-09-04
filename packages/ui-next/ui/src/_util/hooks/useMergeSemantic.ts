@@ -343,7 +343,6 @@ export function useToProps<T>(props: Ref<T>) {
  *
  * 这样做的好处：`styles.root` 能够被语义化合并流程处理（与其他来源的 root style 合并），
  * 而不是直接应用到根元素上覆盖掉语义化 styles.root。
- * 与 ant-design#58474 对齐。
  */
 export function useSemanticRootStyle<Style = CSSProperties>(
   style: Ref<Style | undefined>,
