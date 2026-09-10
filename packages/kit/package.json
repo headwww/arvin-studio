@@ -3,25 +3,46 @@
   "version": "1.0.0",
   "description": "ArvinStudio 工具函数库",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./lib/index.js",
+  "module": "./es/index.js",
+  "types": "./es/index.d.ts",
+  "unpkg": "./dist/all.esm.js",
+  "jsdelivr": "./dist/all.esm.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./es/index.d.ts",
+        "default": "./es/index.js"
+      },
+      "require": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      }
     },
     "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.js"
+      "import": {
+        "types": "./es/*.d.ts",
+        "default": "./es/*.js"
+      },
+      "require": {
+        "types": "./lib/*.d.ts",
+        "default": "./lib/*.js"
+      }
+    },
+    "./dist/all.esm.js": {
+      "types": "./es/index.d.ts",
+      "default": "./dist/all.esm.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "es",
+    "lib"
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "pnpm exec tsdown",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [

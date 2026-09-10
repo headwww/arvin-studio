@@ -40,12 +40,14 @@ export default defineConfig([
       'unicorn/prefer-promise-try': 'off',
       'unicorn/prefer-await': 'off',
       'unicorn/no-negation-in-equality-check': 'off',
+      'unicorn/no-immediate-mutation': 'off',
     },
   },
   {
     ignores: [
       'packages/icons/**',
       'packages/ui-next/headless/src/qrcode/libs/qrcodegen.ts',
+      'packages/kit',
     ],
   },
 ]);

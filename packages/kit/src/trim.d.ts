@@ -1,0 +1,14 @@
+/**
+ * 去除字符串左右两边的空格
+ * @param str 字符串
+ */
+export declare function trim(str: string | null | undefined): string;
+export declare function trim(str: any): string;
+
+declare module './ctor' {
+  interface AsKitMethods {
+    trim: typeof trim;
+  }
+}
+
+export default trim

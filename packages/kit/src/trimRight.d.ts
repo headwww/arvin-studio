@@ -1,0 +1,14 @@
+/**
+ * 去除字符串右边的空格
+ * @param str 字符串
+ */
+export declare function trimRight(str: string | null | undefined): string;
+export declare function trimRight(str: any): string;
+
+declare module './ctor' {
+  interface AsKitMethods {
+    trimRight: typeof trimRight;
+  }
+}
+
+export default trimRight

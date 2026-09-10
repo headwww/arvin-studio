@@ -17,5 +17,6 @@ export default defineConfig({
   ignorePatterns: [
     'packages/icons/**',
     'packages/ui-next/headless/src/qrcode/libs/qrcodegen.ts',
+    'packages/kit',
   ],
 });
