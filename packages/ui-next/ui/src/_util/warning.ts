@@ -26,7 +26,7 @@ let _warning: Warning = noop;
 // eslint-disable-next-line unicorn/prefer-ternary
 if (isDev) {
   _warning = (valid, component, message) => {
-    rcWarning(valid, `[antd: ${component}] ${message}`);
+    rcWarning(valid, `[arvin-studio: ${component}] ${message}`);
 
     // StrictMode will inject console which will not throw warning in React 17.
     if (isDev) {

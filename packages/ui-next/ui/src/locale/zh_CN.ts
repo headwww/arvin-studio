@@ -9,6 +9,9 @@ import TimePicker from '../time-picker/locale/zh_CN';
 const typeTemplate = '${label}不是一个有效的${type}';
 
 const localeValues: Locale = {
+  Table: {
+    seqTitle: '序号',
+  },
   locale: 'zh-cn',
   Pagination,
   DatePicker,

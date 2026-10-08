@@ -137,7 +137,7 @@ const Collapse = defineComponent<
     } = useComponentBaseConfig('collapse', props, ['expandIcon']);
     const { styles, classes } = toPropsRefs(props, 'styles', 'classes');
     const mergedSize = useSize<SizeType>(
-      (ctxSize) => props?.size ?? ctxSize ?? 'middle',
+      (ctxSize) => props?.size ?? ctxSize ?? 'medium',
     );
     const rootPrefixCls = getPrefixCls();
     const [hashId, cssVarCls] = useStyle(prefixCls);
@@ -219,7 +219,7 @@ const Collapse = defineComponent<
           [`${prefixCls.value}-rtl`]: direction.value === 'rtl',
           [`${prefixCls.value}-ghost`]: !!ghost,
           [`${prefixCls.value}-${mergedSize.value}`]:
-            mergedSize.value !== 'middle',
+            mergedSize.value !== 'medium',
         },
         contextClassName.value,
         (attrs as any).class,
@@ -266,7 +266,7 @@ const Collapse = defineComponent<
           destroyOnHidden={destroyOnHidden}
           expandIcon={renderExpandIcon}
           items={items}
-          onChange={(key) => emit('change', key as string[])}
+          onChange={(key: any) => emit('change', key as string[])}
           prefixCls={prefixCls.value}
           style={[mergedStyles.value.root, (attrs as any).style]}
           styles={mergedStyles.value}

@@ -2,7 +2,7 @@ import type { InjectionKey, Ref } from 'vue';
 
 import { computed, defineComponent, inject, provide } from 'vue';
 
-export type SizeType = 'large' | 'medium' | 'middle' | 'small' | undefined;
+export type SizeType = 'large' | 'medium' | 'small' | undefined;
 
 export interface SizeContextProps {
   size?: SizeType;

@@ -23,7 +23,7 @@ import type { SizeType } from '../config-provider/size-context';
 export function isPresetSize(
   size?: number | SizeType | string,
 ): size is SizeType {
-  return ['large', 'medium', 'middle', 'small'].includes(size as string);
+  return ['large', 'medium', 'small'].includes(size as string);
 }
 
 /**

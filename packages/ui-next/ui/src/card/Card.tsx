@@ -31,7 +31,7 @@ import useStyle from './style';
 
 export type CardType = 'inner';
 
-export type CardSize = 'default' | 'medium' | 'middle' | 'small';
+export type CardSize = 'default' | 'medium' | 'small';
 
 export interface CardTabListType extends Omit<Tab, 'label'> {
   key: string;

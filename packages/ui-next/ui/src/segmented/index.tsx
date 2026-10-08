@@ -159,7 +159,7 @@ export interface SegmentedSlots<
 }
 
 const defaults = {
-  size: 'middle',
+  size: 'medium',
   shape: 'default',
 } as any;
 

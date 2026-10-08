@@ -1,3 +1,4 @@
+import type { LoggingContextProps } from '../_util/logger.ts';
 import type { WarningContextProps } from '../_util/warning';
 import type { Locale } from '../locale';
 import type {
@@ -118,6 +119,11 @@ export interface ConfigProviderProps {
    * @descEN Language package setting, you can find the packages in `antd/locale`.
    */
   locale?: Locale;
+  /**
+   * @descCN 组件日志配置（输出等级、去重、消息目录覆盖）。
+   * @descEN Component logging config (level, dedupe, message catalog override).
+   */
+  logging?: LoggingContextProps;
   masonry?: MasonryConfig;
   mentions?: MentionsConfig;
   menu?: MenuConfig;

@@ -6,6 +6,7 @@ import type { ValidateMessages } from '../form/types.ts';
 import type { ModalLocale } from '../modal/interface.ts';
 import type { PaginationLocale } from '../pagination';
 import type { PopconfirmLocale } from '../popconfirm/PurePanel';
+import type { TableLocale } from '../table/locale';
 import type { TimePickerLocale } from '../time-picker';
 import type { TourLocale } from '../tour';
 import type { TransferLocale } from '../transfer';
@@ -50,6 +51,12 @@ export interface Locale {
     preview: string;
   };
   locale: string;
+  /**
+   * @descCN 组件日志消息目录（key → 模板，`{0}` `{1}` 为占位符）
+   * @descEN Log message catalog (key → template, `{0}` `{1}` as placeholders).
+   * @default 内置英文目录 src/_util/loggerMessages.ts
+   */
+  Logger?: Record<string, string>;
   Modal?: ModalLocale;
   Pagination?: PaginationLocale;
   Popconfirm?: PopconfirmLocale;
@@ -59,7 +66,7 @@ export interface Locale {
     scanned?: string;
   };
   Select?: Record<string, any>;
-
+  Table?: TableLocale;
   Text?: {
     collapse?: any;
     copied?: any;

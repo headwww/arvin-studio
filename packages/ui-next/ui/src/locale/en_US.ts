@@ -9,6 +9,9 @@ import TimePicker from '../time-picker/locale/en_US';
 const typeTemplate = '${label} is not a valid ${type}';
 
 const localeValues: Locale = {
+  Table: {
+    seqTitle: '#',
+  },
   locale: 'en',
   Pagination,
   DatePicker,

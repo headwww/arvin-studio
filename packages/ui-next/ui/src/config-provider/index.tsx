@@ -1,5 +1,6 @@
 import type { App, AppContext, SlotsType, VNodeChild } from 'vue';
 
+import type { LoggingContextProps } from '../_util/logger';
 import type { Locale } from '../locale';
 import type { ConfigConsumerProps, Theme, ThemeConfig } from './context';
 import type {
@@ -13,6 +14,7 @@ import { computed, defineComponent, shallowReactive } from 'vue';
 import { createTheme, useStyleContext } from '@arvin-studio/cssinjs';
 import { IconContextProvider } from '@arvin-studio/icons';
 
+import { useLoggerProvider } from '../_util/logger';
 import { useWarningProvider } from '../_util/warning';
 import { AS_MARK, LocaleProvider, useLocaleContext } from '../locale';
 import { defaultTheme, DesignTokenProvider } from '../theme/context';
@@ -352,7 +354,12 @@ const ProviderChildren = defineComponent<
     useWarningProvider({
       strict,
     });
-
+    // // logging provider
+    const logging = computed<LoggingContextProps>(() => ({
+      ...props.parentContext?.logging,
+      ...props.logging,
+    }));
+    useLoggerProvider(logging);
     return () => {
       let childNode = slots?.default?.();
       if (locale.value) {

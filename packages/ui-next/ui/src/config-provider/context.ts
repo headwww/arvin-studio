@@ -4,17 +4,18 @@ import type { DerivativeFunc } from '@arvin-studio/cssinjs';
 
 import type { VueNode } from '../_util';
 import type { MaskType } from '../_util/hooks/useMergedMask';
-import type { WarningContextProps } from '../_util/warning.ts';
-import type { ShowWaveEffect } from '../_util/wave/interface.ts';
+import type { LoggingContextProps } from '../_util/logger';
+import type { WarningContextProps } from '../_util/warning';
+import type { ShowWaveEffect } from '../_util/wave/interface';
 import type { AlertProps } from '../alert';
 import type { AnchorProps } from '../anchor';
 import type { BadgeProps } from '../badge';
-import type { RibbonProps } from '../badge/Ribbon.tsx';
-import type { BreadcrumbProps } from '../breadcrumb/Breadcrumb.tsx';
+import type { RibbonProps } from '../badge/Ribbon';
+import type { BreadcrumbProps } from '../breadcrumb/Breadcrumb';
 import type { ButtonProps } from '../button';
 import type { CalendarProps } from '../calendar';
-import type { CardProps } from '../card/Card.tsx';
-import type { CardMetaProps } from '../card/CardMeta.tsx';
+import type { CardProps } from '../card/Card';
+import type { CardMetaProps } from '../card/CardMeta';
 import type { CascaderProps } from '../cascader';
 import type { CheckboxProps } from '../checkbox';
 import type { CollapseProps } from '../collapse';
@@ -27,24 +28,24 @@ import type { DropdownProps } from '../dropdown';
 import type { EmptyProps } from '../empty';
 import type { FlexProps } from '../flex';
 import type { FloatButtonGroupProps, FloatButtonProps } from '../float-button';
-import type { FormProps } from '../form/Form.tsx';
-import type { ImageProps } from '../image/index.tsx';
+import type { FormProps } from '../form/Form';
+import type { ImageProps } from '../image/index';
 import type { InputNumberProps } from '../input-number';
-import type { InputProps } from '../input/Input.tsx';
+import type { InputProps } from '../input/Input';
 import type { OTPProps } from '../input/OTP';
-import type { SearchProps } from '../input/Search.tsx';
-import type { TextAreaProps } from '../input/TextArea.tsx';
+import type { SearchProps } from '../input/Search';
+import type { TextAreaProps } from '../input/TextArea';
 import type { Locale } from '../locale';
-import type { MasonryProps } from '../masonry/Masonry.tsx';
+import type { MasonryProps } from '../masonry/Masonry';
 import type { MenuProps } from '../menu';
-import type { ModalProps } from '../modal/interface.ts';
+import type { ModalProps } from '../modal/interface';
 import type { ArgsProps as NotificationProps } from '../notification';
-import type { PaginationProps } from '../pagination/interface.ts';
+import type { PaginationProps } from '../pagination/interface';
 import type { PopconfirmProps } from '../popconfirm';
 import type { PopoverProps } from '../popover';
 import type { ProgressProps } from '../progress';
 import type { QRCodeProps } from '../qrcode';
-import type { RadioProps } from '../radio/interface.ts';
+import type { RadioProps } from '../radio/interface';
 import type { ResultProps } from '../result';
 import type { SegmentedProps } from '../segmented';
 import type { SelectProps } from '../select';
@@ -56,6 +57,7 @@ import type { SplitterProps } from '../splitter';
 import type { StatisticProps } from '../statistic';
 import type { StepsProps } from '../steps';
 import type { SwitchProps } from '../switch';
+import type { AsTableProps } from '../table/types/table';
 import type { TabsProps } from '../tabs';
 import type { TagProps } from '../tag';
 import type {
@@ -70,9 +72,9 @@ import type { TooltipProps } from '../tooltip';
 import type { TourProps } from '../tour';
 import type { TransferProps } from '../transfer/interface';
 import type { TreeSelectProps } from '../tree-select';
-import type { TreeProps } from '../tree/Tree.tsx';
+import type { TreeProps } from '../tree/Tree';
 import type { BlockProps as TypographyBaseProps } from '../typography/interface';
-import type { UploadProps } from '../upload/interface.ts';
+import type { UploadProps } from '../upload/interface';
 import type { RenderEmptyHandler } from './default-render-empty';
 
 import { computed, inject, provide, ref } from 'vue';
@@ -557,6 +559,24 @@ export type DropdownConfig = ComponentStyleConfig &
 export type ProgressConfig = ComponentStyleConfig &
   Pick<ProgressProps, 'classes' | 'styles'>;
 
+export type TableConfig = ComponentStyleConfig &
+  Pick<
+    AsTableProps,
+    | 'aggregateConfig'
+    | 'checkboxConfig'
+    | 'columnConfig'
+    | 'columnDragConfig'
+    | 'customConfig'
+    | 'expandConfig'
+    | 'filterConfig'
+    | 'mouseConfig'
+    | 'rowConfig'
+    | 'sortConfig'
+    | 'treeConfig'
+    | 'virtualXConfig'
+    | 'virtualYConfig'
+  >;
+
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -616,6 +636,7 @@ export interface ConfigComponentProps {
   statistic?: StatisticConfig;
   steps?: StepsConfig;
   switch?: SwitchStyleConfig;
+  table?: TableConfig;
   tabs?: TabsConfig;
   tag?: TagConfig;
   textArea?: TextAreaConfig;
@@ -639,6 +660,7 @@ export interface ConfigConsumerProps extends ConfigComponentProps {
   getTargetContainer?: () => HTMLElement;
   iconPrefixCls: string;
   locale?: Locale;
+  logging?: LoggingContextProps;
   popupMatchSelectWidth?: boolean;
   popupOverflow?: PopupOverflow;
   renderEmpty?: RenderEmptyHandler;

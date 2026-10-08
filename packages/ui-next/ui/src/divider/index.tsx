@@ -157,8 +157,7 @@ const Divider = defineComponent<DividerProps>(
           [`${prefixCls.value}-${variant}`]: variant !== 'solid',
           [`${prefixCls.value}-plain`]: !!plain,
           [`${prefixCls.value}-rtl`]: direction.value === 'rtl',
-          [`${prefixCls.value}-md`]:
-            sizeFullName.value === 'medium' || sizeFullName.value === 'middle',
+          [`${prefixCls.value}-md`]: sizeFullName.value === 'medium',
           [`${prefixCls.value}-sm`]: sizeFullName.value === 'small',
           [railCls]: !hasChildren,
           [mergedClassNames.value.rail as string]:
