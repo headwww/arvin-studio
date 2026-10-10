@@ -11,7 +11,7 @@ type EachIteratee<V, K, C, T = unknown> = (
  * @param iteratee 回调
  * @param context 上下文
  */
-declare function each<T, Ctx = unknown>(
+export declare function each<T, Ctx = unknown>(
   collection: T[] | null | undefined,
   iteratee: EachIteratee<T, number, T[], Ctx>,
   context?: Ctx,
@@ -23,7 +23,7 @@ declare function each<T, Ctx = unknown>(
  * @param iteratee 回调
  * @param context 上下文
  */
-declare function each<T, Ctx = unknown>(
+export declare function each<T, Ctx = unknown>(
   collection: Set<T> | null | undefined,
   iteratee: EachIteratee<T, T, Set<T>, Ctx>,
   context?: Ctx,
@@ -35,7 +35,7 @@ declare function each<T, Ctx = unknown>(
  * @param iteratee 回调
  * @param context 上下文
  */
-declare function each<K, V, Ctx = unknown>(
+export declare function each<K, V, Ctx = unknown>(
   collection: Map<K, V> | null | undefined,
   iteratee: EachIteratee<V, K, Map<K, V>, Ctx>,
   context?: Ctx,
@@ -47,7 +47,7 @@ declare function each<K, V, Ctx = unknown>(
  * @param iteratee 回调
  * @param context 上下文
  */
-declare function each<T extends object, Ctx = unknown>(
+export declare function each<T extends object, Ctx = unknown>(
   collection: T | null | undefined,
   iteratee: EachIteratee<T[keyof T], Extract<keyof T, string>, T, Ctx>,
   context?: Ctx,
