@@ -15,8 +15,9 @@
     "@arvin-studio/kit": "workspace:*",
     "@arvin-studio/ui": "workspace:*",
     "vue": "catalog:",
-    "vxe-pc-ui": "4.17.29",
-    "vxe-table": "4.21.5"
+    "vue-router": "catalog:",
+    "vxe-pc-ui": "4.20.0",
+    "vxe-table": "4.22.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
@@ -24,6 +25,7 @@
     "sass-embedded": "^1.100.0",
     "typescript": "catalog:",
     "vite": "^7.2.7",
+    "vite-plugin-lazy-import": "^1.0.7",
     "vite-plugin-tsx-resolve-types": "^1.0.1"
   }
 }

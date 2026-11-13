@@ -40,7 +40,6 @@ declare type VNodeChildAtom =
   | string
   | undefined
   | VNode
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   | void;
 
 export type VueNode = VNode | VNodeChildAtom | VNodeChildAtom[];

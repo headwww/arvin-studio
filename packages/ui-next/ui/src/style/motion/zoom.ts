@@ -6,7 +6,7 @@ import { Keyframes } from '@arvin-studio/cssinjs';
 
 import { initMotion } from './motion';
 
-export const zoomIn = new Keyframes('antZoomIn', {
+export const zoomIn = new Keyframes('asZoomIn', {
   '0%': {
     transform: 'scale(0.2)',
     opacity: 0,
@@ -18,7 +18,7 @@ export const zoomIn = new Keyframes('antZoomIn', {
   },
 });
 
-export const zoomOut = new Keyframes('antZoomOut', {
+export const zoomOut = new Keyframes('asZoomOut', {
   '0%': {
     transform: 'scale(1)',
   },
@@ -29,7 +29,7 @@ export const zoomOut = new Keyframes('antZoomOut', {
   },
 });
 
-export const zoomBigIn = new Keyframes('antZoomBigIn', {
+export const zoomBigIn = new Keyframes('asZoomBigIn', {
   '0%': {
     transform: 'scale(0.8)',
     opacity: 0,
@@ -41,7 +41,7 @@ export const zoomBigIn = new Keyframes('antZoomBigIn', {
   },
 });
 
-export const zoomBigOut = new Keyframes('antZoomBigOut', {
+export const zoomBigOut = new Keyframes('asZoomBigOut', {
   '0%': {
     transform: 'scale(1)',
   },
@@ -52,7 +52,7 @@ export const zoomBigOut = new Keyframes('antZoomBigOut', {
   },
 });
 
-export const zoomUpIn = new Keyframes('antZoomUpIn', {
+export const zoomUpIn = new Keyframes('asZoomUpIn', {
   '0%': {
     transform: 'scale(0.8)',
     transformOrigin: '50% 0%',
@@ -65,7 +65,7 @@ export const zoomUpIn = new Keyframes('antZoomUpIn', {
   },
 });
 
-export const zoomUpOut = new Keyframes('antZoomUpOut', {
+export const zoomUpOut = new Keyframes('asZoomUpOut', {
   '0%': {
     transform: 'scale(1)',
     transformOrigin: '50% 0%',
@@ -78,7 +78,7 @@ export const zoomUpOut = new Keyframes('antZoomUpOut', {
   },
 });
 
-export const zoomLeftIn = new Keyframes('antZoomLeftIn', {
+export const zoomLeftIn = new Keyframes('asZoomLeftIn', {
   '0%': {
     transform: 'scale(0.8)',
     transformOrigin: '0% 50%',
@@ -91,7 +91,7 @@ export const zoomLeftIn = new Keyframes('antZoomLeftIn', {
   },
 });
 
-export const zoomLeftOut = new Keyframes('antZoomLeftOut', {
+export const zoomLeftOut = new Keyframes('asZoomLeftOut', {
   '0%': {
     transform: 'scale(1)',
     transformOrigin: '0% 50%',
@@ -104,7 +104,7 @@ export const zoomLeftOut = new Keyframes('antZoomLeftOut', {
   },
 });
 
-export const zoomRightIn = new Keyframes('antZoomRightIn', {
+export const zoomRightIn = new Keyframes('asZoomRightIn', {
   '0%': {
     transform: 'scale(0.8)',
     transformOrigin: '100% 50%',
@@ -117,7 +117,7 @@ export const zoomRightIn = new Keyframes('antZoomRightIn', {
   },
 });
 
-export const zoomRightOut = new Keyframes('antZoomRightOut', {
+export const zoomRightOut = new Keyframes('asZoomRightOut', {
   '0%': {
     transform: 'scale(1)',
     transformOrigin: '100% 50%',
@@ -130,7 +130,7 @@ export const zoomRightOut = new Keyframes('antZoomRightOut', {
   },
 });
 
-export const zoomDownIn = new Keyframes('antZoomDownIn', {
+export const zoomDownIn = new Keyframes('asZoomDownIn', {
   '0%': {
     transform: 'scale(0.8)',
     transformOrigin: '50% 100%',
@@ -143,7 +143,7 @@ export const zoomDownIn = new Keyframes('antZoomDownIn', {
   },
 });
 
-export const zoomDownOut = new Keyframes('antZoomDownOut', {
+export const zoomDownOut = new Keyframes('asZoomDownOut', {
   '0%': {
     transform: 'scale(1)',
     transformOrigin: '50% 100%',

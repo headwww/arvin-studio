@@ -6,7 +6,7 @@ import { Keyframes } from '@arvin-studio/cssinjs';
 
 import { initMotion } from './motion';
 
-export const fadeIn = new Keyframes('antFadeIn', {
+export const fadeIn = new Keyframes('asFadeIn', {
   '0%': {
     opacity: 0,
   },
@@ -15,7 +15,7 @@ export const fadeIn = new Keyframes('antFadeIn', {
   },
 });
 
-export const fadeOut = new Keyframes('antFadeOut', {
+export const fadeOut = new Keyframes('asFadeOut', {
   '0%': {
     opacity: 1,
   },

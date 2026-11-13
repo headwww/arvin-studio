@@ -359,6 +359,8 @@ export type PopoverConfig = ComponentStyleConfig &
 export type PopconfirmConfig = ComponentStyleConfig &
   Pick<PopconfirmProps, 'arrow' | 'classes' | 'styles' | 'trigger'>;
 
+export type ScrollbarConfig = ComponentStyleConfig;
+
 export type SegmentedConfig = ComponentStyleConfig &
   Pick<SegmentedProps, 'classes' | 'styles'>;
 
@@ -563,16 +565,37 @@ export type TableConfig = ComponentStyleConfig &
   Pick<
     AsTableProps,
     | 'aggregateConfig'
+    | 'areaConfig'
+    | 'cellConfig'
     | 'checkboxConfig'
     | 'columnConfig'
     | 'columnDragConfig'
     | 'customConfig'
+    | 'editConfig'
+    | 'editDirtyConfig'
+    | 'emptyRender'
     | 'expandConfig'
     | 'filterConfig'
+    | 'floatingFilterConfig'
+    | 'footerCellConfig'
+    | 'footerTooltipConfig'
+    | 'headerCellConfig'
+    | 'headerTooltipConfig'
+    | 'minHeight'
     | 'mouseConfig'
+    | 'radioConfig'
+    | 'rendererConfig'
+    | 'resizableConfig'
+    | 'resizeConfig'
     | 'rowConfig'
+    | 'rowDragConfig'
+    | 'rowDragConfig'
+    | 'scrollbarConfig'
+    | 'seqConfig'
     | 'sortConfig'
+    | 'tooltipConfig'
     | 'treeConfig'
+    | 'validConfig'
     | 'virtualXConfig'
     | 'virtualYConfig'
   >;
@@ -626,8 +649,14 @@ export interface ConfigComponentProps {
   rate?: ComponentStyleConfig;
   result?: ResultConfig;
   ribbon?: RibbonConfig;
+  scrollbar?: ScrollbarConfig;
   segmented?: SegmentedConfig;
   select?: SelectConfig;
+  /**
+   * SharedTooltip 组件配置。
+   * key 使用 kebab-case，与 `useComponentBaseConfig('shared-tooltip')` 的 propName 保持一致。
+   */
+  'shared-tooltip'?: ComponentStyleConfig;
   skeleton?: SkeletonConfig;
   slider?: SliderConfig;
   space?: SpaceConfig;

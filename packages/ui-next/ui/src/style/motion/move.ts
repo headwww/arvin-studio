@@ -6,7 +6,7 @@ import { Keyframes } from '@arvin-studio/cssinjs';
 
 import { initMotion } from './motion';
 
-export const moveDownIn = new Keyframes('antMoveDownIn', {
+export const moveDownIn = new Keyframes('asMoveDownIn', {
   '0%': {
     transform: 'translate3d(0, 100%, 0)',
     transformOrigin: '0 0',
@@ -20,7 +20,7 @@ export const moveDownIn = new Keyframes('antMoveDownIn', {
   },
 });
 
-export const moveDownOut = new Keyframes('antMoveDownOut', {
+export const moveDownOut = new Keyframes('asMoveDownOut', {
   '0%': {
     transform: 'translate3d(0, 0, 0)',
     transformOrigin: '0 0',
@@ -34,7 +34,7 @@ export const moveDownOut = new Keyframes('antMoveDownOut', {
   },
 });
 
-export const moveLeftIn = new Keyframes('antMoveLeftIn', {
+export const moveLeftIn = new Keyframes('asMoveLeftIn', {
   '0%': {
     transform: 'translate3d(-100%, 0, 0)',
     transformOrigin: '0 0',
@@ -48,7 +48,7 @@ export const moveLeftIn = new Keyframes('antMoveLeftIn', {
   },
 });
 
-export const moveLeftOut = new Keyframes('antMoveLeftOut', {
+export const moveLeftOut = new Keyframes('asMoveLeftOut', {
   '0%': {
     transform: 'translate3d(0, 0, 0)',
     transformOrigin: '0 0',
@@ -62,7 +62,7 @@ export const moveLeftOut = new Keyframes('antMoveLeftOut', {
   },
 });
 
-export const moveRightIn = new Keyframes('antMoveRightIn', {
+export const moveRightIn = new Keyframes('asMoveRightIn', {
   '0%': {
     transform: 'translate3d(100%, 0, 0)',
     transformOrigin: '0 0',
@@ -76,7 +76,7 @@ export const moveRightIn = new Keyframes('antMoveRightIn', {
   },
 });
 
-export const moveRightOut = new Keyframes('antMoveRightOut', {
+export const moveRightOut = new Keyframes('asMoveRightOut', {
   '0%': {
     transform: 'translate3d(0, 0, 0)',
     transformOrigin: '0 0',
@@ -90,7 +90,7 @@ export const moveRightOut = new Keyframes('antMoveRightOut', {
   },
 });
 
-export const moveUpIn = new Keyframes('antMoveUpIn', {
+export const moveUpIn = new Keyframes('asMoveUpIn', {
   '0%': {
     transform: 'translate3d(0, -100%, 0)',
     transformOrigin: '0 0',
@@ -104,7 +104,7 @@ export const moveUpIn = new Keyframes('antMoveUpIn', {
   },
 });
 
-export const moveUpOut = new Keyframes('antMoveUpOut', {
+export const moveUpOut = new Keyframes('asMoveUpOut', {
   '0%': {
     transform: 'translate3d(0, 0, 0)',
     transformOrigin: '0 0',

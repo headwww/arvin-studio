@@ -38,6 +38,20 @@ type SetupContextLoose<E, S extends SlotsType> = Omit<
 > & { emit: EmitFnFromRecord<E> };
 
 declare module 'vue' {
+  interface TableHTMLAttributes {
+    border?: number;
+    xvm?: any;
+  }
+  interface ColHTMLAttributes {
+    name?: string;
+  }
+
+  interface HTMLAttributes {
+    colid?: string;
+    rowid?: string;
+    xid?: any;
+  }
+
   /**
    * - E 不要求 EmitsOptions（无需索引签名）
    * - 用 __typeEmits 把“真实事件类型”喂给 language-tools

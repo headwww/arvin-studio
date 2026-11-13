@@ -165,7 +165,7 @@ export interface UploadProps<T = any> {
   name?: string;
   onDownload?: (file: UploadFile<T>) => void;
   onPreview?: (file: UploadFile<T>) => void;
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+
   onRemove?: (file: UploadFile<T>) => boolean | Promise<boolean | void> | void;
   openFileDialogOnClick?: boolean;
   pastable?: boolean;
@@ -237,7 +237,7 @@ export interface UploadListProps<T = any> {
   locale: UploadLocale;
   onDownload?: (file: UploadFile<T>) => void;
   onPreview?: (file: UploadFile<T>) => void;
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+
   onRemove?: (file: UploadFile<T>) => boolean | void;
   prefixCls?: string;
   previewFile?: PreviewFileHandler;

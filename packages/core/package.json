@@ -34,7 +34,6 @@
     "vue": "catalog:"
   },
   "dependencies": {
-    "@arvin-studio/kit": "workspace:*",
-    "dom-zindex": "catalog:"
+    "@arvin-studio/kit": "workspace:*"
   }
 }

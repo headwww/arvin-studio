@@ -1,10 +1,21 @@
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 import { defineConfig } from 'vite';
+import { lazyImport, VxeResolver } from 'vite-plugin-lazy-import';
 import { tsxResolveTypes } from 'vite-plugin-tsx-resolve-types';
 
 export default defineConfig({
   plugins: [
+    lazyImport({
+      resolvers: [
+        VxeResolver({
+          libraryName: 'vxe-pc-ui',
+        }),
+        VxeResolver({
+          libraryName: 'vxe-table',
+        }),
+      ],
+    }),
     // TODO 编译时自动将 defineComponent 泛型参数中的 TypeScript 类型提取为运行时 props 声明。
     // 使得组件库源码无需手动维护 props: [...] 数组，直接从类型推导。
     // defaultPropsToUndefined: ['Boolean'] — Vue 对未传的 Boolean prop 默认填 false，

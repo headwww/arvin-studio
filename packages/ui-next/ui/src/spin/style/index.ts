@@ -40,7 +40,7 @@ interface SpinToken extends FullToken<'Spin'> {
 }
 
 // 经典圆环：整体匀速旋转一周（方案 A）
-const antSpinRotate = new Keyframes('antSpinRotate', {
+const antSpinRotate = new Keyframes('asSpinRotate', {
   to: { transform: 'rotate(360deg)' },
 });
 

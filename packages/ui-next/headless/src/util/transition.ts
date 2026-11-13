@@ -163,7 +163,6 @@ export declare type MotionEventHandler = (
 export declare type MotionEndEventHandler = (
   element: Element,
   done?: () => void,
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 ) => boolean | void;
 
 // ================== Collapse Motion ==================

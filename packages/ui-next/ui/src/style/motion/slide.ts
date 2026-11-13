@@ -6,7 +6,7 @@ import { Keyframes } from '@arvin-studio/cssinjs';
 
 import { initMotion } from './motion';
 
-export const slideUpIn = new Keyframes('antSlideUpIn', {
+export const slideUpIn = new Keyframes('asSlideUpIn', {
   '0%': {
     transform: 'scaleY(0.8)',
     transformOrigin: '0% 0%',
@@ -20,7 +20,7 @@ export const slideUpIn = new Keyframes('antSlideUpIn', {
   },
 });
 
-export const slideUpOut = new Keyframes('antSlideUpOut', {
+export const slideUpOut = new Keyframes('asSlideUpOut', {
   '0%': {
     transform: 'scaleY(1)',
     transformOrigin: '0% 0%',
@@ -34,7 +34,7 @@ export const slideUpOut = new Keyframes('antSlideUpOut', {
   },
 });
 
-export const slideDownIn = new Keyframes('antSlideDownIn', {
+export const slideDownIn = new Keyframes('asSlideDownIn', {
   '0%': {
     transform: 'scaleY(0.8)',
     transformOrigin: '100% 100%',
@@ -48,7 +48,7 @@ export const slideDownIn = new Keyframes('antSlideDownIn', {
   },
 });
 
-export const slideDownOut = new Keyframes('antSlideDownOut', {
+export const slideDownOut = new Keyframes('asSlideDownOut', {
   '0%': {
     transform: 'scaleY(1)',
     transformOrigin: '100% 100%',
@@ -62,7 +62,7 @@ export const slideDownOut = new Keyframes('antSlideDownOut', {
   },
 });
 
-export const slideLeftIn = new Keyframes('antSlideLeftIn', {
+export const slideLeftIn = new Keyframes('asSlideLeftIn', {
   '0%': {
     transform: 'scaleX(0.8)',
     transformOrigin: '0% 0%',
@@ -76,7 +76,7 @@ export const slideLeftIn = new Keyframes('antSlideLeftIn', {
   },
 });
 
-export const slideLeftOut = new Keyframes('antSlideLeftOut', {
+export const slideLeftOut = new Keyframes('asSlideLeftOut', {
   '0%': {
     transform: 'scaleX(1)',
     transformOrigin: '0% 0%',
@@ -90,7 +90,7 @@ export const slideLeftOut = new Keyframes('antSlideLeftOut', {
   },
 });
 
-export const slideRightIn = new Keyframes('antSlideRightIn', {
+export const slideRightIn = new Keyframes('asSlideRightIn', {
   '0%': {
     transform: 'scaleX(0.8)',
     transformOrigin: '100% 0%',
@@ -104,7 +104,7 @@ export const slideRightIn = new Keyframes('antSlideRightIn', {
   },
 });
 
-export const slideRightOut = new Keyframes('antSlideRightOut', {
+export const slideRightOut = new Keyframes('asSlideRightOut', {
   '0%': {
     transform: 'scaleX(1)',
     transformOrigin: '100% 0%',

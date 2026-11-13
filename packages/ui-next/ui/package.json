@@ -21,9 +21,11 @@
     "@arvin-studio/cssinjs": "workspace:*",
     "@arvin-studio/headless": "workspace:*",
     "@arvin-studio/icons": "workspace:*",
+    "@arvin-studio/core": "workspace:*",
     "@arvin-studio/kit": "workspace:*",
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
+        "dom-zindex": "catalog:",
     "scroll-into-view-if-needed": "catalog:",
     "throttle-debounce": "catalog:"
   }

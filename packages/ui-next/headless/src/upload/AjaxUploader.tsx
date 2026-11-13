@@ -155,7 +155,6 @@ const AjaxUploader = defineComponent<UploadProps>(
     ): Promise<ParsedFileInfo> => {
       const { beforeUpload } = props;
 
-      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
       let transformedFile: BeforeUploadFileType | void = file;
       if (beforeUpload) {
         try {

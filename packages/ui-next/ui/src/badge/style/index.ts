@@ -123,32 +123,32 @@ export interface BadgeToken extends FullToken<'Badge'> {
   badgeTextColor: string;
 }
 
-const antStatusProcessing = new Keyframes('antStatusProcessing', {
+const antStatusProcessing = new Keyframes('asStatusProcessing', {
   '0%': { transform: 'scale(0.8)', opacity: 0.5 },
   '100%': { transform: 'scale(2.4)', opacity: 0 },
 });
 
-const antZoomBadgeIn = new Keyframes('antZoomBadgeIn', {
+const antZoomBadgeIn = new Keyframes('asZoomBadgeIn', {
   '0%': { transform: 'scale(0) translate(50%, -50%)', opacity: 0 },
   '100%': { transform: 'scale(1) translate(50%, -50%)' },
 });
 
-const antZoomBadgeOut = new Keyframes('antZoomBadgeOut', {
+const antZoomBadgeOut = new Keyframes('asZoomBadgeOut', {
   '0%': { transform: 'scale(1) translate(50%, -50%)' },
   '100%': { transform: 'scale(0) translate(50%, -50%)', opacity: 0 },
 });
 
-const antNoWrapperZoomBadgeIn = new Keyframes('antNoWrapperZoomBadgeIn', {
+const antNoWrapperZoomBadgeIn = new Keyframes('asNoWrapperZoomBadgeIn', {
   '0%': { transform: 'scale(0)', opacity: 0 },
   '100%': { transform: 'scale(1)' },
 });
 
-const antNoWrapperZoomBadgeOut = new Keyframes('antNoWrapperZoomBadgeOut', {
+const antNoWrapperZoomBadgeOut = new Keyframes('asNoWrapperZoomBadgeOut', {
   '0%': { transform: 'scale(1)' },
   '100%': { transform: 'scale(0)', opacity: 0 },
 });
 
-const antBadgeLoadingCircle = new Keyframes('antBadgeLoadingCircle', {
+const antBadgeLoadingCircle = new Keyframes('asBadgeLoadingCircle', {
   '0%': { transformOrigin: '50%' },
   '100%': {
     transform: 'translate(50%, -50%) rotate(360deg)',

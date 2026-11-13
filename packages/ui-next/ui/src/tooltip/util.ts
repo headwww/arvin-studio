@@ -4,6 +4,8 @@ import type { ColorGenInput } from '@arvin-studio/headless';
 
 import { clsx } from '@arvin-studio/kit';
 
+import DomZIndex from 'dom-zindex';
+
 import { isPresetColor } from '../_util/colors';
 import { generateColor } from '../color-picker/util';
 import { genCssVar } from '../theme/util/genStyleUtils';
@@ -33,4 +35,20 @@ export function parseColor(
   }
 
   return { className, overlayStyle, arrowStyle };
+}
+
+export function nextZIndex() {
+  return DomZIndex.getNext();
+}
+
+export function getLastZIndex() {
+  return DomZIndex.getCurrent();
+}
+
+export function nextSubZIndex() {
+  return DomZIndex.getSubNext();
+}
+
+export function getSubLastZIndex() {
+  return DomZIndex.getSubCurrent();
 }

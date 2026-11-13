@@ -41,6 +41,8 @@ export default defineConfig([
       'unicorn/prefer-await': 'off',
       'unicorn/no-negation-in-equality-check': 'off',
       'unicorn/no-immediate-mutation': 'off',
+      '@typescript-eslint/no-invalid-void-type': 'off',
+      'unicorn/max-nested-calls': 'off',
     },
   },
   {

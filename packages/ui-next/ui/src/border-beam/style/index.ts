@@ -20,7 +20,7 @@ const genBorderBeamStyle: GenerateStyle<BorderBeamToken, CSSObject> = (
   const [, varRef] = genCssVar(asCls, 'border-beam');
   const defaultBeamGradient = `linear-gradient(to left, ${token.colorPrimary} 0%, ${token.colorPrimaryHover} ${MAX_BEAM_COLOR_STOP_PERCENT}%, transparent)`;
 
-  const antBorderBeamMove = new Keyframes('antBorderBeamMove', {
+  const antBorderBeamMove = new Keyframes('asBorderBeamMove', {
     from: { offsetDistance: '0%' },
     to: { offsetDistance: '100%' },
   });

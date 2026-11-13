@@ -43,8 +43,10 @@ import type { ComponentToken as QRCodeComponentToken } from '../../qrcode/style'
 import type { ComponentToken as RadioComponentToken } from '../../radio/style';
 import type { ComponentToken as RateComponentToken } from '../../rate/style';
 import type { ComponentToken as ResultComponentToken } from '../../result/style';
+import type { ComponentToken as ScrollbarComponentToken } from '../../scrollbar/style';
 import type { ComponentToken as SegmentedComponentToken } from '../../segmented/style';
 import type { ComponentToken as SelectComponentToken } from '../../select/style';
+import type { ComponentToken as SharedTooltipComponentToken } from '../../tooltip/style/shared';
 import type { ComponentToken as SkeletonComponentToken } from '../../skeleton/style';
 import type { ComponentToken as SliderComponentToken } from '../../slider/style';
 import type { ComponentToken as SpaceComponentToken } from '../../space/style';
@@ -53,7 +55,7 @@ import type { ComponentToken as SplitterComponentToken } from '../../splitter/st
 import type { ComponentToken as StatisticComponentToken } from '../../statistic/style';
 import type { ComponentToken as StepsComponentToken } from '../../steps/style';
 import type { ComponentToken as SwitchComponentToken } from '../../switch/style';
-import type { ComponentToken as TableComponentToken } from '../../table/style';
+import type { ComponentToken as TableComponentToken } from '../../table/style/interface';
 import type { ComponentToken as TabsComponentToken } from '../../tabs/style';
 import type { ComponentToken as TagComponentToken } from '../../tag/style';
 import type { ComponentToken as TimelineComponentToken } from '../../timeline/style';
@@ -109,8 +111,10 @@ export interface ComponentTokenMap {
   Radio?: RadioComponentToken;
   Rate?: RateComponentToken;
   Result?: ResultComponentToken;
+  Scrollbar?: ScrollbarComponentToken;
   Segmented?: SegmentedComponentToken;
   Select?: SelectComponentToken;
+  SharedTooltip?: SharedTooltipComponentToken;
   Skeleton?: SkeletonComponentToken;
   Slider?: SliderComponentToken;
   Space?: SpaceComponentToken;

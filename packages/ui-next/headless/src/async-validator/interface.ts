@@ -71,7 +71,6 @@ export interface RuleItem {
     callback: (error?: Error | string) => void,
     source: Values,
     options: ValidateOption,
-    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   ) => SyncValidateResult | void;
   whitespace?: boolean;
 }

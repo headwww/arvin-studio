@@ -31,6 +31,8 @@ const renderMap: Record<string, AsGlobalRendererOptions> = {};
  */
 export const renderer: AsGlobalRenderer = {
   mixin(opts) {
+    // oxlint-disable-next-line typescript/ban-ts-comment
+    // @ts-expect-error
     each(opts, (options: any, name: any) => renderer.add(name, options));
     return renderer;
   },
