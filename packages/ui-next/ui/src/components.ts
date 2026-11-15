@@ -329,6 +329,20 @@ export { default as Rate } from './rate';
 export type { RateEmits, RateProps } from './rate';
 export { default as Result } from './result';
 export type { ResultProps, ResultSlots, ResultStatusType } from './result';
+export { default as Scrollbar } from './scrollbar';
+export type {
+  AsScrollbarComponent,
+  AsScrollbarConstructor,
+  AsScrollbarDefines,
+  AsScrollbarEmits,
+  AsScrollbarEventProps,
+  AsScrollbarEvents,
+  AsScrollbarInstance,
+  AsScrollbarMethods,
+  AsScrollbarPropTypes,
+  AsScrollbarProps,
+  AsScrollbarSlots,
+} from './scrollbar';
 export { default as Segmented } from './segmented';
 export type {
   SegmentedEmits,
@@ -343,6 +357,17 @@ export type {
   SelectSlots,
   SelectValue,
 } from './select';
+export { default as SharedTooltip } from './tooltip/SharedTooltip';
+export type {
+  AsSharedTooltipComponent,
+  AsSharedTooltipConstructor,
+  AsSharedTooltipEmits,
+  AsSharedTooltipEventProps,
+  AsSharedTooltipInstance,
+  AsSharedTooltipMethods,
+  AsSharedTooltipProps,
+  AsSharedTooltipSlots,
+} from './tooltip/shared-tooltip';
 export {
   default as Skeleton,
   SkeletonAvatar,
@@ -371,7 +396,7 @@ export type {
   SwitchSize,
   SwitchSlots,
 } from './switch';
-export { default as Table } from './table';
+export { Colgroup, Column, default as Table } from './table';
 export { TabPane, default as Tabs } from './tabs';
 export type {
   TabPaneProps,

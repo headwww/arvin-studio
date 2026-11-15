@@ -11,6 +11,14 @@ const typeTemplate = '${label} is not a valid ${type}';
 const localeValues: Locale = {
   Table: {
     seqTitle: '#',
+    emptyText: 'No Data',
+    allTitle: 'Select all/cancel',
+    sortAsc: 'Ascending order: lowest to highest',
+    sortDesc: 'Descending order: highest to lowest',
+    filter: 'Enable filtering for selected columns',
+    rowGroupContentTotal: '{0} ({1})',
+    resizeColTip: 'Width: {0} pixels',
+    resizeRowTip: 'Height: {0} pixels',
   },
   locale: 'en',
   Pagination,

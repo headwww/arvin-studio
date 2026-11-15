@@ -1,5 +1,6 @@
 import type { App, Plugin } from 'vue';
 
+import ArvinStudio from '@arvin-studio/core';
 import { StyleProvider } from '@arvin-studio/cssinjs';
 
 import * as components from './components';
@@ -37,3 +38,7 @@ export type { GlobalToken } from './theme';
 export { StyleProvider, version };
 
 export { default as theme } from './theme';
+
+export { ArvinStudio };
+
+export const renderer = ArvinStudio.renderer;

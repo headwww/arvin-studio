@@ -104,15 +104,15 @@ const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]
   <div>
     <Table
       show-footer
-      :row-config="{ useKey: true }"
-      :column-config="{ useKey: true }"
+      :row-config="{ useKey: true, resizable: true }"
+      :column-config="{ useKey: true, resizable: true }"
       :footer-data="footerData"
       :tooltip-config="tooltipConfig"
       :header-tooltip-config="headerTooltipConfig"
       :footer-tooltip-config="footerTooltipConfig"
       :data="tableData"
     >
-      <Column field="seq" type="seq" width="70" />
+      <Column field="seq" type="seq" width="70" row-resize />
       <Column field="name" title="名称" />
       <Column field="role" title="角色" />
       <Column field="date" title="Date" />

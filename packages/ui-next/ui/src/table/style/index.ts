@@ -1,33 +1,48 @@
-import type { CSSObject } from '@arvin-studio/cssinjs';
+import type { TableToken } from './interface';
 
-import type {
-  FullToken,
-  GenerateStyle,
-  GetDefaultToken,
-} from '../../theme/internal';
-
-import { genStyleHooks } from '../../theme/internal';
-
-export interface ComponentToken {}
-
-interface TableToken extends FullToken<'Table'> {}
-
-const genTableStyle: GenerateStyle<TableToken, CSSObject> = (token) => {
-  const { componentCls } = token;
-  return {
-    [componentCls]: {}, // 用全局 token
-  };
-};
-
-// 必须返回 ComponentToken
-export const prepareComponentToken: GetDefaultToken<'Table'> = () => {
-  return {};
-};
+import { genStyleHooks, mergeToken } from '../../theme/internal';
+import { genAreaStyle } from './area';
+import {
+  genBodyStyle,
+  genLargeCellPaddingStyle,
+  genMediumCellPaddingStyle,
+  genSmallCellPaddingStyle,
+} from './body';
+import {
+  genMainStyle,
+  genSizeBaseTableStyle,
+  genSizeLargeTableStyle,
+  genSizeSmallTableStyle,
+} from './main';
+import { prepareComponentToken } from './prepare';
+import { genScrollStyle } from './scroll';
 
 export default genStyleHooks(
   'Table',
   (token) => {
-    return [genTableStyle(token)];
+    const tableToken = mergeToken<TableToken>(token, {});
+    return [
+      genMainStyle(tableToken),
+      // 尺寸
+      genSizeBaseTableStyle(tableToken),
+      genSizeLargeTableStyle(tableToken),
+      genSizeSmallTableStyle(tableToken),
+
+      genMediumCellPaddingStyle(tableToken),
+      genLargeCellPaddingStyle(tableToken),
+      genSmallCellPaddingStyle(tableToken),
+
+      genAreaStyle(tableToken),
+      genBodyStyle(tableToken),
+      genScrollStyle(tableToken),
+    ];
   },
   prepareComponentToken,
+  {
+    // Space 同款：不需要额外 reset 字体（表格自带排版语义）
+    resetStyle: false,
+    unitless: {
+      headerFontWeight: true,
+    },
+  },
 );
