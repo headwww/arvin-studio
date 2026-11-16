@@ -59,6 +59,8 @@ export interface ComponentToken {
   columnHoverCurrentBackgroundColor: string;
   /** 列图标颜色（排序/筛选箭头） */
   columnIconBorderColor: string;
+  /** 拖拽经过时的高亮背景色 */
+  dragOverBackgroundColor: string;
   /** 表格内容字体大小 */
   contentFontSize: number;
   /**  大号表格内容字体大小*/

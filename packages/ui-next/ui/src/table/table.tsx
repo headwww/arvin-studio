@@ -35,6 +35,11 @@ import {
 } from 'vue';
 
 import {
+  StopOutlined,
+  SubnodeOutlined,
+  SwapOutlined,
+} from '@arvin-studio/icons';
+import {
   arrayEach,
   assign,
   browse,
@@ -74,12 +79,21 @@ import {
   uniqueId,
 } from '@arvin-studio/kit';
 
-import { ArvinStudio, SharedTooltip } from '..';
+import { ArvinStudio, message, SharedTooltip } from '..';
+import {
+  clearColAnimate,
+  clearRowAnimate,
+  moveColAnimateToLr,
+  moveRowAnimateToTb,
+} from '../_util/anime';
 import {
   addClass,
   checkTargetElement,
+  getEventTargetNode,
   getPaddingTopBottomSize,
+  getTpImg,
   hasClass,
+  hasControlKey,
   isPx,
   isScale,
   removeClass,
@@ -101,6 +115,7 @@ import { formatLocaleText } from './cell';
 import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
+import { getCrossTableDragRowInfo } from './store';
 import useStyle from './style';
 import {
   createHandleGetRowId,
@@ -144,29 +159,15 @@ const { renderer, formats, createEvent } = ArvinStudio;
 const defaults = {
   size: 'medium',
   showHeader: true,
-  cellConfig: {
-    padding: true,
-  },
-  columnConfig: {
-    autoOptions: {
-      isCalcHeader: true,
-      isCalcBody: true,
-      isCalcFooter: true,
-    },
-    maxFixedSize: 4,
-  },
-  treeConfig: {
-    padding: true,
-    rowField: 'id',
-    parentField: 'parentId',
-    childrenField: 'children',
-    hasChildField: 'hasChild',
-    mapChildrenField: '_AS_ROW_CHILD',
-    indent: 20,
-    showIcon: true,
-    showRootLine: true,
-  },
+  autoResize: true,
+  keepSource: false,
 } as AsTableProps;
+
+// oxlint-disable-next-line no-unused-vars
+let crossTableDragRowObj: null | {
+  $newTable: (AsTableConstructor & AsTablePrivateMethods) | null;
+  $oldTable: AsTableConstructor & AsTablePrivateMethods;
+} = null;
 
 export const Table = defineComponent<AsTableProps>(
   (props = defaults, context) => {
@@ -213,6 +214,9 @@ export const Table = defineComponent<AsTableProps>(
       minHeight: cMinHeight,
       resizeConfig: cResizeConfig,
       footerCellConfig: cFooterCellConfig,
+      keyboardConfig: cKeyboardConfig,
+      currentColumnConfig: cCurrentColumnConfig,
+      currentRowConfig: cCurrentRowConfig,
     } = useComponentBaseConfig('table', props, [
       'resizeConfig',
       'rowConfig',
@@ -247,6 +251,9 @@ export const Table = defineComponent<AsTableProps>(
       'footerTooltipConfig',
       'footerCellConfig',
       'seqConfig',
+      'keyboardConfig',
+      'currentColumnConfig',
+      'currentRowConfig',
     ]);
 
     const [hashId, cssVarCls] = useStyle(prefixCls);
@@ -254,6 +261,13 @@ export const Table = defineComponent<AsTableProps>(
     const xID = uniqueId();
 
     const browseObj = browse();
+
+    const crossTableDragRowInfo = getCrossTableDragRowInfo();
+
+    // eslint-disable-next-line no-useless-assignment
+    let tableMethods = {} as TableMethods;
+    // eslint-disable-next-line no-useless-assignment
+    let tablePrivateMethods = {} as TablePrivateMethods;
 
     const refElem = ref() as Ref<HTMLDivElement>;
     const refVarElem = ref() as Ref<HTMLDivElement>;
@@ -270,6 +284,10 @@ export const Table = defineComponent<AsTableProps>(
     const refTeleportWrapper = ref<HTMLDivElement>();
 
     const refEmptyPlaceholder = ref() as Ref<HTMLDivElement>;
+
+    const refDragTipElem = ref<HTMLDivElement>();
+    const refDragRowLineElem = ref<HTMLDivElement>();
+    const refDragColLineElem = ref<HTMLDivElement>();
 
     const refRowExpandElem = ref<HTMLDivElement>();
     const refRowExpandYSpaceElem = ref<HTMLDivElement>();
@@ -326,11 +344,6 @@ export const Table = defineComponent<AsTableProps>(
         ),
       );
     };
-
-    // eslint-disable-next-line no-useless-assignment
-    let tableMethods = {} as TableMethods;
-    // eslint-disable-next-line no-useless-assignment
-    let tablePrivateMethods = {} as TablePrivateMethods;
 
     const computeTableId = computed(() => {
       const { id } = props;
@@ -397,7 +410,8 @@ export const Table = defineComponent<AsTableProps>(
 
     const computeTreeOpts = computed(() => {
       return Object.assign(
-        { ...config.table.treeConfig },
+        {},
+        config.table.treeConfig,
         cTreeConfig.value,
         props.treeConfig,
       ) as AsTablePropTypes.TreeOpts;
@@ -424,7 +438,12 @@ export const Table = defineComponent<AsTableProps>(
     });
 
     const computeCellOpts = computed(() => {
-      const cellOpts = Object.assign({}, cCellConfig.value, props.cellConfig);
+      const cellOpts = Object.assign(
+        {},
+        config.table.cellConfig,
+        cCellConfig.value,
+        props.cellConfig,
+      );
       if (cellOpts.height) {
         cellOpts.height = toNumber(cellOpts.height);
       }
@@ -601,7 +620,12 @@ export const Table = defineComponent<AsTableProps>(
     });
 
     const computeColumnDragOpts = computed(() => {
-      return Object.assign({}, cColumnDragConfig.value, props.columnDragConfig);
+      return Object.assign(
+        {},
+        config.table.columnDragConfig,
+        cColumnDragConfig.value,
+        props.columnDragConfig,
+      ) as AsTablePropTypes.ColumnDragConfig;
     });
 
     const computeScrollbarOpts = computed(() => {
@@ -639,11 +663,39 @@ export const Table = defineComponent<AsTableProps>(
     });
 
     const computeColumnOpts = computed(() => {
-      return Object.assign({}, cColumnConfig.value, props.columnConfig);
+      return Object.assign(
+        {},
+        config.table.columnConfig,
+        cColumnConfig.value,
+        props.columnConfig,
+      );
+    });
+
+    const computeCurrentColumnOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.currentColumnConfig,
+        cCurrentColumnConfig.value,
+        props.currentColumnConfig,
+      );
+    });
+
+    const computeCurrentRowOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.currentRowConfig,
+        cCurrentRowConfig.value,
+        props.currentRowConfig,
+      );
     });
 
     const computeRowDragOpts = computed(() => {
-      return Object.assign({}, cRowDragConfig.value, props.rowDragConfig);
+      return Object.assign(
+        {},
+        config.table.rowDragConfig,
+        cRowDragConfig.value,
+        props.rowDragConfig,
+      );
     });
 
     const computeTooltipOpts = computed(() => {
@@ -718,9 +770,19 @@ export const Table = defineComponent<AsTableProps>(
     const computeAreaOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.areaConfig,
         cAreaConfig.value,
         props.areaConfig,
       ) as AsTablePropTypes.AreaOpts;
+    });
+
+    const computeKeyboardOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.keyboardConfig,
+        cKeyboardConfig.value,
+        props.keyboardConfig,
+      ) as AsTablePropTypes.KeyboardOpts;
     });
 
     const computeLeftFixedWidth = computed(() => {
@@ -744,7 +806,12 @@ export const Table = defineComponent<AsTableProps>(
     });
 
     const computeValidOpts = computed(() => {
-      const opts = Object.assign({}, cValidConfig.value, props.validConfig);
+      const opts = Object.assign(
+        {},
+        config.table.validConfig,
+        cValidConfig.value,
+        props.validConfig,
+      );
       return opts;
     });
 
@@ -953,6 +1020,14 @@ export const Table = defineComponent<AsTableProps>(
       internalData,
       getComputeMaps: () => computeMaps,
     } as unknown as AsTableConstructor & AsTableMethods & AsTablePrivateMethods;
+
+    const getNextSortOrder = (column: AsTableDefines.ColumnInfo) => {
+      const sortOpts = computeSortOpts.value;
+      const { orders = [] } = sortOpts;
+      const currOrder = column.order || null;
+      const oIndex = orders.indexOf(currOrder) + 1;
+      return orders[oIndex < orders.length ? oIndex : 0];
+    };
 
     const getCustomStorageMap = (id?: string) => {
       const rest = toStringJSON(localStorage.getItem(customStorageKey) || '');
@@ -2562,8 +2637,8 @@ export const Table = defineComponent<AsTableProps>(
       } = internalData;
       const treeOpts = computeTreeOpts.value;
       const { reserve, lazy, accordion, toggleMethod } = treeOpts;
-      const childrenField = treeOpts.children || treeOpts.childrenField;
-      const hasChildField = treeOpts.hasChild || treeOpts.hasChildField;
+      const childrenField = treeOpts.childrenField;
+      const hasChildField = treeOpts.hasChildField;
       const result: any[] = [];
       const columnIndex = $asTable.getColumnIndex(treeNodeColumn);
       const $columnIndex = $asTable.getVMColumnIndex(treeNodeColumn);
@@ -3194,7 +3269,7 @@ export const Table = defineComponent<AsTableProps>(
       } = internalData;
       const treeOpts = computeTreeOpts.value;
       const aggregateOpts = computeAggregateOpts.value;
-      const childrenField = treeOpts.children || treeOpts.childrenField;
+      const childrenField = treeOpts.childrenField;
       const checkboxOpts = computeCheckboxOpts.value;
       const { checkField, reserve, checkMethod } = checkboxOpts;
       const { handleGetRowId } = createHandleGetRowId($asTable);
@@ -4879,6 +4954,16 @@ export const Table = defineComponent<AsTableProps>(
         });
       },
       /**
+       * 根据列的唯一主键获取列
+       * @param {String} colid 列主键
+       */
+      getColumnById(colid) {
+        const { fullColumnIdData } = internalData;
+        return colid && fullColumnIdData[colid]
+          ? fullColumnIdData[colid].column
+          : null;
+      },
+      /**
        * 根据列的字段名获取列
        * @param {String} field 字段名
        */
@@ -4888,6 +4973,7 @@ export const Table = defineComponent<AsTableProps>(
           ? fullColumnFieldData[field].column
           : null;
       },
+
       getCellLabel(row, fieldOrColumn) {
         const column = handleFieldOrColumn($asTable, fieldOrColumn);
         if (!column) {
@@ -5234,7 +5320,7 @@ export const Table = defineComponent<AsTableProps>(
         const { tableFullTreeData } = internalData;
         const treeOpts = computeTreeOpts.value;
         const { transform, lazy } = treeOpts;
-        const childrenField = treeOpts.children || treeOpts.childrenField;
+        const childrenField = treeOpts.childrenField;
         const expandeds: any[] = [];
         eachTree(
           tableFullTreeData,
@@ -5255,6 +5341,34 @@ export const Table = defineComponent<AsTableProps>(
           reactData.treeExpandedFlag++;
           return $asTable.recalculate();
         });
+      },
+      /**
+       * 用于当前列，设置某列行为高亮状态
+       */
+      setCurrentColumn(fieldOrColumn) {
+        const { mouseConfig } = props;
+        const mouseOpts = computeMouseOpts.value;
+        const isMouseSelected = mouseConfig && mouseOpts.selected;
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column) {
+          $asTable.clearCurrentColumn();
+          internalData.currentCol = column;
+          reactData.currColFlag++; // 刷新当前列状态
+        }
+        return nextTick().then(() => {
+          // 更新状选中态
+          if (isMouseSelected) {
+            $asTable.addCellSelectedClass();
+          }
+        });
+      },
+      /**
+       * 用于当前列，手动清空当前高亮的状态
+       */
+      clearCurrentColumn() {
+        internalData.currentCol = null;
+        reactData.currColFlag++; // 刷新当前列状态
+        return nextTick();
       },
 
       setRowGroupExpandByField(groupFields, expanded) {
@@ -5325,7 +5439,7 @@ export const Table = defineComponent<AsTableProps>(
       setAllRowExpand(expanded) {
         const treeOpts = computeTreeOpts.value;
         const { tableFullData, tableFullTreeData } = internalData;
-        const childrenField = treeOpts.children || treeOpts.childrenField;
+        const childrenField = treeOpts.childrenField;
         let expandedRows: any[] = [];
         if (props.treeConfig) {
           eachTree(
@@ -5829,6 +5943,15 @@ export const Table = defineComponent<AsTableProps>(
           storeData.aggFuncData = aggFuncData;
         }
         return storeData;
+      },
+
+      focus() {
+        internalData.isActivated = true;
+        return nextTick();
+      },
+      blur() {
+        internalData.isActivated = false;
+        return nextTick();
       },
     };
 
@@ -6460,6 +6583,28 @@ export const Table = defineComponent<AsTableProps>(
       });
     };
 
+    const checkValidate = (type: any) => {
+      if ($asTable.triggerValidate) {
+        return $asTable.triggerValidate(type);
+      }
+      return nextTick();
+    };
+
+    /**
+     * 当单元格发生改变时
+     * 如果存在规则，则校验
+     */
+    const handleChangeCell = (evnt: Event, params: any) => {
+      checkValidate('blur')
+        .catch((error: any) => error)
+        .then(() => {
+          $asTable
+            .handleEdit(params, evnt)
+            .then(() => checkValidate('change'))
+            .catch((error: any) => error);
+        });
+    };
+
     const handleDefaultSort = () => {
       const { sortConfig } = props;
       if (sortConfig) {
@@ -6522,6 +6667,18 @@ export const Table = defineComponent<AsTableProps>(
 
       // ③ 提交到响应式状态 —— 渲染组件从这里取列
       reactData.tableColumn = tableColumn;
+    };
+
+    const handleUpdateColumn = () => {
+      const columnList = orderBy(
+        internalData.collectColumn,
+        'renderSortNumber',
+      );
+      internalData.collectColumn = columnList;
+      const tFullColumn = getColumnList(columnList);
+      internalData.tableFullColumn = tFullColumn;
+      reactData.updateColFlag++;
+      cacheColumnMap();
     };
 
     const loadScrollXData = () => {
@@ -7067,6 +7224,272 @@ export const Table = defineComponent<AsTableProps>(
       return nextTick();
     };
 
+    const handleRowDragEndClearStatus = () => {
+      clearRowDragData();
+      clearCrossTableDragStatus();
+      handleRecalculateStyle(false, true, true);
+    };
+
+    const handleColDragEndClearStatus = () => {
+      clearColDragData();
+      clearCrossTableDragStatus();
+      handleRecalculateStyle(true, true, true);
+    };
+
+    const clearRowDropOrigin = () => {
+      const el = refElem.value;
+      if (el) {
+        const clss = 'row--drag-origin';
+        arrayEach(el.querySelectorAll(`.${clss}`), (elem) => {
+          (elem as HTMLTableCellElement).draggable = false;
+          removeClass(elem, clss);
+        });
+      }
+    };
+
+    const updateRowDropOrigin = (row: any) => {
+      const el = refElem.value;
+      if (el) {
+        const clss = 'row--drag-origin';
+        const rowid = getRowid($asTable, row);
+        arrayEach(
+          el.querySelectorAll(`[rowid="${CSS.escape(rowid)}"]`),
+          (elem) => {
+            addClass(elem, clss);
+          },
+        );
+      }
+    };
+
+    const updateRowDropTipContent = (tdEl: HTMLElement) => {
+      const { dragRow } = reactData;
+      const rowDragOpts = computeRowDragOpts.value;
+      const { tooltipMethod } = rowDragOpts;
+      // eslint-disable-next-line no-useless-assignment
+      let tipContent = '';
+      if (tooltipMethod) {
+        const rtParams = {
+          $table: $asTable,
+          row: dragRow,
+        };
+        tipContent = `${tooltipMethod(rtParams) || ''}`;
+      } else {
+        tipContent = formatLocaleText(locale?.value.dragTip, [
+          tdEl.textContent || '',
+        ]);
+      }
+      reactData.dragTipText = tipContent;
+    };
+
+    const updateColDropOrigin = (column: AsTableDefines.ColumnInfo) => {
+      const el = refElem.value;
+      if (el) {
+        const colQuerys: string[] = [];
+        eachTree([column], (item) => {
+          colQuerys.push(`[colid="${item.id}"]`);
+        });
+        const clss = 'col--drag-origin';
+        arrayEach(el.querySelectorAll(colQuerys.join(',')), (elem) => {
+          addClass(elem, clss);
+        });
+      }
+    };
+
+    const clearColDropOrigin = () => {
+      const el = refElem.value;
+      if (el) {
+        const clss = 'col--drag-origin';
+        arrayEach(el.querySelectorAll(`.${clss}`), (elem) => {
+          (elem as HTMLTableCellElement).draggable = false;
+          removeClass(elem, clss);
+        });
+      }
+    };
+
+    const updateColDropTipContent = (tdEl: HTMLElement) => {
+      const { dragCol } = reactData;
+      const columnDragOpts = computeColumnDragOpts.value;
+      const { tooltipMethod } = columnDragOpts;
+      // eslint-disable-next-line no-useless-assignment
+      let tipContent = '';
+      if (tooltipMethod) {
+        const dtParams = {
+          $table: $asTable,
+          column: dragCol,
+        } as any;
+        tipContent = `${tooltipMethod(dtParams) || ''}`;
+      } else {
+        tipContent = formatLocaleText(locale?.value.dragTip, [
+          tdEl.textContent || '',
+        ]);
+      }
+      reactData.dragTipText = tipContent;
+    };
+
+    const showDropTip = (
+      evnt: DragEvent | MouseEvent,
+      trEl: HTMLElement | null,
+      thEl: HTMLElement | null,
+      showLine: boolean,
+      dragPos: string,
+    ) => {
+      let wrapperEl = refElem.value;
+      // TODO if ($xeGantt && trEl) {
+      //   const { refGanttContainerElem } = $xeGantt.getRefMaps();
+      //   const ganttContainerElem = refGanttContainerElem.value;
+      //   if (ganttContainerElem) {
+      //     wrapperEl = ganttContainerElem;
+      //   }
+      // }
+      if (!wrapperEl) {
+        return;
+      }
+      const { overflowX, scrollbarWidth, overflowY, scrollbarHeight } =
+        reactData;
+      const { prevDragToChild } = internalData;
+      const wrapperRect = wrapperEl.getBoundingClientRect();
+      const osbWidth = overflowY ? scrollbarWidth : 0;
+      const osbHeight = overflowX ? scrollbarHeight : 0;
+      const tableWrapperWidth = wrapperEl.clientWidth;
+      const tableWrapperHeight = wrapperEl.clientHeight;
+      if (trEl) {
+        const rdLineEl = refDragRowLineElem.value;
+        if (rdLineEl) {
+          if (showLine) {
+            const scrollbarYToLeft = computeScrollbarYToLeft.value;
+            const trRect = trEl.getBoundingClientRect();
+            let trHeight = trEl.clientHeight;
+            const offsetTop = Math.max(1, trRect.y - wrapperRect.y);
+            if (offsetTop + trHeight > tableWrapperHeight - osbHeight) {
+              trHeight = tableWrapperHeight - offsetTop - osbHeight;
+            }
+            rdLineEl.style.display = 'block';
+            rdLineEl.style.left = `${scrollbarYToLeft ? osbWidth : 0}px`;
+            rdLineEl.style.top = `${offsetTop}px`;
+            rdLineEl.style.height = `${trHeight}px`;
+            rdLineEl.style.width = `${tableWrapperWidth - osbWidth}px`;
+            rdLineEl.setAttribute('drag-pos', dragPos);
+            rdLineEl.setAttribute('drag-to-child', prevDragToChild ? 'y' : 'n');
+          } else {
+            rdLineEl.style.display = '';
+          }
+        }
+      } else if (thEl) {
+        const cdLineEl = refDragColLineElem.value;
+        if (cdLineEl) {
+          if (showLine) {
+            const scrollbarXToTop = computeScrollbarXToTop.value;
+            const leftContainerElem = refLeftContainer.value;
+            const leftContainerWidth = leftContainerElem
+              ? leftContainerElem.clientWidth
+              : 0;
+            const rightContainerElem = refRightContainer.value;
+            const rightContainerWidth = rightContainerElem
+              ? rightContainerElem.clientWidth
+              : 0;
+            const thRect = thEl.getBoundingClientRect();
+            let thWidth = thEl.clientWidth;
+            const offsetTop = Math.max(0, thRect.y - wrapperRect.y);
+            const startX = leftContainerWidth;
+            let offsetLeft = thRect.x - wrapperRect.x;
+            if (offsetLeft < startX) {
+              thWidth -= startX - offsetLeft;
+              offsetLeft = startX;
+            }
+            const endX =
+              tableWrapperWidth -
+              rightContainerWidth -
+              (rightContainerWidth ? 0 : osbWidth);
+            if (offsetLeft + thWidth > endX) {
+              thWidth = endX - offsetLeft;
+            }
+            cdLineEl.style.display = 'block';
+            cdLineEl.style.top = `${offsetTop}px`;
+            cdLineEl.style.left = `${offsetLeft}px`;
+            cdLineEl.style.width = `${thWidth}px`;
+            cdLineEl.style.height = prevDragToChild
+              ? `${thRect.height}px`
+              : `${tableWrapperHeight - offsetTop - (scrollbarXToTop ? 0 : osbHeight)}px`;
+            cdLineEl.setAttribute('drag-pos', dragPos);
+            cdLineEl.setAttribute('drag-to-child', prevDragToChild ? 'y' : 'n');
+          } else {
+            cdLineEl.style.display = '';
+          }
+        }
+      }
+      const rdTipEl = refDragTipElem.value;
+      if (rdTipEl) {
+        rdTipEl.style.display = 'block';
+        rdTipEl.style.top = `${Math.min(wrapperEl.clientHeight - wrapperEl.scrollTop - rdTipEl.clientHeight, evnt.clientY - wrapperRect.y)}px`;
+        rdTipEl.style.left = `${Math.min(wrapperEl.clientWidth - wrapperEl.scrollLeft - rdTipEl.clientWidth - 16, evnt.clientX - wrapperRect.x)}px`;
+        rdTipEl.setAttribute(
+          'drag-status',
+          showLine ? (prevDragToChild ? 'sub' : 'normal') : 'disabled',
+        );
+      }
+    };
+
+    const clearRowDragData = () => {
+      let wrapperEl = refElem.value;
+      const dtClss = [`.${prefixCls.value}-body--row`];
+      // TODO if ($xeGantt) {
+      //   const { refGanttContainerElem } = $xeGantt.getRefMaps();
+      //   const ganttContainerElem = refGanttContainerElem.value;
+      //   if (ganttContainerElem) {
+      //     wrapperEl = ganttContainerElem;
+      //   }
+      //   dtClss.push('.vxe-gantt-view--body-row', '.vxe-gantt-view--chart-row');
+      // }
+      hideDropTip();
+      clearRowDropOrigin();
+      clearRowAnimate(wrapperEl, dtClss);
+      internalData.prevDragToChild = false;
+      reactData.dragRow = null;
+      reactData.dragCol = null;
+    };
+
+    const clearColDragData = () => {
+      const el = refElem.value;
+      hideDropTip();
+      clearColDropOrigin();
+      clearColAnimate(el, [`.${prefixCls.value}--column`]);
+      internalData.prevDragToChild = false;
+      reactData.dragRow = null;
+      reactData.dragCol = null;
+    };
+
+    const hideDropTip = () => {
+      const rdTipEl = refDragTipElem.value;
+      const rdLineEl = refDragRowLineElem.value;
+      const cdLineEl = refDragColLineElem.value;
+      if (rdTipEl) {
+        rdTipEl.style.display = '';
+      }
+      if (rdLineEl) {
+        rdLineEl.style.display = '';
+      }
+      if (cdLineEl) {
+        cdLineEl.style.display = '';
+      }
+    };
+
+    const clearCrossTableDragStatus = () => {
+      crossTableDragRowObj = null;
+      crossTableDragRowInfo.row = null;
+    };
+
+    const clearDragStatus = () => {
+      const { dragRow, dragCol } = reactData;
+      if (dragRow || dragCol) {
+        clearColDropOrigin();
+        clearRowDropOrigin();
+        hideDropTip();
+        clearCrossTableDragStatus();
+        reactData.dragRow = null;
+        reactData.dragCol = null;
+      }
+    };
+
     tablePrivateMethods = {
       updateAfterDataIndex,
       callSlot,
@@ -7128,7 +7551,7 @@ export const Table = defineComponent<AsTableProps>(
         const radioOpts = computeRadioOpts.value;
         const rowOpts = computeRowOpts.value;
         const checkboxOpts = computeCheckboxOpts.value;
-        const childrenField = treeOpts.children || treeOpts.childrenField;
+        const childrenField = treeOpts.childrenField;
         const rowkey = getRowkey($asTable);
         if (!isArray(records)) {
           records = [records];
@@ -7670,7 +8093,54 @@ export const Table = defineComponent<AsTableProps>(
           $asTable.closeMenu();
         }
       },
+      handleColResizeDblclickEvent(evnt, params) {
+        const resizableOpts = computeResizableOpts.value;
+        const { isDblclickAutoWidth } = resizableOpts;
+        const el = refElem.value;
+        if (isDblclickAutoWidth && el) {
+          evnt.stopPropagation();
+          evnt.preventDefault();
+          const { fullColumnIdData } = internalData;
+          const { column } = params;
+          let resizeColumn = column;
+          if (column.children && column.children.length > 0) {
+            eachTree(column.children, (childColumn) => {
+              resizeColumn = childColumn;
+            });
+          }
+          const colid = resizeColumn.id;
+          const colRest = fullColumnIdData[colid];
+          const dragBtnElem = evnt.target as HTMLDivElement;
+          const cell = dragBtnElem.parentNode as HTMLTableCellElement;
+          const cellParams = Object.assign(params, {
+            cell,
+            $table: $asTable,
+          });
+          const colMinWidth = getColReMinWidth(cellParams);
+          const colMaxWidth = getColReMaxWidth(cellParams);
 
+          el.dataset.calcCol = 'Y';
+          let resizeWidth = calcColumnAutoWidth(resizeColumn, el);
+          delete el.dataset.calcCol;
+          if (colRest) {
+            resizeWidth = Math.max(resizeWidth, colRest.width);
+          }
+          resizeWidth = Math.max(colMinWidth, resizeWidth);
+          if (colMaxWidth > 1) {
+            resizeWidth = Math.min(colMaxWidth, resizeWidth);
+          }
+          const resizeParams = { ...params, resizeWidth, resizeColumn };
+          reactData.isDragResize = false;
+          internalData._lastResizeTime = Date.now();
+
+          if ($asTable.handleColResizeDblclickCellAreaEvent) {
+            $asTable.handleColResizeDblclickCellAreaEvent(evnt, resizeParams);
+          } else {
+            resizeColumn.resizeWidth = resizeWidth;
+            handleUpdateColResize(evnt, resizeParams);
+          }
+        }
+      },
       /**
        * @private
        */
@@ -7806,6 +8276,47 @@ export const Table = defineComponent<AsTableProps>(
           removeClass(tableEl, 'row-drag--resize');
         };
         updateEvent(evnt);
+      },
+
+      /**
+       * @private
+       */
+      handleRowResizeDblclickEvent(evnt, params) {
+        const resizableOpts = computeResizableOpts.value;
+        const { isDblclickAutoHeight } = resizableOpts;
+        const el = refElem.value;
+        if (isDblclickAutoHeight && el) {
+          evnt.stopPropagation();
+          evnt.preventDefault();
+          const { editStore } = reactData;
+          const { fullAllDataRowIdData } = internalData;
+          const { actived } = editStore;
+          const { row } = params;
+          const rowid = getRowid($asTable, row);
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (!rowRest) {
+            return;
+          }
+          const handleRsHeight = () => {
+            el.dataset.calcRow = 'Y';
+            const resizeHeight = calcCellAutoHeight(rowid, rowRest, el);
+            delete el.dataset.calcRow;
+            const resizeParams = { ...params, resizeHeight, resizeRow: row };
+            reactData.isDragResize = false;
+            internalData._lastResizeTime = Date.now();
+            if ($asTable.handleRowResizeDblclickCellAreaEvent) {
+              $asTable.handleRowResizeDblclickCellAreaEvent(evnt, resizeParams);
+            } else {
+              rowRest.resizeHeight = resizeHeight;
+              handleUpdateRowResize(evnt, resizeParams);
+            }
+          };
+          if (actived.row || actived.column) {
+            $asTable.clearEdit().then(handleRsHeight);
+          } else {
+            handleRsHeight();
+          }
+        }
       },
       // 更新横向 X 可视渲染上下剩余空间大小
       updateScrollXSpace() {
@@ -8067,6 +8578,47 @@ export const Table = defineComponent<AsTableProps>(
           $asTable.handleTableData();
           $asTable.updateScrollYSpace();
         });
+      },
+
+      /**
+       * 行 hover 事件
+       */
+      triggerHoverEvent(evnt, { row }) {
+        $asTable.setHoverRow(row);
+      },
+
+      setHoverRow(row) {
+        // TODO const $xeGanttView = internalData.xeGanttView;
+        $asTable.clearHoverRow();
+        const rowid = getRowid($asTable, row);
+        const el = refElem.value;
+        if (el) {
+          arrayEach(
+            el.querySelectorAll(
+              `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"]`,
+            ),
+            (elem) => addClass(elem, 'row--hover'),
+          );
+        }
+        internalData.hoverRow = row;
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
+        //   $xeGanttView.handleUpdateHoverRow(row);
+        // }
+      },
+
+      clearHoverRow() {
+        // TODO const $xeGanttView = internalData.xeGanttView;
+        const el = refElem.value;
+        if (el) {
+          arrayEach(
+            el.querySelectorAll(`.${prefixCls.value}-body--row.row--hover`),
+            (elem) => removeClass(elem, 'row--hover'),
+          );
+        }
+        internalData.hoverRow = null;
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
+        //   $xeGanttView.handleUpdateHoverRow()
+        // }
       },
       handleUpdateHeaderMerge() {
         const { mergeHeaderList } = internalData;
@@ -8708,6 +9260,291 @@ export const Table = defineComponent<AsTableProps>(
           $asTable.closeTooltip();
         }
       },
+      triggerHeaderCellClickEvent(evnt, params) {
+        const { _lastResizeTime } = internalData;
+        const sortOpts = computeSortOpts.value;
+        const columnOpts = computeColumnOpts.value;
+        const currentColumnOpts = computeCurrentColumnOpts.value;
+        const { column } = params;
+        const cell = evnt.currentTarget;
+        const triggerResizable =
+          _lastResizeTime && _lastResizeTime > Date.now() - 300;
+        const triggerSort = getEventTargetNode(
+          evnt,
+          cell,
+          `${prefixCls.value}-cell--sort`,
+        ).flag;
+        const triggerFilter = getEventTargetNode(
+          evnt,
+          cell,
+          `${prefixCls.value}-cell--filter`,
+        ).flag;
+        if (
+          sortOpts.trigger === 'cell' &&
+          !(triggerResizable || triggerSort || triggerFilter)
+        ) {
+          $asTable.triggerSortEvent(evnt, column, getNextSortOrder(column)!);
+        }
+        // TODO if ($xeGantt) {
+        //   const ganttReactData = $asTable.reactData;
+        //   ganttReactData.activeBarRowid = null;
+        // }
+        dispatchEvent(
+          'header-cell-click',
+          Object.assign(
+            { triggerResizable, triggerSort, triggerFilter, cell },
+            params,
+          ),
+          evnt,
+        );
+        if (
+          columnOpts.isCurrent &&
+          (!currentColumnOpts.trigger ||
+            ['default', 'header'].includes(currentColumnOpts.trigger))
+        ) {
+          $asTable.triggerCurrentColumnEvent(evnt, params);
+        }
+      },
+      triggerHeaderCellDblclickEvent(evnt, params) {
+        dispatchEvent(
+          'header-cell-dblclick',
+          Object.assign({ cell: evnt.currentTarget }, params),
+          evnt,
+        );
+      },
+      /**
+       * 列点击事件
+       * 如果是单击模式，则激活为编辑状态
+       * 如果是双击模式，则单击后选中状态
+       */
+      triggerCellClickEvent(evnt, params) {
+        const { treeConfig, editConfig, aggregateConfig } = props;
+        const {
+          editStore,
+          isDragResize,
+          expandColumn,
+          checkboxColumn,
+          radioColumn,
+        } = reactData;
+        if (isDragResize) {
+          return;
+        }
+        const expandOpts = computeExpandOpts.value;
+        const editOpts = computeEditOpts.value;
+        const treeOpts = computeTreeOpts.value;
+        const radioOpts = computeRadioOpts.value;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const keyboardOpts = computeKeyboardOpts.value;
+        const aggregateOpts = computeAggregateOpts.value;
+        const rowOpts = computeRowOpts.value;
+        const columnOpts = computeColumnOpts.value;
+        const currentColumnOpts = computeCurrentColumnOpts.value;
+        const { actived, focused } = editStore;
+        const { row, column } = params;
+        const { type, treeNode, rowGroupNode } = column;
+        const isRadioType = type === 'radio';
+        const isCheckboxType = type === 'checkbox';
+        const isExpandType = type === 'expand';
+        const cell = evnt.currentTarget as HTMLDivElement;
+        const triggerRadio =
+          isRadioType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--radio`).flag;
+        const triggerCheckbox =
+          isCheckboxType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--checkbox`)
+            .flag;
+        const triggerTreeNode =
+          treeNode &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--tree-btn`)
+            .flag;
+        const triggerExpandNode =
+          isExpandType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}--expanded`).flag;
+        const triggerRowGroupNode =
+          isExpandType &&
+          getEventTargetNode(
+            evnt,
+            cell,
+            `${prefixCls.value}-row-group--node-btn`,
+          ).flag;
+        params = Object.assign(
+          {
+            cell,
+            triggerRadio,
+            triggerCheckbox,
+            triggerTreeNode,
+            triggerExpandNode,
+          },
+          params,
+        );
+        if (!triggerCheckbox && !triggerRadio) {
+          // 如果是展开行
+          if (
+            !triggerExpandNode &&
+            ((expandColumn && expandOpts.trigger === 'row') ||
+              (isExpandType && expandOpts.trigger === 'cell'))
+          ) {
+            $asTable.triggerRowExpandEvent(evnt, params);
+          }
+          // 如果是树形表格
+          if (
+            treeConfig &&
+            (treeOpts.trigger === 'row' ||
+              (treeNode && treeOpts.trigger === 'cell'))
+          ) {
+            $asTable.triggerTreeExpandEvent(evnt, params);
+          }
+          // 如果是行分组
+          if (
+            aggregateConfig &&
+            (aggregateOpts.trigger === 'row' ||
+              (rowGroupNode && aggregateOpts.trigger === 'cell'))
+          ) {
+            $asTable.triggerRowGroupExpandEvent(evnt, params);
+          }
+        }
+        // 如果点击了树节点
+        if (!triggerTreeNode) {
+          if (!triggerExpandNode && !triggerRowGroupNode) {
+            // 如果是当前行
+            if (rowOpts.isCurrent && !triggerCheckbox && !triggerRadio) {
+              $asTable.triggerCurrentRowEvent(evnt, params);
+            }
+            // 如果是当前列
+            if (
+              columnOpts.isCurrent &&
+              (!currentColumnOpts.trigger ||
+                ['cell', 'default'].includes(currentColumnOpts.trigger)) &&
+              !triggerCheckbox &&
+              !triggerRadio
+            ) {
+              $asTable.triggerCurrentColumnEvent(evnt, params);
+            }
+            // 如果是单选框
+            if (
+              !triggerRadio &&
+              ((radioColumn && radioOpts.trigger === 'row') ||
+                (isRadioType && radioOpts.trigger === 'cell'))
+            ) {
+              $asTable.triggerRadioRowEvent(evnt, params);
+            }
+            // 如果是复选框
+            if (
+              !triggerCheckbox &&
+              ((checkboxColumn && checkboxOpts.trigger === 'row') ||
+                (isCheckboxType && checkboxOpts.trigger === 'cell'))
+            ) {
+              $asTable.handleToggleCheckRowEvent(evnt, params);
+            }
+          }
+          // 如果设置了单元格选中功能，则不会使用点击事件去处理（只能支持双击模式）
+          if (isEnableConf(editConfig)) {
+            // 记录点击输入框聚焦状态
+            if (
+              keyboardOpts.arrowCursorLock &&
+              evnt &&
+              editOpts.mode === 'cell' &&
+              evnt.target &&
+              /^input|textarea$/i.test((evnt.target as HTMLElement).tagName)
+            ) {
+              focused.column = column;
+              focused.row = row;
+            }
+            if (editOpts.trigger === 'manual') {
+              if (
+                actived.args &&
+                actived.row === row &&
+                column !== actived.column
+              ) {
+                if (editOpts.mode === 'row') {
+                  handleChangeCell(evnt, params);
+                } else {
+                  checkValidate('blur').catch((error: any) => error);
+                }
+              }
+            } else if (
+              !actived.args ||
+              row !== actived.row ||
+              column !== actived.column
+            ) {
+              if (editOpts.trigger === 'click') {
+                handleChangeCell(evnt, params);
+              }
+              if (
+                editOpts.trigger === 'dblclick' &&
+                editOpts.mode === 'row' &&
+                actived.row === row
+              ) {
+                handleChangeCell(evnt, params);
+              }
+            }
+          }
+        }
+        // 如果是双击编辑模式，当autoClear=false时
+        if (
+          isEnableConf(editConfig) &&
+          editOpts.autoClear !== false &&
+          editOpts.trigger === 'dblclick' &&
+          actived.row &&
+          actived.column
+        ) {
+          if (editOpts.mode === 'row') {
+            if (!$asTable.eqRow(actived.row, row)) {
+              $asTable.handleClearEdit(evnt);
+            }
+          } else if (
+            editOpts.mode === 'cell' &&
+            (!$asTable.eqRow(actived.row, row) ||
+              actived.column.id !== column.id)
+          ) {
+            $asTable.handleClearEdit(evnt);
+          }
+        }
+        // TODO if ($xeGantt) {
+        //   const ganttReactData = $xeGantt.reactData;
+        //   ganttReactData.activeBarRowid = null;
+        // }
+        dispatchEvent('cell-click', params, evnt);
+      },
+
+      /**
+       * 列双击点击事件
+       * 如果是双击模式，则激活为编辑状态
+       */
+      triggerCellDblclickEvent(evnt, params) {
+        const { editConfig } = props;
+        const { editStore, isDragResize } = reactData;
+        if (isDragResize) {
+          return;
+        }
+        const editOpts = computeEditOpts.value;
+        const { actived } = editStore;
+        const cell = evnt.currentTarget as HTMLDivElement;
+        params = Object.assign({ cell }, params);
+        if (
+          isEnableConf(editConfig) &&
+          editOpts.trigger === 'dblclick' &&
+          (!actived.args || evnt.currentTarget !== actived.args.cell)
+        ) {
+          if (editOpts.mode === 'row') {
+            checkValidate('blur')
+              .catch((error) => error)
+              .then(() => {
+                $asTable
+                  .handleEdit(params, evnt)
+                  .then(() => checkValidate('change'))
+                  .catch((error) => error);
+              });
+          } else if (editOpts.mode === 'cell') {
+            $asTable
+              .handleEdit(params, evnt)
+              .then(() => checkValidate('change'))
+              .catch((error) => error);
+          }
+        }
+        dispatchEvent('cell-dblclick', params, evnt);
+      },
+
       handleClearStack() {
         const { stackHistoryStore } = internalData;
         stackHistoryStore.undoStacks = [];
@@ -8742,6 +9579,142 @@ export const Table = defineComponent<AsTableProps>(
             }
           }
         }
+      },
+      handleHeaderCellDragDragendEvent(evnt) {
+        const { dragCol } = reactData;
+        const { prevDragCol, prevDragPos, prevDragToChild } = internalData;
+        $asTable.handleColDragSwapEvent(
+          evnt,
+          true,
+          dragCol,
+          prevDragCol,
+          prevDragPos,
+          prevDragToChild,
+        );
+      },
+      handleHeaderCellDragDragoverEvent(evnt) {
+        const { dragCol } = reactData;
+        const columnDragOpts = computeColumnDragOpts.value;
+        const { isToChildDrag, isPeerDrag, isCrossDrag } = columnDragOpts;
+        if (!dragCol) {
+          evnt.preventDefault();
+          return;
+        }
+        const isControlKey = hasControlKey(evnt);
+        const thEl = evnt.currentTarget as HTMLElement;
+        const colid = thEl.getAttribute('colid');
+        const column = $asTable.getColumnById(colid);
+        if (column) {
+          evnt.preventDefault();
+          const { clientX } = evnt;
+          const offsetX = clientX - thEl.getBoundingClientRect().x;
+          const dragPos = offsetX < thEl.clientWidth / 2 ? 'left' : 'right';
+          internalData.prevDragToChild = !!(
+            isCrossDrag &&
+            isToChildDrag &&
+            isControlKey
+          );
+          internalData.prevDragCol = column;
+          internalData.prevDragPos = dragPos;
+          if (
+            column.fixed ||
+            (dragCol && dragCol.id === column.id) ||
+            (!isCrossDrag &&
+              (isPeerDrag
+                ? dragCol.parentId !== column.parentId
+                : column.parentId))
+          ) {
+            showDropTip(evnt, null, thEl, false, dragPos);
+            return;
+          }
+          showDropTip(evnt, null, thEl, true, dragPos);
+          dispatchEvent(
+            'column-dragover',
+            {
+              oldColumn: dragCol,
+              targetColumn: column,
+              dragPos,
+            },
+            evnt,
+          );
+
+          // 边缘滚动
+          const el = refElem.value;
+          if (!el) {
+            return;
+          }
+          const xHandleEl = refScrollXHandleElem.value;
+          const tableBody = refTableBody.value;
+          const tableBodyElem = tableBody
+            ? (tableBody.$el as HTMLDivElement)
+            : null;
+          const scrollTargetEl = xHandleEl || tableBodyElem;
+          if (scrollTargetEl) {
+            const wrapperRect = el.getBoundingClientRect();
+            const tableWrapperWidth = el.clientWidth;
+            const leftContainerElem = refLeftContainer.value;
+            const leftContainerWidth = leftContainerElem
+              ? leftContainerElem.clientWidth
+              : 0;
+            const rightContainerElem = refRightContainer.value;
+            const rightContainerWidth = rightContainerElem
+              ? rightContainerElem.clientWidth
+              : 0;
+            const srartX = wrapperRect.x + leftContainerWidth;
+            const endX =
+              wrapperRect.x + tableWrapperWidth - rightContainerWidth;
+            const distSize = 28;
+            const startDistSize = clientX - srartX;
+            const endDistSize = endX - clientX;
+            if (startDistSize > 0 && startDistSize <= distSize) {
+              const scrollRatio = Math.floor(
+                tableWrapperWidth / (startDistSize > distSize / 2 ? 240 : 120),
+              );
+              scrollTargetEl.scrollLeft -=
+                scrollRatio * (distSize - startDistSize);
+            } else if (endDistSize > 0 && endDistSize <= distSize) {
+              const scrollRatio = Math.floor(
+                tableWrapperWidth / (endDistSize > distSize / 2 ? 240 : 120),
+              );
+              scrollTargetEl.scrollLeft +=
+                scrollRatio * (distSize - endDistSize);
+            }
+          }
+        }
+      },
+      handleHeaderCellDragMousedownEvent(evnt, params) {
+        evnt.stopPropagation();
+        const columnDragOpts = computeColumnDragOpts.value;
+        const { trigger, dragStartMethod } = columnDragOpts;
+        const { column } = params;
+        const dragEl = evnt.currentTarget as HTMLElement;
+        const thEl =
+          trigger === 'cell'
+            ? dragEl
+            : (dragEl.parentElement?.parentElement as HTMLElement);
+        clearColDropOrigin();
+        if (dragStartMethod && !dragStartMethod(params)) {
+          thEl.draggable = false;
+          reactData.dragRow = null;
+          reactData.dragCol = null;
+          clearCrossTableDragStatus();
+          hideDropTip();
+          return;
+        }
+        reactData.dragCol = column;
+        reactData.dragRow = null;
+        thEl.draggable = true;
+        clearCrossTableDragStatus();
+        updateColDropOrigin(column);
+        updateColDropTipContent(thEl);
+        dispatchEvent('column-dragstart', params, evnt);
+      },
+      handleHeaderCellDragMouseupEvent() {
+        clearColDropOrigin();
+        hideDropTip();
+        clearCrossTableDragStatus();
+        reactData.dragRow = null;
+        reactData.dragCol = null;
       },
 
       handleScrollEvent(evnt, isRollY, isRollX, scrollTop, scrollLeft, params) {
@@ -9409,8 +10382,7 @@ export const Table = defineComponent<AsTableProps>(
               // 树与分组
               if (treeConfig || isRowGroupStatus) {
                 const { transform } = treeOpts;
-                const childrenField =
-                  treeOpts.children || treeOpts.childrenField;
+                const childrenField = treeOpts.childrenField;
                 const iteratorChildField = treeConfig
                   ? transform
                     ? treeOpts.mapChildrenField
@@ -9624,6 +10596,1147 @@ export const Table = defineComponent<AsTableProps>(
           }
         }
       },
+      triggerCurrentColumnEvent(evnt, params) {
+        const { currentCol: oldValue } = internalData;
+        const currentColumnOpts = computeCurrentColumnOpts.value;
+        const beforeRowMethod = currentColumnOpts.beforeSelectMethod;
+        let newValue: AsTableDefines.ColumnInfo | null = params.column;
+        const { trigger, strict } = currentColumnOpts;
+        if (trigger === 'manual') {
+          return;
+        }
+        let isChange = oldValue !== newValue;
+        if (
+          !beforeRowMethod ||
+          beforeRowMethod({ column: newValue, $table: $asTable })
+        ) {
+          if (strict) {
+            $asTable.setCurrentColumn(newValue);
+          } else {
+            if (oldValue === newValue) {
+              newValue = null;
+            }
+            isChange = oldValue !== newValue;
+            if (isChange && newValue) {
+              $asTable.setCurrentColumn(newValue);
+            } else {
+              newValue = null;
+              $asTable.clearCurrentColumn();
+            }
+          }
+          if (isChange) {
+            dispatchEvent(
+              'current-column-change',
+              { oldValue, newValue, selected: !!newValue, ...params },
+              evnt,
+            );
+          }
+        } else {
+          dispatchEvent('current-column-disabled', params, evnt);
+        }
+      },
+      triggerCurrentRowEvent(evnt, params) {
+        const { currentRow: oldValue } = internalData;
+        const currentRowOpts = computeCurrentRowOpts.value;
+        const beforeRowMethod = currentRowOpts.beforeSelectMethod;
+        let { row: newValue } = params;
+        const { trigger, strict } = currentRowOpts;
+        if (trigger === 'manual') {
+          return;
+        }
+        let isChange = oldValue !== newValue;
+        if (
+          !beforeRowMethod ||
+          beforeRowMethod({ row: newValue, $table: $asTable })
+        ) {
+          if (strict) {
+            $asTable.setCurrentRow(newValue);
+          } else {
+            if (oldValue === newValue) {
+              newValue = null;
+            }
+            isChange = oldValue !== newValue;
+            if (isChange && newValue) {
+              $asTable.setCurrentRow(newValue);
+            } else {
+              newValue = null;
+              $asTable.clearCurrentRow();
+            }
+          }
+          if (isChange) {
+            dispatchEvent(
+              'current-row-change',
+              { oldValue, newValue, selected: !!newValue, ...params },
+              evnt,
+            );
+          }
+        } else {
+          dispatchEvent('current-row-disabled', params, evnt);
+        }
+      },
+      /**
+       * 单元格按下事件
+       */
+      triggerCellMousedownEvent(evnt, params) {
+        const { column } = params;
+        const { type, treeNode } = column;
+        const isRadioType = type === 'radio';
+        const isCheckboxType = type === 'checkbox';
+        const isExpandType = type === 'expand';
+        const rowOpts = computeRowOpts.value;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { trigger, isCrossDrag, isPeerDrag, disabledMethod } =
+          rowDragOpts;
+        const cell = evnt.currentTarget as HTMLElement;
+        params.cell = cell;
+        const triggerInput =
+          cell && cell.tagName && cell.tagName.toLowerCase() === 'input';
+        const triggerRadio =
+          isRadioType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--radio`).flag;
+        const triggerCheckbox =
+          isCheckboxType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--checkbox`)
+            .flag;
+        const triggerTreeNode =
+          treeNode &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}-cell--tree-btn`)
+            .flag;
+        const triggerExpandNode =
+          isExpandType &&
+          getEventTargetNode(evnt, cell, `${prefixCls.value}--expanded`).flag;
+        const isColDragCell = rowOpts.drag
+          ? trigger === 'row' || (column.dragSort && trigger === 'cell')
+          : false;
+        let triggerDrag = false;
+        if (
+          !(
+            triggerInput ||
+            triggerRadio ||
+            triggerCheckbox ||
+            triggerTreeNode ||
+            triggerExpandNode
+          ) &&
+          isColDragCell &&
+          (isCrossDrag || isPeerDrag || !params.level) &&
+          !(disabledMethod && disabledMethod(params))
+        ) {
+          triggerDrag = true;
+          $asTable.handleCellDragMousedownEvent(evnt, params);
+        }
+        if (!triggerDrag && $asTable.handleCellMousedownEvent) {
+          $asTable.handleCellMousedownEvent(evnt, params);
+        }
+        $asTable.focus();
+        $asTable.closeFilter();
+        if ($asTable.closeMenu) {
+          $asTable.closeMenu();
+        }
+      },
+      triggerCellMouseupEvent() {
+        clearDragStatus();
+      },
+
+      /**
+       * 行拖拽
+       */
+      handleRowDragDragstartEvent(evnt) {
+        if (evnt.dataTransfer) {
+          evnt.dataTransfer.setDragImage(getTpImg(), 0, 0);
+        }
+        $asTable.closeTooltip();
+      },
+      handleRowDragSwapEvent(
+        evnt,
+        isSyncRow,
+        dragRow,
+        prevDragRow,
+        prevDragPos,
+        prevDragToChild,
+      ) {
+        const { treeConfig } = props;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { afterFullData, tableFullData, fullAllDataRowIdData } =
+          internalData;
+        // TODO const $xeGanttView = internalData.xeGanttView;
+        const {
+          animation,
+          isPeerDrag,
+          isCrossDrag,
+          isSelfToChildDrag,
+          dragEndMethod,
+          dragToChildMethod,
+        } = rowDragOpts;
+        const treeOpts = computeTreeOpts.value;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const { transform, rowField, mapChildrenField, parentField } = treeOpts;
+        const childrenField = treeOpts.childrenField;
+        const dEndMethod = dragEndMethod;
+        const dragOffsetIndex = prevDragPos === 'bottom' ? 1 : 0;
+        const el = refElem.value;
+        const errRest = {
+          status: false,
+        };
+        if (!(el && prevDragRow && dragRow)) {
+          handleRowDragEndClearStatus();
+          return Promise.resolve(errRest);
+        }
+        // 判断是否有拖动
+        if (prevDragRow !== dragRow) {
+          const dragParams = {
+            oldRow: dragRow,
+            newRow: prevDragRow,
+            dragRow,
+            dragPos: prevDragPos as 'bottom' | 'top',
+            dragToChild: !!prevDragToChild,
+            offsetIndex: dragOffsetIndex as 0 | 1,
+          };
+
+          const dragRowid = getRowid($asTable, dragRow);
+          const dragRowRest =
+            fullAllDataRowIdData[dragRowid] ||
+            ({} as AsTableDefines.RowCacheItem);
+          const _dragRowIndex = dragRowRest._index;
+          let dragRowHeight = 0;
+          let dragOffsetTop = -1;
+          if (animation) {
+            dragRowHeight = getCellRestHeight(
+              dragRowRest,
+              cellOpts,
+              defaultRowHeight,
+            );
+            const oldTrEl = el.querySelector<HTMLElement>(
+              `.${prefixCls.value}-body--row[rowid="${CSS.escape(dragRowid)}"]`,
+            );
+            if (oldTrEl) {
+              dragOffsetTop = oldTrEl.offsetTop;
+            }
+          }
+
+          let oafIndex = -1;
+          let nafIndex = -1;
+          const oldRest = dragRowRest;
+          const newRowid = getRowid($asTable, prevDragRow);
+          const newRest = fullAllDataRowIdData[newRowid];
+          const oldAllMaps: Record<string, any> = {};
+          let isSelfToChildStatus = false;
+
+          // 如果为树结构
+          if (treeConfig && transform && oldRest && newRest) {
+            const { level: oldLevel } = oldRest;
+            const { level: newLevel } = newRest;
+
+            eachTree(
+              [dragRow],
+              (item) => {
+                oldAllMaps[getRowid($asTable, item)] = item;
+              },
+              { children: mapChildrenField },
+            );
+
+            if (oldLevel && newLevel) {
+              // 子到子
+
+              if (isPeerDrag && !isCrossDrag) {
+                if (oldRest.row[parentField] !== newRest.row[parentField]) {
+                  // 非同级
+                  handleRowDragEndClearStatus();
+                  return Promise.resolve(errRest);
+                }
+              } else {
+                if (!isCrossDrag) {
+                  handleRowDragEndClearStatus();
+                  return Promise.resolve(errRest);
+                }
+                if (oldAllMaps[newRowid]) {
+                  isSelfToChildStatus = true;
+                  if (!(isCrossDrag && isSelfToChildDrag)) {
+                    if (message) {
+                      message.error(locale?.value.treeDragChild);
+                    }
+                    handleRowDragEndClearStatus();
+                    return Promise.resolve(errRest);
+                  }
+                }
+              }
+            } else if (oldLevel) {
+              // 子到根
+
+              if (!isCrossDrag) {
+                handleRowDragEndClearStatus();
+                return Promise.resolve(errRest);
+              }
+            } else if (newLevel) {
+              // 根到子
+
+              if (!isCrossDrag) {
+                handleRowDragEndClearStatus();
+                return Promise.resolve(errRest);
+              }
+              if (oldAllMaps[newRowid]) {
+                isSelfToChildStatus = true;
+                if (!(isCrossDrag && isSelfToChildDrag)) {
+                  if (message) {
+                    message.error(locale?.value.treeDragChild);
+                  }
+                  handleRowDragEndClearStatus();
+                  return Promise.resolve(errRest);
+                }
+              }
+            } else {
+              // 根到根
+            }
+          }
+
+          const isDragToChildFlag =
+            isSelfToChildDrag && dragToChildMethod
+              ? dragToChildMethod(dragParams)
+              : prevDragToChild;
+          if (dEndMethod) {
+            handleRowDragEndClearStatus();
+          }
+          return Promise.resolve(dEndMethod ? dEndMethod(dragParams) : true)
+            .then((status) => {
+              if (!status) {
+                return errRest;
+              }
+
+              // 如果为树结构
+              if (treeConfig) {
+                // 移出源位置
+                if (transform && oldRest && newRest) {
+                  const fullList = toTreeArray(internalData.afterTreeFullData, {
+                    updated: false,
+                    key: rowField,
+                    parentKey: parentField,
+                    children: mapChildrenField,
+                  });
+
+                  // 移出
+                  const otfIndex = $asTable.findRowIndexOf(fullList, dragRow);
+                  fullList.splice(otfIndex, 1);
+
+                  // 插入
+                  const ptfIndex = $asTable.findRowIndexOf(
+                    fullList,
+                    prevDragRow,
+                  );
+                  const ntfIndex = ptfIndex + dragOffsetIndex;
+                  fullList.splice(ntfIndex, 0, dragRow);
+
+                  // 改变层级
+                  if (isSelfToChildStatus && isCrossDrag && isSelfToChildDrag) {
+                    each(dragRow[childrenField], (childRow) => {
+                      childRow[parentField] = dragRow[parentField];
+                    });
+                  }
+                  // eslint-disable-next-line unicorn/prefer-minimal-ternary
+                  dragRow[parentField] = isDragToChildFlag
+                    ? prevDragRow[rowField]
+                    : prevDragRow[parentField];
+
+                  internalData.tableFullTreeData = toArrayTree(fullList, {
+                    key: rowField,
+                    parentKey: parentField,
+                    children: childrenField,
+                    mapChildren: mapChildrenField,
+                  });
+                }
+              } else {
+                // 移出
+                oafIndex = $asTable.findRowIndexOf(afterFullData, dragRow);
+                const otfIndex = $asTable.findRowIndexOf(
+                  tableFullData,
+                  dragRow,
+                );
+                afterFullData.splice(oafIndex, 1);
+                tableFullData.splice(otfIndex, 1);
+                // 插入
+                const pafIndex = $asTable.findRowIndexOf(
+                  afterFullData,
+                  prevDragRow,
+                );
+                const ptfIndex = $asTable.findRowIndexOf(
+                  tableFullData,
+                  prevDragRow,
+                );
+                nafIndex = pafIndex + dragOffsetIndex;
+                const ntfIndex = ptfIndex + dragOffsetIndex;
+                afterFullData.splice(nafIndex, 0, dragRow);
+                tableFullData.splice(ntfIndex, 0, dragRow);
+              }
+
+              $asTable.handleClearStack();
+              $asTable.handleTableData(treeConfig && transform);
+              $asTable.cacheRowMap(false);
+              updateScrollYStatus();
+              if (!(treeConfig && transform)) {
+                $asTable.updateAfterDataIndex();
+              }
+              $asTable.checkSelectionStatus();
+              if (reactData.scrollYLoad) {
+                $asTable.updateScrollYSpace();
+              }
+
+              if (evnt) {
+                dispatchEvent(
+                  'row-dragend',
+                  {
+                    oldRow: dragRow,
+                    newRow: prevDragRow,
+                    dragRow,
+                    dragPos: prevDragPos as any,
+                    dragToChild: isDragToChildFlag,
+                    offsetIndex: dragOffsetIndex,
+                    _index: {
+                      newIndex: nafIndex,
+                      oldIndex: oafIndex,
+                    },
+                  },
+                  evnt,
+                );
+              }
+
+              return nextTick()
+                .then(() => {
+                  if (animation) {
+                    const { tableData } = reactData;
+                    const { fullAllDataRowIdData } = internalData;
+                    const dragRowRest = fullAllDataRowIdData[dragRowid]!;
+                    const _newRowIndex = dragRowRest._index;
+                    const firstRow = tableData[0];
+                    const firstRowRest =
+                      fullAllDataRowIdData[getRowid($asTable, firstRow)];
+                    let wrapperEl = el;
+
+                    // TODO if ($xeGantt && $xeGanttView) {
+                    //   const { refGanttContainerElem } = $xeGantt.getRefMaps();
+                    //   const ganttContainerElem = refGanttContainerElem.value;
+                    //   if (ganttContainerElem) {
+                    //     wrapperEl = ganttContainerElem;
+                    //   }
+                    // }
+                    if (firstRowRest) {
+                      const _firstRowIndex = firstRowRest._index;
+                      const _lastRowIndex = _firstRowIndex + tableData.length;
+
+                      // eslint-disable-next-line no-useless-assignment
+                      let rsIndex = -1;
+                      // eslint-disable-next-line no-useless-assignment
+                      let reIndex = -1;
+                      let offsetRate = 1;
+                      if (_dragRowIndex < _firstRowIndex) {
+                        // 从上往下虚拟拖拽
+                        rsIndex = 0;
+                        reIndex = _newRowIndex - _firstRowIndex;
+                      } else if (_dragRowIndex > _lastRowIndex) {
+                        // 从下往上虚拟拖拽
+                        const $newRowIndex = dragRowRest.$index;
+                        rsIndex = $newRowIndex + 1;
+                        reIndex = tableData.length;
+                        offsetRate = -1;
+                      } else {
+                        if (_newRowIndex > _dragRowIndex) {
+                          // 从上往下拖拽
+                          rsIndex = _dragRowIndex - _firstRowIndex;
+                          reIndex = rsIndex + _newRowIndex - _dragRowIndex;
+                        } else {
+                          // 从下往上拖拽
+                          rsIndex = _newRowIndex - _firstRowIndex;
+                          reIndex = rsIndex + _dragRowIndex - _newRowIndex + 1;
+                          offsetRate = -1;
+                        }
+                      }
+
+                      const dragRangeList = tableData.slice(rsIndex, reIndex);
+                      if (dragRangeList.length > 0) {
+                        const dtClss: string[] = [];
+                        dragRangeList.forEach((row) => {
+                          const rowid = getRowid($asTable, row);
+                          dtClss.push(
+                            `.${prefixCls.value}-body--row[rowid="${rowid}"]`,
+                          );
+                          // TODO if ($xeGantt) {
+                          //   dtClss.push(
+                          //     `.vxe-gantt-view--body-row[rowid="${rowid}"]`,
+                          //     `.vxe-gantt-view--chart-row[rowid="${rowid}"]`,
+                          //   );
+                          // }
+                        });
+                        const dtTrList =
+                          wrapperEl.querySelectorAll<HTMLElement>(
+                            dtClss.join(','),
+                          );
+                        moveRowAnimateToTb(
+                          dtTrList,
+                          offsetRate * dragRowHeight,
+                        );
+                      }
+                    }
+
+                    const drClss = [
+                      `.${prefixCls.value}-body--row[rowid="${dragRowid}"]`,
+                    ];
+                    // TODO if ($xeGantt) {
+                    //   drClss.push(
+                    //     `.vxe-gantt-view--body-row[rowid="${dragRowid}"]`,
+                    //     `.vxe-gantt-view--chart-row[rowid="${dragRowid}"]`,
+                    //   );
+                    // }
+                    const newDtTrList = wrapperEl.querySelectorAll<HTMLElement>(
+                      drClss.join(','),
+                    );
+                    const newTrEl = newDtTrList[0];
+                    if (dragOffsetTop > -1 && newTrEl) {
+                      moveRowAnimateToTb(
+                        newDtTrList,
+                        dragOffsetTop - newTrEl.offsetTop,
+                      );
+                    }
+                  }
+
+                  updateRowOffsetTop();
+                  updateRowExpandStyle();
+                  $asTable.updateCellAreas();
+                  $asTable.recalculate();
+                })
+                .then(() => {
+                  return {
+                    status: true,
+                  };
+                });
+            })
+            .catch(() => {
+              return errRest;
+            })
+            .then((rest) => {
+              handleRowDragEndClearStatus();
+              return rest;
+            });
+        }
+        handleRowDragEndClearStatus();
+        return Promise.resolve(errRest);
+      },
+      handleCellDragMousedownEvent(evnt, params) {
+        evnt.stopPropagation();
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isCrossTableDrag, trigger, dragStartMethod } = rowDragOpts;
+        const { row } = params;
+        const dragEl = evnt.currentTarget as HTMLElement;
+        const tdEl =
+          trigger === 'cell' || trigger === 'row'
+            ? dragEl
+            : (dragEl.parentElement?.parentElement as HTMLElement);
+        const trEl = tdEl.parentElement as HTMLElement;
+        clearRowDropOrigin();
+        if (dragStartMethod && !dragStartMethod(params)) {
+          trEl.draggable = false;
+          reactData.dragRow = null;
+          reactData.dragCol = null;
+          clearCrossTableDragStatus();
+          hideDropTip();
+          return;
+        }
+        if (isCrossTableDrag) {
+          crossTableDragRowInfo.row = row;
+          crossTableDragRowObj = { $oldTable: $asTable, $newTable: null };
+        }
+        reactData.dragRow = row;
+        reactData.isCrossDragRow = false;
+        reactData.dragCol = null;
+        trEl.draggable = true;
+        updateRowDropOrigin(row);
+        updateRowDropTipContent(tdEl);
+        dispatchEvent('row-dragstart', params, evnt);
+      },
+      handleCellDragMouseupEvent() {
+        clearDragStatus();
+      },
+
+      /**
+       * 列拖拽
+       */
+      handleHeaderCellDragDragstartEvent(evnt) {
+        if (evnt.dataTransfer) {
+          evnt.dataTransfer.setDragImage(getTpImg(), 0, 0);
+        }
+        $asTable.closeTooltip();
+      },
+
+      handleColDragSwapColumn() {
+        handleUpdateColumn();
+        return parseColumns(false).then(() => {
+          $asTable.updateCellAreas();
+          $asTable.saveCustomStore('update:sort');
+        });
+      },
+      handleColDragSwapEvent(
+        evnt,
+        isSyncColumn,
+        dragCol,
+        prevDragCol,
+        prevDragPos,
+        prevDragToChild,
+      ) {
+        const { mouseConfig } = props;
+        const columnDragOpts = computeColumnDragOpts.value;
+        const {
+          animation,
+          isPeerDrag,
+          isCrossDrag,
+          isSelfToChildDrag,
+          isToChildDrag,
+          dragEndMethod,
+          dragToChildMethod,
+        } = columnDragOpts;
+        const { collectColumn, fullColumnIdData } = internalData;
+        const el = refElem.value;
+        const dragOffsetIndex = prevDragPos === 'right' ? 1 : 0;
+        const errRest = {
+          status: false,
+        };
+        if (!(el && prevDragCol && dragCol)) {
+          return Promise.resolve(errRest);
+        }
+        // 判断是否有拖动
+        if (prevDragCol !== dragCol) {
+          const dragColumn = dragCol;
+          const newColumn = prevDragCol;
+          const dragParams = {
+            oldColumn: dragColumn,
+            newColumn,
+            dragColumn,
+            dragPos: prevDragPos as 'left' | 'right',
+            dragToChild: !!prevDragToChild,
+            offsetIndex: dragOffsetIndex as 0 | 1,
+          };
+
+          let dragTargetColumn: AsTableDefines.ColumnInfo | null = null;
+          const dragAllTargetCols: AsTableDefines.ColumnInfo[] = [];
+          let dragColWidth = 0;
+          if (animation) {
+            eachTree([dragColumn], (column) => {
+              if (
+                !dragTargetColumn &&
+                (!column.children || column.children.length === 0)
+              ) {
+                dragTargetColumn = column;
+                dragColWidth += column.renderWidth;
+              }
+              dragAllTargetCols.push(column);
+            });
+          }
+          if (!dragTargetColumn) {
+            dragTargetColumn = dragColumn;
+          }
+          const dragColRest =
+            fullColumnIdData[dragTargetColumn!.id] ||
+            ({} as AsTableDefines.ColumnCacheItem);
+          const _dragColIndex = dragColRest._index;
+
+          let dragOffsetLeft = -1;
+          if (animation) {
+            const oldTrEl = el.querySelector<HTMLElement>(
+              `.${prefixCls.value}--column[colid="${CSS.escape(dragTargetColumn!.id)}"]`,
+            );
+            if (oldTrEl) {
+              dragOffsetLeft = oldTrEl.offsetLeft;
+            }
+          }
+
+          let oafIndex = -1;
+          let nafIndex = -1;
+
+          const oldAllMaps: Record<string, any> = {};
+          eachTree([dragColumn], (column) => {
+            oldAllMaps[column.id] = column;
+          });
+
+          let isSelfToChildStatus = false;
+
+          if (dragColumn.parentId && newColumn.parentId) {
+            // 子到子
+
+            if (isPeerDrag && !isCrossDrag) {
+              if (dragColumn.parentId !== newColumn.parentId) {
+                // 非同级
+                handleColDragEndClearStatus();
+                return Promise.resolve(errRest);
+              }
+            } else {
+              if (!isCrossDrag) {
+                handleColDragEndClearStatus();
+                return Promise.resolve(errRest);
+              }
+
+              if (oldAllMaps[newColumn.id]) {
+                isSelfToChildStatus = true;
+                if (!(isCrossDrag && isSelfToChildDrag)) {
+                  if (message) {
+                    message.error(locale?.value.treeDragChild);
+                  }
+                  handleColDragEndClearStatus();
+                  return Promise.resolve(errRest);
+                }
+              }
+            }
+          } else if (dragColumn.parentId) {
+            // 子到根
+
+            if (!isCrossDrag) {
+              handleColDragEndClearStatus();
+              return Promise.resolve(errRest);
+            }
+          } else if (newColumn.parentId) {
+            // 根到子
+
+            if (!isCrossDrag) {
+              handleColDragEndClearStatus();
+              return Promise.resolve(errRest);
+            }
+            if (oldAllMaps[newColumn.id]) {
+              isSelfToChildStatus = true;
+              if (!(isCrossDrag && isSelfToChildDrag)) {
+                if (message) {
+                  message.error(locale?.value.treeDragChild);
+                }
+                handleColDragEndClearStatus();
+                return Promise.resolve(errRest);
+              }
+            }
+          } else {
+            // 根到根
+          }
+
+          const isDragToChildFlag =
+            isSelfToChildDrag && dragToChildMethod
+              ? dragToChildMethod(dragParams)
+              : prevDragToChild;
+          return Promise.resolve(
+            dragEndMethod ? dragEndMethod(dragParams) : true,
+          )
+            .then((status) => {
+              if (!status) {
+                return errRest;
+              }
+
+              const oldewMatchRest = findTree(
+                collectColumn,
+                (item) => item.id === dragColumn.id,
+              );
+
+              // 改变层级
+              if (isSelfToChildStatus && isCrossDrag && isSelfToChildDrag) {
+                if (oldewMatchRest) {
+                  const { items: oCols, index: oIndex } = oldewMatchRest;
+                  const childList = dragColumn.children || [];
+                  childList.forEach((column: any) => {
+                    column.parentId = dragColumn.parentId;
+                  });
+                  oCols.splice(oIndex, 1, ...childList);
+                  dragColumn.children = [];
+                }
+              } else {
+                if (oldewMatchRest) {
+                  const {
+                    items: oCols,
+                    index: oIndex,
+                    parent: oParent,
+                  } = oldewMatchRest;
+                  oCols.splice(oIndex, 1);
+                  if (!oParent) {
+                    oafIndex = oIndex;
+                  }
+                }
+              }
+
+              const newMatchRest = findTree(
+                collectColumn,
+                (item) => item.id === newColumn.id,
+              );
+              if (newMatchRest) {
+                const {
+                  items: nCols,
+                  index: nIndex,
+                  parent: nParent,
+                } = newMatchRest;
+                // 转子级
+                if (isCrossDrag && isToChildDrag && isDragToChildFlag) {
+                  dragColumn.parentId = newColumn.id;
+                  newColumn.children = (newColumn.children || []).concat([
+                    dragColumn,
+                  ]);
+                } else {
+                  dragColumn.parentId = newColumn.parentId;
+                  nCols.splice(nIndex + dragOffsetIndex, 0, dragColumn);
+                }
+                if (!nParent) {
+                  nafIndex = nIndex;
+                }
+              }
+
+              eachTree(
+                collectColumn,
+                (column, index, items, path, parentColumn) => {
+                  if (parentColumn) {
+                    return;
+                  }
+
+                  const sortIndex = index + 1;
+                  column.renderSortNumber = sortIndex;
+                },
+              );
+
+              $asTable.handleClearStack();
+              if (mouseConfig) {
+                if ($asTable.clearSelected) {
+                  $asTable.clearSelected();
+                }
+                if ($asTable.clearCellAreas) {
+                  $asTable.clearCellAreas();
+                  $asTable.clearCopyCellArea();
+                }
+              }
+
+              if (evnt) {
+                dispatchEvent(
+                  'column-dragend',
+                  {
+                    oldColumn: dragColumn,
+                    newColumn,
+                    dragColumn,
+                    dragPos: prevDragPos,
+                    dragToChild: isDragToChildFlag,
+                    offsetIndex: dragOffsetIndex,
+                    _index: {
+                      newIndex: nafIndex,
+                      oldIndex: oafIndex,
+                    },
+                  },
+                  evnt,
+                );
+              }
+
+              return nextTick()
+                .then(() => {
+                  if (isSyncColumn) {
+                    return $asTable.handleColDragSwapColumn();
+                  }
+                })
+                .then(() => {
+                  if (animation) {
+                    const { tableColumn } = reactData;
+                    const { visibleColumn, fullColumnIdData } = internalData;
+                    let dragNewColumn: AsTableDefines.ColumnInfo | null = null;
+                    const dragNewColMaps: Record<
+                      string,
+                      AsTableDefines.ColumnInfo
+                    > = {};
+                    eachTree([dragColumn], (column) => {
+                      if (
+                        !dragNewColumn &&
+                        (!column.children || column.children.length === 0)
+                      ) {
+                        dragNewColumn = column;
+                      }
+                      dragNewColMaps[column.id] = column;
+                    });
+                    if (!dragNewColumn) {
+                      dragNewColumn = dragColumn;
+                    }
+
+                    if (dragColWidth && dragAllTargetCols.length > 0) {
+                      const _newColIndex = findIndexOf(
+                        visibleColumn,
+                        (column) =>
+                          !!dragNewColumn && column.id === dragNewColumn.id,
+                      );
+                      const firstCol = tableColumn[0]!;
+                      const firstColRest = fullColumnIdData[firstCol.id];
+
+                      if (firstColRest) {
+                        const _firstColIndex = firstColRest._index;
+                        const _lastColIndex =
+                          _firstColIndex + tableColumn.length;
+                        // eslint-disable-next-line no-useless-assignment
+                        let csIndex = -1;
+                        // eslint-disable-next-line no-useless-assignment
+                        let ceIndex = -1;
+                        let offsetRate = 1;
+                        if (_dragColIndex < _firstColIndex) {
+                          // 从左往右虚拟拖拽
+                          csIndex = 0;
+                          ceIndex = _newColIndex - _firstColIndex;
+                        } else if (_dragColIndex > _lastColIndex) {
+                          // 从右往左虚拟拖拽
+                          const $newRowIndex = dragColRest.$index;
+                          csIndex = $newRowIndex + 1;
+                          ceIndex = tableColumn.length;
+                          offsetRate = -1;
+                        } else {
+                          if (_newColIndex > _dragColIndex) {
+                            // 从左往右拖拽
+                            csIndex = _dragColIndex - _firstColIndex;
+                            ceIndex = csIndex + _newColIndex - _dragColIndex;
+                          } else {
+                            // 从右往左拖拽
+                            csIndex = _newColIndex - _firstColIndex + 1;
+                            ceIndex = csIndex + _dragColIndex - _newColIndex;
+                            offsetRate = -1;
+                          }
+                        }
+
+                        const dragRangeList: AsTableDefines.ColumnInfo[] = [];
+                        const dragRangeMaps: Record<
+                          string,
+                          AsTableDefines.ColumnInfo
+                        > = {};
+                        for (let i = csIndex; i < ceIndex; i++) {
+                          const column = tableColumn[i]!;
+                          if (
+                            !dragRangeMaps[column.id] &&
+                            !dragNewColMaps[column.id]
+                          ) {
+                            dragRangeMaps[column.id] = column;
+                            dragRangeList.push(column);
+                          }
+                        }
+                        eachTree([newColumn], (column) => {
+                          if (dragRangeMaps[column.id]) {
+                            return;
+                          }
+
+                          dragRangeMaps[column.id] = column;
+                          dragRangeList.push(column);
+                        });
+                        if (dragRangeList.length > 0) {
+                          const dtTrList = el.querySelectorAll<HTMLElement>(
+                            dragRangeList
+                              .map(
+                                (column) =>
+                                  `.${prefixCls.value}--column[colid="${column.id}"]`,
+                              )
+                              .join(','),
+                          );
+                          moveColAnimateToLr(
+                            dtTrList,
+                            offsetRate * dragColWidth,
+                          );
+                        }
+                      }
+
+                      const newTrList = el.querySelectorAll<HTMLElement>(
+                        dragAllTargetCols
+                          .map(
+                            (column) =>
+                              `.${prefixCls.value}--column[colid="${column.id}"]`,
+                          )
+                          .join(','),
+                      );
+                      const newTdEl = newTrList[0];
+                      if (dragOffsetLeft > -1 && newTdEl) {
+                        moveColAnimateToLr(
+                          newTrList,
+                          dragOffsetLeft - newTdEl.offsetLeft,
+                        );
+                      }
+                    }
+                  }
+
+                  updateColumnOffsetLeft();
+                  loadScrollXData();
+                  $asTable.updateCellAreas();
+
+                  return {
+                    status: true,
+                  };
+                });
+            })
+            .catch(() => {
+              return errRest;
+            })
+            .then((rest) => {
+              handleColDragEndClearStatus();
+              return rest;
+            });
+        }
+        handleColDragEndClearStatus();
+        return Promise.resolve(errRest);
+      },
+
+      handleRowDragDragendEvent(evnt) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData, prevDragToChild } = internalData;
+        const { dragRow } = reactData;
+        const treeOpts = computeTreeOpts.value;
+        const { lazy } = treeOpts;
+        const hasChildField = treeOpts.hasChildField;
+        const { prevDragRow, prevDragPos } = internalData;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isCrossTableDrag } = rowDragOpts;
+        // 跨表拖拽
+        if (isCrossTableDrag && crossTableDragRowObj) {
+          const { $newTable } = crossTableDragRowObj;
+          if ($newTable && $newTable.xID !== $asTable.xID) {
+            $newTable.handleCrossTableRowDragInsertEvent(evnt);
+            return;
+          }
+        }
+        if (treeConfig && lazy && prevDragToChild) {
+          // 懒加载
+          const newRowid = getRowid($asTable, prevDragRow);
+          const rowRest = fullAllDataRowIdData[newRowid];
+          if (prevDragRow[hasChildField]) {
+            if (rowRest && rowRest.treeLoaded) {
+              $asTable.handleRowDragSwapEvent(
+                evnt,
+                true,
+                dragRow,
+                prevDragRow,
+                prevDragPos,
+                prevDragToChild,
+              );
+            }
+          } else {
+            $asTable.handleRowDragSwapEvent(
+              evnt,
+              true,
+              dragRow,
+              prevDragRow,
+              prevDragPos,
+              prevDragToChild,
+            );
+          }
+        } else {
+          $asTable.handleRowDragSwapEvent(
+            evnt,
+            true,
+            dragRow,
+            prevDragRow,
+            prevDragPos,
+            prevDragToChild,
+          );
+        }
+      },
+      handleRowDragDragoverEvent(evnt) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData } = internalData;
+        const { dragRow } = reactData;
+        const treeOpts = computeTreeOpts.value;
+        const { lazy, transform, parentField } = treeOpts;
+        const hasChildField = treeOpts.hasChildField;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isPeerDrag, isCrossDrag, isToChildDrag, isCrossTableDrag } =
+          rowDragOpts;
+        if (
+          !dragRow &&
+          !(
+            isCrossTableDrag &&
+            (!treeConfig || isCrossDrag) &&
+            crossTableDragRowObj
+          )
+        ) {
+          evnt.preventDefault();
+          return;
+        }
+        const isControlKey = hasControlKey(evnt);
+        const trEl = evnt.currentTarget as HTMLElement;
+        const rowid = trEl.getAttribute('rowid') || '';
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (rowRest) {
+          evnt.preventDefault();
+          const row = rowRest.row;
+          const offsetY = evnt.clientY - trEl.getBoundingClientRect().y;
+          const dragPos = offsetY < trEl.clientHeight / 2 ? 'top' : 'bottom';
+          internalData.prevDragToChild = !!(
+            treeConfig &&
+            transform &&
+            isCrossDrag &&
+            isToChildDrag &&
+            isControlKey
+          );
+          internalData.prevDragRow = row;
+          internalData.prevDragPos = dragPos;
+          // 跨表拖拽
+          if (
+            isCrossTableDrag &&
+            (!treeConfig || isCrossDrag) &&
+            crossTableDragRowObj
+          ) {
+            const { $oldTable, $newTable } = crossTableDragRowObj;
+            if ($oldTable) {
+              const oldTableReactData = $oldTable.reactData;
+              if ($oldTable.xID === $asTable.xID) {
+                if ($newTable) {
+                  $newTable.hideCrossTableRowDropClearStatus();
+                }
+                reactData.isCrossDragRow = false;
+                oldTableReactData.isCrossDragRow = false;
+                crossTableDragRowObj.$newTable = null;
+              } else {
+                if ($newTable && $newTable.xID !== $asTable.xID) {
+                  $newTable.hideCrossTableRowDropClearStatus();
+                }
+                $oldTable.hideCrossTableRowDropClearStatus();
+                oldTableReactData.isCrossDragRow = true;
+                reactData.dragTipText = oldTableReactData.dragTipText;
+                crossTableDragRowObj.$newTable = $asTable;
+                showDropTip(evnt, trEl, null, true, dragPos);
+                return;
+              }
+            }
+          }
+          if (
+            $asTable.eqRow(dragRow, row) ||
+            (isControlKey &&
+              treeConfig &&
+              lazy &&
+              row[hasChildField] &&
+              rowRest &&
+              !rowRest.treeLoaded) ||
+            (!isCrossDrag &&
+              treeConfig &&
+              transform &&
+              (isPeerDrag
+                ? dragRow[parentField] !== row[parentField]
+                : rowRest.level))
+          ) {
+            showDropTip(evnt, trEl, null, false, dragPos);
+            return;
+          }
+          showDropTip(evnt, trEl, null, true, dragPos);
+          dispatchEvent(
+            'row-dragover',
+            {
+              oldRow: dragRow,
+              targetRow: row,
+              dragPos,
+            },
+            evnt,
+          );
+        }
+      },
+      handleToggleCheckRowEvent(evnt, params) {
+        const { selectCheckboxMaps } = internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField, trigger } = checkboxOpts;
+        const { row } = params;
+        if (trigger === 'manual') {
+          return;
+        }
+        // eslint-disable-next-line no-useless-assignment
+        let checked = false;
+        checked = checkField
+          ? !get(row, checkField)
+          : !selectCheckboxMaps[getRowid($asTable, row)];
+        if (evnt) {
+          $asTable.triggerCheckRowEvent(evnt, params, checked);
+        } else {
+          $asTable.handleBatchSelectRows([row], checked);
+          $asTable.checkSelectionStatus();
+        }
+      },
     };
 
     Object.assign($asTable, tableMethods, tablePrivateMethods);
@@ -9650,6 +11763,92 @@ export const Table = defineComponent<AsTableProps>(
         }
       }
       return getFuncText(props.emptyText) || locale?.value.emptyText;
+    };
+
+    const renderDragTipContents = () => {
+      const { dragRow, dragCol, dragTipText } = reactData;
+      const columnDragOpts = computeColumnDragOpts.value;
+      const rowDragOpts = computeRowDragOpts.value;
+      const rowDragSlots = rowDragOpts.slots || {};
+      const rTipSlot = rowDragSlots.tip;
+      const columnDragSlots = columnDragOpts.slots || {};
+      const cTipSlot = columnDragSlots.tip;
+      const dRow =
+        dragRow ||
+        (rowDragOpts.isCrossTableDrag ? crossTableDragRowInfo.row : null);
+
+      if (dRow && rTipSlot) {
+        return callSlot(rTipSlot, { row: dRow });
+      }
+      if (dragCol && cTipSlot) {
+        return callSlot(cTipSlot, { column: dragCol });
+      }
+      return [h('span', dragTipText)];
+    };
+
+    const renderDragTip = () => {
+      const { dragRow, dragCol } = reactData;
+      const rowOpts = computeRowOpts.value;
+      const columnOpts = computeColumnOpts.value;
+      const rowDragOpts = computeRowDragOpts.value;
+      const columnDragOpts = computeColumnDragOpts.value;
+      const dRow =
+        dragRow ||
+        (rowDragOpts.isCrossTableDrag ? crossTableDragRowInfo.row : null);
+
+      if (rowOpts.drag || columnOpts.drag) {
+        return (
+          <div class={`${prefixCls.value}--drag-wrapper`}>
+            <div
+              class={[
+                `${prefixCls.value}--drag-row-line`,
+                { 'is--guides': rowDragOpts.showGuidesStatus },
+              ]}
+              ref={refDragRowLineElem}
+            />
+            <div
+              class={[
+                `${prefixCls.value}--drag-col-line`,
+                { 'is--guides': columnDragOpts.showGuidesStatus },
+              ]}
+              ref={refDragColLineElem}
+            />
+            {(dRow && rowDragOpts.showDragTip) ||
+            (dragCol && columnDragOpts.showDragTip) ? (
+              <div
+                class={`${prefixCls.value}--drag-sort-tip`}
+                ref={refDragTipElem}
+              >
+                <div class={`${prefixCls.value}--drag-sort-tip-wrapper`}>
+                  <div class={`${prefixCls.value}--drag-sort-tip-status`}>
+                    <span
+                      class={`${prefixCls.value}--drag-sort-tip-normal-status`}
+                    >
+                      {dRow ? <SwapOutlined rotate={90} /> : <SwapOutlined />}
+                    </span>
+                    <span
+                      class={`${prefixCls.value}--drag-sort-tip-sub-status`}
+                    >
+                      <SubnodeOutlined />
+                    </span>
+                    <span
+                      class={`${prefixCls.value}--drag-sort-tip-disabled-status`}
+                    >
+                      <StopOutlined />
+                    </span>
+                  </div>
+                  <div class={`${prefixCls.value}--drag-sort-tip-content`}>
+                    {renderDragTipContents()}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              createCommentVNode()
+            )}
+          </div>
+        );
+      }
+      return createCommentVNode();
     };
 
     const renderRowExpandedVNs = () => {
@@ -10019,7 +12218,12 @@ export const Table = defineComponent<AsTableProps>(
                     <div class={`${prefixCls.value}--resizable-number-tip`} />
                   ) : null}
                 </div>
-                {}
+                {
+                  /**
+                   * 拖拽排序提示
+                   */
+                  renderDragTip()
+                }
               </div>
             </Teleport>
           </div>

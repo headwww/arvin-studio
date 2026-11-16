@@ -684,7 +684,7 @@ export default defineComponent<BodyProps>(
             ]}
             key="tcc"
             onDblclick={(evnt: MouseEvent) =>
-              $asTable.handleColResizeDblclickEvent(evnt, fixedType, cellParams)
+              $asTable.handleColResizeDblclickEvent(evnt, cellParams)
             }
             onMousedown={(evnt: MouseEvent) =>
               $asTable.handleColResizeMousedownEvent(

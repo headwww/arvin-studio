@@ -110,7 +110,7 @@ const footerData = ref<VxeTablePropTypes.FooterData>([
   <div>
     <vxe-table
       show-footer
-      :row-config="{ useKey: true }"
+      :row-config="{ useKey: true, drag: true }"
       :column-config="{ useKey: true }"
       :footer-data="footerData"
       :tooltip-config="tooltipConfig"
@@ -118,7 +118,7 @@ const footerData = ref<VxeTablePropTypes.FooterData>([
       :footer-tooltip-config="footerTooltipConfig"
       :data="tableData"
     >
-      <vxe-column field="seq" type="seq" width="70" />
+      <vxe-column drag-sort field="seq" type="seq" width="70" />
       <vxe-column field="name" title="名称" />
       <vxe-column field="role" title="角色" />
       <vxe-column field="date" title="Date" />

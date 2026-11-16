@@ -12,6 +12,7 @@ const localeValues: Locale = {
   Table: {
     seqTitle: '序号',
     emptyText: '暂无数据',
+    dragTip: '移动：{0}',
     allTitle: '全选/取消',
     sortAsc: '升序：最低到最高',
     sortDesc: '降序：最高到最低',
@@ -19,6 +20,7 @@ const localeValues: Locale = {
     rowGroupContentTotal: '{0}（{1}）',
     resizeColTip: '宽：{0} 像素',
     resizeRowTip: '高：{0} 像素',
+    treeDragChild: '父级不能拖拽到自己的子级中',
   },
   locale: 'zh-cn',
   Pagination,

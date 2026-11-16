@@ -183,11 +183,14 @@ export function createInternalData(): TableInternalData {
       redoStacks: [],
     },
     teleportToWrapperElem: null,
+    isActivated: false,
   };
 }
 
 export function createReactData(): TableReactData {
   return {
+    dragTipText: '',
+    isCrossDragRow: false,
     lazScrollLoading: false,
     rowHeightStore: {
       large: 48,

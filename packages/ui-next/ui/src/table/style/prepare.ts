@@ -126,6 +126,7 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
     rowHoverRadioCheckedBackgroundColor: colorPrimaryBgHover,
     rowHoverCheckboxCheckedBackgroundColor: colorPrimaryBgHover,
     rowHoverCurrentBackgroundColor: colorPrimaryBgHover,
+    dragOverBackgroundColor: new FastColor('#ffffc8').setA(0.3).toRgbString(),
 
     // 单元格脏标记
     cellDirtyWidth: 5,

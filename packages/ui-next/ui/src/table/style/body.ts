@@ -135,6 +135,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     colorWarning,
     colorError,
     headerIconColor,
+    dragOverBackgroundColor,
   } = token;
   return {
     [`${componentCls}--layout-wrapper`]: {
@@ -526,6 +527,128 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         top: 0,
         left: 0,
       },
+    },
+
+    /* 拖拽行与列 */
+    [`${componentCls}--drag-col-line,
+    ${componentCls}--drag-row-line`]: {
+      display: 'none',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 11,
+      pointerEvents: 'none',
+    },
+
+    [`${componentCls}--drag-row-line`]: {
+      width: '100%',
+      height: 1,
+      border: '2px solid transparent',
+
+      [`&[drag-pos="top"]`]: {
+        borderTopColor: primaryColor,
+      },
+      [`&[drag-pos="bottom"]`]: {
+        borderBottomColor: primaryColor,
+      },
+      [`&[drag-to-child="y"]`]: {
+        borderTopColor: 'transparent',
+        borderBottomColor: 'transparent',
+        borderLeftColor: colorSuccess,
+      },
+      [`&.is--guides`]: {
+        backgroundColor: dragOverBackgroundColor,
+      },
+    },
+
+    [`${componentCls}--drag-col-line`]: {
+      height: '100%',
+      width: 1,
+      border: '2px solid transparent',
+
+      [`&[drag-pos="left"]`]: {
+        borderLeftColor: primaryColor,
+      },
+      [`&[drag-pos="right"]`]: {
+        borderRightColor: primaryColor,
+      },
+      [`&[drag-to-child="y"]`]: {
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderBottomColor: colorSuccess,
+      },
+      [`&.is--guides`]: {
+        backgroundColor: dragOverBackgroundColor,
+      },
+    },
+
+    [`${componentCls}-body--row-list-move`]: {
+      transitionProperty: 'transform',
+      transitionDuration: '0.35s',
+    },
+
+    /* 拖拽排序提示框 */
+    [`${componentCls}--drag-sort-tip`]: {
+      display: 'none',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      padding: '0.6em 1.4em',
+      maxWidth: '50%',
+      minWidth: '100px',
+      borderRadius,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      userSelect: 'none',
+      pointerEvents: 'none',
+      backgroundColor: layoutBackgroundColor,
+      boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.2)',
+      zIndex: 33,
+
+      [`&[drag-status="normal"]`]: {
+        [`${componentCls}--drag-sort-tip-normal-status`]: {
+          display: 'block',
+        },
+      },
+      [`&[drag-status="sub"]`]: {
+        [`${componentCls}--drag-sort-tip-sub-status`]: {
+          display: 'block',
+        },
+      },
+      [`&[drag-status="disabled"]`]: {
+        [`${componentCls}--drag-sort-tip-disabled-status`]: {
+          display: 'block',
+        },
+      },
+    },
+
+    [`${componentCls}--drag-sort-tip-wrapper`]: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    [`${componentCls}--drag-sort-tip-status`]: {
+      paddingRight: '0.4em',
+    },
+
+    [`${componentCls}--drag-sort-tip-disabled-status`]: {
+      display: 'none',
+      flexShrink: 0,
+      color: colorError,
+    },
+
+    [`${componentCls}--drag-sort-tip-normal-status,
+    ${componentCls}--drag-sort-tip-sub-status`]: {
+      display: 'none',
+    },
+
+    [`${componentCls}--drag-sort-tip-content`]: {
+      flexGrow: 1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
 
     [`${componentCls}--checkbox-range,
@@ -932,19 +1055,6 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
             [`& > ${componentCls}-cell`]: {
               opacity: 0.3,
             },
-          },
-        },
-      },
-
-      /* 拖拽列*/
-      [`${componentCls}--column`]: {
-        [`&.col--drag-move`]: {
-          transition: 'transform 0.5s ease',
-        },
-
-        [`&.col--drag-origin`]: {
-          [`& > ${componentCls}-cell`]: {
-            opacity: 0.3,
           },
         },
       },
@@ -1417,7 +1527,19 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         },
       },
 
-      /* 拖拽行把柄*/
+      /* 拖拽列*/
+      [`${componentCls}--column`]: {
+        [`&.col--drag-move`]: {
+          transition: 'transform 0.5s ease',
+        },
+
+        [`&.col--drag-origin`]: {
+          [`& > ${componentCls}-cell`]: {
+            opacity: 0.3,
+          },
+        },
+      },
+
       /* 拖拽行把柄 */
       [`${componentCls}-cell--drag-handle`]: {
         userSelect: 'none',

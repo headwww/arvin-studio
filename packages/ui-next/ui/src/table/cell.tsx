@@ -202,6 +202,7 @@ function renderCellDragIcon(
       $table.handleCellDragMouseupEvent(evnt);
     };
   }
+
   return (
     <span
       class={[
@@ -297,11 +298,12 @@ function renderCellBaseVNs(
   const treeOpts = computeTreeOpts.value;
   const { showIcon, isPeerDrag, isCrossDrag, visibleMethod } = rowDragOpts;
   const vns: any[] = [];
+  const rVisibleMethod = visibleMethod || null;
   if (
     dragSort &&
     rowOpts.drag &&
     showIcon &&
-    (!visibleMethod || visibleMethod(params))
+    (!rVisibleMethod || rVisibleMethod(params))
   ) {
     if (treeConfig) {
       if (treeOpts.transform && (isPeerDrag || isCrossDrag || !level)) {
@@ -902,8 +904,8 @@ export const Cell = {
       iconOpen,
       iconClose,
     } = treeOpts;
-    const childrenField = treeOpts.children || treeOpts.childrenField;
-    const hasChildField = treeOpts.hasChild || treeOpts.hasChildField;
+    const childrenField = treeOpts.childrenField;
+    const hasChildField = treeOpts.hasChildField;
     const rowChilds = row[childrenField];
     const hasChild = rowChilds && rowChilds.length > 0;
     let hasLazyChilds = false;

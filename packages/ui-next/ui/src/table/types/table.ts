@@ -66,6 +66,7 @@ export interface TableReactData<D = any> {
   currColFlag: number;
   dragCol: AsTableDefines.ColumnInfo | null;
   dragRow: any;
+  dragTipText: string;
   // 存放可编辑相关信息
   editStore: {
     // 激活
@@ -112,6 +113,7 @@ export interface TableReactData<D = any> {
   // 复选框属性，是否全选
   isAllSelected: boolean;
   isColLoading: boolean;
+  isCrossDragRow: boolean;
   isCustomStatus: boolean;
   isDragResize: boolean;
   // 是否使用分组表头
@@ -224,15 +226,15 @@ export interface TableInternalData<D = any> {
    */
   currKeyField: string;
   customHeight: number;
-
   customMaxHeight: number;
+
   customMinHeight: number;
   // 单元格值缓存
   cvCacheMaps: Record<string, any>;
-
   elemStore: {
     [key: string]: null | Ref<ComponentPublicInstance> | Ref<HTMLElement>;
   };
+
   footerFullDataRowData: Record<string, AsTableDefines.FooterRowCacheItem>;
   // 全量数据集（包括当前和已删除）
   fullAllDataRowIdData: Record<string, AsTableDefines.RowCacheItem<D>>;
@@ -265,55 +267,64 @@ export interface TableInternalData<D = any> {
   insertRowMaps: Record<string, D | null>;
   // 滚动属性
   intoRunScroll?: boolean;
+
   inVirtualScroll?: boolean;
 
   inWheelScroll?: boolean;
-
+  isActivated: boolean;
   isCurrDeepKey: boolean;
   isResizeCellHeight?: boolean;
   keepUpdateFieldMaps: Record<string, number>;
+
   // 最后滚动位置
   lastScrollLeft: number;
+
   lastScrollTop: number;
   // 最后滚动时间戳
   lastSTime: number;
   lcsRunTime?: number | undefined;
   // 同步滚动
   lcsTimeout?: number | undefined;
-
   // 横向虚拟
   lxRunTime?: number | undefined;
   lxTimeout?: number | undefined;
-
   // 纵向虚拟
   lyRunTime?: number | undefined;
   lyTimeout?: number | undefined;
+
   // 已合并单元格数据集合
   mergeBodyCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
   mergeBodyColMaps: Record<string, AsTableDefines.MergeCacheCol>;
+
   // 合并单元格的数据
   mergeBodyList: AsTableDefines.MergeItem<D>[];
   mergeBodyMaps: Record<string, AsTableDefines.MergeItem>;
   mergeBodyRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
-
   // 已合并表尾数据集合
   mergeFooterCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
   mergeFooterColMaps: Record<string, AsTableDefines.MergeCacheCol>;
   // 合并表尾单元格的数据
   mergeFooterList: AsTableDefines.MergeItem<D>[];
   mergeFooterMaps: Record<string, AsTableDefines.MergeItem>;
-  mergeFooterRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
 
+  mergeFooterRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
   // 已合并单元格数据集合
   mergeHeaderCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
-
   mergeHeaderColMaps: Record<string, AsTableDefines.MergeCacheCol>;
   // 合并表头单元格的数据
   mergeHeaderList: AsTableDefines.MergeItem<D>[];
   mergeHeaderMaps: Record<string, AsTableDefines.MergeItem>;
+
   mergeHeaderRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
+
   // 已标记的对象集
   pendingRowMaps: Record<string, D | null>;
+  // 上一个拖动的列
+  prevDragCol?: AsTableDefines.ColumnInfo | null;
+  prevDragPos?: '' | 'bottom' | 'left' | 'right' | 'top';
+  // 上一个拖动的行
+  prevDragRow?: any;
+  prevDragToChild?: boolean;
   // 单选框属性，已选中保留的行
   radioReserveRow: any;
   // 刷新布局
@@ -457,6 +468,10 @@ export type ValueOf<T> = T extends any[] ? T[number] : T[keyof T];
 
 export interface AsTableExtendCellAreaMethods<D = any> {
   /**
+   * @private
+   */
+  addCellSelectedClass(): void;
+  /**
    * 手动关闭快捷菜单
    */
   closeMenu(): Promise<any>;
@@ -469,38 +484,120 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     column: AsTableDefines.ColumnInfo;
     row: any;
   }): string;
+  handleCellMousedownEvent(evnt: any, params: any): void;
+  /**
+   * @private
+   */
+  handleClearEdit(evnt: Event | null, row?: any): Promise<any>;
   /**
    * 内部方法
    * @private
    */
   handleColResizeCellAreaEvent(evnt: MouseEvent, params: any): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handlePivotTableAggData(aggList: AsTableDefines.AggregateRowInfo[]): void;
 
   /**
    * 内部方法
    * @private
    */
+  handleColResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
+  /**
+   * @private
+   */
+  handleEdit(
+    params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    },
+    evnt: any,
+    options?: {
+      isClear?: boolean;
+    },
+  ): Promise<any>;
+  /**
+   * @private
+   */
+  handleEdit(
+    params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    },
+    evnt: any,
+    options?: {
+      isClear?: boolean;
+    },
+  ): Promise<any>;
+  /**
+   * @private
+   */
+  handleEdit(
+    params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    },
+    evnt: any,
+    options?: {
+      isClear?: boolean;
+    },
+  ): Promise<any>;
+  /**
+   * 内部方法
+   * @private
+   */
+  handlePivotTableAggData(aggList: AsTableDefines.AggregateRowInfo[]): void;
+  /**
+   * 内部方法
+   * @private
+   */
   handleRecalculateCellAreaEvent(): any;
+
   /**
    * 内部方法
    * @private
    */
   handleRowResizeCellAreaEvent(evnt: MouseEvent, params: any): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleRowResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
   handleUpdateCustomColumn(): void;
   /**
    * 内部方法
    * @private
    */
   triggerCellAreaExtendMousedownEvent(evnt: MouseEvent, params: any): void;
+
+  triggerValidate(type: any): Promise<any>;
 }
 
 export interface TableMethods<
   DT = any,
 > extends AsTableExtendCellAreaMethods<DT> {
+  /**
+   * 使表格失去焦点
+   */
+  blur(): Promise<void>;
   /**
    * 用于 mouse-config.area，用于清除鼠标选择的区域，可以指定清除的区域
    */
@@ -512,9 +609,17 @@ export interface TableMethods<
    */
   clearCopyCellArea(): Promise<any>;
   /**
+   * 用于 column-config.isCurrent，手动清空当前高亮的状态
+   */
+  clearCurrentColumn(): Promise<void>;
+  /**
    * 用于 row-config.isCurrent，手动清空当前高亮的状态
    */
   clearCurrentRow(): Promise<any>;
+  /**
+   * 手动清除单元格激活状态
+   */
+  clearEdit(row?: any): Promise<any>;
   /**
    * 清除表尾单元格格式化缓存
    */
@@ -549,9 +654,14 @@ export interface TableMethods<
    */
   clearScroll(): Promise<any>;
   /**
+   * 手动清除单元格选中状态
+   */
+  clearSelected(): Promise<any>;
+  /**
    * 手动关闭筛选面板
    */
   closeFilter(): Promise<any>;
+
   /**
    * 关闭 tooltip 提示
    */
@@ -562,12 +672,15 @@ export interface TableMethods<
    * @param records 数据
    */
   createData(records: any[]): Promise<any[]>;
-
   dispatchEvent(
     type: ValueOf<AsTableEmits>,
     params: Record<string, any>,
     evnt: Event | null,
   ): void;
+  /**
+   * 使表格获取焦点
+   */
+  focus(): Promise<void>;
   /**
    * 获取单元格显示值
    */
@@ -578,7 +691,6 @@ export interface TableMethods<
       | AsTableDefines.ColumnInfo<any>
       | null,
   ): null | number | string;
-
   /**
    * 用于 type=checkbox，获取半选状态的行数据；如果 isFull=true 则包含完整当前列表（包含筛选）；否则返回当前列表
    */
@@ -603,11 +715,16 @@ export interface TableMethods<
     field: AsColumnPropTypes.Field | null,
   ): AsTableDefines.ColumnInfo<DT> | null;
   /**
+   * 根据列的唯一主键获取列
+   * @param colid 列主键
+   */
+  getColumnById(colid: null | string): AsTableDefines.ColumnInfo | null;
+
+  /**
    * 根据 column 获取相对于 columns 中的索引
    * @param column 列对象
    */
   getColumnIndex(column: AsTableDefines.ColumnInfo<any> | null): number;
-
   /**
    * 用于 custom-config，用于获取个性化设置，用于自定义保持
    */
@@ -676,13 +793,13 @@ export interface TableMethods<
    * @param children 子节点
    */
   loadTreeChildren(row: any, children: any[]): Promise<any[]>;
+
   /**
    * 打开 tooltip 提示
    * @param target 目标元素
    * @param content 内容
    */
   openTooltip(target: HTMLElement, content: number | string): Promise<any>;
-
   /**
    * 重新计算表格，如果传 true 则进行完整计算
    * 对于某些特殊场景可能会用到，比如隐藏的表格、重新计算列宽...等
@@ -734,6 +851,13 @@ export interface TableMethods<
    */
   setAllTreeExpand(checked: boolean): Promise<void>;
   /**
+   * 用于 column-config.isCurrent，设置某列行为高亮状态
+   * @param columnOrField 列对象或字段名
+   */
+  setCurrentColumn(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+  ): Promise<void>;
+  /**
    * 用于 row-config.isCurrent，设置某一行为高亮状态
    * @param row 指定行
    */
@@ -754,6 +878,7 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
+
   /**
    * 临时合并表头单元格，如果为数组则合并多个
    */
@@ -762,13 +887,13 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
-
   /**
    * 用于 expand-config，设置展开行，二个参数设置这一行展开与否
    * @param rows 指定行
    * @param expanded 是否展开
    */
   setRowExpand(rows: any | any[], expanded: boolean): Promise<void>;
+
   /**
    * 用于行分组，根据行分组字段设置分组的展开状态，二个参数设置这一行展开与否
    * @param groupFields 行分组字段
@@ -899,25 +1024,42 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   handleClearStack(): Promise<void>;
-
+  /**
+   * 内部方法
+   * @private
+   */
+  handleColDragSwapColumn(): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleColDragSwapEvent(
+    evnt: DragEvent | null,
+    isSyncColumn: boolean | undefined,
+    dragCol: AsTableDefines.ColumnInfo | null | undefined,
+    prevDragCol: AsTableDefines.ColumnInfo | null | undefined,
+    prevDragPos: '' | 'bottom' | 'left' | 'right' | 'top' | undefined,
+    prevDragToChild: boolean | undefined,
+  ): Promise<{ status: boolean }>;
   /**
    * 内部方法
    * @private
    */
   handleColResizeDblclickEvent(
     evnt: MouseEvent,
-    fixedType: '' | 'left' | 'right',
     params:
       | AsTableDefines.CellRenderBodyParams
       | AsTableDefines.CellRenderFooterParams
       | AsTableDefines.CellRenderHeaderParams,
   ): void;
+
   /**
    * 内部方法
    * @private
    */
-  handleColResizeDblclickEvent(
+  handleColResizeMousedownEvent(
     evnt: MouseEvent,
+    fixedType: '' | 'left' | 'right',
     params:
       | AsTableDefines.CellRenderBodyParams
       | AsTableDefines.CellRenderFooterParams
@@ -939,7 +1081,23 @@ export interface TablePrivateMethods<D = any> {
    * 内部方法
    * @private
    */
+  handleCrossTableRowDragInsertEvent(evnt: DragEvent): void;
+
+  /**
+   * 内部方法
+   * @private
+   */
   handleHeaderCellDragDragendEvent(evnt: DragEvent): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleHeaderCellDragDragendEvent(evnt: DragEvent): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleHeaderCellDragDragoverEvent(evnt: DragEvent): void;
   /**
    * 内部方法
    * @private
@@ -964,13 +1122,28 @@ export interface TablePrivateMethods<D = any> {
    * 内部方法
    * @private
    */
+  handleHeaderCellDragMousedownEvent(
+    evnt: MouseEvent,
+    params: {
+      column: AsTableDefines.ColumnInfo;
+    },
+  ): void;
+
+  /**
+   * 内部方法
+   * @private
+   */
+  handleHeaderCellDragMouseupEvent(evnt: MouseEvent): void;
+  /**
+   * 内部方法
+   * @private
+   */
   handleHeaderCellDragMouseupEvent(evnt: MouseEvent): void;
   /**
    * 内部方法
    * @private
    */
   handleRowDragDragendEvent(evnt: DragEvent): void;
-
   /**
    * 内部方法
    * @private
@@ -981,6 +1154,18 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   handleRowDragDragstartEvent(evnt: DragEvent): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleRowDragSwapEvent(
+    evnt: DragEvent | null,
+    isSyncRow: boolean | undefined,
+    dragRow: any,
+    prevDragRow: any,
+    prevDragPos: '' | 'bottom' | 'left' | 'right' | 'top' | undefined,
+    prevDragToChild: boolean | undefined,
+  ): Promise<{ status: boolean }>;
   /**
    * 内部方法
    * @private
@@ -1027,6 +1212,11 @@ export interface TablePrivateMethods<D = any> {
    * 内部方法
    * @private
    */
+  handleToggleCheckRowEvent(evnt: Event | null, params: { row: any }): void;
+  /**
+   * 内部方法
+   * @private
+   */
   handleUpdateBodyMerge(): void;
   /**
    * 内部方法
@@ -1042,7 +1232,17 @@ export interface TablePrivateMethods<D = any> {
    * 内部方法
    * @private
    */
+  hideCrossTableRowDropClearStatus(): void;
+  /**
+   * 内部方法
+   * @private
+   */
   saveCustomStore(type: AsTableDefines.CustomEventType): Promise<any>;
+  /**
+   * 内部方法
+   * @private
+   */
+  setHoverRow(row: any): void;
   /**
    * 内部方法
    * @private
@@ -1097,6 +1297,30 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   triggerCheckRowEvent(evnt: Event, params: { row: any }, value: boolean): void;
+
+  /**
+   * 内部方法
+   * @private
+   */
+  triggerCurrentColumnEvent(
+    evnt: Event,
+    params: {
+      column: AsTableDefines.ColumnInfo;
+    },
+  ): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  triggerCurrentRowEvent(
+    evnt: Event,
+    params: {
+      $rowIndex: number;
+      $table: AsTableConstructor<any>;
+      row: any;
+      rowIndex: number;
+    },
+  ): void;
   /**
    * 内部方法
    * @private
@@ -1114,7 +1338,6 @@ export interface TablePrivateMethods<D = any> {
     evnt: MouseEvent,
     params: AsTableDefines.CellRenderFooterParams<any>,
   ): void;
-
   /**
    * 内部方法
    * @private
@@ -1152,6 +1375,7 @@ export interface TablePrivateMethods<D = any> {
     evnt: MouseEvent,
     params: AsTableDefines.CellRenderHeaderParams<any>,
   ): void;
+
   /**
    * 内部方法
    * @private
@@ -1712,11 +1936,6 @@ export namespace AsTablePropTypes {
      */
     maxWidth?: number;
     /**
-     * 不建议使用，已废弃
-     * @deprecated
-     */
-    message?: '' | 'default' | 'inline' | 'tooltip' | null;
-    /**
      * 校验消息提示方式
      * - single 单个提示
      * - full - 全量提示
@@ -1890,6 +2109,189 @@ export namespace AsTablePropTypes {
     selectCellToRow?: boolean;
   }
   export interface AreaOpts<D = any> extends AreaConfig<D> {}
+
+  /**
+   * 按键配置项
+   */
+  export interface KeyboardConfig<D = any> {
+    /**
+     * 用于 mouse-config.area，方向键光标锁，开启后将支持两种状态
+     * 非聚焦式输入状态：默认情况下，可以按方向键移动单元格。
+     * 聚焦式输入状态：如果需要移动光标，可以按 F2 键或者鼠标左键点击输入框，切换为聚焦输入状态，就可以用方向键左右移动光标
+     */
+    arrowCursorLock?: boolean;
+    /**
+     * 只对 isDel=true 有效，用于重写回退键清空单元格内容并激活为编辑状态方法
+     */
+    backMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): void;
+    /**
+     * 只对 isEnter=true 有效，用于回车键执行之前的方法，返回 false 可以阻止默认行为
+     */
+    beforeEnterMethod?(params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): boolean;
+    /**
+     * 只对 isEnter=true 有效，用于Tab键执行之前的方法，返回 false 可以阻止默认行为
+     */
+    beforeTabMethod?(params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): boolean;
+    /**
+     * 只对 isDel=true 有效，用于重写删除键的方法
+     */
+    delMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): void;
+    /**
+     * 只对 isEdit=true 有效，用于重写编辑单元格方法
+     */
+    editMethod?(params: {
+      // TODO $grid: AsGridConstructor<D> | null | undefined;
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): void;
+    /**
+     * 只有 isEdit 有效，编辑模式，支持覆盖式和末端插入式编辑
+     */
+    editMode?: '' | 'coverage' | 'insert' | null;
+    /**
+     * 只对 isEnter=true 有效，用于重写回车键的方法
+     */
+    enterMethod?(params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): void;
+    /**
+     * 用于 mouse-config.area，是否将回车键行为改成 Tab 键行为
+     */
+    enterToTab?: boolean;
+    /**
+     * 是否启用全选
+     * Window/Linux对应按键: Ctrl+A
+     * MacOS对应按键: Command+A
+     */
+    isAll?: boolean;
+    /**
+     * 是否开启非编辑状态下，上下左右移动功能
+     */
+    isArrow?: boolean;
+    /**
+     * 是否开启回退键功能
+     */
+    isBack?: boolean;
+    /**
+     * 用于 mouse-config.area & column.type=checkbox|radio，开启空格键切换复选框或单选框状态功能
+     */
+    isChecked?: boolean;
+    /**
+     * 用于 mouse-config.area，开启复制/剪贴/粘贴功能
+     * Window/Linux对应按键: Ctrl+X, Ctrl+C, Ctrl+V
+     * MacOS对应按键: Command+C Command+C, Command+V
+     */
+    isClip?: boolean;
+    /**
+     * 是否开启删除键功能
+     */
+    isDel?: boolean;
+    /**
+     * 是否开启单元格选择编辑
+     */
+    isEdit?: boolean;
+    /**
+     * 是否开启回车移动上下行移动
+     */
+    isEnter?: boolean;
+    /**
+     * 是否开启Esc键退出编辑功能
+     */
+    isEsc?: boolean;
+    /**
+     * 如果功能被支持，用于 mouse-config.area，开启查找和替换功能
+     * Window/Linux对应按键: Ctrl+F, Ctrl+H
+     * MacOS对应按键: Command+F, Command+H
+     */
+    isFNR?: boolean;
+    /**
+     * 当在最后一行按下回车键时，自动插入新行
+     */
+    isLastEnterAppendRow?: boolean;
+    /**
+     * 当在最后一行的最后一列按下Tab键时，自动插入新行
+     */
+    isLastTabAppendRow?: boolean;
+    /**
+     * 用于 mouse-config.area，开启合并和取消合并功能
+     */
+    isMerge?: boolean;
+    /**
+     * 如果功能被支持，用于 mouse-config.area，开启同时按住方向键以活动区域为起始，向指定方向延伸单元格区域
+     */
+    isShift?: boolean;
+    /**
+     * 是否开启TAB键左右移动功能
+     */
+    isTab?: boolean;
+    /**
+     * 是否开启撤销功能
+     * Window/Linux对应按键: Ctrl+Z
+     * MacOS对应按键: Command+Z
+     * 恢复/重做功能
+     * Window/Linux对应按键: Ctrl+Y, Ctrl+Shift+Y
+     * MacOS对应按键: Command+Shift+Y
+     */
+    isUndoRedo?: boolean;
+    /**
+     * 只对 isEnter=true 有效，用于重写Tab键的方法
+     */
+    tabMethod?(params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    }): void;
+  }
+  export interface KeyboardOpts<D = any> extends KeyboardConfig<D> {}
 
   /**
    * 展开行配置项
@@ -2075,6 +2477,10 @@ export namespace AsTablePropTypes {
    */
   export interface RowDragConfig<D = any> {
     /**
+     * 是否显示拖拽动画，启用后由数据量的大小来影响渲染性能
+     */
+    animation?: boolean;
+    /**
      * 是否禁用拖拽按钮
      */
     disabledMethod?(params: {
@@ -2083,21 +2489,76 @@ export namespace AsTablePropTypes {
       row: D;
     }): boolean;
     /**
+     * 拖拽结束时是否允许行拖拽调整顺序的方法，该方法的返回值用来决定是否允许被拖拽调整顺序
+     */
+    dragEndMethod?(
+      params: Omit<AsTableDefines.RowDragendEventParams<D>, '_index'>,
+    ): boolean | Promise<boolean>;
+    /**
+     * 拖拽开始时是否允许行拖拽调整顺序的方法，该方法的返回值用来决定是否允许被拖拽
+     */
+    dragStartMethod?(
+      params: AsTableDefines.RowDragstartEventParams<D>,
+    ): boolean;
+    /**
+     * 用于 isToChildDrag，在拖拽完成后，该方法的返回值用于决定是否拖拽成子级
+     */
+    dragToChildMethod?(
+      params: Omit<AsTableDefines.RowDragToChildMethod<D>, '_index'>,
+    ): boolean;
+    /**
      * 自定义图标
      */
-    icon?: AsComponentSlotType | AsComponentSlotType[];
+    icon?: string;
     /**
      * 只对 tree-config 启用有效，是否允许同级/跨层行拖拽，用于树结构，启用后允许跨层级拖拽（除了上级拖到子级）
      */
     isCrossDrag?: boolean;
     /**
+     * 是否允许在不同表格之间进行拖拽
+     */
+    isCrossTableDrag?: boolean;
+    /**
      * 只对 tree-config 启用有效，是否允许同级行拖拽，用于树结构，启用后允许同层级之间进行拖拽
      */
     isPeerDrag?: boolean;
     /**
+     * 需要 isCrossDrag，只对 tree-config 启用有效，是否允许将自己拖拽到子级行中
+     */
+    isSelfToChildDrag?: boolean;
+    /**
+     * 需要 isCrossDrag，只对 tree-config 启用有效，是否允许拖拽成目标行的子级
+     */
+    isToChildDrag?: boolean;
+    /**
+     * 显示拖拽提示，拖拽过程中显示信息
+     */
+    showDragTip?: boolean;
+    /**
+     * 是否显示拖拽辅助状态显示
+     */
+    showGuidesStatus?: boolean;
+    /**
      * 是否显示拖拽按钮图标
      */
     showIcon?: boolean;
+    /**
+     * 自定义插槽模板
+     */
+    slots?: {
+      tip?:
+        | ((
+            params: AsTableDefines.RowDragSlotParams,
+          ) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    /**
+     * 自定义提示内容
+     */
+    tooltipMethod?(params: {
+      $table: AsTableConstructor<D>;
+      row: D;
+    }): null | number | string;
     /**
      * 触发拖拽方式
      */
@@ -2308,6 +2769,58 @@ export namespace AsTablePropTypes {
   }
 
   /**
+   * 当前行配置项
+   */
+  export interface CurrentRowConfig<D = any> {
+    /**
+     * 用于选中当前行执行之前的方法，返回 false 可以阻止默认行为
+     */
+    beforeSelectMethod?(params: {
+      $table: AsTableConstructor<D>;
+      row: D;
+      selected?: boolean;
+    }): boolean;
+    /**
+     * 只对 mouse-config.selected 启用有效，是否跟随单元格选中而移动高亮行
+     */
+    isFollowSelected?: boolean;
+    /**
+     * 严格模式，选中后不能取消
+     */
+    strict?: boolean;
+    /**
+     * 触发方式
+     */
+    trigger?: '' | 'default' | 'manual' | 'row' | null;
+  }
+
+  /**
+   * 当前列配置项
+   */
+  export interface CurrentColumnConfig<D = any> {
+    /**
+     * 用于选中当前列执行之前的方法，返回 false 可以阻止默认行为
+     */
+    beforeSelectMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      selected?: boolean;
+    }): boolean;
+    /**
+     * 只对 mouse-config.selected 启用有效，是否跟随单元格选中而移动高亮列
+     */
+    isFollowSelected?: boolean;
+    /**
+     * 严格模式，选中后不能取消
+     */
+    strict?: boolean;
+    /**
+     * 触发方式
+     */
+    trigger?: '' | 'cell' | 'default' | 'header' | 'manual' | null;
+  }
+
+  /**
    * 单元格配置项
    */
   export interface CellConfig<D = any> {
@@ -2465,20 +2978,10 @@ export namespace AsTablePropTypes {
       // TODO $gantt: AsGanttConstructor | null | undefined;
       // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
-      /**
-       * 已被 html 替换
-       * @deprecated
-       */
-      content: string;
       html: string;
 
       options: PrintHandleOptions;
     }): boolean | string;
-    /**
-     * 已被 html 替换
-     * @deprecated
-     */
-    content?: string;
     /**
      * 自定义打印内容
      */
@@ -2490,11 +2993,6 @@ export namespace AsTablePropTypes {
       // TODO $gantt: AsGanttConstructor | null | undefined;
       // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
-      /**
-       * 已被 html 替换
-       * @deprecated
-       */
-      content: string;
       html: string;
 
       options: PrintHandleOptions;
@@ -2517,12 +3015,59 @@ export namespace AsTablePropTypes {
    */
   export interface EditConfig<DT = any> {
     /**
-     * 自定义编辑图标，支持 class 字符串、图标组件、VNode 或返回图标的函数
+     * 自定义编辑之后逻辑
+     */
+    afterEditMethod?(params: {
+      // TODO $gantt: AsGanttConstructor<DT> | null | undefined;
+      // $grid: AsGridConstructor<DT> | null | undefined;
+      $table: AsTableConstructor<DT> & AsTablePrivateMethods;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: DT;
+      rowIndex: number;
+    }): void;
+    /**
+     * 当点击表格之外或者非编辑列之后，是否自动清除单元格的激活状态
+     */
+    autoClear?: boolean;
+    /**
+     * 当单元格被激活为编辑状态时，是否自动聚焦，默认 input，可以通过 item-render.autoFocus 指定
+     */
+    autoFocus?: boolean;
+    /**
+     * 当单元格被激活为编辑状态时，是否自动定位
+     */
+    autoPos?: boolean;
+    /**
+     * 自定义编辑之前逻辑，该方法的返回值用来决定该单元格是否允许编辑
+     */
+    beforeEditMethod?(params: {
+      // TODO $gantt: AsGanttConstructor<DT> | null | undefined;
+      // $grid: AsGridConstructor<DT> | null | undefined;
+      $table: AsTableConstructor<DT> & AsTablePrivateMethods;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: DT;
+      rowIndex: number;
+    }): boolean;
+    /**
+     * 是否启用缓存，启用后渲染性能的大幅提升，数据越大提升越好
+     */
+    cache?: boolean;
+    /**
+     * 是否启用
+     */
+    enabled?: boolean;
+    /**
+     * 自定义可编辑列的状态图标
      */
     icon?:
-      | ((params?: any) => AsComponentSlotType | AsComponentSlotType[])
-      | AsComponentSlotType
-      | AsComponentSlotType[];
+      | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+      | string;
+    /**
+     * 启用可复用渲染模式，对于全键盘方式编辑单元格时对中文输入法兼容性较好
+     */
+    isReuseKeep?: boolean;
     /**
      * 编辑模式
      * - cell（单元格编辑模式）
@@ -2530,11 +3075,11 @@ export namespace AsTablePropTypes {
      */
     mode?: '' | 'cell' | 'row' | null;
     /**
-     * 是否显示必填星号
+     * 是否显示必填字段的红色星号
      */
     showAsterisk?: boolean;
     /**
-     * 是否显示编辑图标
+     * 是否显示列头编辑图标
      */
     showIcon?: boolean;
     /**
@@ -2549,6 +3094,14 @@ export namespace AsTablePropTypes {
      * 只对 keep-source 开启有效，是否显示单元格修改状态
      */
     showUpdateStatus?: boolean;
+
+    /**
+     * 触发方式
+     * - manual（手动触发方式，只能用于 mode=row）
+     * - click（点击触发编辑）
+     * - dblclick（双击触发编辑）
+     */
+    trigger?: '' | 'click' | 'dblclick' | 'manual' | null;
   }
 
   export interface EditOpts<D = any> extends EditConfig<D> {}
@@ -2677,11 +3230,6 @@ export namespace AsTablePropTypes {
      */
     accordion?: boolean;
     /**
-     * 已废弃，请使用 childrenField
-     * @deprecated
-     */
-    children?: string;
-    /**
      * 树子节点的字段名
      */
     childrenField?: string;
@@ -2693,11 +3241,6 @@ export namespace AsTablePropTypes {
      * 默认展开指定树节点（只会在初始化时被触发一次，需要有 row-config.keyField）
      */
     expandRowKeys?: number[] | string[];
-    /**
-     * 已废弃，请使用 hasChildField
-     * @deprecated
-     */
-    hasChild?: string;
     /**
      * 只对 lazy 启用后有效，标识是否存在子节点，从而控制是否允许被点击
      */
@@ -2722,11 +3265,6 @@ export namespace AsTablePropTypes {
      * 是否使用懒加载（启用后只有指定 hasChildField 字段的节点才允许被点击）
      */
     lazy?: boolean;
-    /**
-     * 已废弃，请使用 showLine
-     * @deprecated
-     */
-    line?: boolean;
     /**
      * 该方法用于异步加载子节点
      */
@@ -3255,6 +3793,24 @@ export namespace AsTablePropTypes {
       column: AsTableDefines.ColumnInfo;
     }): boolean;
     /**
+     * 拖拽结束时是否允许行拖拽调整顺序的方法，该方法的返回值用来决定是否允许被拖拽调整顺序
+     */
+    dragEndMethod?(
+      params: Omit<AsTableDefines.ColumnDragendEventParams<D>, '_index'>,
+    ): boolean | Promise<boolean>;
+    /**
+     * 拖拽开始时是否允许行拖拽调整顺序的方法，该方法的返回值用来决定是否允许被拖拽
+     */
+    dragStartMethod?(
+      params: AsTableDefines.ColumnDragstartEventParams<D>,
+    ): boolean;
+    /**
+     * 用于 isToChildDrag，在拖拽完成后，该方法的返回值用于决定是否拖拽成子级
+     */
+    dragToChildMethod?(
+      params: Omit<AsTableDefines.ColumnDragToChildMethod<D>, '_index'>,
+    ): boolean;
+    /**
      * 自定义图标
      */
     icon?: string;
@@ -3286,6 +3842,23 @@ export namespace AsTablePropTypes {
      * 是否显示拖拽按钮图标
      */
     showIcon?: boolean;
+    /**
+     * 自定义插槽模板
+     */
+    slots?: {
+      tip?:
+        | ((
+            params: AsTableDefines.ColumnDragSlotParams,
+          ) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    /**
+     * 自定义提示内容
+     */
+    tooltipMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+    }): null | number | string;
     /**
      * 触发拖拽方式
      */
@@ -3368,6 +3941,14 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 列拖拽排序配置项
    */
   columnDragConfig?: AsTablePropTypes.ColumnDragConfig<D>;
+  /**
+   * 当前列配置项
+   */
+  currentColumnConfig?: AsTablePropTypes.CurrentColumnConfig<D>;
+  /**
+   * 当前行配置项
+   */
+  currentRowConfig?: AsTablePropTypes.CurrentRowConfig<D>;
   /**
    * 个性化信息配置项
    */
@@ -3490,6 +4071,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 保持原始值的状态，被某些功能所依赖，比如编辑状态、还原数据等
    */
   keepSource?: AsTablePropTypes.KeepSource;
+  /**
+   * 按键配置项
+   */
+  keyboardConfig?: AsTablePropTypes.KeyboardConfig<D>;
   /**
    * max-height
    */
@@ -4099,6 +4684,13 @@ export namespace AsTableDefines {
     sortData?: CustomSortStoreObj[];
     visibleData?: Record<string, boolean>;
   }
+  export interface ColumnDragSlotParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+  }
+
+  export interface RowDragSlotParams<D = any> {
+    row: D;
+  }
 
   export interface ValidatorRule<D = any> {
     /**
@@ -4192,6 +4784,78 @@ export namespace AsTableDefines {
     visibleData: D[];
     visibleTreeData: D[];
   }
+
+  export interface RowDragstartEventParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+    row: D;
+  }
+
+  export interface RowDragToChildMethod<
+    D = any,
+  > extends RowDragendEventParams<D> {}
+
+  export interface ColumnDragstartEventParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragoverEventParams<D = any> {
+    dragColumn: AsTableDefines.ColumnInfo;
+    dragPos: 'left' | 'right';
+    offsetIndex: 0 | 1;
+    oldColumn: AsTableDefines.ColumnInfo;
+    targetColumn: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragendEventParams<D = any> {
+    _index: {
+      newIndex: number;
+      oldIndex: number;
+    };
+    dragColumn: AsTableDefines.ColumnInfo;
+    dragPos: 'left' | 'right';
+    dragToChild: boolean;
+    newColumn: AsTableDefines.ColumnInfo;
+    offsetIndex: 0 | 1;
+    oldColumn: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragToChildMethod<
+    D = any,
+  > extends ColumnDragendEventParams<D> {}
+
+  export interface RowDragoverEventParams<D = any> {
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+    targetRow: D;
+  }
+
+  export interface RowDragendEventParams<D = any> {
+    _index: {
+      newIndex: number;
+      oldIndex: number;
+    };
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    dragToChild: boolean;
+    newRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+  }
+
+  export interface RowRemoveDragendEventParams<D = any> {
+    row: D;
+  }
+
+  export interface RowInsertDragendEventParams<D = any> {
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    dragToChild: boolean;
+    newRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+  }
 }
 
 export namespace AsTableSlotTypes {
@@ -4252,4 +4916,21 @@ export type AsTableEmits = [
   'checkbox-range-select',
   'checkbox-change',
   'row-resizable-change',
+
+  'cell-click',
+  'current-column-change',
+  'current-column-disabled',
+
+  'current-row-change',
+  'current-row-disabled',
+  'cell-dblclick',
+  'header-cell-click',
+  'header-cell-dblclick',
+  'row-dragover',
+  'row-dragstart',
+  'row-dragend',
+  'column-dragover',
+  'column-dragstart',
+
+  'column-dragend',
 ];

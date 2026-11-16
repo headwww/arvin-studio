@@ -2,6 +2,7 @@ import type { VueNode } from '../_util';
 
 export interface TableLocale {
   allTitle: VueNode;
+  dragTip: VueNode;
   emptyText: VueNode;
   /**
    * 筛选按钮提示语
@@ -21,8 +22,10 @@ export interface TableLocale {
    * 升序按钮提示语
    */
   sortAsc: VueNode;
+
   /**
    * 降序按钮提示语
    */
   sortDesc: VueNode;
+  treeDragChild: VueNode;
 }
