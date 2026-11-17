@@ -12,6 +12,7 @@ const localeValues: Locale = {
   Table: {
     seqTitle: '序号',
     emptyText: '暂无数据',
+    loadingText: '加载中...',
     dragTip: '移动：{0}',
     allTitle: '全选/取消',
     sortAsc: '升序：最低到最高',

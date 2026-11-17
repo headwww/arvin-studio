@@ -60,7 +60,6 @@ const Slider = defineComponent<SlickProps>((props, { slots, expose }) => {
     breakpoints.sort((x, y) => x - y);
 
     breakpoints.forEach((value, index) => {
-      // eslint-disable-next-line no-useless-assignment
       let bQuery = '';
       bQuery =
         // eslint-disable-next-line unicorn/prefer-minimal-ternary

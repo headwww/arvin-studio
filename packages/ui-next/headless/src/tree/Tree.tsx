@@ -310,7 +310,6 @@ const Tree = defineComponent<TreeProps>(
     }));
 
     const getInitExpandedKeys = () => {
-      // eslint-disable-next-line no-useless-assignment
       let keys: Key[] = [];
       const defaultExpandAll = props.defaultExpandAll;
       const defaultExpandParent = props.defaultExpandParent;

@@ -120,7 +120,6 @@ const CheckableTagGroup = defineComponent<
       },
     });
     const handleChange = (checked: boolean, option: CheckableTagOption) => {
-      // eslint-disable-next-line no-useless-assignment
       let newValue:
         | CheckableTagDefaultValue
         | CheckableTagDefaultValue[]

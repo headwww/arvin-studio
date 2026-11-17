@@ -133,7 +133,7 @@ class Schema {
 
     function complete(results: (ValidateError | ValidateError[])[]) {
       let errors: ValidateError[] = [];
-      // eslint-disable-next-line no-useless-assignment
+
       let fields: ValidateFieldsError = {};
 
       function add(e: ValidateError | ValidateError[]) {

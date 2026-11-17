@@ -131,6 +131,8 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     scrollbarWidth,
     scrollbarHeight,
     layoutBackgroundColor,
+    fixedLeftScrollingBoxShadow,
+    fixedRightScrollingBoxShadow,
     colorTextSecondary,
     colorText,
     footerBackgroundColor,
@@ -148,6 +150,15 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
   return {
     [`${componentCls}-slots, ${componentCls}--file-form`]: {
       display: 'none',
+    },
+
+    /* valid error*/
+    [`div.${componentCls}--tooltip-wrapper`]: {
+      [`&.${componentCls}--valid-error`]: {
+        padding: 0,
+        color: cellValidateErrorColor,
+        backgroundColor: cellValidateErrorThemeNormalBackgroundColor,
+      },
     },
 
     [`${componentCls}--layout-wrapper`]: {
@@ -251,6 +262,24 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         },
       },
     },
+
+    [`${componentCls}--fixed-left-wrapper, ${componentCls}--fixed-right-wrapper`]:
+      {
+        [`&.sx--hidden`]: {
+          [`& > ${componentCls}--body-wrapper`]: {
+            [`& > ${componentCls}--body-inner-wrapper`]: {
+              overflowX: 'hidden',
+            },
+          },
+        },
+        [`&.sy--hidden`]: {
+          [`& > ${componentCls}--body-wrapper`]: {
+            [`& > ${componentCls}--body-inner-wrapper`]: {
+              overflowY: 'hidden',
+            },
+          },
+        },
+      },
 
     [`${componentCls}-body--column`]: {
       '&.col--vertical-top': {
@@ -868,6 +897,43 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       },
     },
 
+    /* 固定列 half*/
+    [`${componentCls}--fixed-left-wrapper`]: {
+      [`${componentCls}--cell-main-area,
+        ${componentCls}--cell-item-area,
+        ${componentCls}--cell-extend-area,
+        ${componentCls}--cell-active-area`]: {
+        [`&[half="1"]`]: {
+          borderRight: 0,
+        },
+      },
+      [`${componentCls}--cell-copy-area`]: {
+        [`&[half="1"]`]: {
+          backgroundSize: `${cellClipAreaBorderWidth}px 12px, 0 12px, 12px ${cellClipAreaBorderWidth}px, 12px ${cellClipAreaBorderWidth}px`,
+        },
+      },
+    },
+
+    [`${componentCls}--fixed-right-wrapper`]: {
+      [`${componentCls}--cell-main-area,
+        ${componentCls}--cell-item-area,
+        ${componentCls}--cell-extend-area,
+        ${componentCls}--cell-active-area`]: {
+        [`&[half="1"]`]: {
+          borderLeft: 0,
+        },
+      },
+      [`${componentCls}--cell-copy-area`]: {
+        [`&[half="1"]`]: {
+          backgroundSize: `0 12px, ${cellClipAreaBorderWidth}px 12px, 12px ${cellClipAreaBorderWidth}px, 12px ${cellClipAreaBorderWidth}px`,
+        },
+      },
+      [`${componentCls}-cell--col-resizable`]: {
+        right: 'auto',
+        left: '-0.3em',
+      },
+    },
+
     /* 复选框-范围选择*/
     [`${componentCls}--checkbox-range`]: {
       backgroundColor: checkboxRangeBackgroundColor,
@@ -958,6 +1024,46 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         },
       },
     },
+
+    [`${componentCls}--loading`]: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      zIndex: 99,
+      display: 'none',
+      alignItems: 'center',
+      justifyContent: 'center',
+      userSelect: 'none',
+      borderRadius: 'inherit',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        backgroundColor: colorBgContainer,
+        opacity: 0.6,
+        pointerEvents: 'none',
+      },
+      '&.is--visible': {
+        display: 'flex',
+      },
+    },
+    [`${componentCls}--loading-custom-wrapper`]: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      zIndex: 99,
+      display: 'none',
+      '&.is--visible': {
+        display: 'block',
+      },
+    },
     /** render-default */
     [`${componentCls}--render-default`]: {
       position: 'relative',
@@ -1021,8 +1127,35 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       },
 
       [`&.drag--range`]: {
+        [`${componentCls}--main-wrapper,
+          ${componentCls}--fixed-left-wrapper,
+          ${componentCls}--fixed-right-wrapper`]: {
+          '*': {
+            cursor: 'default',
+          },
+        },
         [`${componentCls}-body--column`]: {
           userSelect: 'none',
+        },
+      },
+
+      [`&.drag--area`]: {
+        [`${componentCls}--main-wrapper,
+          ${componentCls}--fixed-left-wrapper,
+          ${componentCls}--fixed-right-wrapper`]: {
+          '*': {
+            cursor: 'default',
+          },
+        },
+      },
+
+      [`&.drag--extend-range`]: {
+        [`${componentCls}--main-wrapper,
+          ${componentCls}--fixed-left-wrapper,
+          ${componentCls}--fixed-right-wrapper`]: {
+          '*': {
+            cursor: 'crosshair',
+          },
         },
       },
 
@@ -1436,6 +1569,52 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
               },
             },
           },
+      },
+
+      /* 固定列容器*/
+      [`${componentCls}--fixed-left-wrapper, ${componentCls}--fixed-right-wrapper`]:
+        {
+          width: '100%',
+          position: 'absolute',
+          top: 0,
+          zIndex: 5,
+          overflow: 'hidden',
+          // 原 SCSS 此处先写 inherit 再被下一行覆盖，无实际效果，省略
+          transition: '0.3s box-shadow',
+          outline: 0,
+          backgroundColor: layoutBackgroundColor,
+
+          [`&.y-ob--contain`]: {
+            [`& > ${componentCls}--body-wrapper`]: {
+              [`& > ${componentCls}--body-inner-wrapper`]: {
+                overscrollBehaviorY: 'contain',
+              },
+            },
+          },
+
+          [`${componentCls}--body-wrapper`]: {
+            outline: 0,
+          },
+        },
+
+      [`${componentCls}--fixed-left-wrapper`]: {
+        [`${componentCls}--body-wrapper`]: {
+          width: `calc(100% + 40px)`,
+        },
+        left: 0,
+        width: 200,
+
+        [`&.scrolling--middle`]: {
+          boxShadow: fixedLeftScrollingBoxShadow,
+        },
+      },
+
+      [`${componentCls}--fixed-right-wrapper`]: {
+        right: 0,
+
+        [`&.scrolling--middle`]: {
+          boxShadow: fixedRightScrollingBoxShadow,
+        },
       },
 
       [`&${componentCls}-medium`]: {

@@ -73,6 +73,12 @@ export interface ComponentToken {
   disabledColor: string;
   /** 展开行默认内边距 */
   expandPaddingDefault: number;
+  /** 固定列滚动时的阴影颜色 */
+  fixedScrollingBoxShadowColor: string;
+  /** 固定左侧列滚动时的阴影 */
+  fixedLeftScrollingBoxShadow: string;
+  /** 固定右侧列滚动时的阴影 */
+  fixedRightScrollingBoxShadow: string;
   /** 表尾背景 */
   footerBackgroundColor: string;
   /** 表尾文字颜色 */

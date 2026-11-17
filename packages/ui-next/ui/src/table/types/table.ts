@@ -1634,6 +1634,12 @@ export interface AsTablePrivateMethods<
 export namespace AsTablePropTypes {
   export type Round = boolean;
   export type Loading = boolean;
+  export interface LoadingConfig {
+    /** 加载图标（Spin 的 indicator，VNode 或返回 VNode 的函数） */
+    icon?: (() => VNode) | VNode;
+    /** 加载提示文字 */
+    text?: string;
+  }
   export type EmptyText = string;
   export type Stripe = boolean;
   export type Align = AsComponentAlignType;
@@ -2061,6 +2067,13 @@ export namespace AsTablePropTypes {
      * 校验提示框的最大宽度
      */
     maxWidth?: number;
+    /**
+     * 校验消息提示方式
+     * - default 使用内置提示（表格高度不足时以 tooltip 展示）
+     * - inline 行内提示
+     * - tooltip 使用 tooltip 展示
+     */
+    message?: '' | 'default' | 'inline' | 'tooltip' | null;
     /**
      * 校验消息提示方式
      * - single 单个提示
@@ -4345,6 +4358,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 表格是否显示加载中
    */
   loading?: AsTablePropTypes.Loading;
+  /**
+   * 加载中配置项
+   */
+  loadingConfig?: AsTablePropTypes.LoadingConfig;
   /**
    * max-height
    */

@@ -5,6 +5,7 @@ export const config = {
     animat: true,
     delayHover: 250,
     autoResize: true,
+    loadingConfig: {},
     resizeConfig: {
       // refreshDelay: 20
     },

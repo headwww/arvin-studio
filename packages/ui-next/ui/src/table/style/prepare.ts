@@ -47,6 +47,9 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
     .setA(0.1)
     .toHexString();
 
+  // 对应 vxe 的 rgba(0, 0, 0, 0.12)：固定列滚动阴影色
+  const fixedScrollingBoxShadowColor = 'rgba(0, 0, 0, 0.12)';
+
   return {
     // 布局/边框
     layoutBackgroundColor: colorBgContainer,
@@ -54,6 +57,11 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
     borderColor: colorBorderSecondary,
     borderWidth: 1.04,
     resizableLineColor: colorBorder,
+
+    // 固定列滚动阴影
+    fixedScrollingBoxShadowColor,
+    fixedLeftScrollingBoxShadow: `8px 0px 10px -5px ${fixedScrollingBoxShadowColor}`,
+    fixedRightScrollingBoxShadow: `-8px 0px 10px -5px ${fixedScrollingBoxShadowColor}`,
 
     // 内容字体
     contentFontSize,

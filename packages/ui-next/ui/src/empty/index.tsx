@@ -122,7 +122,7 @@ const Empty = defineComponent<
         getSlotPropsFnRun(slots, props, 'image') ??
         componentConfig.value?.image ??
         defaultEmptyImg;
-      // eslint-disable-next-line no-useless-assignment
+
       let imageNode: any = null;
       imageNode =
         typeof mergedImage === 'string' ? (

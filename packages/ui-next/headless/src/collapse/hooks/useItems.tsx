@@ -112,7 +112,6 @@ function convertItemsToNodes(items: ItemType[], props: Props) {
       rawOnItemClick?.(value);
     };
 
-    // eslint-disable-next-line no-useless-assignment
     let isActive = false;
 
     isActive = accordion ? activeKey?.[0] === key : activeKey.includes(key);

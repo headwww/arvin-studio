@@ -312,9 +312,9 @@ const SharedTooltip = defineComponent({
     const updateTipStyle = () => {
       const { isArrow, placement, defaultPlacement } = props;
       const { tipTarget: targetElem, tipStore, tipPos } = reactData;
-      // eslint-disable-next-line no-useless-assignment
+
       let top: '' | number = '';
-      // eslint-disable-next-line no-useless-assignment
+
       let left: '' | number = '';
       let panelPlacement: 'bottom' | 'top' = 'bottom';
       let arrowLeft: '' | number = '';
@@ -674,22 +674,15 @@ const SharedTooltip = defineComponent({
       }
 
       if (useScrollbar) {
-        const {
-          className,
-          viewClassName,
-          viewInnerClassName,
-          ...restConfig
-        } = scrollbarConfig || {};
+        const { className, viewClassName, viewInnerClassName, ...restConfig } =
+          scrollbarConfig || {};
 
         return h(
           Scrollbar,
           {
             ...restConfig,
             ref: contentScrollbar,
-            class: clsx(
-              `${prefixCls.value}-scrollbar-content`,
-              className,
-            ),
+            class: clsx(`${prefixCls.value}-scrollbar-content`, className),
             viewClassName: clsx(
               `${prefixCls.value}-scrollbar-content-view`,
               viewClassName,

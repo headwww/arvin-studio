@@ -9,6 +9,10 @@ export interface TableLocale {
    */
   filter: VueNode;
   /**
+   * 加载中提示语
+   */
+  loadingText?: string;
+  /**
    * 宽像素提示
    */
   resizeColTip: VueNode;

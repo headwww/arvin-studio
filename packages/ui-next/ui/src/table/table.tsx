@@ -109,6 +109,7 @@ import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
 import enUS from '../locale/en_US';
 import useLocale from '../locale/useLocale';
+import Spin from '../spin';
 import { genCssVar } from '../theme/util/genStyleUtils';
 import version from '../version';
 import TableBodyComponent from './body';
@@ -179,10 +180,6 @@ export const Table = defineComponent<AsTableProps>(
     const log = useLog('Table');
     const [locale] = useLocale('Table', enUS.Table);
 
-    const $asParentTable = inject<
-      (AsTableConstructor & AsTablePrivateMethods) | null
-    >('$asTable', null);
-
     const {
       prefixCls,
       rootPrefixCls,
@@ -204,6 +201,7 @@ export const Table = defineComponent<AsTableProps>(
       cellConfig: cCellConfig,
       headerCellConfig: cHeaderCellConfig,
       emptyRender: cEmptyRender,
+      loadingConfig: cLoadingConfig,
       editConfig: cEditConfig,
       radioConfig: cRadioConfig,
       tooltipConfig: cTooltipConfig,
@@ -242,6 +240,7 @@ export const Table = defineComponent<AsTableProps>(
       'cellConfig',
       'headerCellConfig',
       'emptyRender',
+      'loadingConfig',
       'editConfig',
       'radioConfig',
       'validConfig',
@@ -267,17 +266,26 @@ export const Table = defineComponent<AsTableProps>(
 
     const browseObj = browse();
 
+    const $asParentTable = inject<
+      (AsTableConstructor & AsTablePrivateMethods) | null
+    >('$asTable', null);
+
+    const mergedSize = useSize(computed(() => props.size ?? 'medium'));
+
     const crossTableDragRowInfo = getCrossTableDragRowInfo();
 
-    // eslint-disable-next-line no-useless-assignment
+    const reactData = reactive(createReactData());
+
+    const internalData = createInternalData();
+
     let tableMethods = {} as TableMethods;
-    // eslint-disable-next-line no-useless-assignment
     let tablePrivateMethods = {} as TablePrivateMethods;
 
     const refElem = ref() as Ref<HTMLDivElement>;
     const refVarElem = ref() as Ref<HTMLDivElement>;
     const refTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refCommTooltip = ref() as Ref<AsSharedTooltipInstance>;
+    const refValidTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refTableViewportElem = ref<HTMLDivElement>();
     const refTableBody = ref() as Ref<ComponentPublicInstance>;
     const refTableFooter = ref() as Ref<ComponentPublicInstance>;
@@ -309,9 +317,6 @@ export const Table = defineComponent<AsTableProps>(
     const refScrollYBottomCornerElem = ref<HTMLDivElement>();
     const refScrollXSpaceElem = ref<HTMLDivElement>();
     const refScrollYSpaceElem = ref<HTMLDivElement>();
-
-    const reactData = reactive(createReactData());
-    const internalData = createInternalData();
 
     const getWheelSpeed = (lastScrollTime: number) => {
       let multiple = 1;
@@ -512,6 +517,15 @@ export const Table = defineComponent<AsTableProps>(
         cCheckboxConfig.value,
         props.checkboxConfig,
       ) as AsTablePropTypes.CheckboxOpts;
+    });
+
+    const computeLoadingOpts = computed(() => {
+      return Object.assign(
+        { text: locale?.value.loadingText },
+        config.table.loadingConfig,
+        cLoadingConfig.value,
+        props.loadingConfig,
+      ) as AsTablePropTypes.LoadingConfig;
     });
 
     const computeBodyMergeCoverFixed = computed(() => {
@@ -800,6 +814,10 @@ export const Table = defineComponent<AsTableProps>(
       return Object.assign({}, tooltipOpts, tooltipStore.currOpts);
     });
 
+    const computeValidTipConfig = computed(() => {
+      return Object.assign({}, computeTooltipOpts.value);
+    });
+
     const computeEditOpts = computed(() => {
       return Object.assign(
         {},
@@ -1036,8 +1054,6 @@ export const Table = defineComponent<AsTableProps>(
       return false;
     });
 
-    const mergedSize = useSize(computed(() => props.size ?? 'medium'));
-
     const computeMaps: AsTablePrivateComputed = {
       computeIsAllCheckboxDisabled,
       computeFloatingFilterOpts,
@@ -1207,7 +1223,7 @@ export const Table = defineComponent<AsTableProps>(
         }
         const startTop = scrollTop;
         const endTop = scrollTop + clientHeight;
-        // eslint-disable-next-line no-useless-assignment
+
         let toVisibleIndex = -1;
         let visibleSize = 0;
         const isCustomCellHeight = isResizeCellHeight || cellOpts.height;
@@ -1971,9 +1987,8 @@ export const Table = defineComponent<AsTableProps>(
         isDeep: isSortDeep,
       } = sortOpts;
 
-      // eslint-disable-next-line no-useless-assignment
       let tableData: any[] = [];
-      // eslint-disable-next-line no-useless-assignment
+
       let tableTree: any[] = [];
       // 收集筛选/排序条件
       if (!allRemoteFilter || !allRemoteSort) {
@@ -3827,7 +3842,7 @@ export const Table = defineComponent<AsTableProps>(
       const footerTableElem = getRefElem(elemStore['main-footer-table']);
       const xHandleEl = refScrollXHandleElem.value;
       const yHandleEl = refScrollYHandleElem.value;
-      // eslint-disable-next-line no-useless-assignment
+
       let overflowY = false;
 
       let overflowX = false;
@@ -3966,13 +3981,10 @@ export const Table = defineComponent<AsTableProps>(
         const renderCellSize = tableData.length * tableColumn.length;
         // 渲染量低的场景
         if (renderCellSize < 400) {
-          // eslint-disable-next-line no-useless-assignment
           rceDelay = 20;
         } else if (renderCellSize < 600) {
-          // eslint-disable-next-line no-useless-assignment
           rceDelay = 40;
         } else if (renderCellSize < 800) {
-          // eslint-disable-next-line no-useless-assignment
           rceDelay = 80;
         }
         if (rceTimeout) {
@@ -4872,7 +4884,7 @@ export const Table = defineComponent<AsTableProps>(
           const { footerFullDataRowData } = internalData;
           const colid = column.id;
           const $rowIndex = footerTableData.indexOf(row);
-          // eslint-disable-next-line no-useless-assignment
+
           let rowRest: any = null;
           if ($rowIndex !== -1) {
             rowRest = footerFullDataRowData[$rowIndex];
@@ -7513,7 +7525,7 @@ export const Table = defineComponent<AsTableProps>(
       const { dragRow } = reactData;
       const rowDragOpts = computeRowDragOpts.value;
       const { tooltipMethod } = rowDragOpts;
-      // eslint-disable-next-line no-useless-assignment
+
       let tipContent = '';
       if (tooltipMethod) {
         const rtParams = {
@@ -7558,7 +7570,7 @@ export const Table = defineComponent<AsTableProps>(
       const { dragCol } = reactData;
       const columnDragOpts = computeColumnDragOpts.value;
       const { tooltipMethod } = columnDragOpts;
-      // eslint-disable-next-line no-useless-assignment
+
       let tipContent = '';
       if (tooltipMethod) {
         const dtParams = {
@@ -9287,7 +9299,6 @@ export const Table = defineComponent<AsTableProps>(
           return;
         }
 
-        // eslint-disable-next-line no-useless-assignment
         let scrollTop = yHandleEl.scrollTop;
         let scrollLeft = xHandleEl.scrollLeft;
         if (leftScrollElem && fixedType === 'left') {
@@ -10133,7 +10144,7 @@ export const Table = defineComponent<AsTableProps>(
           return;
         }
         const rowOpts = computeRowOpts.value;
-        // TODO const validTip = refValidTooltip.value;
+        const validTip = refValidTooltip.value;
         const tooltip = refTooltip.value;
         const bodyHeight = yHandleEl.clientHeight;
         const bodyWidth = xHandleEl.clientWidth;
@@ -10213,9 +10224,9 @@ export const Table = defineComponent<AsTableProps>(
         if (rowOpts.isHover) {
           $asTable.clearHoverRow();
         }
-        // TODO if (validTip && validTip.reactData.visible) {
-        //   validTip.close();
-        // }
+        if (validTip && validTip.reactData.visible) {
+          validTip.close();
+        }
         if (tooltip && tooltip.reactData.visible) {
           tooltip.close();
         }
@@ -10355,7 +10366,6 @@ export const Table = defineComponent<AsTableProps>(
                   },
             );
 
-            // eslint-disable-next-line no-useless-assignment
             let isSelected = false;
             if (cLen > 0) {
               if (vLen > 0) {
@@ -11627,9 +11637,8 @@ export const Table = defineComponent<AsTableProps>(
                       const _firstRowIndex = firstRowRest._index;
                       const _lastRowIndex = _firstRowIndex + tableData.length;
 
-                      // eslint-disable-next-line no-useless-assignment
                       let rsIndex = -1;
-                      // eslint-disable-next-line no-useless-assignment
+
                       let reIndex = -1;
                       let offsetRate = 1;
                       if (_dragRowIndex < _firstRowIndex) {
@@ -12065,9 +12074,9 @@ export const Table = defineComponent<AsTableProps>(
                         const _firstColIndex = firstColRest._index;
                         const _lastColIndex =
                           _firstColIndex + tableColumn.length;
-                        // eslint-disable-next-line no-useless-assignment
+
                         let csIndex = -1;
-                        // eslint-disable-next-line no-useless-assignment
+
                         let ceIndex = -1;
                         let offsetRate = 1;
                         if (_dragColIndex < _firstColIndex) {
@@ -12331,7 +12340,7 @@ export const Table = defineComponent<AsTableProps>(
         if (trigger === 'manual') {
           return;
         }
-        // eslint-disable-next-line no-useless-assignment
+
         let checked = false;
         checked = checkField
           ? !get(row, checkField)
@@ -12656,6 +12665,83 @@ export const Table = defineComponent<AsTableProps>(
       );
     };
 
+    /**
+     * 渲染浮固定列
+     * 分别渲染左边固定列和右边固定列
+     * 如果宽度足够情况下，则不需要渲染固定列
+     * @param fixedType 固定列类型
+     */
+    function renderViewFixed(fixedType: 'left' | 'right') {
+      const { showHeader, showFooter } = props;
+      const {
+        tableData,
+        tableColumn,
+        tableGroupColumn,
+        columnStore,
+        footerTableData,
+      } = reactData;
+      const scrollbarOpts = computeScrollbarOpts.value;
+      const scrollbarXOpts = computeScrollbarXOpts.value;
+      const scrollbarYOpts = computeScrollbarYOpts.value;
+      const { overscrollBehavior: overscrollXBehavior } = scrollbarXOpts;
+      const { overscrollBehavior: overscrollYBehavior } = scrollbarYOpts;
+      const isFixedLeft = fixedType === 'left';
+      const fixedColumn = isFixedLeft
+        ? columnStore.leftList
+        : columnStore.rightList;
+      const osXBehavior = eqNull(overscrollXBehavior)
+        ? scrollbarOpts.overscrollBehavior
+        : overscrollXBehavior;
+      const osYBehavior = eqNull(overscrollYBehavior)
+        ? scrollbarOpts.overscrollBehavior
+        : overscrollYBehavior;
+
+      return (
+        <div
+          class={[
+            `${prefixCls.value}--fixed-${fixedType}-wrapper`,
+            `sx--${scrollbarXOpts.visible}`,
+            `sy--${scrollbarYOpts.visible}`,
+            {
+              [`x-ob--${osXBehavior}`]: osXBehavior,
+              [`y-ob--${osYBehavior}`]: osYBehavior,
+            },
+          ]}
+          ref={isFixedLeft ? refLeftContainer : refRightContainer}
+        >
+          {showHeader && (
+            <TableHeaderComponent
+              fixedColumn={fixedColumn}
+              fixedType={fixedType}
+              prefixCls={prefixCls.value}
+              size={mergedSize.value}
+              tableColumn={tableColumn}
+              tableData={tableData}
+              tableGroupColumn={tableGroupColumn}
+            ></TableHeaderComponent>
+          )}
+          <TableBodyComponent
+            fixedColumn={fixedColumn}
+            fixedType={fixedType}
+            prefixCls={prefixCls.value}
+            size={mergedSize.value}
+            tableColumn={tableColumn}
+            tableData={tableData}
+          ></TableBodyComponent>
+          {showFooter && (
+            <TableFooterComponent
+              fixedColumn={fixedColumn}
+              fixedType={fixedType}
+              footerTableData={footerTableData}
+              prefixCls={prefixCls.value}
+              size={mergedSize.value}
+              tableColumn={tableColumn}
+            ></TableFooterComponent>
+          )}
+        </div>
+      );
+    }
+
     function renderViewport() {
       const { showHeader, showFooter } = props;
       const scrollbarOpts = computeScrollbarOpts.value;
@@ -12664,8 +12750,16 @@ export const Table = defineComponent<AsTableProps>(
       const { overscrollBehavior: overscrollXBehavior } = scrollbarXOpts;
       const { overscrollBehavior: overscrollYBehavior } = scrollbarYOpts;
 
-      const { tableData, tableColumn, tableGroupColumn, footerTableData } =
-        reactData;
+      const {
+        overflowX,
+        tableData,
+        tableColumn,
+        tableGroupColumn,
+        footerTableData,
+        columnStore,
+      } = reactData;
+      const { leftList, rightList } = columnStore;
+
       const osXBehavior = eqNull(overscrollXBehavior)
         ? scrollbarOpts.overscrollBehavior
         : overscrollXBehavior;
@@ -12684,8 +12778,14 @@ export const Table = defineComponent<AsTableProps>(
           ]}
           ref={refTableViewportElem}
         >
-          <div class={`${prefixCls.value}--main-wrapper`}>
-            {showHeader ? (
+          <div
+            class={[
+              `${prefixCls.value}--main-wrapper`,
+              `sx--${scrollbarXOpts.visible}`,
+              `sy--${scrollbarYOpts.visible}`,
+            ]}
+          >
+            {showHeader && (
               <TableHeaderComponent
                 prefixCls={prefixCls.value}
                 size={mergedSize.value}
@@ -12693,8 +12793,6 @@ export const Table = defineComponent<AsTableProps>(
                 tableData={tableData}
                 tableGroupColumn={tableGroupColumn}
               ></TableHeaderComponent>
-            ) : (
-              createCommentVNode()
             )}
             <TableBodyComponent
               fixedType={''}
@@ -12704,16 +12802,24 @@ export const Table = defineComponent<AsTableProps>(
               tableColumn={tableColumn}
               tableData={tableData}
             ></TableBodyComponent>
-            {showFooter ? (
+            {showFooter && (
               <TableFooterComponent
                 footerTableData={footerTableData}
                 prefixCls={prefixCls.value}
                 ref={refTableFooter}
                 tableColumn={tableColumn}
               ></TableFooterComponent>
-            ) : (
-              createCommentVNode()
             )}
+          </div>
+          <div class={`${prefixCls.value}--fixed-wrapper`}>
+            {leftList &&
+              leftList.length > 0 &&
+              overflowX &&
+              renderViewFixed('left')}
+            {rightList &&
+              rightList.length > 0 &&
+              overflowX &&
+              renderViewFixed('right')}
           </div>
           {renderRowExpandedVNs()}
         </div>
@@ -12741,6 +12847,7 @@ export const Table = defineComponent<AsTableProps>(
         mouseConfig,
         showFooter,
         editRules,
+        height,
       } = props;
       const {
         isGroup,
@@ -12766,7 +12873,9 @@ export const Table = defineComponent<AsTableProps>(
           : null;
       const rowDragOpts = computeRowDragOpts.value;
       const tableTipConfig = computeTableTipConfig.value;
+      const validTipConfig = computeValidTipConfig.value;
       const validOpts = computeValidOpts.value;
+      const loadingOpts = computeLoadingOpts.value;
       const checkboxOpts = computeCheckboxOpts.value;
       const treeOpts = computeTreeOpts.value;
       const rowOpts = computeRowOpts.value;
@@ -12776,6 +12885,7 @@ export const Table = defineComponent<AsTableProps>(
       const areaOpts = computeAreaOpts.value;
       const currLoading =
         reactData.isColLoading || reactData.isRowLoading || loading;
+      const loadingSlot = slots.loading;
       const resizableOpts = computeResizableOpts.value;
       const isArea = mouseConfig && mouseOpts.area;
       const columnDragOpts = computeColumnDragOpts.value;
@@ -12907,10 +13017,37 @@ export const Table = defineComponent<AsTableProps>(
                     <div class={`${prefixCls.value}--resizable-number-tip`} />
                   ) : null}
                 </div>
+                {/* 加载中 */}
+                {loadingSlot ? (
+                  <div
+                    class={clsx(`${prefixCls.value}--loading-custom-wrapper`, {
+                      'is--visible': !!currLoading,
+                    })}
+                    key="lg"
+                  >
+                    {callSlot(loadingSlot, {
+                      $table: $asTable,
+                      loading: currLoading,
+                    })}
+                  </div>
+                ) : currLoading ? (
+                  <div
+                    class={clsx(`${prefixCls.value}--loading`, {
+                      'is--visible': !!currLoading,
+                    })}
+                    key="lg"
+                  >
+                    <Spin
+                      description={loadingOpts.text}
+                      indicator={loadingOpts.icon}
+                      spinning
+                    />
+                  </div>
+                ) : (
+                  createCommentVNode()
+                )}
                 {
-                  /**
-                   * 拖拽排序提示
-                   */
+                  /** 拖拽排序提示 */
                   renderDragTip()
                 }
               </div>
@@ -13004,6 +13141,21 @@ export const Table = defineComponent<AsTableProps>(
               }
               width={tableTipConfig.width}
             ></SharedTooltip>
+            {/* 校验提示 */}
+            {editRules &&
+            validOpts.showErrorMessage &&
+            (validOpts.message === 'default'
+              ? !height
+              : validOpts.message === 'tooltip') ? (
+              <SharedTooltip
+                class={`${prefixCls.value}--valid-error`}
+                enterable={validTipConfig.enterable}
+                enterDelay={validTipConfig.enterDelay}
+                key="vtp"
+                leaveDelay={validTipConfig.leaveDelay}
+                ref={refValidTooltip}
+              />
+            ) : null}
           </div>
         </div>
       );

@@ -453,7 +453,6 @@ const Slider = defineComponent<SliderProps>(
         }
       });
 
-      // eslint-disable-next-line no-useless-assignment
       let focusIndex = valueIndex;
 
       if (

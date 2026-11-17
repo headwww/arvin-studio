@@ -277,7 +277,6 @@ const OptionList = defineComponent({
             : null;
         };
 
-        // eslint-disable-next-line no-useless-assignment
         let nextActiveKey: Key | null = null;
 
         // single mode active first checked node

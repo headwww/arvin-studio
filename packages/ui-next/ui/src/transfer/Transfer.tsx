@@ -260,7 +260,7 @@ const Transfer = defineComponent<
         directionValue === 'left'
           ? sourceSelectedKeys.value
           : targetSelectedKeys.value;
-      // eslint-disable-next-line no-useless-assignment
+
       let mergedCheckedKeys: TransferKey[] = [];
 
       if (checkAll === 'replace') {

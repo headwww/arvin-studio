@@ -20,7 +20,6 @@ const Icon = defineComponent<IconProps>((props, { slots }) => {
     if (typeof icon === 'function') {
       const childIcons = (icon as any)(iconProps);
       if (!childIcons) {
-        // eslint-disable-next-line no-useless-assignment
         iconNode = null;
         return children;
       }

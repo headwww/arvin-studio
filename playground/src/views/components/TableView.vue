@@ -118,7 +118,7 @@ const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]
       <Column field="role" title="角色" />
       <Column field="date" title="Date" />
       <Column field="rate" title="Rate" />
-      <Column field="address" title="Address" width="160" />
+      <Column field="address" title="Address" />
       <Column type="html" field="content" title="Content" width="200" />
     </Table>
   </div>

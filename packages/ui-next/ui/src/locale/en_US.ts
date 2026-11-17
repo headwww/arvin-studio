@@ -12,6 +12,7 @@ const localeValues: Locale = {
   Table: {
     seqTitle: '#',
     emptyText: 'No Data',
+    loadingText: 'Loading...',
     allTitle: 'Select all/cancel',
     dragTip: 'Move: {0}',
     sortAsc: 'Ascending order: lowest to highest',

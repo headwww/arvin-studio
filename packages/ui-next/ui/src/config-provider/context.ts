@@ -586,7 +586,7 @@ export type TableConfig = ComponentStyleConfig &
     | 'headerCellConfig'
     | 'headerTooltipConfig'
     | 'keyboardConfig'
-    | 'keyboardConfig'
+    | 'loadingConfig'
     | 'minHeight'
     | 'mouseConfig'
     | 'radioConfig'

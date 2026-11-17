@@ -506,7 +506,6 @@ const InnerSlider = defineComponent<SlickProps>(
     };
 
     const play = () => {
-      // eslint-disable-next-line no-useless-assignment
       let nextIndex = 0;
       if (mergedProps.value.rtl) {
         nextIndex = state.currentSlide - mergedProps.value.slidesToScroll;

@@ -43,6 +43,7 @@ export default defineConfig([
       'unicorn/no-immediate-mutation': 'off',
       '@typescript-eslint/no-invalid-void-type': 'off',
       'unicorn/max-nested-calls': 'off',
+      'no-useless-assignment': 'off',
     },
   },
   {

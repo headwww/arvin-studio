@@ -72,7 +72,6 @@ export default function useTouchMove(
 
   function onWheel(e: WheelEvent) {
     const { deltaX, deltaY } = e;
-    // eslint-disable-next-line no-useless-assignment
     let mixed = 0;
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);

@@ -72,7 +72,6 @@ const Line = defineComponent<ProgressProps>(
             stroke-width={railWidth || strokeWidth}
           />
           {percentList.map((ptg, index) => {
-            // eslint-disable-next-line no-useless-assignment
             let dashPercent = 1;
             switch (strokeLinecap) {
               case 'round': {

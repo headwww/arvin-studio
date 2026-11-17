@@ -225,7 +225,6 @@ const Notification = defineComponent<NotificationProps>(
       const hasTitle = titleNode !== null;
       const hasDescription = descNode !== null;
 
-      // eslint-disable-next-line no-useless-assignment
       let contentNode: VueNode = null;
       contentNode =
         hasTitle && hasDescription ? (

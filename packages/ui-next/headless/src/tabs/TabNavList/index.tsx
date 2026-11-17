@@ -197,9 +197,8 @@ const TabNavList = defineComponent<TabNavListProps>(
     );
 
     const transformComputed = computed(() => {
-      // eslint-disable-next-line no-useless-assignment
       let transformMin = 0;
-      // eslint-disable-next-line no-useless-assignment
+
       let transformMax = 0;
 
       if (!tabPositionTopOrBottom.value) {
