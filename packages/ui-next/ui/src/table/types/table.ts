@@ -18,6 +18,7 @@ import type {
 } from './column';
 import type {
   AsComponentAlignType,
+  AsComponentEventParams,
   AsComponentSlotType,
   AsComponentStyleType,
 } from './common';
@@ -62,6 +63,19 @@ export interface TableReactData<D = any> {
     rightList: AsTableDefines.ColumnInfo<D>[];
     scaleList: AsTableDefines.ColumnInfo<D>[];
     scaleMinList: AsTableDefines.ColumnInfo<D>[];
+  };
+  // 存放快捷菜单的信息
+  ctxMenuStore: {
+    [key: string]: any;
+    list: AsTableDefines.MenuFirstOption[][];
+    selectChild:
+      | AsTableDefines.MenuChildOption
+      | AsTableDefines.MenuFirstOption
+      | null;
+    selected: any;
+    showChild: boolean;
+    style: any;
+    visible: boolean;
   };
   currColFlag: number;
   dragCol: AsTableDefines.ColumnInfo | null;
@@ -206,8 +220,9 @@ export interface TableReactData<D = any> {
 
 export interface TableInternalData<D = any> {
   _lastResizeTime?: any;
-  afterFullData: D[];
+  _sToTime?: any;
 
+  afterFullData: D[];
   // 列表条件处理后数据集合
   afterFullRowMaps: Record<string, D>;
   afterGroupFullData: D[];
@@ -226,14 +241,14 @@ export interface TableInternalData<D = any> {
    */
   currKeyField: string;
   customHeight: number;
-  customMaxHeight: number;
 
+  customMaxHeight: number;
   customMinHeight: number;
   // 单元格值缓存
   cvCacheMaps: Record<string, any>;
   elemStore: {
     [key: string]: null | Ref<ComponentPublicInstance> | Ref<HTMLElement>;
-  };
+  }; // 内部属性
 
   footerFullDataRowData: Record<string, AsTableDefines.FooterRowCacheItem>;
   // 全量数据集（包括当前和已删除）
@@ -396,6 +411,8 @@ export interface TableInternalData<D = any> {
   // 表头高度
   tHeaderHeight: number;
   tooltipTimeout: any;
+  // 展开手风琴
+  treeEATime?: number | undefined;
   // 已展开树节点
   treeExpandedMaps: Record<string, D | null>;
   // 树结构数据，已展开保留的行集合
@@ -440,10 +457,12 @@ export interface TablePrivateComputed<D = any> {
   computeIsBodyRenderOptimize: ComputedRef<boolean>;
   computeIsFooterRenderOptimize: ComputedRef<boolean>;
   computeIsHeaderRenderOptimize: ComputedRef<boolean>;
+  computeLeftFixedWidth: ComputedRef<number>;
   computeMouseOpts: ComputedRef<AsTablePropTypes.MouseOpts>;
   computeRadioOpts: ComputedRef<AsTablePropTypes.RadioOpts<D>>;
   computeRendererOpts: ComputedRef<AsTablePropTypes.RendererConfig>;
   computeResizableOpts: ComputedRef<AsTablePropTypes.ResizableOpts<D>>;
+  computeRightFixedWidth: ComputedRef<number>;
   computeRowDragOpts: ComputedRef<AsTablePropTypes.RowDragConfig>;
   computeRowOpts: ComputedRef<AsTablePropTypes.RowOpts>;
   computeSeqOpts: ComputedRef<AsTablePropTypes.SeqOpts<D>>;
@@ -494,12 +513,12 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * @private
    */
   handleColResizeCellAreaEvent(evnt: MouseEvent, params: any): void;
-
   /**
    * 内部方法
    * @private
    */
   handleColResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
+
   /**
    * @private
    */
@@ -560,6 +579,19 @@ export interface AsTableExtendCellAreaMethods<D = any> {
       isClear?: boolean;
     },
   ): Promise<any>;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleHeaderCellAreaMouseDnEvent(
+    evnt: MouseEvent,
+    params: AsTableDefines.HeaderCellClickEventParams<D>,
+  ): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleKdClAreaEvent(evnt: KeyboardEvent): void;
   /**
    * 内部方法
    * @private
@@ -581,13 +613,39 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * @private
    */
   handleRowResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
+  /**
+   * @private
+   */
+  handleSelected(
+    params: {
+      $columnIndex: number;
+      $rowIndex: number;
+      $table: AsTableConstructor<D>;
+      _columnIndex: number;
+      _rowIndex: number;
+      column: AsTableDefines.ColumnInfo;
+      columnIndex: number;
+      row: D;
+      rowIndex: number;
+    },
+    evnt: Event | null,
+  ): Promise<any>;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleSortEvent(
+    evnt: Event,
+    params: AsTableDefines.SortChangeEventParams<D>,
+  ): any;
+
   handleUpdateCustomColumn(): void;
+
   /**
    * 内部方法
    * @private
    */
   triggerCellAreaExtendMousedownEvent(evnt: MouseEvent, params: any): void;
-
   triggerValidate(type: any): Promise<any>;
 }
 
@@ -658,20 +716,27 @@ export interface TableMethods<
    */
   clearSelected(): Promise<any>;
   /**
+   * 手动清空排序条件，数据会恢复成未排序的状态；如果需要同时触发对应的事件，请使用 clearSortByEvent
+   */
+  clearSort(
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): Promise<void>;
+  /**
    * 手动关闭筛选面板
    */
   closeFilter(): Promise<any>;
-
   /**
    * 关闭 tooltip 提示
    */
   closeTooltip(): Promise<any>;
+
   /**
    * 创建 data 对象
    * 对于某些特殊场景可能会用到，会自动对数据的字段名进行检测，如果不存在就自动定义
    * @param records 数据
    */
   createData(records: any[]): Promise<any[]>;
+
   dispatchEvent(
     type: ValueOf<AsTableEmits>,
     params: Record<string, any>,
@@ -719,7 +784,6 @@ export interface TableMethods<
    * @param colid 列主键
    */
   getColumnById(colid: null | string): AsTableDefines.ColumnInfo | null;
-
   /**
    * 根据 column 获取相对于 columns 中的索引
    * @param column 列对象
@@ -729,6 +793,7 @@ export interface TableMethods<
    * 用于 custom-config，用于获取个性化设置，用于自定义保持
    */
   getCustomStoreData(): AsTableDefines.CustomStoreData;
+
   /**
    * 获取表尾单元格显示值
    */
@@ -747,6 +812,10 @@ export interface TableMethods<
    * @param row 行对象
    */
   getRowIndex(row: any): number;
+  /**
+   * 获取当前排序的列信息
+   */
+  getSortColumns(): AsTableDefines.SortCheckedParams[];
   /**
    * 根据 column 获取渲染中的虚拟索引
    * @param column 列对象
@@ -782,18 +851,28 @@ export interface TableMethods<
    */
   isInsertByRow(row: any | null): boolean;
   /**
+   * 用于 expand-config，判断行是否为展开状态
+   * @param row 指定行
+   */
+  isRowExpandByRow(row: any | null): boolean;
+  /**
+   * 用于 tree-config，判断行是否为树形节点展开状态
+   * @param row 指定行
+   */
+  isTreeExpandByRow(row: any | null): boolean;
+  /**
    * 只对 keep-source 开启有效，判断行数据是否发生改变
    * @param row 指定行
    * @param field 指定字段
    */
   isUpdateByRow(row: any, field?: null | string): boolean;
+
   /**
    * 用于树结构，给行数据加载子节点
    * @param row 行对象
    * @param children 子节点
    */
   loadTreeChildren(row: any, children: any[]): Promise<any[]>;
-
   /**
    * 打开 tooltip 提示
    * @param target 目标元素
@@ -829,10 +908,19 @@ export interface TableMethods<
     y?: null | number,
   ): Promise<void>;
   /**
+   * 如果有滚动条，则滚动到对应的行
+   */
+  scrollToRow(
+    rowOrRowid: any,
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+    options?: AsTableDefines.ScrollToRowConfig,
+  ): Promise<any>;
+  /**
    * 用于 type=checkbox，设置所有行的选中状态
    * @param checked 是否选中
    */
   setAllCheckboxRow(checked: boolean): Promise<any>;
+
   /**
    * 用于 expand-config，设置所有行的展开与否
    * 如果是关闭所有行，可以使用 clearRowExpand 快速清除
@@ -870,6 +958,7 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
+
   /**
    * 临时合并表尾单元格，如果为数组则合并多个
    */
@@ -878,7 +967,6 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
-
   /**
    * 临时合并表头单元格，如果为数组则合并多个
    */
@@ -893,7 +981,12 @@ export interface TableMethods<
    * @param expanded 是否展开
    */
   setRowExpand(rows: any | any[], expanded: boolean): Promise<void>;
-
+  /**
+   * 用于行分组，设置行分组的展开状态，二个参数设置这一行展开与否
+   * @param rows 指定行
+   * @param expanded 是否展开
+   */
+  setRowGroupExpand(rows: any | any[], expanded: boolean): Promise<void>;
   /**
    * 用于行分组，根据行分组字段设置分组的展开状态，二个参数设置这一行展开与否
    * @param groupFields 行分组字段
@@ -910,9 +1003,25 @@ export interface TableMethods<
    */
   setTreeExpand(rows: any | any[], checked: boolean): Promise<void>;
   /**
+   * 手动对表格进行排序，建议使用 setSort 方法
+   * @param sortConfs 字段名、多列排序
+   * @param order 排序方式
+   */
+  sort(field: string, order?: AsTablePropTypes.SortOrder): Promise<void>;
+  sort(
+    sortConfs: AsTableDefines.SortConfs,
+    order?: AsTablePropTypes.SortOrder,
+  ): Promise<void>;
+  sort(
+    sortConfs: AsTableDefines.SortConfs[],
+    order?: AsTablePropTypes.SortOrder,
+  ): Promise<void>;
+
+  /**
    * 用于 mouse-config.area，更新已选区域的单元格样式
    */
   updateCellAreas(): Promise<void>;
+
   /**
    * 手动更新表尾
    */
@@ -962,11 +1071,6 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   clearHoverRow(): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  defineField(records: any[]): any[];
   /**
    * 内部方法
    * @private
@@ -1052,42 +1156,52 @@ export interface TablePrivateMethods<D = any> {
       | AsTableDefines.CellRenderFooterParams
       | AsTableDefines.CellRenderHeaderParams,
   ): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleColResizeMousedownEvent(
+    evnt: MouseEvent,
+    fixedType: '' | 'left' | 'right',
+    params:
+      | AsTableDefines.CellRenderBodyParams
+      | AsTableDefines.CellRenderFooterParams
+      | AsTableDefines.CellRenderHeaderParams,
+  ): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleColResizeMousedownEvent(
+    evnt: MouseEvent,
+    fixedType: '' | 'left' | 'right',
+    params:
+      | AsTableDefines.CellRenderBodyParams
+      | AsTableDefines.CellRenderFooterParams
+      | AsTableDefines.CellRenderHeaderParams,
+  ): void;
+  /**
+   * 内部方法
+   * @private
+   */
+  handleColumnSortEvent(evnt: Event, column: AsTableDefines.ColumnInfo): void;
 
-  /**
-   * 内部方法
-   * @private
-   */
-  handleColResizeMousedownEvent(
-    evnt: MouseEvent,
-    fixedType: '' | 'left' | 'right',
-    params:
-      | AsTableDefines.CellRenderBodyParams
-      | AsTableDefines.CellRenderFooterParams
-      | AsTableDefines.CellRenderHeaderParams,
-  ): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleColResizeMousedownEvent(
-    evnt: MouseEvent,
-    fixedType: '' | 'left' | 'right',
-    params:
-      | AsTableDefines.CellRenderBodyParams
-      | AsTableDefines.CellRenderFooterParams
-      | AsTableDefines.CellRenderHeaderParams,
-  ): void;
   /**
    * 内部方法
    * @private
    */
   handleCrossTableRowDragInsertEvent(evnt: DragEvent): void;
-
+  /**
+   * 内部方法
+   * @private
+   */
+  handleCrossTableRowDragoverEmptyEvent(evnt: DragEvent): void;
   /**
    * 内部方法
    * @private
    */
   handleHeaderCellDragDragendEvent(evnt: DragEvent): void;
+
   /**
    * 内部方法
    * @private
@@ -1128,12 +1242,12 @@ export interface TablePrivateMethods<D = any> {
       column: AsTableDefines.ColumnInfo;
     },
   ): void;
-
   /**
    * 内部方法
    * @private
    */
   handleHeaderCellDragMouseupEvent(evnt: MouseEvent): void;
+
   /**
    * 内部方法
    * @private
@@ -1197,12 +1311,12 @@ export interface TablePrivateMethods<D = any> {
       type: string;
     },
   ): void;
-
   /**
    * 内部方法
    * @private
    */
   handleTableData(force?: boolean): Promise<any>;
+
   /**
    * 内部方法
    * @private
@@ -1237,7 +1351,17 @@ export interface TablePrivateMethods<D = any> {
    * 内部方法
    * @private
    */
+  preventEvent(evnt: any, type: any, args?: any, next?: any, end?: any): any;
+  /**
+   * 内部方法
+   * @private
+   */
   saveCustomStore(type: AsTableDefines.CustomEventType): Promise<any>;
+  /**
+   * 内部方法
+   * @private
+   */
+  scrollToTreeRow(row: any): Promise<any>;
   /**
    * 内部方法
    * @private
@@ -1292,12 +1416,12 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   triggerCheckAllEvent(evnt: MouseEvent | null, value: boolean): void;
+
   /**
    * 内部方法
    * @private
    */
   triggerCheckRowEvent(evnt: Event, params: { row: any }, value: boolean): void;
-
   /**
    * 内部方法
    * @private
@@ -1367,6 +1491,7 @@ export interface TablePrivateMethods<D = any> {
     evnt: MouseEvent,
     params: AsTableDefines.CellRenderHeaderParams<any>,
   ): void;
+
   /**
    * 内部方法
    * @private
@@ -1375,7 +1500,6 @@ export interface TablePrivateMethods<D = any> {
     evnt: MouseEvent,
     params: AsTableDefines.CellRenderHeaderParams<any>,
   ): void;
-
   /**
    * 内部方法
    * @private
@@ -1447,7 +1571,7 @@ export interface TablePrivateMethods<D = any> {
     evnt: Event,
     column: AsTableDefines.ColumnInfo,
     order: AsTablePropTypes.SortOrder,
-  ): Promise<any>;
+  ): void;
   /**
    * 内部方法
    * @private
@@ -1508,6 +1632,8 @@ export interface AsTablePrivateMethods<
 > extends TablePrivateMethods<D> {}
 
 export namespace AsTablePropTypes {
+  export type Round = boolean;
+  export type Loading = boolean;
   export type EmptyText = string;
   export type Stripe = boolean;
   export type Align = AsComponentAlignType;
@@ -2104,9 +2230,149 @@ export namespace AsTablePropTypes {
    */
   export interface AreaConfig<D = any> {
     /**
+     * 只对 mouse-config.extension 启用后有效，扩展区域之后的方法
+     * @param params
+     */
+    afterExtendMethod?(
+      params: AsTableExtendCellAreaDefines.CellAreaExtensionEndParams<D>,
+    ): void;
+    /**
+     * 只对 extendByCopy | extendByCalc 启用后有效，自定义单元格扩展区域赋值之后的方法
+     * @param params
+     */
+    afterExtendSetMethod?(
+      params: AsTableExtendCellAreaDefines.ExtendCellAreaCalcBaseParams<D> & {
+        $table: AsTableConstructor<D>;
+        extendValues: any[][];
+      },
+    ): void;
+    /**
+     * 当点击表格之外，是否自动清除单元格的选取状态
+     */
+    autoClear?: boolean;
+    /**
+     * 只对 mouse-config.extension 启用后有效，扩展区域之前的方法，可以通过返回 false 阻止扩展行为
+     * @param params
+     */
+    beforeExtendMethod?(
+      params: AsTableExtendCellAreaDefines.CellAreaExtensionStartParams<D>,
+    ): boolean;
+    /**
+     * 只对 extendByCopy | extendByCalc 启用后有效，自定义单元格扩展区域赋值之前的方法，可以通过返回 false 阻止扩展赋值行为
+     * @param params
+     */
+    beforeExtendSetMethod?(
+      params: AsTableExtendCellAreaDefines.ExtendCellAreaCalcBaseParams<D>,
+    ): boolean;
+    /**
+     * 自定义操作提示消息
+     */
+    customModalMsg?: (params: {
+      $table: AsTableConstructor<D>;
+      message: string;
+      status: 'error' | 'info' | 'loading' | 'question' | 'success' | 'warning';
+      type: 'clip' | 'fnr' | 'merge' | 'selected';
+    }) => void;
+    /**
+     * 用于排除指定列允许不允许被选取
+     */
+    excludeFields?: string[];
+    /**
+     * 只对 mouse-config.extension 启用后有效，扩展区域时将自动识别数字规则进行计算
+     */
+    extendByCalc?: boolean;
+    /**
+     * 只对 mouse-config.extension 启用后有效，将被选取区域的值复制到扩展区域中
+     */
+    extendByCopy?: boolean;
+    /**
+     * 只对 extendByCalc 启用后有效，重写单元格扩展区域计算值的方法
+     * @param params
+     */
+    extendCalcMethod?(
+      params: AsTableExtendCellAreaDefines.ExtendCellAreaCalcBaseParams<D>,
+    ): any[][];
+    /**
+     * 只对 mouse-config.extension 启用后有效，扩展区域的方向控制
+     */
+    extendDirection?:
+      | boolean
+      // eslint-disable-next-line perfectionist/sort-union-types
+      | {
+          /**
+           * 是否允许向下扩展
+           */
+          bottom?: boolean;
+          /**
+           * 是否允许向左扩展
+           */
+          left?: boolean;
+          /**
+           * 是否允许向右扩展
+           */
+          right?: boolean;
+          /**
+           * 是否允许向上扩展
+           */
+          top?: boolean;
+        };
+    /**
+     * 只对 extendByCopy | extendByCalc 启用后有效，重写单元格扩展区域赋值的方法
+     * @param params
+     */
+    extendSetMethod?(
+      params: AsTableExtendCellAreaDefines.ExtendCellAreaCalcBaseParams<D> & {
+        $table: AsTableConstructor<D>;
+        cellValue: any;
+        column: AsTableDefines.ColumnInfo;
+        row: D;
+      },
+    ): void;
+    /**
+     * 用于指定哪些列允许被选取
+     */
+    includeFields?: string[];
+    /**
+     * 是否启用选中复制填充功能，自动把上面的单元格内容填到下面
+     */
+    isFillByCopy?: boolean;
+    /**
+     * 只对 mouse-config.area 启用后有效，启用多区域选取功能
+     */
+    multiple?: boolean;
+    /**
+     * 只对 mouse-config.area 启用后有效，表格单元格选取功能
+     */
+    selectCellByBody?: boolean;
+    /**
+     * 只对 mouse-config.area 启用后有效，表格头部选取功能
+     */
+    selectCellByHeader?: boolean;
+    /**
      * 只对 mouse-config.area 启用后有效，点击单元格后自动选取当前行的单元格;如果为 true，当选中第一列时联动选择当前行的单元格
      */
     selectCellToRow?: boolean;
+    /**
+     * 单元格选取的方法，返回是否允许被选取
+     */
+    selectedMethod?(params: {
+      // TODO $grid: AsGridConstructor<D> | null | undefined;
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      row: D;
+    }): boolean;
+    /**
+     * 是否显示操作提示消息
+     */
+    showActionMsg?: boolean;
+    /**
+     * 只对 mouse-config.area 启用后有效，选择单元格后显示列状态
+     */
+    showColumnStatus?: boolean;
+    /**
+     * 只对 mouse-config.area 启用后有效，选择单元格后显示行状态
+     */
+    showRowStatus?: boolean;
   }
   export interface AreaOpts<D = any> extends AreaConfig<D> {}
 
@@ -4076,6 +4342,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    */
   keyboardConfig?: AsTablePropTypes.KeyboardConfig<D>;
   /**
+   * 表格是否显示加载中
+   */
+  loading?: AsTablePropTypes.Loading;
+  /**
    * max-height
    */
   maxHeight?: AsTablePropTypes.MaxHeight;
@@ -4115,6 +4385,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 响应式布局配置项
    */
   resizeConfig?: AsTablePropTypes.ResizeConfig;
+  /**
+   * 是否为圆角边框
+   */
+  round?: AsTablePropTypes.Round;
   /**
    * 给行附加 className
    */
@@ -4176,7 +4450,6 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 是否带有斑马纹（需要注意的是，在可编辑表格场景下，临时插入的数据不会有斑马纹样式）
    */
   stripe?: AsTablePropTypes.Stripe;
-
   /**
    * 工具提示配置项
    */
@@ -4201,6 +4474,19 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
 }
 
 export namespace AsTableDefines {
+  export interface MenuSlotParams {}
+  export interface ScrollToRowConfig extends ScrollToColumnConfig {
+    /**
+     * 是否强制定位到行
+     */
+    rowAlign?: boolean;
+  }
+  export interface ScrollToColumnConfig {
+    /**
+     * 是否强制定位到列
+     */
+    colAlign?: boolean;
+  }
   export type CustomEventType =
     | 'confirm'
     | 'reset'
@@ -4229,6 +4515,10 @@ export namespace AsTableDefines {
     | 'min'
     | 'sum';
 
+  export interface SortConfs {
+    field: string;
+    order?: AsTablePropTypes.SortOrder;
+  }
   export interface ColumnOptions<D = any> extends AsColumnProps<D> {
     children?: ColumnOptions<D>[];
     slots?: AsColumnPropTypes.Slots<D>;
@@ -4745,6 +5035,82 @@ export namespace AsTableDefines {
     rules: ValidatorRule<D>[];
   }
 
+  export interface MenuOptions {
+    disabled?: boolean;
+    options?: MenuFirstOption[][];
+  }
+  export interface MenuFirstOption {
+    [key: string]: any;
+    children?: MenuChildOption[];
+    className?: string;
+    code?: string;
+    disabled?: boolean;
+    loading?: boolean;
+    name?: string;
+    params?: any;
+    prefixConfig?: {
+      className?: string;
+      content?: string;
+      icon?:
+        | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    prefixIcon?:
+      | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+      | string;
+    slots?: {
+      content?:
+        | ((
+            params: AsTableDefines.MenuSlotParams,
+          ) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    suffixConfig?: {
+      className?: string;
+      content?: string;
+      icon?: (() => AsComponentSlotType | AsComponentSlotType[]) | string;
+    };
+    suffixIcon?:
+      | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+      | string;
+    visible?: boolean;
+  }
+  export interface MenuChildOption {
+    [key: string]: any;
+    className?: string;
+    code?: string;
+    disabled?: boolean;
+    loading?: boolean;
+    name?: string;
+    params?: any;
+    prefixConfig?: {
+      className?: string;
+      content?: string;
+      icon?:
+        | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    prefixIcon?:
+      | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+      | string;
+    slots?: {
+      content?:
+        | ((
+            params: AsTableDefines.MenuSlotParams,
+          ) => AsComponentSlotType | AsComponentSlotType[])
+        | string;
+    };
+    suffixConfig?: {
+      className?: string;
+      content?: string;
+      icon?: (() => AsComponentSlotType | AsComponentSlotType[]) | string;
+    };
+    suffixIcon?:
+      | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
+      | string;
+    visible?: boolean;
+  }
+
   export interface FilterStoreObj {
     column: AsTableDefines.ColumnInfo | null | undefined;
     isAllSelected: boolean;
@@ -4856,6 +5222,37 @@ export namespace AsTableDefines {
     offsetIndex: 0 | 1;
     oldRow: D;
   }
+
+  interface TableEventParams<D = any> extends AsComponentEventParams {
+    $table: AsTableConstructor<D>;
+  }
+
+  export interface SortChangeParams<D = any> extends SortCheckedParams<D> {
+    sortList: SortCheckedParams[];
+  }
+
+  export interface SortChangeEventParams<D = any>
+    extends SortChangeParams<D>, TableEventParams<D> {}
+
+  interface TableBaseHeaderCellParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    column: ColumnInfo;
+    columnIndex: number;
+    source: string;
+    type: string;
+  }
+
+  export interface HeaderCellClickParams<
+    D = any,
+  > extends TableBaseHeaderCellParams<D> {
+    triggerFilter: boolean;
+    triggerResizable: boolean;
+    triggerSort: boolean;
+  }
+
+  export interface HeaderCellClickEventParams<D = any>
+    extends HeaderCellClickParams<D>, TableEventParams<D> {}
 }
 
 export namespace AsTableSlotTypes {
@@ -4895,42 +5292,93 @@ export namespace AsTableSlotTypes {
 }
 
 export type AsTableEmits = [
-  'column-resizable-change',
   'ready',
   'init-rendered',
   'data-rendered',
-  'data-change',
+
+  'update:data',
+  'keydown-start',
+  'keydown',
+  'keydown-end',
+  'paste',
+  'copy',
+  'cut',
+  'undo',
+  'redo',
+  'context-menu',
 
   'columns-change',
-  'cell-mouseenter',
-  'cell-mouseleave',
+  'data-change',
   'footer-data-change',
-
-  'scroll',
-  'scroll-boundary',
-
-  'filter-visible',
-  'radio-change',
-  'checkbox-all',
-
-  'checkbox-range-select',
-  'checkbox-change',
-  'row-resizable-change',
-
-  'cell-click',
-  'current-column-change',
-  'current-column-disabled',
 
   'current-row-change',
   'current-row-disabled',
+  'current-column-change',
+  'current-column-disabled',
+  'radio-change',
+  'checkbox-change',
+  'checkbox-all',
+  'checkbox-range-start',
+  'checkbox-range-change',
+  'checkbox-range-end',
+  'checkbox-range-select',
+  'cell-click',
   'cell-dblclick',
+  'cell-menu',
+  'cell-mouseenter',
+  'cell-mouseleave',
+  'cell-selected',
+  'cell-delete-value',
+  'cell-backspace-value',
   'header-cell-click',
   'header-cell-dblclick',
-  'row-dragover',
-  'row-dragstart',
-  'row-dragend',
-  'column-dragover',
-  'column-dragstart',
+  'header-cell-menu',
+  'footer-cell-click',
+  'footer-cell-dblclick',
+  'footer-cell-menu',
+  'clear-merge',
+  'sort-change',
+  'clear-sort',
+  'clear-all-sort',
+  'filter-change',
+  'filter-visible',
+  'clear-filter',
+  'clear-all-filter',
 
+  'column-resizable-change',
+  'row-resizable-change',
+  'toggle-row-group-expand',
+  'toggle-row-expand',
+  'toggle-tree-expand',
+  'menu-click',
+  'edit-closed',
+  'row-dragstart',
+  'row-dragover',
+  'row-dragend',
+  'row-remove-dragend',
+  'row-insert-dragend',
+  'column-dragstart',
+  'column-dragover',
   'column-dragend',
+  'enter-append-row',
+  'tab-append-row',
+
+  'edit-activated',
+  'edit-disabled',
+  'valid-error',
+  'scroll',
+  'scroll-boundary',
+  'custom',
+  'custom-open',
+  'custom-close',
+  'custom-cancel',
+  'custom-reset',
+  'custom-confirm',
+  'custom-visible-change',
+  'custom-visible-all',
+  'custom-fixed-change',
+  'custom-sort-change',
+  'custom-align-change',
+  'custom-header-align-change',
+  'custom-footer-align-change',
 ];

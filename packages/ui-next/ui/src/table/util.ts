@@ -491,8 +491,8 @@ export function getRowkey($asTable: AsTableConstructor) {
 }
 
 // 行主键 value
-export function getRowid($xeTable: AsTableConstructor, row: any) {
-  const internalData = $xeTable.internalData;
+export function getRowid($asTable: AsTableConstructor, row: any) {
+  const internalData = $asTable.internalData;
   const { isCurrDeepKey, currKeyField } = internalData;
   return row
     ? encodeRowid(
@@ -559,8 +559,8 @@ export function createHandleUpdateRowId($asTable: AsTableConstructor) {
   };
 }
 
-export function createHandleGetRowId($xeTable: AsTableConstructor) {
-  const internalData = $xeTable.internalData;
+export function createHandleGetRowId($asTable: AsTableConstructor) {
+  const internalData = $asTable.internalData;
   const { isCurrDeepKey, currKeyField } = internalData;
   const getRId = isCurrDeepKey ? getDeepRowIdByKey : getFastRowIdByKey;
   return {
@@ -622,8 +622,8 @@ function hangleBolleanDefaultValue(
   return isBoolean(currVal) ? currVal : defVal;
 }
 
-export function handleCustomStoreConfig($xeTable: AsTableConstructor) {
-  const { computeCustomOpts } = $xeTable.getComputeMaps();
+export function handleCustomStoreConfig($asTable: AsTableConstructor) {
+  const { computeCustomOpts } = $asTable.getComputeMaps();
   const customOpts = computeCustomOpts.value;
   const { storage, storeOptions } = customOpts;
 
@@ -1145,4 +1145,169 @@ function getElementMarginAndWidth(elem: HTMLElement | null) {
     return elem.offsetWidth + marginLeft + marginRight;
   }
   return 0;
+}
+
+export function rowToVisible(
+  $asTable: AsTableConstructor & AsTablePrivateMethods,
+  row: any,
+) {
+  const reactData = $asTable.reactData;
+  const internalData = $asTable.internalData;
+
+  const {
+    computeLeftFixedWidth,
+    computeRightFixedWidth,
+    computeCellOpts,
+    computeDefaultRowHeight,
+  } = $asTable.getComputeMaps();
+  const { scrollYLoad, scrollYTop, isAllOverflow } = reactData;
+  const { elemStore, afterFullData, fullAllDataRowIdData, isResizeCellHeight } =
+    internalData;
+  const cellOpts = computeCellOpts.value;
+  const defaultRowHeight = computeDefaultRowHeight.value;
+  const leftFixedWidth = computeLeftFixedWidth.value;
+  const rightFixedWidth = computeRightFixedWidth.value;
+  const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+  const rowid = getRowid($asTable, row);
+  if (bodyScrollElem) {
+    const bodyHeight = bodyScrollElem.clientHeight;
+    const bodyScrollTop = bodyScrollElem.scrollTop;
+    const trElem: HTMLTableRowElement | null = bodyScrollElem.querySelector(
+      `[rowid="${CSS.escape(rowid)}"]`,
+    );
+    if (trElem) {
+      const trOffsetTop = trElem.offsetTop + (scrollYLoad ? scrollYTop : 0);
+      const trHeight = trElem.clientHeight;
+      // 检测行是否在可视区中
+      if (
+        trOffsetTop < bodyScrollTop ||
+        trOffsetTop > bodyScrollTop + bodyHeight
+      ) {
+        return $asTable.scrollTo(null, trOffsetTop);
+      } else if (trOffsetTop + trHeight >= bodyHeight + bodyScrollTop) {
+        return $asTable.scrollTo(null, bodyScrollTop + trHeight);
+      }
+    } else {
+      // 如果是虚拟渲染滚动
+      if (scrollYLoad) {
+        const isCustomCellHeight = isResizeCellHeight || cellOpts.height;
+        if (!isCustomCellHeight && isAllOverflow) {
+          return $asTable.scrollTo(
+            null,
+            ($asTable.findRowIndexOf(afterFullData, row) - 1) *
+              defaultRowHeight,
+          );
+        }
+        const rowRest =
+          fullAllDataRowIdData[rowid] || ({} as AsTableDefines.RowCacheItem);
+        const rHeight =
+          rowRest.resizeHeight ||
+          cellOpts.height ||
+          rowRest.height ||
+          defaultRowHeight;
+        const scrollTop = rowRest.oTop;
+        if (scrollTop < bodyScrollTop) {
+          return $asTable.scrollTo(null, scrollTop - leftFixedWidth - 1);
+        }
+        return $asTable.scrollTo(
+          null,
+          scrollTop + rHeight - (bodyHeight - rightFixedWidth - 1),
+        );
+      }
+    }
+  }
+  return Promise.resolve();
+}
+
+export function colToVisible(
+  $asTable: AsTableConstructor & AsTablePrivateMethods,
+  isForce: boolean,
+  column: AsTableDefines.ColumnInfo,
+  row?: any,
+) {
+  const reactData = $asTable.reactData;
+  const internalData = $asTable.internalData;
+
+  const { computeLeftFixedWidth, computeRightFixedWidth } =
+    $asTable.getComputeMaps();
+  const { scrollXLoad, scrollXLeft } = reactData;
+  const { elemStore, visibleColumn } = internalData;
+  const leftFixedWidth = computeLeftFixedWidth.value;
+  const rightFixedWidth = computeRightFixedWidth.value;
+  const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+  if (column.fixed) {
+    return Promise.resolve();
+  }
+  if (bodyScrollElem) {
+    const bodyWidth = bodyScrollElem.clientWidth;
+    const bodyScrollLeft = bodyScrollElem.scrollLeft;
+    let tdElem: HTMLTableCellElement | null = null;
+    if (row) {
+      const rowid = getRowid($asTable, row);
+      tdElem = bodyScrollElem.querySelector(
+        `[rowid="${CSS.escape(rowid)}"] .${column.id}`,
+      );
+    }
+    if (!tdElem) {
+      tdElem = bodyScrollElem.querySelector(`.${column.id}`);
+    }
+    if (tdElem) {
+      const tdOffsetLeft = tdElem.offsetLeft + (scrollXLoad ? scrollXLeft : 0);
+      const cellWidth = tdElem.clientWidth;
+      // 检测是否在可视区中
+      if (
+        isForce ||
+        (!(
+          tdOffsetLeft <= bodyScrollLeft + leftFixedWidth &&
+          tdOffsetLeft + cellWidth > bodyScrollLeft + leftFixedWidth
+        ) &&
+          !(
+            tdOffsetLeft >= bodyScrollLeft + leftFixedWidth &&
+            tdOffsetLeft < bodyScrollLeft + bodyWidth - rightFixedWidth
+          ))
+      ) {
+        if (tdOffsetLeft < bodyScrollLeft + leftFixedWidth) {
+          return $asTable.scrollTo(tdOffsetLeft - leftFixedWidth - 1);
+        } else if (
+          tdOffsetLeft + cellWidth - bodyScrollLeft >
+          bodyWidth - rightFixedWidth
+        ) {
+          return $asTable.scrollTo(
+            tdOffsetLeft + cellWidth - (bodyWidth - rightFixedWidth - 1),
+          );
+        }
+      }
+    } else {
+      if (scrollXLoad) {
+        let tdOffsetLeft = 0;
+        const cellWidth = column.renderWidth;
+        for (const currCol of visibleColumn) {
+          if (currCol === column || currCol.id === column.id) {
+            break;
+          }
+          tdOffsetLeft += currCol.renderWidth;
+        }
+        // 检测是否在可视区中
+        if (
+          isForce ||
+          (!(
+            tdOffsetLeft <= bodyScrollLeft + leftFixedWidth &&
+            tdOffsetLeft + cellWidth > bodyScrollLeft + leftFixedWidth
+          ) &&
+            !(
+              tdOffsetLeft >= bodyScrollLeft + leftFixedWidth &&
+              tdOffsetLeft < bodyScrollLeft + bodyWidth - rightFixedWidth
+            ))
+        ) {
+          if (tdOffsetLeft < bodyScrollLeft) {
+            return $asTable.scrollTo(tdOffsetLeft - leftFixedWidth - 1);
+          }
+          return $asTable.scrollTo(
+            tdOffsetLeft + cellWidth - (bodyWidth - rightFixedWidth - 1),
+          );
+        }
+      }
+    }
+  }
+  return Promise.resolve();
 }

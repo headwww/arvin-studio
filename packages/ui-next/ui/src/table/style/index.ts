@@ -1,28 +1,24 @@
 import type { TableToken } from './interface';
 
 import { genStyleHooks, mergeToken } from '../../theme/internal';
-import { genAreaStyle } from './area';
 import {
   genBodyStyle,
   genLargeCellPaddingStyle,
   genMediumCellPaddingStyle,
   genSmallCellPaddingStyle,
 } from './body';
+import { prepareComponentToken } from './prepare';
 import {
-  genMainStyle,
   genSizeBaseTableStyle,
   genSizeLargeTableStyle,
   genSizeSmallTableStyle,
-} from './main';
-import { prepareComponentToken } from './prepare';
-import { genScrollStyle } from './scroll';
+} from './size';
 
 export default genStyleHooks(
   'Table',
   (token) => {
     const tableToken = mergeToken<TableToken>(token, {});
     return [
-      genMainStyle(tableToken),
       // 尺寸
       genSizeBaseTableStyle(tableToken),
       genSizeLargeTableStyle(tableToken),
@@ -32,9 +28,7 @@ export default genStyleHooks(
       genLargeCellPaddingStyle(tableToken),
       genSmallCellPaddingStyle(tableToken),
 
-      genAreaStyle(tableToken),
       genBodyStyle(tableToken),
-      genScrollStyle(tableToken),
     ];
   },
   prepareComponentToken,

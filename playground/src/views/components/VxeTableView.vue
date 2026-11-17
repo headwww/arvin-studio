@@ -1,130 +1,135 @@
 <script lang="ts" setup>
-import type { VxeTablePropTypes } from 'vxe-table';
+import type { VxeTableInstance, VxeTablePropTypes } from 'vxe-table';
 
-import { reactive, ref } from 'vue';
+import { ref } from 'vue';
+
+import { VxeUI } from 'vxe-table';
 
 interface RowVO {
   address: string;
-  content: string;
-  date: string;
+  age: number;
+  id: number;
   name: string;
-  rate: number;
   role: string;
+  sex: string;
 }
 
+const tableRef = ref<VxeTableInstance<RowVO>>();
+
+const editConfig = ref<VxeTablePropTypes.EditConfig<RowVO>>({
+  trigger: 'manual',
+  mode: 'row',
+});
+
+const loading = ref(false);
 const tableData = ref<RowVO[]>([
   {
+    id: 10_001,
     name: 'Test1',
-    role: '前端',
-    date: '2020-02-28',
-    rate: 5,
-    address: 'address1',
-    content: 'xxxxx1<br>换行换行11111111111',
+    role: 'Develop',
+    sex: 'Man',
+    age: 28,
+    address: 'test abc',
   },
   {
+    id: 10_002,
     name: 'Test2',
-    role: '后端',
-    date: '2020-02-22',
-    rate: 2,
-    address: 'address2',
-    content: 'xxxxx1<br>换行换行2',
+    role: 'Test',
+    sex: 'Women',
+    age: 22,
+    address: 'Guangzhou',
   },
   {
+    id: 10_003,
     name: 'Test3',
-    role: '前端',
-    date: '2020-01-01',
-    rate: 0,
-    address: 'address3',
-    content: 'xxxxx1<br>换行换行<br>3333',
+    role: 'PM',
+    sex: 'Man',
+    age: 32,
+    address: 'Shanghai',
   },
   {
+    id: 10_004,
     name: 'Test4',
-    role: '设计师',
-    date: '2020-02-23',
-    rate: 1,
-    address: 'address4',
-    content: 'xxxxx1<br>换行换行4',
-  },
-  {
-    name: 'Test5',
-    role: '前端',
-    date: '2020-01-20',
-    rate: 3,
-    address: 'address5',
-    content: 'xxxxx1<br>换行换行55',
+    role: 'Designer',
+    sex: 'Women',
+    age: 24,
+    address: 'Shanghai',
   },
 ]);
 
-const headerTooltipConfig = reactive<
-  VxeTablePropTypes.HeaderTooltipConfig<RowVO>
->({
-  showAll: true,
-  enterable: true,
-  contentMethod: ({ column }) => {
-    const { field, title } = column;
-    // 重写默认的提示内容
-    if (field === 'date' || field === 'rate') {
-      return `自定义表头：${title}`;
-    }
-    // 其余的单元格使用默认行为
-    return null;
-  },
-});
+const hasEditStatus = (row: RowVO) => {
+  const $table = tableRef.value;
+  if ($table) {
+    return $table.isEditByRow(row);
+  }
+};
 
-const tooltipConfig = reactive<VxeTablePropTypes.TooltipConfig<RowVO>>({
-  showAll: true,
-  enterable: true,
-  contentMethod: ({ column, row }) => {
-    const { field } = column;
-    // 重写默认的提示内容
-    if (field === 'date' || field === 'rate') {
-      return `自定义单元格：${row[field]}`;
-    }
-    // 其余的单元格使用默认行为
-    return null;
-  },
-});
+const editRowEvent = (row: RowVO) => {
+  const $table = tableRef.value;
+  if ($table) {
+    $table.setEditRow(row);
+  }
+};
 
-const footerTooltipConfig = reactive<
-  VxeTablePropTypes.FooterTooltipConfig<RowVO>
->({
-  showAll: true,
-  enterable: true,
-  contentMethod: ({ column, row }) => {
-    const { field } = column;
-    // 重写默认的提示内容
-    if (field === 'date' || field === 'rate') {
-      return `自定义表尾：${row[field]}`;
-    }
-    // 其余的单元格使用默认行为
-    return null;
-  },
-});
+const saveRowEvent = (row: RowVO) => {
+  const $table = tableRef.value;
+  if ($table) {
+    $table.clearEdit().then(() => {
+      loading.value = true;
+      setTimeout(() => {
+        loading.value = false;
+        VxeUI.modal.message({
+          content: `保存成功！name=${row.name}`,
+          status: 'success',
+        });
+      }, 300);
+    });
+  }
+};
 
-const footerData = ref<VxeTablePropTypes.FooterData>([
-  { seq: '合计', date: '2020-09-05', rate: 999.8 },
-]);
+const cancelRowEvent = () => {
+  const $table = tableRef.value;
+  if ($table) {
+    $table.clearEdit();
+  }
+};
 </script>
 
 <template>
   <div>
     <vxe-table
-      show-footer
-      :row-config="{ useKey: true, drag: true }"
-      :column-config="{ useKey: true }"
-      :footer-data="footerData"
-      :tooltip-config="tooltipConfig"
-      :header-tooltip-config="headerTooltipConfig"
-      :footer-tooltip-config="footerTooltipConfig"
+      ref="tableRef"
+      border
+      show-overflow
+      height="400"
+      :loading="loading"
+      :edit-config="editConfig"
       :data="tableData"
+      highlight-cell
     >
-      <vxe-column drag-sort field="seq" type="seq" width="70" />
-      <vxe-column field="name" title="名称" />
-      <vxe-column field="role" title="角色" />
-      <vxe-column field="date" title="Date" />
-      <vxe-column field="rate" title="Rate" />
-      <vxe-column field="address" title="Address" width="160" />
-      <vxe-column type="html" field="content" title="Content" width="200" />
+      <vxe-column type="seq" width="70" />
+      <vxe-column
+        field="name"
+        title="Name"
+        :edit-render="{ name: 'VxeInput' }"
+      />
+      <vxe-column field="sex" title="Sex" :edit-render="{ name: 'VxeInput' }" />
+      <vxe-column
+        field="age"
+        title="Age"
+        :edit-render="{ name: 'VxeInput', props: { type: 'integer' } }"
+      />
+      <vxe-column title="操作" width="160">
+        <template #default="{ row }">
+          <template v-if="hasEditStatus(row)">
+            <vxe-button @click="saveRowEvent(row)">保存</vxe-button>
+            <vxe-button @click="cancelRowEvent()">取消</vxe-button>
+          </template>
+          <template v-else>
+            <vxe-button @click="editRowEvent(row)">编辑</vxe-button>
+          </template>
+        </template>
+      </vxe-column>
     </vxe-table>
   </div>
 </template>

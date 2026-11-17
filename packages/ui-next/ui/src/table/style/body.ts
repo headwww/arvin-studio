@@ -5,6 +5,8 @@ import type { TableToken } from './interface';
 
 import { Keyframes, mergeToken, unit } from '@arvin-studio/cssinjs';
 
+import { genCssVar } from '../../theme/util/genStyleUtils';
+
 export const moveCopyCellBorder = new Keyframes('moveCopyCellBorder', {
   '0%': {},
   '100%': {
@@ -68,6 +70,7 @@ export const genLargeCellPaddingStyle: GenerateStyle<TableToken> = (token) => {
 export function genBodyStyle(token: TableToken): CSSInterpolation {
   const {
     componentCls,
+    asCls,
     resizableLineColor,
     colorBgContainer,
     checkboxRangeBorderWidth,
@@ -125,6 +128,8 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     treeNodeLineStyle,
     headerFontColor,
     headerBackgroundColor,
+    scrollbarWidth,
+    scrollbarHeight,
     layoutBackgroundColor,
     colorTextSecondary,
     colorText,
@@ -137,7 +142,14 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     headerIconColor,
     dragOverBackgroundColor,
   } = token;
+
+  const [, varRef] = genCssVar(asCls, 'table');
+
   return {
+    [`${componentCls}-slots, ${componentCls}--file-form`]: {
+      display: 'none',
+    },
+
     [`${componentCls}--layout-wrapper`]: {
       display: 'flex',
       flexDirection: 'row',
@@ -346,6 +358,152 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
           color: primaryColor,
         },
       },
+
+      /* 滚动区 */
+      [`&.is--loading`]: {
+        [`& > ${componentCls}--scroll-x-virtual`]: { visibility: 'hidden' },
+
+        [`& > ${componentCls}--layout-wrapper`]: {
+          [`& > ${componentCls}--scroll-y-virtual`]: { visibility: 'hidden' },
+        },
+      },
+
+      [`${componentCls}--scroll-x-virtual`]: { height: 0 },
+      [`${componentCls}--scroll-y-virtual`]: { width: 0 },
+
+      [`${componentCls}--scroll-x-virtual, ${componentCls}--scroll-y-virtual`]:
+        {
+          visibility: 'hidden',
+          position: 'relative',
+          flexShrink: 0,
+          zIndex: 7,
+        },
+
+      [`${componentCls}--scroll-x-handle,
+        ${componentCls}--scroll-y-handle,
+        ${componentCls}--scroll-x-wrapper,
+        ${componentCls}--scroll-y-wrapper,
+        ${componentCls}--scroll-y-top-corner,
+        ${componentCls}--scroll-y-bottom-corner,
+        ${componentCls}--scroll-x-left-corner,
+        ${componentCls}--scroll-x-right-corner`]: {
+        position: 'absolute',
+      },
+
+      [`${componentCls}--scroll-x-handle, ${componentCls}--scroll-x-wrapper`]: {
+        width: '100%',
+        left: 0,
+        bottom: 0,
+      },
+
+      [`${componentCls}--scroll-x-wrapper`]: { height: '100%' },
+
+      [`${componentCls}--scroll-x-handle`]: {
+        overflowY: 'hidden',
+        overflowX: 'scroll',
+        height: varRef('scrollbar-height', `${scrollbarHeight}px`),
+      },
+
+      [`${componentCls}--scroll-y-handle, ${componentCls}--scroll-y-wrapper`]: {
+        width: '100%',
+        height: '100%',
+        right: 0,
+        top: 0,
+      },
+
+      [`${componentCls}--scroll-y-handle`]: {
+        overflowY: 'scroll',
+        overflowX: 'hidden',
+        width: varRef('scrollbar-width', `${scrollbarWidth}px`),
+        height: '100%',
+      },
+
+      [`${componentCls}--scroll-x-space`]: { height: 1 },
+      [`${componentCls}--scroll-y-space`]: { width: 1 },
+
+      [`${componentCls}--scroll-x-left-corner,
+        ${componentCls}--scroll-x-right-corner,
+        ${componentCls}--scroll-y-top-corner,
+        ${componentCls}--scroll-y-bottom-corner`]: {
+        display: 'none',
+        position: 'absolute',
+      },
+
+      [`${componentCls}--scroll-x-left-corner, ${componentCls}--scroll-x-right-corner`]:
+        {
+          bottom: 0,
+          width: 0,
+          height: '100%',
+
+          [`&::before`]: {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: `calc(100% + ${borderWidth})`,
+            height: '100%',
+            zIndex: 1,
+            borderWidth,
+            borderStyle: 'solid',
+            borderColor,
+          },
+        },
+
+      [`${componentCls}--scroll-x-left-corner`]: { left: 0 },
+      [`${componentCls}--scroll-x-right-corner`]: { right: 0 },
+
+      [`&.sy-pos--right`]: {
+        [`${componentCls}--scroll-y-top-corner, ${componentCls}--scroll-y-bottom-corner`]:
+          {
+            right: 0,
+            width: `calc(100% + ${borderWidth})`,
+          },
+
+        // SCSS 原文把同一个选择器写了两遍，这里合并成一条
+        [`${componentCls}--scroll-x-right-corner`]: {
+          [`&::before`]: {
+            left: `calc(${borderWidth} * -1)`,
+            borderRight: 0,
+          },
+        },
+      },
+
+      [`&.sy-pos--left`]: {
+        [`${componentCls}--scroll-y-top-corner, ${componentCls}--scroll-y-bottom-corner`]:
+          {
+            left: 0,
+            width: `calc(100% + ${borderWidth})`,
+          },
+
+        [`${componentCls}--scroll-x-left-corner`]: {
+          [`&::before`]: {
+            top: `calc(${borderWidth} * -1)`,
+            height: `calc(100% + ${borderWidth})`,
+          },
+        },
+      },
+
+      [`&.sx-pos--bottom`]: {
+        [`${componentCls}--scroll-x-right-corner`]: {
+          bottom: borderWidth,
+
+          [`&::before`]: { borderBottom: 0 },
+        },
+      },
+
+      [`${componentCls}--scroll-y-top-corner`]: {
+        backgroundColor: headerBackgroundColor,
+      },
+
+      [`${componentCls}--scroll-y-top-corner, ${componentCls}--scroll-y-bottom-corner`]:
+        {
+          top: 0,
+          height: 0,
+        },
+
+      [`${componentCls}--scroll-y-bottom-corner`]: {
+        marginTop: `calc(${borderWidth} * -1)`,
+      },
     },
 
     [`${componentCls}-sort--asc-btn,
@@ -429,6 +587,28 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`&:last-child`]: {
         [`& > ${componentCls}-cell--col-resizable`]: {
           right: 0,
+        },
+      },
+    },
+
+    /* 表头列拖拽*/
+    [`&.col--drag-cell`]: {
+      [`${componentCls}-header--column`]: {
+        userSelect: 'none',
+
+        [`&.is--drag-active`]: {
+          cursor: 'grab',
+          [`&:active`]: {
+            cursor: 'grabbing',
+          },
+          [`&:hover`]: {
+            color: primaryColor,
+          },
+        },
+
+        [`&.is--drag-disabled`]: {
+          color: disabledColor,
+          cursor: 'not-allowed',
         },
       },
     },
@@ -780,6 +960,10 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     },
     /** render-default */
     [`${componentCls}--render-default`]: {
+      position: 'relative',
+      fontFamily: 'inherit',
+      color: colorText,
+      direction: 'ltr',
       [`${componentCls}--footer-wrapper`]: {
         marginTop: calc(borderWidth).mul(-1).equal(),
         backgroundColor: footerBackgroundColor,
@@ -1130,9 +1314,130 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         },
       },
 
+      /* 边框线 */
+      [`${componentCls}--border-line`]: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 10,
+        pointerEvents: 'none',
+        border: `${borderWidth} solid ${borderColor}`,
+      },
+
+      '&.border--inner': {
+        [`${componentCls}--border-line`]: {
+          borderWidth: '0 0 1px 0',
+        },
+      },
+
+      '&.border--none': {
+        [`${componentCls}--border-line`]: {
+          display: 'none',
+        },
+      },
+
+      /* 边框：滚动区四角与横竖轴外观线 */
+      [`&.border--default, &.border--full, &.border--outer, &.border--inner`]: {
+        [`&.sy-pos--right`]: {
+          [`${componentCls}--scroll-y-top-corner`]: {
+            backgroundImage: `linear-gradient(${borderColor}, ${borderColor}), linear-gradient(${borderColor}, ${borderColor})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${borderWidth} 100%, 100% ${borderWidth}`,
+            backgroundPosition: 'left top, left bottom',
+          },
+
+          [`${componentCls}--scroll-y-bottom-corner`]: {
+            backgroundImage: `linear-gradient(${borderColor}, ${borderColor}), linear-gradient(${borderColor}, ${borderColor})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${borderWidth} 100%, 100% ${borderWidth}`,
+            backgroundPosition: 'left top, left top',
+          },
+        },
+
+        [`&.sy-pos--left`]: {
+          [`${componentCls}--scroll-y-top-corner`]: {
+            backgroundImage: `linear-gradient(${borderColor}, ${borderColor}), linear-gradient(${borderColor}, ${borderColor})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${borderWidth} 100%, 100% ${borderWidth}`,
+            backgroundPosition: 'right top, left bottom',
+          },
+
+          [`${componentCls}--scroll-y-bottom-corner`]: {
+            backgroundImage: `linear-gradient(${borderColor}, ${borderColor}), linear-gradient(${borderColor}, ${borderColor})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${borderWidth} 100%, 100% ${borderWidth}`,
+            backgroundPosition: 'right top, left top',
+          },
+        },
+
+        [`${componentCls}--scroll-x-handle-appearance`]: {
+          position: 'absolute',
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          pointerEvents: 'none',
+        },
+
+        [`&.sx-pos--top`]: {
+          [`${componentCls}--scroll-x-handle-appearance`]: {
+            top: 0,
+            borderBottom: `${borderWidth} solid ${borderColor}`,
+          },
+        },
+
+        [`&.sx-pos--bottom`]: {
+          [`${componentCls}--scroll-x-handle-appearance`]: {
+            bottom: 0,
+            height: `calc(100% + ${borderWidth})`,
+            borderTop: `${borderWidth} solid ${borderColor}`,
+          },
+        },
+      },
+
+      [`&.border--default, &.border--full`]: {
+        [`${componentCls}--scroll-y-handle-appearance`]: {
+          position: 'absolute',
+          top: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          pointerEvents: 'none',
+        },
+
+        [`&.sy-pos--left`]: {
+          [`${componentCls}--scroll-y-handle-appearance`]: {
+            left: 0,
+            borderRight: `${borderWidth} solid ${borderColor}`,
+          },
+        },
+
+        [`&.sy-pos--right`]: {
+          [`${componentCls}--scroll-y-handle-appearance`]: {
+            right: 0,
+            width: `calc(100% + ${borderWidth})`,
+            borderLeft: `${borderWidth} solid ${borderColor}`,
+          },
+        },
+      },
+
       '.fixed--hidden': {
         visibility: 'hidden',
       },
+
+      [`&.is--header`]: {
+        [`${componentCls}--fixed-left-wrapper, ${componentCls}--fixed-right-wrapper`]:
+          {
+            [`${componentCls}--body-wrapper`]: {
+              [`&:before`]: {
+                display: 'none',
+              },
+            },
+          },
+      },
+
       [`&${componentCls}-medium`]: {
         [`${componentCls}--empty-placeholder,
           ${componentCls}--empty-block`]: {
@@ -1591,14 +1896,17 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         overflow: 'hidden',
         pointerEvents: 'none',
       },
+      [`${componentCls}--empty-placeholder`]: {
+        display: 'flex',
+      },
       [`${componentCls}--empty-content`]: {
         display: 'block',
         width: '50%',
         pointerEvents: 'auto',
       },
       [`&.is--empty`]: {
-        [`${componentCls}--empty-placeholder,
-          ${componentCls}--empty-block`]: {
+        [`${componentCls}--empty-block,
+          ${componentCls}--empty-place-wrapper`]: {
           display: 'flex',
         },
       },
@@ -1623,6 +1931,339 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
       [`${componentCls}-cell--wrapper`]: {
         margin: 'auto 0',
+      },
+
+      /* 校验消息位置*/
+      [`&.valid-msg--single`]: {
+        [`${componentCls}-body--row`]: {
+          [`&:last-child`]: {
+            [`${componentCls}-cell--valid-error-tip`]: {
+              bottom: '100%',
+              transform: 'translate(-50%, 0)',
+            },
+
+            [`&:first-child`]: {
+              [`${componentCls}-cell--valid-error-tip`]: {
+                bottom: 'auto',
+                transform: 'translate(-50%, -2px)',
+              },
+            },
+          },
+        },
+      },
+
+      [`&.valid-msg--full`]: {
+        [`${componentCls}-body--row`]: {
+          [`&:last-child`]: {
+            [`${componentCls}-cell--valid-error-tip`]: {
+              top: 'calc(100% - 1.3em)',
+            },
+          },
+        },
+      },
+
+      /* 圆角*/
+      [`&.is--round`]: {
+        borderRadius,
+
+        [`&.sy-pos--right`]: {
+          [`&.sx-pos--bottom`]: {
+            [`&.is--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `${borderRadius} 0 0 0`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `${borderRadius} 0 0 ${borderRadius}`,
+                },
+              },
+            },
+            [`&.not--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius,
+                },
+              },
+            },
+          },
+          [`&.sx-pos--top`]: {
+            [`&.is--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 0 0 ${borderRadius}`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `${borderRadius} 0 0 ${borderRadius}`,
+                },
+              },
+            },
+            [`&.not--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--border-line`]: {
+                  borderRadius,
+                },
+              },
+            },
+          },
+        },
+
+        [`&.sy-pos--left`]: {
+          [`&.sx-pos--bottom`]: {
+            [`&.is--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 ${borderRadius} 0 0`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 ${borderRadius} ${borderRadius} 0`,
+                },
+              },
+            },
+            [`&.not--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius,
+                },
+              },
+            },
+          },
+          [`&.sx-pos--top`]: {
+            [`&.is--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 0 ${borderRadius} 0`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 ${borderRadius} ${borderRadius} 0`,
+                },
+              },
+            },
+            [`&.not--scroll-y`]: {
+              [`&.is--scroll-x`]: {
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                },
+              },
+              [`&.not--scroll-x`]: {
+                [`${componentCls}--header-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `${borderRadius} ${borderRadius} 0 0`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `${borderRadius} 0 0 0`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 ${borderRadius} 0 0`,
+                  },
+                },
+                [`${componentCls}--footer-wrapper`]: {
+                  [`&.body--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} ${borderRadius}`,
+                  },
+                  [`&.fixed-left--wrapper`]: {
+                    borderRadius: `0 0 0 ${borderRadius}`,
+                  },
+                  [`&.fixed-right--wrapper`]: {
+                    borderRadius: `0 0 ${borderRadius} 0`,
+                  },
+                },
+                [`${componentCls}--border-line`]: {
+                  borderRadius,
+                },
+              },
+            },
+          },
+        },
       },
     },
     /* footer*/

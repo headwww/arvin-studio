@@ -110,6 +110,7 @@ const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]
       :tooltip-config="tooltipConfig"
       :header-tooltip-config="headerTooltipConfig"
       :footer-tooltip-config="footerTooltipConfig"
+      show-overflow
       :data="tableData"
     >
       <Column drag-sort field="seq" type="seq" width="70" row-resize />

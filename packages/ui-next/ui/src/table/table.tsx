@@ -2,7 +2,7 @@ import type { ComponentPublicInstance, Ref } from 'vue';
 
 import type { AsSharedTooltipInstance } from '..';
 import type { AsColumnPropTypes } from './types/column';
-import type { AsComponentSlotType } from './types/common';
+import type { AsComponentSlotType, AsComponentStyleType } from './types/common';
 import type {
   AsTableConstructor,
   AsTableDefines,
@@ -109,6 +109,7 @@ import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
 import enUS from '../locale/en_US';
 import useLocale from '../locale/useLocale';
+import { genCssVar } from '../theme/util/genStyleUtils';
 import version from '../version';
 import TableBodyComponent from './body';
 import { formatLocaleText } from './cell';
@@ -118,6 +119,7 @@ import TableHeaderComponent from './header';
 import { getCrossTableDragRowInfo } from './store';
 import useStyle from './style';
 import {
+  colToVisible,
   createHandleGetRowId,
   createHandleUpdateRowId,
   createInternalData,
@@ -146,6 +148,7 @@ import {
   hasDeepKey,
   isEnableConf,
   restoreScrollLocation,
+  rowToVisible,
   toTreePathSeq,
 } from './util';
 
@@ -155,7 +158,8 @@ const maxXWidth = 5e6;
 const maxYHeight = 5e6;
 const sourceType = 'table';
 
-const { renderer, formats, createEvent } = ArvinStudio;
+const { renderer, formats, createEvent, globalEvents, GLOBAL_EVENT_KEYS } =
+  ArvinStudio;
 const defaults = {
   size: 'medium',
   showHeader: true,
@@ -181,6 +185,7 @@ export const Table = defineComponent<AsTableProps>(
 
     const {
       prefixCls,
+      rootPrefixCls,
       rowConfig: cRowConfig,
       treeConfig: cTreeConfig,
       filterConfig: cFilterConfig,
@@ -345,6 +350,24 @@ export const Table = defineComponent<AsTableProps>(
       );
     };
 
+    const handleScrollToRowColumn = (
+      fieldOrColumn: AsTableDefines.ColumnInfo | null | string,
+      row: any,
+      options?: AsTableDefines.ScrollToRowConfig,
+    ) => {
+      const { fullColumnIdData } = internalData;
+      const column = handleFieldOrColumn($asTable, fieldOrColumn);
+      if (column && fullColumnIdData[column.id]) {
+        return colToVisible(
+          $asTable,
+          options ? options.colAlign !== false : true,
+          column,
+          row,
+        );
+      }
+      return nextTick();
+    };
+
     const computeTableId = computed(() => {
       const { id } = props;
       if (id) {
@@ -394,6 +417,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeFooterCellOpts = computed(() => {
       const footerCellOpts = Object.assign(
         {},
+        config.table.footerCellConfig as AsTablePropTypes.FooterCellConfig,
         cFooterCellConfig.value,
         props.footerCellConfig,
       );
@@ -420,6 +444,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeFilterOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.filterConfig,
         cFilterConfig.value,
         props.filterConfig,
       ) as AsTablePropTypes.FilterOpts;
@@ -428,13 +453,19 @@ export const Table = defineComponent<AsTableProps>(
     const computeSortOpts = computed(() => {
       return Object.assign(
         { orders: ['asc', 'desc', null] },
+        config.table.sortConfig,
         cSortConfig.value,
         props.sortConfig,
       ) as AsTablePropTypes.SortOpts;
     });
 
     const computeAggregateOpts = computed(() => {
-      return Object.assign({}, cAggregateConfig.value, props.aggregateConfig);
+      return Object.assign(
+        {},
+        config.table.aggregateConfig,
+        cAggregateConfig.value,
+        props.aggregateConfig,
+      );
     });
 
     const computeCellOpts = computed(() => {
@@ -453,6 +484,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeHeaderCellOpts = computed(() => {
       const headerCellOpts = Object.assign(
         {},
+        config.table.headerCellConfig as AsTablePropTypes.HeaderCellConfig,
         cHeaderCellConfig.value,
         props.headerCellConfig,
       );
@@ -476,6 +508,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeCheckboxOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.checkboxConfig,
         cCheckboxConfig.value,
         props.checkboxConfig,
       ) as AsTablePropTypes.CheckboxOpts;
@@ -549,6 +582,7 @@ export const Table = defineComponent<AsTableProps>(
       const { virtualYConfig } = props;
       return Object.assign(
         {},
+        config.table.virtualYConfig,
         cVirtualYConfig.value,
         virtualYConfig,
       ) as AsTablePropTypes.VirtualYConfig & { gt: number };
@@ -558,6 +592,7 @@ export const Table = defineComponent<AsTableProps>(
       const { virtualXConfig } = props;
       return Object.assign(
         {},
+        config.table.virtualXConfig,
         cVirtualXConfig.value,
         virtualXConfig,
       ) as AsTablePropTypes.VirtualXConfig & { gt: number };
@@ -574,13 +609,32 @@ export const Table = defineComponent<AsTableProps>(
     const computeExpandOpts = computed(() => {
       return Object.assign(
         {},
-        cExpandConfig,
+        config.table.expandConfig,
+        cExpandConfig.value,
         props.expandConfig,
       ) as AsTablePropTypes.ExpandOpts;
     });
 
     const computeCustomOpts = computed(() => {
-      return Object.assign({}, cCustomConfig.value, props.customConfig);
+      return Object.assign(
+        {},
+        config.table.customConfig,
+        cCustomConfig.value,
+        props.customConfig,
+      );
+    });
+
+    const computeTableStyle = computed(() => {
+      const [varName] = genCssVar(rootPrefixCls.value, 'table');
+      const { width, height } = computeScrollbarOpts.value;
+      const style: AsComponentStyleType = {};
+      if (width) {
+        style[varName('scrollbar-width')] = toCssUnit(width);
+      }
+      if (height) {
+        style[varName('scrollbar-height')] = toCssUnit(height);
+      }
+      return style;
     });
 
     const computeTableRowExpandedList = computed(() => {
@@ -629,7 +683,12 @@ export const Table = defineComponent<AsTableProps>(
     });
 
     const computeScrollbarOpts = computed(() => {
-      return Object.assign({}, cScrollbarConfig.value, props.scrollbarConfig);
+      return Object.assign(
+        {},
+        config.table.scrollbarConfig as AsTablePropTypes.ScrollbarConfig,
+        cScrollbarConfig.value,
+        props.scrollbarConfig,
+      );
     });
 
     const computeScrollbarXOpts = computed(() => {
@@ -715,6 +774,7 @@ export const Table = defineComponent<AsTableProps>(
           enterable: tooltipOpts.enterable,
           defaultPlacement: tooltipOpts.defaultPlacement,
         },
+        config.table.headerTooltipConfig,
         cHeaderTooltipConfig.value,
         props.headerTooltipConfig,
       );
@@ -728,6 +788,7 @@ export const Table = defineComponent<AsTableProps>(
           enterable: tooltipOpts.enterable,
           defaultPlacement: tooltipOpts.defaultPlacement,
         },
+        config.table.footerTooltipConfig,
         cFooterTooltipConfig.value,
         props.footerTooltipConfig,
       );
@@ -742,6 +803,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeEditOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.editConfig,
         cEditConfig.value,
         props.editConfig,
       ) as AsTablePropTypes.EditOpts;
@@ -754,6 +816,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeFloatingFilterOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.floatingFilterConfig,
         cFloatingFilterConfig.value,
         props.floatingFilterConfig,
       );
@@ -762,6 +825,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeMouseOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.mouseConfig,
         cMouseConfig.value,
         props.mouseConfig,
       ) as AsTablePropTypes.MouseOpts;
@@ -875,6 +939,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeRadioOpts = computed(() => {
       return Object.assign(
         {},
+        config.table.radioConfig,
         cRadioConfig.value,
         props.radioConfig,
       ) as AsTablePropTypes.RadioOpts;
@@ -1010,6 +1075,8 @@ export const Table = defineComponent<AsTableProps>(
       computeHeaderTooltipOpts,
       computeFooterTooltipOpts,
       computeEditDirtyOpts,
+      computeLeftFixedWidth,
+      computeRightFixedWidth,
     };
 
     const $asTable = {
@@ -5548,6 +5615,50 @@ export const Table = defineComponent<AsTableProps>(
         return nextTick();
       },
 
+      getSortColumns() {
+        const sortOpts = computeSortOpts.value;
+        const { multiple, chronological } = sortOpts;
+        const sortList: AsTableDefines.SortCheckedParams[] = [];
+        const { tableFullColumn } = internalData;
+        tableFullColumn.forEach((column) => {
+          const { field, order } = column;
+          if (column.sortable && order) {
+            sortList.push({
+              column,
+              field,
+              order,
+              sortTime: column.sortTime,
+            });
+          }
+        });
+        if (multiple && chronological && sortList.length > 1) {
+          return orderBy(sortList, 'sortTime');
+        }
+        return sortList;
+      },
+
+      /**
+       * 判断行是否为展开状态
+       * @param {Row} row 行对象
+       */
+      isRowExpandByRow(row) {
+        const { rowExpandedFlag } = reactData;
+        const { rowExpandedMaps } = internalData;
+        const rowid = getRowid($asTable, row);
+        return !!rowExpandedFlag && !!rowExpandedMaps[rowid];
+      },
+
+      /**
+       * 判断行是否为树形节点展开状态
+       * @param {Row} row 行对象
+       */
+      isTreeExpandByRow(row) {
+        const { treeExpandedFlag } = reactData;
+        const { treeExpandedMaps } = internalData;
+        return (
+          !!treeExpandedFlag && !!treeExpandedMaps[getRowid($asTable, row)]
+        );
+      },
       /**
        * 设置合并单元格 [{ row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }]
        */
@@ -5620,6 +5731,63 @@ export const Table = defineComponent<AsTableProps>(
           );
         });
       },
+
+      /**
+       * 如果有滚动条，则滚动到对应的行
+       */
+      scrollToRow(rowOrRowid, fieldOrColumn, options) {
+        const { isAllOverflow, scrollYLoad, scrollXLoad } = reactData;
+        const { fullAllDataRowIdData, _sToTime } = internalData;
+        const rest = [];
+        let row: any;
+        if (isString(rowOrRowid) || isNumber(rowOrRowid)) {
+          const rowid = rowOrRowid;
+          const rowRest = rowid ? fullAllDataRowIdData[rowid] : null;
+          if (rowRest) {
+            row = rowRest.row;
+          }
+        } else {
+          row = rowOrRowid;
+        }
+        if (row) {
+          if (props.treeConfig) {
+            rest.push($asTable.scrollToTreeRow(row));
+          } else {
+            rest.push(rowToVisible($asTable, row));
+          }
+        }
+        if (fieldOrColumn) {
+          rest.push(handleScrollToRowColumn(fieldOrColumn, row, options));
+        }
+        if (_sToTime) {
+          clearTimeout(_sToTime);
+        }
+        return Promise.all(rest).then(() => {
+          if (!row) {
+            return;
+          }
+
+          if (!isAllOverflow && (scrollYLoad || scrollXLoad)) {
+            calcCellHeight();
+            calcCellWidth();
+            // 可视区被渲染后位置被偏移
+            internalData._sToTime = setTimeout(() => {
+              internalData._sToTime = undefined;
+              if (scrollYLoad) {
+                if (props.treeConfig) {
+                  $asTable.scrollToTreeRow(row);
+                } else {
+                  rowToVisible($asTable, row);
+                }
+              }
+              if (scrollXLoad && fieldOrColumn) {
+                handleScrollToRowColumn(fieldOrColumn, row, options);
+              }
+            }, 350);
+          }
+          return nextTick();
+        });
+      },
       /**
        * 关闭筛选
        * @param {Event} evnt 事件
@@ -5687,6 +5855,71 @@ export const Table = defineComponent<AsTableProps>(
         });
       },
 
+      sort(sortConfs: any, sortOrder?: AsTablePropTypes.SortOrder) {
+        const sortOpts = computeSortOpts.value;
+        const { multiple, remote, orders } = sortOpts;
+        if (sortConfs && isString(sortConfs)) {
+          sortConfs = [{ field: sortConfs, order: sortOrder }];
+        }
+        if (!isArray(sortConfs)) {
+          sortConfs = [sortConfs];
+        }
+        if (sortConfs.length > 0) {
+          if (!multiple) {
+            clearAllSort();
+          }
+          (multiple ? sortConfs : [sortConfs[0]]).forEach(
+            (confs: any, index: number) => {
+              let { field, order } = confs;
+              const column = isString(field)
+                ? $asTable.getColumnByField(field)
+                : field;
+              if (column && column.sortable) {
+                if (orders && !orders.includes(order)) {
+                  order = getNextSortOrder(column);
+                }
+                if (column.order !== order) {
+                  column.order = order;
+                }
+                column.sortTime = Date.now() + index;
+              }
+            },
+          );
+          // 如果是服务端排序，则跳过本地排序处理
+          if (!remote) {
+            $asTable.handleTableData(true);
+          }
+          return nextTick().then(() => {
+            updateRowOffsetTop();
+            $asTable.updateCellAreas();
+            return updateStyle();
+          });
+        }
+        return nextTick();
+      },
+      /**
+       * 清空指定列的排序条件
+       * 如果为空则清空所有列的排序条件
+       * @param {String} fieldOrColumn 列或字段名
+       */
+      clearSort(fieldOrColumn) {
+        const sortOpts = computeSortOpts.value;
+        if (fieldOrColumn) {
+          const column = handleFieldOrColumn($asTable, fieldOrColumn);
+          if (column) {
+            column.order = null;
+          }
+        } else {
+          clearAllSort();
+        }
+        if (!sortOpts.remote) {
+          $asTable.handleTableData(true);
+        }
+        return nextTick().then(() => {
+          updateRowOffsetTop();
+          return updateStyle();
+        });
+      },
       /**
        * 设置展开行，二个参数设置这一行展开与否
        * 支持单行
@@ -5770,6 +6003,15 @@ export const Table = defineComponent<AsTableProps>(
             handleRowExpandScroll();
             return $asTable.updateCellAreas();
           });
+      },
+      setRowGroupExpand(rows, expanded) {
+        if (rows) {
+          if (!isArray(rows)) {
+            rows = [rows];
+          }
+          return handleRowGroupVirtualExpand(rows, expanded);
+        }
+        return nextTick();
       },
       /**
        * 用于 custom-config，用于获取自定义列设置信息，用于自定义保持
@@ -5953,6 +6195,12 @@ export const Table = defineComponent<AsTableProps>(
         internalData.isActivated = false;
         return nextTick();
       },
+    };
+    const clearAllSort = () => {
+      const { tableFullColumn } = internalData;
+      tableFullColumn.forEach((column) => {
+        column.order = null;
+      });
     };
 
     const calcTableHeight = (key: 'height' | 'maxHeight' | 'minHeight') => {
@@ -7427,6 +7675,57 @@ export const Table = defineComponent<AsTableProps>(
           showLine ? (prevDragToChild ? 'sub' : 'normal') : 'disabled',
         );
       }
+    };
+
+    /**
+     * 表格键盘事件
+     */
+    const keydownEvent = (evnt: KeyboardEvent) => {
+      const { mouseConfig, keyboardConfig } = props;
+      const { filterStore, ctxMenuStore, editStore } = reactData;
+      const mouseOpts = computeMouseOpts.value;
+      const keyboardOpts = computeKeyboardOpts.value;
+      const { actived } = editStore;
+      const isEsc = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ESCAPE);
+      if (isEsc) {
+        $asTable.preventEvent(evnt, 'event.keydown', null, () => {
+          dispatchEvent('keydown-start', {}, evnt);
+          if (
+            keyboardConfig &&
+            mouseConfig &&
+            mouseOpts.area &&
+            $asTable.handleKdClAreaEvent
+          ) {
+            $asTable.handleKdClAreaEvent(evnt);
+          } else if (
+            actived.row ||
+            filterStore.visible ||
+            ctxMenuStore.visible
+          ) {
+            evnt.stopPropagation();
+            // 如果按下了 Esc 键，关闭快捷菜单、筛选
+            if ($asTable.closeMenu) {
+              $asTable.closeMenu();
+            }
+            $asTable.closeFilter();
+            // 如果是激活编辑状态，则取消编辑
+            if (keyboardConfig && keyboardOpts.isEsc && actived.row) {
+              const params = actived.args;
+              $asTable.handleClearEdit(evnt);
+              // 如果配置了选中功能，则为选中状态
+              if (mouseOpts.selected) {
+                nextTick(() => $asTable.handleSelected(params, evnt));
+              }
+            }
+          }
+          dispatchEvent('keydown', {}, evnt);
+          dispatchEvent('keydown-end', {}, evnt);
+        });
+      }
+    };
+
+    const contextMenuEvent = (evnt: MouseEvent) => {
+      dispatchEvent('context-menu', {}, evnt);
     };
 
     const clearRowDragData = () => {
@@ -8904,6 +9203,44 @@ export const Table = defineComponent<AsTableProps>(
         );
       },
 
+      /**
+       * 对于树形结构中，可以直接滚动到指定深层节点中
+       * 对于某些特定的场景可能会用到，比如定位到某一节点
+       * @param {Row} row 行对象
+       */
+      scrollToTreeRow(row) {
+        const { treeConfig } = props;
+        const { isRowGroupStatus } = reactData;
+        const { tableFullData } = internalData;
+        const rests: Promise<any>[] = [];
+        if (treeConfig || isRowGroupStatus) {
+          const aggregateOpts = computeAggregateOpts.value;
+          const treeOpts = computeTreeOpts.value;
+          const childrenField = treeOpts.childrenField;
+          const matchObj = findTree(
+            tableFullData,
+            (item) => $asTable.eqRow(item, row),
+            {
+              children: isRowGroupStatus
+                ? aggregateOpts.mapChildrenField
+                : childrenField,
+            },
+          );
+          if (matchObj) {
+            const nodes = matchObj.nodes;
+            nodes.forEach((row, index) => {
+              if (
+                index < nodes.length - 1 &&
+                !$asTable.isTreeExpandByRow(row)
+              ) {
+                rests.push($asTable.setTreeExpand(row, true));
+              }
+            });
+          }
+        }
+        return Promise.all(rests).then(() => rowToVisible($asTable, row));
+      },
+
       triggerBodyScrollEvent(evnt, fixedType) {
         const { scrollYLoad, scrollXLoad } = reactData;
         const {
@@ -9057,6 +9394,64 @@ export const Table = defineComponent<AsTableProps>(
           scrollLeft,
           {
             type: 'header',
+            fixed: fixedType,
+          },
+        );
+      },
+      triggerFooterScrollEvent(evnt, fixedType) {
+        const { scrollXLoad } = reactData;
+        const {
+          elemStore,
+          intoRunScroll,
+          inWheelScroll,
+          inVirtualScroll,
+          inHeaderScroll,
+          inBodyScroll,
+        } = internalData;
+        if (
+          inWheelScroll ||
+          inVirtualScroll ||
+          inHeaderScroll ||
+          inBodyScroll
+        ) {
+          return;
+        }
+        const yHandleEl = refScrollYHandleElem.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        if (intoRunScroll) {
+          return;
+        }
+        if (!footerScrollElem) {
+          return;
+        }
+        if (!xHandleEl) {
+          return;
+        }
+        if (!yHandleEl) {
+          return;
+        }
+        const scrollTop = yHandleEl.scrollTop;
+        const scrollLeft = footerScrollElem.scrollLeft;
+        const isRollX = true;
+        const isRollY = false;
+        internalData.inFooterScroll = true;
+        setScrollLeft(xHandleEl, scrollLeft);
+        setScrollLeft(headerScrollElem, scrollLeft);
+        setScrollLeft(bodyScrollElem, scrollLeft);
+        if (scrollXLoad) {
+          $asTable.triggerScrollXEvent(evnt);
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'footer',
             fixed: fixedType,
           },
         );
@@ -9544,7 +9939,20 @@ export const Table = defineComponent<AsTableProps>(
         }
         dispatchEvent('cell-dblclick', params, evnt);
       },
-
+      triggerFooterCellClickEvent(evnt, params) {
+        const cell = evnt.currentTarget as HTMLDivElement;
+        params = Object.assign({ cell }, params);
+        // TODO if ($xeGantt) {
+        //   const ganttReactData = $xeGantt.reactData
+        //   ganttReactData.activeBarRowid = null
+        // }
+        $asTable.dispatchEvent('footer-cell-click', params, evnt);
+      },
+      triggerFooterCellDblclickEvent(evnt, params) {
+        const cell = evnt.currentTarget as HTMLDivElement;
+        params = Object.assign({ cell }, params);
+        $asTable.dispatchEvent('footer-cell-dblclick', params, evnt);
+      },
       handleClearStack() {
         const { stackHistoryStore } = internalData;
         stackHistoryStore.undoStacks = [];
@@ -10672,6 +11080,204 @@ export const Table = defineComponent<AsTableProps>(
           }
         } else {
           dispatchEvent('current-row-disabled', params, evnt);
+        }
+      },
+      /**
+       * 展开行事件
+       */
+      triggerRowExpandEvent(evnt, params) {
+        const { expandColumn } = reactData;
+        const { rowExpandLazyLoadedMaps } = internalData;
+        const expandOpts = computeExpandOpts.value;
+        const { row } = params;
+        const { lazy, trigger } = expandOpts;
+        if (trigger === 'manual') {
+          return;
+        }
+        evnt.stopPropagation();
+        const rowid = getRowid($asTable, row);
+        if (!lazy || !rowExpandLazyLoadedMaps[rowid]) {
+          const expanded = !$asTable.isRowExpandByRow(row);
+          const columnIndex = expandColumn
+            ? $asTable.getColumnIndex(expandColumn)
+            : -1;
+          const $columnIndex = expandColumn
+            ? $asTable.getVMColumnIndex(expandColumn)
+            : -1;
+          $asTable.setRowExpand(row, expanded);
+          dispatchEvent(
+            'toggle-row-expand',
+            {
+              expanded,
+              column: expandColumn,
+              columnIndex,
+              $columnIndex,
+              row,
+              rowIndex: $asTable.getRowIndex(row),
+              $rowIndex: $asTable.getVMRowIndex(row),
+            },
+            evnt,
+          );
+        }
+      },
+      /**
+       * 行分组事件
+       */
+      triggerRowGroupExpandEvent(evnt, params) {
+        const { rowGroupExpandedMaps } = internalData;
+        const aggregateOpts = computeAggregateOpts.value;
+        const { row, column } = params;
+        const { trigger } = aggregateOpts;
+        if (trigger === 'manual') {
+          return;
+        }
+        evnt.stopPropagation();
+        const rowid = getRowid($asTable, row);
+        const expanded = !rowGroupExpandedMaps[rowid];
+        const columnIndex = $asTable.getColumnIndex(column);
+        const $columnIndex = $asTable.getVMColumnIndex(column);
+        $asTable.setRowGroupExpand(row, expanded);
+        dispatchEvent(
+          'toggle-row-group-expand',
+          { expanded, column, columnIndex, $columnIndex, row },
+          evnt,
+        );
+      },
+      /**
+       * 展开树节点事件
+       */
+      triggerTreeExpandEvent(evnt, params) {
+        const { treeExpandLazyLoadedMaps, treeEATime } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { row, column } = params;
+        const { lazy, trigger, accordion } = treeOpts;
+        if (trigger === 'manual') {
+          return;
+        }
+        evnt.stopPropagation();
+        const rowid = getRowid($asTable, row);
+        if (!lazy || !treeExpandLazyLoadedMaps[rowid]) {
+          const expanded = !$asTable.isTreeExpandByRow(row);
+          const columnIndex = $asTable.getColumnIndex(column);
+          const $columnIndex = $asTable.getVMColumnIndex(column);
+          if (treeEATime) {
+            clearTimeout(treeEATime);
+          }
+          $asTable.setTreeExpand(row, expanded).then(() => {
+            if (accordion) {
+              internalData.treeEATime = setTimeout(() => {
+                internalData.treeEATime = undefined;
+                $asTable.scrollToRow(row);
+              }, 30);
+            }
+          });
+          dispatchEvent(
+            'toggle-tree-expand',
+            { expanded, column, columnIndex, $columnIndex, row },
+            evnt,
+          );
+        }
+      },
+      handleColumnSortEvent(evnt, column) {
+        const { mouseConfig } = props;
+        const mouseOpts = computeMouseOpts.value;
+        const { field, sortable, order } = column;
+        if (sortable) {
+          const params = {
+            $table: $asTable,
+            $event: evnt,
+            column,
+            field,
+            property: field,
+            order,
+            sortList: $asTable.getSortColumns(),
+            sortTime: column.sortTime,
+          };
+          if (mouseConfig && mouseOpts.area && $asTable.handleSortEvent) {
+            $asTable.handleSortEvent(evnt, params);
+          }
+          if (!order) {
+            dispatchEvent('clear-sort', params, evnt);
+          }
+          dispatchEvent('sort-change', params, evnt);
+        }
+      },
+      /**
+       * 点击排序事件
+       */
+      triggerSortEvent(evnt, column, order) {
+        const sortOpts = computeSortOpts.value;
+        const { multiple, allowClear } = sortOpts;
+        const { field, sortable } = column;
+        if (sortable) {
+          if (!order || column.order === order) {
+            if (allowClear) {
+              $asTable.clearSort(multiple ? column : null);
+            }
+          } else {
+            $asTable.sort({ field, order });
+          }
+          $asTable.handleColumnSortEvent(evnt, column);
+        }
+      },
+      /**
+       * 表头单元格按下事件
+       */
+      triggerHeaderCellMousedownEvent(evnt, params) {
+        const { mouseConfig } = props;
+        const mouseOpts = computeMouseOpts.value;
+        const columnOpts = computeColumnOpts.value;
+        const columnDragOpts = computeColumnDragOpts.value;
+        const { trigger, isCrossDrag, isPeerDrag, disabledMethod } =
+          columnDragOpts;
+        const cell = evnt.currentTarget as HTMLDivElement;
+        const triggerInput =
+          cell && cell.tagName && cell.tagName.toLowerCase() === 'input';
+        const triggerCheckbox = getEventTargetNode(
+          evnt,
+          cell,
+          `${prefixCls.value}-cell--checkbox`,
+        ).flag;
+        const triggerSort = getEventTargetNode(
+          evnt,
+          cell,
+          `${prefixCls.value}-cell--sort`,
+        ).flag;
+        const triggerFilter = getEventTargetNode(
+          evnt,
+          cell,
+          `${prefixCls.value}-cell--filter`,
+        ).flag;
+        let triggerDrag = false;
+        const isColDragCell = columnOpts.drag && trigger === 'cell';
+        if (
+          !(triggerInput || triggerCheckbox || triggerSort || triggerFilter)
+        ) {
+          const { column } = params;
+          if (
+            isColDragCell &&
+            !column.fixed &&
+            (isCrossDrag || isPeerDrag || !column.parentId) &&
+            !(disabledMethod && disabledMethod(params))
+          ) {
+            triggerDrag = true;
+            $asTable.handleHeaderCellDragMousedownEvent(evnt, params);
+          }
+        }
+        if (
+          !triggerDrag &&
+          mouseConfig &&
+          mouseOpts.area &&
+          $asTable.handleHeaderCellAreaMouseDnEvent
+        ) {
+          $asTable.handleHeaderCellAreaMouseDnEvent(
+            evnt,
+            Object.assign({ cell, triggerSort, triggerFilter }, params),
+          );
+        }
+        $asTable.focus();
+        if ($asTable.closeMenu) {
+          $asTable.closeMenu();
         }
       },
       /**
@@ -12127,8 +12733,28 @@ export const Table = defineComponent<AsTableProps>(
     }
 
     const renderVN = () => {
-      const { tooltipStore } = reactData;
+      const {
+        loading,
+        stripe,
+        showHeader,
+        treeConfig,
+        mouseConfig,
+        showFooter,
+        editRules,
+      } = props;
+      const {
+        isGroup,
+        overflowX,
+        overflowY,
+        scrollXLoad,
+        scrollYLoad,
+        tableData,
+        isRowGroupStatus,
+        columnStore,
+        tooltipStore,
+      } = reactData;
       const { teleportToWrapperElem } = internalData;
+      const { leftList, rightList } = columnStore;
       const tipSlots = {
         header: slots.headerTooltip || slots['header-tooltip'],
         body: slots.tooltip,
@@ -12138,11 +12764,25 @@ export const Table = defineComponent<AsTableProps>(
         tooltipStore.visible && tooltipStore.type
           ? tipSlots[tooltipStore.type]
           : null;
+      const rowDragOpts = computeRowDragOpts.value;
+      const tableTipConfig = computeTableTipConfig.value;
+      const validOpts = computeValidOpts.value;
+      const checkboxOpts = computeCheckboxOpts.value;
+      const treeOpts = computeTreeOpts.value;
+      const rowOpts = computeRowOpts.value;
+      const columnOpts = computeColumnOpts.value;
       const tableBorder = computeTableBorder.value;
+      const mouseOpts = computeMouseOpts.value;
+      const areaOpts = computeAreaOpts.value;
+      const currLoading =
+        reactData.isColLoading || reactData.isRowLoading || loading;
+      const resizableOpts = computeResizableOpts.value;
+      const isArea = mouseConfig && mouseOpts.area;
+      const columnDragOpts = computeColumnDragOpts.value;
       const scrollbarXToTop = computeScrollbarXToTop.value;
       const scrollbarYToLeft = computeScrollbarYToLeft.value;
-      const tableTipConfig = computeTableTipConfig.value;
-      const resizableOpts = computeResizableOpts.value;
+      const tableStyle = computeTableStyle.value;
+      const { isCrossTableDrag } = rowDragOpts;
 
       const cls = clsx(
         prefixCls.value,
@@ -12158,10 +12798,59 @@ export const Table = defineComponent<AsTableProps>(
           [`${prefixCls.value}-small`]: mergedSize.value === 'small',
           [`${prefixCls.value}-medium`]: mergedSize.value === 'medium',
         },
+        {
+          [`valid-msg--${validOpts.msgMode}`]: !!editRules,
+          'cell--selected': mouseConfig && mouseOpts.selected,
+          'cell--area': isArea,
+          'header-cell--area': isArea && areaOpts.selectCellByHeader,
+          'body-cell--area': isArea && areaOpts.selectCellByBody,
+          'row--highlight': rowOpts.isHover,
+          'column--highlight': columnOpts.isHover,
+          'checkbox--range': checkboxOpts.range,
+          'col--drag-cell':
+            columnOpts.drag && columnDragOpts.trigger === 'cell',
+          'is--header': showHeader,
+          'not--header': !showHeader,
+          'is--footer': showFooter,
+          'not--footer': !showFooter,
+          'is--group': isGroup,
+          'is-row-group': isRowGroupStatus,
+          'is--tree-line': treeConfig && treeOpts.showLine,
+          'is--fixed-left': leftList.length,
+          'is--fixed-right': rightList.length,
+          'is--round': props.round,
+          'is--stripe': !treeConfig && stripe,
+          'is--loading': currLoading,
+          'is--empty': !currLoading && tableData.length === 0,
+          'is--scroll-y': overflowY,
+          'not--scroll-y': !overflowY,
+          'is--scroll-x': overflowX,
+          'not--scroll-x': !overflowX,
+          'is--virtual-x': scrollXLoad,
+          'is--virtual-y': scrollYLoad,
+        },
       );
 
+      const tbOns: {
+        onContextmenu: (...args: any[]) => void;
+        onDragover?: (...args: any[]) => void;
+        onKeydown: (...args: any[]) => void;
+      } = {
+        onKeydown: keydownEvent,
+        onContextmenu: contextMenuEvent,
+      };
+      if (isCrossTableDrag && tableData.length === 0) {
+        tbOns.onDragover = $asTable.handleCrossTableRowDragoverEmptyEvent;
+      }
+
       return (
-        <div class={cls} ref={refElem} spellcheck={false}>
+        <div
+          class={cls}
+          ref={refElem}
+          spellcheck={false}
+          style={tableStyle}
+          {...tbOns}
+        >
           {/* 隐藏列 */}
           <div class={`${prefixCls.value}-slots`}>{slots.default?.()}</div>
           <div class={`${prefixCls.value}-vars`} ref={refVarElem}>
