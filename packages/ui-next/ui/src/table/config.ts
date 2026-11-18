@@ -157,6 +157,7 @@ export const config = {
       maxGroupSize: 4,
       showAggFuncTitle: true,
     },
+    aggregateAccuracyConfig: {},
     treeConfig: {
       padding: true,
       rowField: 'id',

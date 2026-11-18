@@ -2,6 +2,7 @@ import type {
   ComponentPublicInstance,
   ComputedRef,
   Ref,
+  RenderFunction,
   SetupContext,
   VNode,
 } from 'vue';
@@ -10,7 +11,10 @@ import type { AsGlobalRendererOptions } from '@arvin-studio/core';
 
 import type { ComponentBaseProps } from '../../config-provider/context';
 import type { SizeType } from '../../config-provider/size-context';
-import type { AsSharedTooltipPropTypes } from '../../tooltip/shared-tooltip';
+import type {
+  AsSharedTooltipInstance,
+  AsSharedTooltipPropTypes,
+} from '../../tooltip/shared-tooltip';
 import type {
   AsColumnProps,
   AsColumnPropTypes,
@@ -27,22 +31,15 @@ import type { AsTableExtendCellAreaDefines } from './extend-cell-area';
 export interface AsTableConstructor<D = any> extends AsTableMethods {
   // TODO 类型
   asGantt: any;
-
+  // TODO 类型
   asGrid: any;
   context: SetupContext<AsTableEmits>;
   getComputeMaps(): TablePrivateComputed;
-
-  /**
-   * 组件内部属性
-   * @private
-   */
+  getRefMaps(): TablePrivateRef;
   internalData: TableInternalData<D>;
   props: AsTableProps;
-  /**
-   * 组件内部属性
-   * @private
-   */
   reactData: TableReactData;
+  renderVN: RenderFunction;
   xID: string;
 }
 
@@ -349,6 +346,7 @@ export interface TableInternalData<D = any> {
   rceTimeout?: number | undefined;
   // 已删除行
   removeRowMaps: Record<string, D | null>;
+
   // 已展开的行
   rowExpandedMaps: Record<string, D | null>;
   // 行数据，已展开保留的行集合
@@ -357,6 +355,7 @@ export interface TableInternalData<D = any> {
   rowExpandLazyLoadedMaps: Record<string, D | null>;
   // 已展开的分组行
   rowGroupExpandedMaps: Record<string, D | null>;
+  rsePending?: boolean;
   scrollRenderType?: '' | 'left' | 'right';
   // 存放横向 X 虚拟滚动相关的信息
   scrollXStore: {
@@ -428,48 +427,96 @@ export interface TableInternalData<D = any> {
 }
 
 export interface TablePrivateComputed<D = any> {
+  computeAggFuncColumns: ComputedRef<AsTableDefines.ColumnInfo[]>;
+  computeAggregateAccuracyOpts: ComputedRef<AsTablePropTypes.AggregateAccuracyConfig>;
   computeAggregateOpts: ComputedRef<AsTablePropTypes.AggregateConfig>;
   computeAreaOpts: ComputedRef<AsTablePropTypes.AreaOpts>;
+  computeBodyMenu: ComputedRef<AsTableDefines.MenuFirstOption>;
+  computeBodyMergeCoverFixed: ComputedRef<boolean>;
   computeCellOffsetWidth: ComputedRef<number>;
   computeCellOpts: ComputedRef<AsTablePropTypes.CellConfig>;
   computeCheckboxOpts: ComputedRef<AsTablePropTypes.CheckboxOpts<D>>;
+  computeClipOpts: ComputedRef<AsTablePropTypes.ClipOpts<D>>;
   computeColumnDragOpts: ComputedRef<AsTablePropTypes.ColumnDragConfig>;
   computeColumnOpts: ComputedRef<AsTablePropTypes.ColumnOpts>;
+  computeCurrentColumnOpts: ComputedRef<AsTablePropTypes.CurrentColumnConfig>;
+  computeCurrentRowOpts: ComputedRef<AsTablePropTypes.CurrentRowConfig>;
   computeCustomOpts: ComputedRef<AsTablePropTypes.CustomOpts<D>>;
+  computeCustomSimpleMode: ComputedRef<
+    '' | 'auto' | 'inside' | 'outside' | null
+  >;
   computeDefaultRowHeight: ComputedRef<number>;
   computeEditDirtyOpts: ComputedRef<AsTablePropTypes.EditDirtyConfig>;
   computeEditOpts: ComputedRef<AsTablePropTypes.EditOpts<D>>;
   computeEmptyOpts: ComputedRef<AsTablePropTypes.EmptyOpts>;
   computeExpandOpts: ComputedRef<AsTablePropTypes.ExpandOpts<D>>;
+  computeExportOpts: ComputedRef<AsTablePropTypes.ExportOpts>;
   computeFilterOpts: ComputedRef<AsTablePropTypes.FilterOpts<D>>;
+  computeFixedColumnSize: ComputedRef<number>;
   computeFloatingFilterOpts: ComputedRef<
     AsTablePropTypes.FloatingFilterConfig<D>
   >;
+  computeFnrOpts: ComputedRef<AsTablePropTypes.FNROpts<D>>;
   computeFooterCellOpts: ComputedRef<AsTablePropTypes.FooterCellConfig>;
+  computeFooterMenu: ComputedRef<AsTableDefines.MenuFirstOption>;
   computeFooterTooltipOpts: ComputedRef<
     AsTablePropTypes.FooterTooltipConfig<D>
   >;
   computeHeaderCellOpts: ComputedRef<AsTablePropTypes.HeaderCellConfig>;
+  computeHeaderMenu: ComputedRef<AsTableDefines.MenuFirstOption>;
   computeHeaderTooltipOpts: ComputedRef<
     AsTablePropTypes.HeaderTooltipConfig<D>
   >;
+  computeImportOpts: ComputedRef<AsTablePropTypes.ImportOpts>;
   computeIsAllCheckboxDisabled: ComputedRef<boolean>;
   computeIsBodyRenderOptimize: ComputedRef<boolean>;
+  computeIsContentMenu: ComputedRef<boolean>;
   computeIsFooterRenderOptimize: ComputedRef<boolean>;
   computeIsHeaderRenderOptimize: ComputedRef<boolean>;
+  computeIsMaxFixedColumn: ComputedRef<boolean>;
+  computeKeepFields: ComputedRef<string[]>;
+  computeKeyboardOpts: ComputedRef<AsTablePropTypes.KeyboardOpts>;
   computeLeftFixedWidth: ComputedRef<number>;
+  computeLoadingOpts: ComputedRef<AsTablePropTypes.LoadingOpts>;
+  computeMenuList: ComputedRef<any[]>;
+  computeMenuOpts: ComputedRef<AsTablePropTypes.MenuOpts<D>>;
   computeMouseOpts: ComputedRef<AsTablePropTypes.MouseOpts>;
+  computePrintOpts: ComputedRef<AsTablePropTypes.PrintOpts>;
   computeRadioOpts: ComputedRef<AsTablePropTypes.RadioOpts<D>>;
   computeRendererOpts: ComputedRef<AsTablePropTypes.RendererConfig>;
   computeResizableOpts: ComputedRef<AsTablePropTypes.ResizableOpts<D>>;
+  computeResizeOpts: ComputedRef<AsTablePropTypes.ResizeOpts>;
   computeRightFixedWidth: ComputedRef<number>;
   computeRowDragOpts: ComputedRef<AsTablePropTypes.RowDragConfig>;
+  computeRowField: ComputedRef<string>;
+  computeRowGroupColumns: ComputedRef<AsTableDefines.ColumnInfo[]>;
+  computeRowGroupFields: ComputedRef<null | string[] | undefined>;
+  computeRowHeightMaps: ComputedRef<{
+    large: number;
+    medium: number;
+    small: number;
+  }>;
   computeRowOpts: ComputedRef<AsTablePropTypes.RowOpts>;
+  computeScrollbarOpts: ComputedRef<AsTablePropTypes.ScrollbarConfig>;
+  computeScrollbarXOpts: ComputedRef<AsTablePropTypes.ScrollbarXConfig>;
+  computeScrollbarXToTop: ComputedRef<boolean>;
+  computeScrollbarYOpts: ComputedRef<AsTablePropTypes.ScrollbarYConfig>;
+  computeScrollbarYToLeft: ComputedRef<boolean>;
+  computeScrollXThreshold: ComputedRef<number>;
+  computeScrollYThreshold: ComputedRef<number>;
   computeSeqOpts: ComputedRef<AsTablePropTypes.SeqOpts<D>>;
-  computeSortOpts: ComputedRef<AsTablePropTypes.SortOpts<D>>;
+  computeSize: ComputedRef<AsTablePropTypes.Size>;
+  computeSortOpts: ComputedRef<AsTablePropTypes.SortConfig<D>>;
+  computeTableId: ComputedRef<string>;
   computeTooltipOpts: ComputedRef<AsTablePropTypes.TooltipConfig<D>>;
   computeTreeOpts: ComputedRef<AsTablePropTypes.TreeOpts<D>>;
+
+  computeUndoRedoHistoryOpts: ComputedRef<AsTablePropTypes.UndoRedoHistoryConfig>;
   computeValidOpts: ComputedRef<AsTablePropTypes.ValidOpts<D>>;
+  computeVirtualScrollBars: ComputedRef<{
+    x: boolean;
+    y: boolean;
+  }>;
   computeVirtualXOpts: ComputedRef<
     AsTablePropTypes.VirtualXConfig & { gt: number }
   >;
@@ -1631,6 +1678,33 @@ export interface AsTablePrivateMethods<
   D = any,
 > extends TablePrivateMethods<D> {}
 
+export interface TablePrivateRef {
+  refColResizeBar: Ref<HTMLDivElement>;
+  refElem: Ref<HTMLDivElement>;
+  refLeftContainer: Ref<HTMLDivElement>;
+  refRightContainer: Ref<HTMLDivElement>;
+  refRowResizeBar: Ref<HTMLDivElement>;
+  refScrollXHandleElem: Ref<HTMLDivElement | undefined>;
+  refScrollXSpaceElem: Ref<HTMLDivElement | undefined>;
+  refScrollXVirtualElem: Ref<HTMLDivElement | undefined>;
+  refScrollYHandleElem: Ref<HTMLDivElement | undefined>;
+  refScrollYSpaceElem: Ref<HTMLDivElement | undefined>;
+  refScrollYVirtualElem: Ref<HTMLDivElement | undefined>;
+  refTableBody: Ref<ComponentPublicInstance>;
+  refTableFooter: Ref<ComponentPublicInstance>;
+  refTableHeader: Ref<ComponentPublicInstance>;
+  refTableLeftBody: Ref<ComponentPublicInstance>;
+  refTableLeftFooter: Ref<ComponentPublicInstance>;
+  refTableLeftHeader: Ref<ComponentPublicInstance>;
+  refTableRightBody: Ref<ComponentPublicInstance>;
+  refTableRightFooter: Ref<ComponentPublicInstance>;
+  refTableRightHeader: Ref<ComponentPublicInstance>;
+  refTooltip: Ref<AsSharedTooltipInstance>;
+  refValidTooltip: Ref<AsSharedTooltipInstance>;
+}
+
+export interface AsTablePrivateRef extends TablePrivateRef {}
+
 export namespace AsTablePropTypes {
   export type Round = boolean;
   export type Loading = boolean;
@@ -1640,6 +1714,8 @@ export namespace AsTablePropTypes {
     /** 加载提示文字 */
     text?: string;
   }
+  export interface LoadingOpts extends LoadingConfig {}
+
   export type EmptyText = string;
   export type Stripe = boolean;
   export type Align = AsComponentAlignType;
@@ -2185,6 +2261,29 @@ export namespace AsTablePropTypes {
      * 是否启用，支持局部/全局启用
      */
     enabled?: boolean;
+    /**
+     * 自定义列的呈现方式
+     */
+    mode?: '' | 'default' | 'drawer' | 'modal' | 'popup' | 'simple' | null;
+    /**
+     * 自定义面板的显示位置
+     */
+    placement?:
+      | 'bottom-left'
+      | 'bottom-right'
+      | 'left'
+      | 'right'
+      | 'top-left'
+      | 'top-right';
+    /**
+     * 弹窗面板配置项
+     */
+    popupOptions?: {
+      /**
+       * 显示方式
+       */
+      mode?: '' | 'auto' | 'inside' | 'outside' | null;
+    };
     /**
      * 只对 storage 有效，用于重写默认的恢复自定义配置逻辑，用于实现服务端保存
      */
@@ -3785,6 +3884,474 @@ export namespace AsTablePropTypes {
     trigger?: '' | 'cell' | 'default' | 'manual' | 'row' | null;
   }
   /**
+   * 聚合函数计算精度配置项
+   */
+  export interface AggregateAccuracyConfig<D = any> {
+    [key: string]: AggregateAccuracyObj<D>;
+  }
+  export interface AggregateAccuracyObj<D = any> {
+    /**
+     * 小数保留位数
+     */
+    digits?: null | number;
+    /**
+     * 小数处理方式，支持：四舍五入，向下取整，向上取整
+     */
+    format?:
+      | ''
+      | 'ceil'
+      | 'floor'
+      | 'round'
+      | ((params: {
+          $table: AsTableConstructor<D>;
+          aggValue: number;
+          childCount: number;
+          children: D[];
+          column: AsTableDefines.ColumnInfo;
+          groupColumn: AsTableDefines.ColumnInfo;
+          groupField: AsColumnPropTypes.Field;
+          groupValue: any;
+        }) => number)
+      | null;
+  }
+  /**
+   * 右键菜单配置项
+   */
+  export interface MenuConfig<D = any> {
+    /**
+     * 内容的右键菜单
+     */
+    body?: AsTableDefines.MenuOptions;
+    /**
+     * 菜单面板的 className
+     */
+    className?: string;
+    destroyOnClose?: boolean;
+    /**
+     * 是否启用
+     */
+    enabled?: boolean;
+    /**
+     * 表尾的右键菜单
+     */
+    footer?: AsTableDefines.MenuOptions;
+    /**
+     * 表头的右键菜单
+     */
+    header?: AsTableDefines.MenuOptions;
+    /**
+     * 是否启用元素挂载
+     */
+    transfer?: boolean;
+    /**
+     * 触发方式
+     * default（默认右键表格触发）, cell（右键单元格触发）
+     */
+    trigger?: '' | 'cell' | 'default' | null;
+    /**
+     * 该函数的返回值用来决定是否允许显示右键菜单
+     */
+    visibleMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column?: AsTableDefines.ColumnInfo;
+      columnIndex?: number;
+      columns: AsTableDefines.ColumnInfo[];
+      options: AsTableDefines.MenuFirstOption[][];
+      row?: D;
+      rowIndex?: number;
+      type: string;
+    }): boolean;
+    /**
+     * 菜单宽度
+     */
+    width?: number | string;
+    zIndex?: number;
+  }
+  export type MenuOpts<D = any> = Required<MenuConfig<D>>;
+  /**
+   * 复制粘贴配置项
+   */
+  export interface ClipConfig<DT = any> {
+    /**
+     * 自定义单元格复制到剪贴板之后的方法
+     */
+    afterCopyMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      isCut: boolean;
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): void;
+    /**
+     * 自定义单元格剪贴值清除之后的方法
+     */
+    afterCutMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      cutAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): void;
+    /**
+     * 自定义单元格粘贴赋值之后的方法
+     */
+    afterPasteMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellValues: any[][];
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      cutAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      insertColumns: AsTableDefines.ColumnInfo[];
+      insertRows: DT[];
+      isCut: boolean;
+      pasteCells: string[][];
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): void;
+    /**
+     * 自定义单元格复制取值之前的方法，可以通过返回 false 阻止复制行为
+     */
+    beforeCopyMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      activeArea: AsTableExtendCellAreaDefines.MouseCellArea<DT>;
+      isCut: boolean;
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): boolean;
+    /**
+     * 自定义单元格剪贴值清除之前的方法，可以通过返回 false 阻止清除行为
+     */
+    beforeCutMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      activeArea: AsTableExtendCellAreaDefines.MouseCellArea<DT>;
+      clipData: {
+        html?: string;
+        text?: string;
+      };
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      cutAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): boolean;
+    /**
+     * 自定义单元格粘贴赋值之前的方法，可以通过返回 false 阻止粘贴行为
+     */
+    beforePasteMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      activeArea: AsTableExtendCellAreaDefines.MouseCellArea<DT>;
+      cellValues: string[][];
+      clipData: {
+        html?: string;
+        text?: string;
+      };
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      cutAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      isCut: boolean;
+      pasteCells: string[][];
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): boolean;
+    /**
+     * 重写表头单元格复制取值的方法
+     */
+    copyHeaderMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellTitle: string;
+      column: AsTableDefines.ColumnInfo;
+      isCut: boolean;
+    }): string;
+    /**
+     * 重写单元格复制取值的方法
+     */
+    copyMethod?: AsColumnPropTypes.CopyMethod<DT>;
+    /**
+     * @deprecated 请使用 isCopyToContent
+     */
+    copyToLabel?: boolean;
+    /**
+     * 只对 isColumnIncrement 有效，自定义创建自增列配置的方法
+     */
+    createColumnsMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellValues: any[][];
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      insertColumns: AsTableDefines.ColumnOptions[];
+      pasteCells: string[][];
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): AsTableDefines.ColumnOptions<DT>[];
+    /**
+     * 只对 isRowIncrement 有效，自定义创建自增行数据的方法
+     */
+    createRowsMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellValues: any[][];
+      currentAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+      insertRows: DT[];
+      pasteCells: string[][];
+      targetAreas: AsTableExtendCellAreaDefines.MouseCellArea<DT>[];
+    }): DT[];
+    /**
+     * 重写单元格剪贴值清除的方法
+     */
+    cutMethod?: AsColumnPropTypes.CutMethod<DT>;
+    /**
+     * 用于排除指定列允许不允许被复制粘贴
+     */
+    excludeFields?: string[];
+    /**
+     * 用于指定哪些列允许被复制粘贴
+     */
+    includeFields?: string[];
+    /**
+     * 只对 area-config.multiple 有效，对相同行数的跨列选取多区域进行复制粘贴
+     */
+    isAcrossColumn?: boolean;
+    /**
+     * 只对 area-config.multiple 有效，对相同列数的跨行选取多区域进行复制粘贴
+     */
+    isAcrossRow?: boolean;
+    /**
+     * 只对 isCopyHeader 有效，是否支持分组列头
+     */
+    isColgroup?: boolean;
+    /**
+     * 是否启用列自增
+     */
+    isColumnIncrement?: boolean;
+    /**
+     * 是否启用复制功能
+     */
+    isCopy?: boolean;
+    /**
+     * 是否同时复制列头
+     */
+    isCopyHeader?: boolean;
+    /**
+     * 用于 isCopy，当复制单元格时，是否为对应格式化后的值
+     */
+    isCopyToContent?: boolean;
+    /**
+     * 是否启用剪贴功能
+     */
+    isCut?: boolean;
+    /**
+     * 只对 tree-config 启用有效，是否深层粘贴
+     */
+    isDeepPaste?: boolean;
+    /**
+     * 是否填充粘贴
+     */
+    isFillPaste?: boolean;
+    /**
+     * 是否启用粘贴功能
+     */
+    isPaste?: boolean;
+    /**
+     * 是否启用行自增
+     */
+    isRowIncrement?: boolean;
+    /**
+     * @deprecated 请使用 trailingNewline
+     */
+    isTrimCopyContent?: boolean;
+    /**
+     * 重写单元格粘贴赋值的方法
+     */
+    pasteMethod?: AsColumnPropTypes.PasteMethod<DT>;
+    /**
+     * 用于 isCopy，是否给复制到剪贴板文本的末尾带一个换行符
+     */
+    trailingNewline?: boolean;
+  }
+  export interface ClipOpts<D = any> extends ClipConfig<D> {}
+  /**
+   * 查找与替换配置项
+   */
+  export interface FnrConfig<DT = any> {
+    /**
+     * 自定义单元格查找之后的方法
+     */
+    afterFindMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      findValue: null | string;
+      isAll: boolean;
+      result: any[];
+    }): void;
+    /**
+     * 自定义单元格替换之后的方法
+     */
+    afterReplaceMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      findValue: string;
+      isAll: boolean;
+      replaceValue: string;
+      result: any[];
+    }): void;
+    /**
+     * 自定义单元格查找之前的方法，可以通过返回 false 阻止查找行为
+     */
+    beforeFindMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      findValue: null | string;
+      isAll: boolean;
+    }): boolean;
+    /**
+     * 自定义单元格替换之前的方法，可以通过返回 false 阻止替换行为
+     */
+    beforeReplaceMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      findValue: string;
+      isAll: boolean;
+      replaceValue: string;
+    }): boolean;
+    /**
+     * 自定义单元格查找方法
+     */
+    findMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellValue: any;
+      column: AsTableDefines.ColumnInfo;
+      findRE: null | RegExp;
+      findValue: null | string;
+      isRE: boolean;
+      isSensitive: boolean;
+      isWhole: boolean;
+      row: DT;
+    }): boolean;
+    /**
+     * 是否启用查找功能
+     */
+    isFind?: boolean;
+    /**
+     * 是否启用替换功能
+     */
+    isReplace?: boolean;
+    /**
+     * 列表配置项
+     */
+    listOptions?: {
+      /**
+       * 格式化列表的显示值
+       */
+      formatCellValue?(params: { cellValue: any; item: any }): number | string;
+    };
+    /**
+     * 匹配选项配置
+     */
+    matchOptions?: {
+      /**
+       * 是否启用正则表达式
+       */
+      isRE?: boolean;
+      /**
+       * 是否启用区分大小写
+       */
+      isSensitive?: boolean;
+      /**
+       * 是否启用全词匹配
+       */
+      isWhole?: boolean;
+    };
+    /**
+     * 弹窗配置项
+     */
+    modalOptions?: {
+      className?: string;
+      escClosable?: boolean;
+      height?: number | string;
+      lockView?: boolean;
+      mask?: boolean;
+      maskClosable?: boolean;
+      minHeight?: number | string;
+      minWidth?: number | string;
+      resize?: boolean;
+      showMaximize?: boolean;
+      showMinimize?: boolean;
+      showZoom?: boolean;
+      title?: string;
+      width?: number | string;
+    };
+    /**
+     * 自定义单元格替换方法
+     */
+    replaceMethod?(params: {
+      $table: AsTableConstructor<DT>;
+      cellValue: any;
+      column: AsTableDefines.ColumnInfo;
+      findValue: string;
+      replaceValue: string;
+      row: DT;
+    }): void;
+  }
+  export interface FNROpts<DT = any> extends FnrConfig<DT> {}
+  /**
+   * 撤销重做历史配置项
+   */
+  export interface UndoRedoHistoryConfig {
+    /**
+     * 撤销栈的最大步数
+     */
+    stackSize?: number;
+  }
+  /**
+   * 导入配置项
+   */
+  export interface ImportConfig<D = any> {
+    /**
+     * 内置属性
+     */
+    _typeMaps?: Record<string, number>;
+    /**
+     * 导入之后的方法
+     */
+    afterImportMethod?(params: {
+      $table: AsTableConstructor<D>;
+      options: any;
+      status: boolean;
+    }): void;
+    /**
+     * 导入之前的方法，可以返回 false 阻止导入行为
+     */
+    beforeImportMethod?(params: {
+      $table: AsTableConstructor<D>;
+      options: any;
+    }): boolean;
+    /**
+     * 是否启用
+     */
+    enabled?: boolean;
+    encoding?: string;
+    /**
+     * 自定义导入方法
+     */
+    importMethod?(params: {
+      $table: AsTableConstructor<D>;
+      file: File;
+      options: any;
+    }): Promise<any>;
+    /**
+     * 是否显示内置的消息提示
+     */
+    message?: boolean;
+    /**
+     * 导入数据的方式
+     */
+    mode?: string;
+    /**
+     * 导入数据的方式列表
+     */
+    modes?: (
+      | string
+      | {
+          label?: number | string;
+          value: number | string;
+        }
+    )[];
+    /**
+     * 自定义参数
+     */
+    params?: Record<string, any>;
+    /**
+     * 是否服务端导入
+     */
+    remote?: boolean;
+    /**
+     * 可选文件类型列表
+     */
+    types?: string[];
+  }
+  export interface ImportOpts<D = any> extends ImportConfig<D> {}
+  /**
    * 行配置信息
    */
   export interface RowConfig<D = any> {
@@ -4181,6 +4748,10 @@ export namespace AsTablePropTypes {
 
 export interface AsTableProps<D = any> extends ComponentBaseProps {
   /**
+   * 聚合函数计算精度配置项
+   */
+  aggregateAccuracyConfig?: AsTablePropTypes.AggregateAccuracyConfig<D>;
+  /**
    * 数据聚合配置项
    */
   aggregateConfig?: AsTablePropTypes.AggregateConfig<D>;
@@ -4212,6 +4783,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 复选框配置项
    */
   checkboxConfig?: AsTablePropTypes.CheckboxConfig<D>;
+  /**
+   * 复制粘贴配置项
+   */
+  clipConfig?: AsTablePropTypes.ClipConfig<D>;
   /**
    * 列配置信息
    */
@@ -4262,6 +4837,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    */
   expandConfig?: AsTablePropTypes.ExpandConfig<D>;
   /**
+   * 导出配置项
+   */
+  exportConfig?: AsTablePropTypes.ExportConfig<D>;
+  /**
    * 筛选配置项
    */
   filterConfig?: AsTablePropTypes.FilterConfig<D>;
@@ -4269,6 +4848,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 浮动筛选配置项
    */
   floatingFilterConfig?: AsTablePropTypes.FloatingFilterConfig<D>;
+  /**
+   * 查找与替换配置项
+   */
+  fnrConfig?: AsTablePropTypes.FnrConfig<D>;
   /**
    * 所有的表尾列的对齐方式
    */
@@ -4347,6 +4930,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    */
   id?: AsTablePropTypes.ID<D>;
   /**
+   * 导入配置项
+   */
+  importConfig?: AsTablePropTypes.ImportConfig<D>;
+  /**
    * 保持原始值的状态，被某些功能所依赖，比如编辑状态、还原数据等
    */
   keepSource?: AsTablePropTypes.KeepSource;
@@ -4367,6 +4954,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    */
   maxHeight?: AsTablePropTypes.MaxHeight;
   /**
+   * 右键菜单配置项
+   */
+  menuConfig?: AsTablePropTypes.MenuConfig<D>;
+  /**
    * 临时合并指定的单元格 (不能用于展开行)
    */
   mergeCells?: AsTablePropTypes.MergeCells<D>;
@@ -4386,6 +4977,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 鼠标配置项
    */
   mouseConfig?: AsTablePropTypes.MouseConfig;
+  /**
+   * 打印配置项
+   */
+  printConfig?: AsTablePropTypes.PrintConfig<D>;
   /**
    * 单选框配置项
    */
@@ -4475,6 +5070,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 树形结构配置项
    */
   treeConfig?: AsTablePropTypes.TreeConfig<D>;
+  /**
+   * 撤销重做历史配置项
+   */
+  undoRedoHistoryConfig?: AsTablePropTypes.UndoRedoHistoryConfig;
   /**
    * 校验配置项
    */
@@ -4640,8 +5239,8 @@ export namespace AsTableDefines {
      * @private
      */
     defaultParentId: null | string;
-
     dragSort: AsColumnPropTypes.DragSort;
+
     editRender: AsColumnPropTypes.EditRender;
     field: AsColumnPropTypes.Field;
     filterMethod: AsColumnPropTypes.FilterMethod<D>;
@@ -4655,12 +5254,16 @@ export namespace AsTableDefines {
     formatter: AsColumnPropTypes.Formatter<D>;
     headerAlign: AsColumnPropTypes.HeaderAlign;
     headerClassName: AsColumnPropTypes.HeaderClassName;
-
     headerFormatter: AsColumnPropTypes.HeaderFormatter;
-    maxWidth: AsColumnPropTypes.MaxWidth;
 
+    maxWidth: AsColumnPropTypes.MaxWidth;
     minWidth: AsColumnPropTypes.MinWidth;
+
     padding: AsColumnPropTypes.Padding;
+    /**
+     * @private
+     */
+    renderVisible: AsColumnPropTypes.Visible;
     resizable: AsColumnPropTypes.Resizable;
     rowGroupNode: AsColumnPropTypes.RowGroupNode;
     rowResize: AsColumnPropTypes.RowResize;

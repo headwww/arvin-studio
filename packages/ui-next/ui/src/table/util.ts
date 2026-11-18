@@ -225,6 +225,15 @@ export function createReactData(): TableReactData {
       visible: false,
       maxHeight: null,
     },
+    // 存放快捷菜单的信息
+    ctxMenuStore: {
+      list: [],
+      selectChild: null,
+      selected: null,
+      showChild: false,
+      style: null,
+      visible: false,
+    },
     // 是否存在横向滚动条
     overflowX: false,
     overflowY: false,

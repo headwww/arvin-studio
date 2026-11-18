@@ -10,6 +10,7 @@ import type {
   AsTableMethods,
   AsTablePrivateComputed,
   AsTablePrivateMethods,
+  AsTablePrivateRef,
   AsTableProps,
   AsTablePropTypes,
   TableMethods,
@@ -188,6 +189,14 @@ export const Table = defineComponent<AsTableProps>(
       filterConfig: cFilterConfig,
       sortConfig: cSortConfig,
       aggregateConfig: cAggregateConfig,
+      aggregateAccuracyConfig: cAggregateAccuracyConfig,
+      clipConfig: cClipConfig,
+      fnrConfig: cFnrConfig,
+      menuConfig: cMenuConfig,
+      undoRedoHistoryConfig: cUndoRedoHistoryConfig,
+      exportConfig: cExportConfig,
+      importConfig: cImportConfig,
+      printConfig: cPrintConfig,
       checkboxConfig: cCheckboxConfig,
       virtualYConfig: cVirtualYConfig,
       customConfig: cCustomConfig,
@@ -227,6 +236,14 @@ export const Table = defineComponent<AsTableProps>(
       'filterConfig',
       'sortConfig',
       'aggregateConfig',
+      'aggregateAccuracyConfig',
+      'clipConfig',
+      'fnrConfig',
+      'menuConfig',
+      'undoRedoHistoryConfig',
+      'exportConfig',
+      'importConfig',
+      'printConfig',
       'checkboxConfig',
       'virtualYConfig',
       'customConfig',
@@ -343,141 +360,116 @@ export const Table = defineComponent<AsTableProps>(
       return `${rowOpts.keyField || '_AS_ROW_KEY'}`;
     });
 
-    const getWheelSpeed = (lastScrollTime: number) => {
-      let multiple = 1;
-      const currTime = Date.now();
-      if (lastScrollTime + 25 > currTime) {
-        multiple = 1.18;
-      } else if (lastScrollTime + 30 > currTime) {
-        multiple = 1.15;
-      } else if (lastScrollTime + 40 > currTime) {
-        multiple = 1.12;
-      } else if (lastScrollTime + 55 > currTime) {
-        multiple = 1.09;
-      } else if (lastScrollTime + 75 > currTime) {
-        multiple = 1.06;
-      } else if (lastScrollTime + 100 > currTime) {
-        multiple = 1.03;
-      }
-      return multiple;
-    };
-
-    const dispatchEvent = (
-      type: ValueOf<AsTableEmits>,
-      params: Record<string, any>,
-      evnt: Event | null,
-    ) => {
-      emit(
-        type,
-        createEvent(
-          evnt,
-          {
-            $table: $asTable,
-            // TODO , $grid: $xeGrid, $gantt: $xeGantt
-          },
-          params,
-        ),
+    const computeValidOpts = computed(() => {
+      const opts = Object.assign(
+        {},
+        config.table.validConfig,
+        cValidConfig.value,
+        props.validConfig,
       );
-    };
+      return opts;
+    });
 
-    const handleScrollToRowColumn = (
-      fieldOrColumn: AsTableDefines.ColumnInfo | null | string,
-      row: any,
-      options?: AsTableDefines.ScrollToRowConfig,
-    ) => {
-      const { fullColumnIdData } = internalData;
-      const column = handleFieldOrColumn($asTable, fieldOrColumn);
-      if (column && fullColumnIdData[column.id]) {
-        return colToVisible(
-          $asTable,
-          options ? options.colAlign !== false : true,
-          column,
-          row,
-        );
+    const computeScrollXThreshold = computed(() => {
+      const virtualXOpts = computeVirtualXOpts.value;
+      const { threshold } = virtualXOpts;
+      if (threshold) {
+        return toNumber(threshold);
       }
-      return nextTick();
-    };
+      return 0;
+    });
 
-    const computeIsHeaderRenderOptimize = computed(() => {
-      // 表格级配置：两个"合并方法" + 表头溢出总开关
-      const {
-        spanMethod,
-        footerSpanMethod,
-        showHeaderOverflow: allColumnHeaderOverflow,
-      } = props;
-      //  运行时状态：是否分组表头 + 是否开了横向虚拟滚动
-      const { isGroup, scrollXLoad } = reactData;
+    const computeVirtualXOpts = computed(() => {
+      const { virtualXConfig } = props;
+      return Object.assign(
+        {},
+        config.table.virtualXConfig,
+        cVirtualXConfig.value,
+        virtualXConfig,
+      ) as AsTablePropTypes.VirtualXConfig & { gt: number };
+    });
 
-      let isOptimizeMode = false;
+    const computeVirtualYOpts = computed(() => {
+      const { virtualYConfig } = props;
+      return Object.assign(
+        {},
+        config.table.virtualYConfig,
+        cVirtualYConfig.value,
+        virtualYConfig,
+      ) as AsTablePropTypes.VirtualYConfig & { gt: number };
+    });
 
-      if (isGroup) {
-        // 分组表头：直接不优化（保持 false）
-        // 多级表头要跨列对齐（colspan 横跨多个切片区间），切片渲染会错位
-      } else {
-        //  前提：开了横向虚拟滚动 + 表格级允许表头溢出
-        if (scrollXLoad && allColumnHeaderOverflow) {
-          if (spanMethod || footerSpanMethod) {
-            // 配了合并方法 → 不优化
-            // 合并单元格可能跨越切片边界，切片会让跨界格消失/错位
-          } else {
-            isOptimizeMode = true; // 498 四个条件全部满足 → 可以按切片渲染
-          }
-        }
+    const computeVirtualScrollBars = computed(() => {
+      const { overflowX, scrollXLoad, overflowY, scrollYLoad } = reactData;
+      return {
+        x: overflowX && scrollXLoad,
+        y: overflowY && scrollYLoad,
+      };
+    });
+
+    const computeScrollbarOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.scrollbarConfig as AsTablePropTypes.ScrollbarConfig,
+        cScrollbarConfig.value,
+        props.scrollbarConfig,
+      );
+    });
+
+    const computeScrollbarXOpts = computed(() => {
+      const scrollbarOpts = computeScrollbarOpts.value;
+      return Object.assign({}, scrollbarOpts.x, props.scrollbarConfig?.x || {});
+    });
+
+    const computeScrollbarYOpts = computed(() => {
+      const scrollbarOpts = computeScrollbarOpts.value;
+      return Object.assign({}, scrollbarOpts.y, props.scrollbarConfig?.y || {});
+    });
+
+    const computeScrollbarXToTop = computed(() => {
+      const scrollbarXOpts = computeScrollbarXOpts.value;
+      return scrollbarXOpts.position === 'top';
+    });
+
+    const computeScrollbarYToLeft = computed(() => {
+      const scrollbarYOpts = computeScrollbarYOpts.value;
+      return scrollbarYOpts.position === 'left';
+    });
+
+    const computeScrollYThreshold = computed(() => {
+      const virtualYOpts = computeVirtualYOpts.value;
+      const { threshold } = virtualYOpts;
+      if (threshold) {
+        return toNumber(threshold);
       }
-      return isOptimizeMode;
+      return 0;
     });
 
-    const computeFooterCellOpts = computed(() => {
-      const footerCellOpts = Object.assign(
+    const computeRowHeightMaps = computed(() => {
+      return reactData.rowHeightStore;
+    });
+
+    const computeDefaultRowHeight = computed(() => {
+      const vSize = mergedSize.value;
+      const rowHeightMaps = computeRowHeightMaps.value;
+      return rowHeightMaps[vSize || 'medium'] || 18;
+    });
+
+    const computeColumnOpts = computed(() => {
+      return Object.assign(
         {},
-        config.table.footerCellConfig as AsTablePropTypes.FooterCellConfig,
-        cFooterCellConfig.value,
-        props.footerCellConfig,
+        config.table.columnConfig,
+        cColumnConfig.value,
+        props.columnConfig,
       );
-      const cellOpts = computeCellOpts.value;
-      footerCellOpts.height = toNumber(
-        getCalcHeight(footerCellOpts.height || cellOpts.height),
-      );
-      return footerCellOpts;
     });
 
-    const computeRowOpts = computed(() => {
-      return Object.assign({}, cRowConfig.value, props.rowConfig);
-    });
-
-    const computeTreeOpts = computed(() => {
+    const computeCurrentColumnOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.treeConfig,
-        cTreeConfig.value,
-        props.treeConfig,
-      ) as AsTablePropTypes.TreeOpts;
-    });
-
-    const computeFilterOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.filterConfig,
-        cFilterConfig.value,
-        props.filterConfig,
-      ) as AsTablePropTypes.FilterOpts;
-    });
-
-    const computeSortOpts = computed(() => {
-      return Object.assign(
-        { orders: ['asc', 'desc', null] },
-        config.table.sortConfig,
-        cSortConfig.value,
-        props.sortConfig,
-      ) as AsTablePropTypes.SortOpts;
-    });
-
-    const computeAggregateOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.aggregateConfig,
-        cAggregateConfig.value,
-        props.aggregateConfig,
+        config.table.currentColumnConfig,
+        cCurrentColumnConfig.value,
+        props.currentColumnConfig,
       );
     });
 
@@ -518,246 +510,39 @@ export const Table = defineComponent<AsTableProps>(
       return headerCellOpts;
     });
 
-    const computeCheckboxOpts = computed(() => {
+    const computeFooterCellOpts = computed(() => {
+      const footerCellOpts = Object.assign(
+        {},
+        config.table.footerCellConfig as AsTablePropTypes.FooterCellConfig,
+        cFooterCellConfig.value,
+        props.footerCellConfig,
+      );
+      const cellOpts = computeCellOpts.value;
+      footerCellOpts.height = toNumber(
+        getCalcHeight(footerCellOpts.height || cellOpts.height),
+      );
+      return footerCellOpts;
+    });
+
+    const computeRowOpts = computed(() => {
+      return Object.assign({}, cRowConfig.value, props.rowConfig);
+    });
+
+    const computeAggregateOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.checkboxConfig,
-        cCheckboxConfig.value,
-        props.checkboxConfig,
-      ) as AsTablePropTypes.CheckboxOpts;
-    });
-
-    const computeLoadingOpts = computed(() => {
-      return Object.assign(
-        { text: locale?.value.loadingText },
-        config.table.loadingConfig,
-        cLoadingConfig.value,
-        props.loadingConfig,
-      ) as AsTablePropTypes.LoadingConfig;
-    });
-
-    const computeBodyMergeCoverFixed = computed(() => {
-      const { columnStore, mergeBodyFlag } = reactData;
-      const { mergeBodyList, visibleColumn } = internalData;
-      const { leftList, rightList } = columnStore;
-      const rscIndex = visibleColumn.length - rightList.length;
-      if (mergeBodyFlag && (leftList.length > 0 || rightList.length > 0)) {
-        const lecIndex = leftList.length;
-        for (const { col, colspan } of mergeBodyList) {
-          if (
-            (col < lecIndex && col + colspan > lecIndex) ||
-            (col < rscIndex && col + colspan > rscIndex)
-          ) {
-            return true;
-          }
-        }
-      }
-      return false;
-    });
-
-    const computeIsBodyRenderOptimize = computed(() => {
-      const { spanMethod, footerSpanMethod } = props;
-      const { scrollXLoad, scrollYLoad, isAllOverflow, expandColumn } =
-        reactData;
-      const bodyMergeCoverFixed = computeBodyMergeCoverFixed.value;
-      const expandOpts = computeExpandOpts.value;
-      let isOptimizeMode = false;
-      // 如果是使用优化模式
-      if (scrollXLoad || scrollYLoad || isAllOverflow) {
-        // 如果是展开行，内联模式，不支持优化
-        // 如果是方法合并，不支持优化
-        // 如果固定列且配置式合并，不支持优化
-        if (
-          (expandColumn && expandOpts.mode !== 'fixed') ||
-          bodyMergeCoverFixed ||
-          spanMethod ||
-          footerSpanMethod
-        ) {
-          // 如果不支持优化模式
-        } else {
-          isOptimizeMode = true;
-        }
-      }
-      return isOptimizeMode;
-    });
-
-    const computeIsFooterRenderOptimize = computed(() => {
-      const {
-        spanMethod,
-        footerSpanMethod,
-        showFooterOverflow: allColumnFooterOverflow,
-      } = props;
-      const { scrollXLoad } = reactData;
-      let isOptimizeMode = false;
-      // 如果是使用优化模式
-      if (scrollXLoad && allColumnFooterOverflow) {
-        if (spanMethod || footerSpanMethod) {
-          // 如果不支持优化模式
-        } else {
-          isOptimizeMode = true;
-        }
-      }
-      return isOptimizeMode;
-    });
-
-    const computeVirtualYOpts = computed(() => {
-      const { virtualYConfig } = props;
-      return Object.assign(
-        {},
-        config.table.virtualYConfig,
-        cVirtualYConfig.value,
-        virtualYConfig,
-      ) as AsTablePropTypes.VirtualYConfig & { gt: number };
-    });
-
-    const computeVirtualXOpts = computed(() => {
-      const { virtualXConfig } = props;
-      return Object.assign(
-        {},
-        config.table.virtualXConfig,
-        cVirtualXConfig.value,
-        virtualXConfig,
-      ) as AsTablePropTypes.VirtualXConfig & { gt: number };
-    });
-
-    const computeAggFuncColumns = computed(() => {
-      const { rowGroupList, tableColumn } = reactData;
-      if (rowGroupList.length > 0) {
-        return tableColumn.filter((column) => column.aggFunc);
-      }
-      return [];
-    });
-
-    const computeExpandOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.expandConfig,
-        cExpandConfig.value,
-        props.expandConfig,
-      ) as AsTablePropTypes.ExpandOpts;
-    });
-
-    const computeCustomOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.customConfig,
-        cCustomConfig.value,
-        props.customConfig,
+        config.table.aggregateConfig,
+        cAggregateConfig.value,
+        props.aggregateConfig,
       );
     });
 
-    const computeTableStyle = computed(() => {
-      const [varName] = genCssVar(rootPrefixCls.value, 'table');
-      const { width, height } = computeScrollbarOpts.value;
-      const style: AsComponentStyleType = {};
-      if (width) {
-        style[varName('scrollbar-width')] = toCssUnit(width);
-      }
-      if (height) {
-        style[varName('scrollbar-height')] = toCssUnit(height);
-      }
-      return style;
-    });
-
-    const computeTableRowExpandedList = computed(() => {
-      const {
-        tableData,
-        rowExpandedFlag,
-        expandColumn,
-        rowGroupExpandedFlag,
-        treeExpandedFlag,
-      } = reactData;
-      const { visibleDataRowIdData, rowExpandedMaps } = internalData;
-      const expandList: any[] = [];
-      if (
-        tableData.length > 0 &&
-        expandColumn &&
-        rowExpandedFlag &&
-        rowGroupExpandedFlag &&
-        treeExpandedFlag
-      ) {
-        each(rowExpandedMaps, (row, rowid) => {
-          if (visibleDataRowIdData[rowid]) {
-            expandList.push(row);
-          }
-        });
-      }
-      return expandList;
-    });
-
-    const computeAutoWidthColumnList = computed(() => {
-      const { visibleColumn } = internalData;
-      const { tableColumn } = reactData;
-      return tableColumn.length > 0 || visibleColumn.length > 0
-        ? visibleColumn.filter(
-            (column) => column.width === 'auto' || column.minWidth === 'auto',
-          )
-        : [];
-    });
-
-    const computeColumnDragOpts = computed(() => {
+    const computeAggregateAccuracyOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.columnDragConfig,
-        cColumnDragConfig.value,
-        props.columnDragConfig,
-      ) as AsTablePropTypes.ColumnDragConfig;
-    });
-
-    const computeScrollbarOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.scrollbarConfig as AsTablePropTypes.ScrollbarConfig,
-        cScrollbarConfig.value,
-        props.scrollbarConfig,
-      );
-    });
-
-    const computeScrollbarXOpts = computed(() => {
-      const scrollbarOpts = computeScrollbarOpts.value;
-      return Object.assign({}, scrollbarOpts.x, props.scrollbarConfig?.x || {});
-    });
-
-    const computeScrollbarYOpts = computed(() => {
-      const scrollbarOpts = computeScrollbarOpts.value;
-      return Object.assign({}, scrollbarOpts.y, props.scrollbarConfig?.y || {});
-    });
-
-    const computeScrollbarXToTop = computed(() => {
-      const scrollbarXOpts = computeScrollbarXOpts.value;
-      return scrollbarXOpts.position === 'top';
-    });
-
-    const computeScrollbarYToLeft = computed(() => {
-      const scrollbarYOpts = computeScrollbarYOpts.value;
-      return scrollbarYOpts.position === 'left';
-    });
-
-    const computeRowHeightMaps = computed(() => {
-      return reactData.rowHeightStore;
-    });
-
-    const computeDefaultRowHeight = computed(() => {
-      const vSize = mergedSize.value;
-      const rowHeightMaps = computeRowHeightMaps.value;
-      return rowHeightMaps[vSize || 'medium'] || 18;
-    });
-
-    const computeColumnOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.columnConfig,
-        cColumnConfig.value,
-        props.columnConfig,
-      );
-    });
-
-    const computeCurrentColumnOpts = computed(() => {
-      return Object.assign(
-        {},
-        config.table.currentColumnConfig,
-        cCurrentColumnConfig.value,
-        props.currentColumnConfig,
+        config.table.aggregateAccuracyConfig,
+        cAggregateAccuracyConfig.value,
+        props.aggregateAccuracyConfig,
       );
     });
 
@@ -777,6 +562,59 @@ export const Table = defineComponent<AsTableProps>(
         cRowDragConfig.value,
         props.rowDragConfig,
       );
+    });
+
+    const computeColumnDragOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.columnDragConfig,
+        cColumnDragConfig.value,
+        props.columnDragConfig,
+      ) as AsTablePropTypes.ColumnDragConfig;
+    });
+
+    const computeResizeOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.resizeConfig,
+        cResizeConfig.value,
+        props.resizeConfig,
+      ) as AsTablePropTypes.ResizeOpts;
+    });
+
+    const computeResizableOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.resizableConfig,
+        cResizableConfig.value,
+        props.resizableConfig,
+      ) as AsTablePropTypes.ResizableOpts;
+    });
+
+    const computeSeqOpts = computed(() => {
+      return Object.assign(
+        { startIndex: 0 },
+        cSeqConfig.value,
+        props.seqConfig,
+      ) as AsTablePropTypes.SeqOpts;
+    });
+
+    const computeRadioOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.radioConfig,
+        cRadioConfig.value,
+        props.radioConfig,
+      ) as AsTablePropTypes.RadioOpts;
+    });
+
+    const computeCheckboxOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.checkboxConfig,
+        cCheckboxConfig.value,
+        props.checkboxConfig,
+      ) as AsTablePropTypes.CheckboxOpts;
     });
 
     const computeTooltipOpts = computed(() => {
@@ -839,6 +677,24 @@ export const Table = defineComponent<AsTableProps>(
       return Object.assign({}, cEditDirtyConfig.value, props.editDirtyConfig);
     });
 
+    const computeSortOpts = computed(() => {
+      return Object.assign(
+        { orders: ['asc', 'desc', null] },
+        config.table.sortConfig,
+        cSortConfig.value,
+        props.sortConfig,
+      ) as AsTablePropTypes.SortOpts;
+    });
+
+    const computeFilterOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.filterConfig,
+        cFilterConfig.value,
+        props.filterConfig,
+      ) as AsTablePropTypes.FilterOpts;
+    });
+
     const computeFloatingFilterOpts = computed(() => {
       return Object.assign(
         {},
@@ -875,6 +731,110 @@ export const Table = defineComponent<AsTableProps>(
       ) as AsTablePropTypes.KeyboardOpts;
     });
 
+    const computeClipOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.clipConfig,
+        cClipConfig.value,
+        props.clipConfig,
+      );
+    });
+
+    const computeUndoRedoHistoryOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.undoRedoHistoryConfig,
+        cUndoRedoHistoryConfig.value,
+        props.undoRedoHistoryConfig,
+      );
+    });
+
+    const computeFnrOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.fnrConfig,
+        cFnrConfig.value,
+        props.fnrConfig,
+      ) as AsTablePropTypes.FNROpts;
+    });
+
+    const computeMenuOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.menuConfig,
+        cMenuConfig.value,
+        props.menuConfig,
+      ) as AsTablePropTypes.MenuOpts;
+    });
+
+    const computeHeaderMenu = computed(() => {
+      const menuOpts = computeMenuOpts.value;
+      const headerOpts = menuOpts.header;
+      return headerOpts && headerOpts.options ? headerOpts.options : [];
+    });
+
+    const computeBodyMenu = computed(() => {
+      const menuOpts = computeMenuOpts.value;
+      const bodyOpts = menuOpts.body;
+      return bodyOpts && bodyOpts.options ? bodyOpts.options : [];
+    });
+
+    const computeFooterMenu = computed(() => {
+      const menuOpts = computeMenuOpts.value;
+      const footerOpts = menuOpts.footer;
+      return footerOpts && footerOpts.options ? footerOpts.options : [];
+    });
+
+    const computeIsContentMenu = computed(() => {
+      const menuOpts = computeMenuOpts.value;
+      const headerMenu = computeHeaderMenu.value;
+      const bodyMenu = computeBodyMenu.value;
+      const footerMenu = computeFooterMenu.value;
+      return !!(
+        props.menuConfig &&
+        isEnableConf(menuOpts) &&
+        (headerMenu.length > 0 || bodyMenu.length > 0 || footerMenu.length > 0)
+      );
+    });
+
+    const computeMenuList = computed(() => {
+      const { ctxMenuStore } = reactData;
+      const rest: any[] = [];
+      ctxMenuStore.list.forEach((list) => {
+        list.forEach((item) => {
+          rest.push(item);
+        });
+      });
+      return rest;
+    });
+
+    const computeExportOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.exportConfig,
+        cExportConfig.value,
+        props.exportConfig,
+      ) as AsTablePropTypes.ExportOpts;
+    });
+
+    const computeImportOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.importConfig,
+        cImportConfig.value,
+        props.importConfig,
+      ) as AsTablePropTypes.ImportOpts;
+    });
+
+    const computePrintOpts = computed(() => {
+      return Object.assign(
+        {},
+        config.table.printConfig,
+        cPrintConfig.value,
+        props.printConfig,
+      ) as AsTablePropTypes.PrintOpts;
+    });
+
     const computeLeftFixedWidth = computed(() => {
       const { columnStore } = reactData;
       const { leftList } = columnStore;
@@ -895,62 +855,132 @@ export const Table = defineComponent<AsTableProps>(
       return leftWidth;
     });
 
-    const computeValidOpts = computed(() => {
-      const opts = Object.assign(
-        {},
-        config.table.validConfig,
-        cValidConfig.value,
-        props.validConfig,
-      );
-      return opts;
-    });
-
-    const computeScrollXThreshold = computed(() => {
-      const virtualXOpts = computeVirtualXOpts.value;
-      const { threshold } = virtualXOpts;
-      if (threshold) {
-        return toNumber(threshold);
+    const computeBodyMergeCoverFixed = computed(() => {
+      const { columnStore, mergeBodyFlag } = reactData;
+      const { mergeBodyList, visibleColumn } = internalData;
+      const { leftList, rightList } = columnStore;
+      const rscIndex = visibleColumn.length - rightList.length;
+      if (mergeBodyFlag && (leftList.length > 0 || rightList.length > 0)) {
+        const lecIndex = leftList.length;
+        for (const { col, colspan } of mergeBodyList) {
+          if (
+            (col < lecIndex && col + colspan > lecIndex) ||
+            (col < rscIndex && col + colspan > rscIndex)
+          ) {
+            return true;
+          }
+        }
       }
-      return 0;
+      return false;
     });
 
-    const computeScrollYThreshold = computed(() => {
-      const virtualYOpts = computeVirtualYOpts.value;
-      const { threshold } = virtualYOpts;
-      if (threshold) {
-        return toNumber(threshold);
+    const computeIsHeaderRenderOptimize = computed(() => {
+      // 表格级配置：两个"合并方法" + 表头溢出总开关
+      const {
+        spanMethod,
+        footerSpanMethod,
+        showHeaderOverflow: allColumnHeaderOverflow,
+      } = props;
+      //  运行时状态：是否分组表头 + 是否开了横向虚拟滚动
+      const { isGroup, scrollXLoad } = reactData;
+
+      let isOptimizeMode = false;
+
+      if (isGroup) {
+        // 分组表头：直接不优化（保持 false）
+        // 多级表头要跨列对齐（colspan 横跨多个切片区间），切片渲染会错位
+      } else {
+        //  前提：开了横向虚拟滚动 + 表格级允许表头溢出
+        if (scrollXLoad && allColumnHeaderOverflow) {
+          if (spanMethod || footerSpanMethod) {
+            // 配了合并方法 → 不优化
+            // 合并单元格可能跨越切片边界，切片会让跨界格消失/错位
+          } else {
+            isOptimizeMode = true; // 498 四个条件全部满足 → 可以按切片渲染
+          }
+        }
       }
-      return 0;
+      return isOptimizeMode;
     });
 
-    const computeResizeOpts = computed(() => {
+    const computeIsBodyRenderOptimize = computed(() => {
+      const { spanMethod, footerSpanMethod } = props;
+      const { scrollXLoad, scrollYLoad, isAllOverflow, expandColumn } =
+        reactData;
+      const bodyMergeCoverFixed = computeBodyMergeCoverFixed.value;
+      const expandOpts = computeExpandOpts.value;
+      let isOptimizeMode = false;
+      // 如果是使用优化模式
+      if (scrollXLoad || scrollYLoad || isAllOverflow) {
+        // 如果是展开行，内联模式，不支持优化
+        // 如果是方法合并，不支持优化
+        // 如果固定列且配置式合并，不支持优化
+        if (
+          (expandColumn && expandOpts.mode !== 'fixed') ||
+          bodyMergeCoverFixed ||
+          spanMethod ||
+          footerSpanMethod
+        ) {
+          // 如果不支持优化模式
+        } else {
+          isOptimizeMode = true;
+        }
+      }
+      return isOptimizeMode;
+    });
+
+    const computeIsFooterRenderOptimize = computed(() => {
+      const {
+        spanMethod,
+        footerSpanMethod,
+        showFooterOverflow: allColumnFooterOverflow,
+      } = props;
+      const { scrollXLoad } = reactData;
+      let isOptimizeMode = false;
+      // 如果是使用优化模式
+      if (scrollXLoad && allColumnFooterOverflow) {
+        if (spanMethod || footerSpanMethod) {
+          // 如果不支持优化模式
+        } else {
+          isOptimizeMode = true;
+        }
+      }
+      return isOptimizeMode;
+    });
+
+    const computeExpandOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.resizeConfig,
-        cResizeConfig.value,
-        props.resizeConfig,
-      ) as AsTablePropTypes.ResizeOpts;
+        config.table.expandConfig,
+        cExpandConfig.value,
+        props.expandConfig,
+      ) as AsTablePropTypes.ExpandOpts;
     });
 
-    const computeResizableOpts = computed(() => {
+    const computeTreeOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.resizableConfig,
-        cResizableConfig.value,
-        props.resizableConfig,
-      ) as AsTablePropTypes.ResizableOpts;
+        config.table.treeConfig,
+        cTreeConfig.value,
+        props.treeConfig,
+      ) as AsTablePropTypes.TreeOpts;
     });
 
-    const computeSeqOpts = computed(() => {
+    const computeEmptyOpts = computed(() => {
       return Object.assign(
-        { startIndex: 0 },
-        cSeqConfig.value,
-        props.seqConfig,
-      ) as AsTablePropTypes.SeqOpts;
+        {},
+        cEmptyRender.value,
+        props.emptyRender,
+      ) as AsTablePropTypes.EmptyOpts;
     });
 
-    const computeRendererOpts = computed(() => {
-      return Object.assign({}, cRendererConfig.value, props.rendererConfig);
+    const computeLoadingOpts = computed(() => {
+      return Object.assign(
+        { text: locale?.value.loadingText },
+        config.table.loadingConfig,
+        cLoadingConfig.value,
+        props.loadingConfig,
+      ) as AsTablePropTypes.LoadingConfig;
     });
 
     const computeCellOffsetWidth = computed(() => {
@@ -962,21 +992,109 @@ export const Table = defineComponent<AsTableProps>(
         : 1;
     });
 
-    const computeRadioOpts = computed(() => {
+    const computeCustomOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.radioConfig,
-        cRadioConfig.value,
-        props.radioConfig,
-      ) as AsTablePropTypes.RadioOpts;
+        config.table.customConfig,
+        cCustomConfig.value,
+        props.customConfig,
+      );
     });
 
-    const computeEmptyOpts = computed(() => {
-      return Object.assign(
-        {},
-        cEmptyRender.value,
-        props.emptyRender,
-      ) as AsTablePropTypes.EmptyOpts;
+    const computeCustomSimpleMode = computed(() => {
+      const { height, minHeight } = props;
+      const customOpts = computeCustomOpts.value;
+      const { mode, placement, popupOptions } = customOpts;
+      if (
+        (!placement || placement === 'top-left' || placement === 'top-right') &&
+        !(mode === 'modal' || mode === 'drawer')
+      ) {
+        const { mode: popupMode } = popupOptions || {};
+        if (!popupMode || popupMode === 'auto') {
+          if (height || minHeight) {
+            return 'inside';
+          }
+          return 'outside';
+        }
+        if (popupMode) {
+          return popupMode;
+        }
+      }
+      return '';
+    });
+
+    const computeTableStyle = computed(() => {
+      const [varName] = genCssVar(rootPrefixCls.value, 'table');
+      const { width, height } = computeScrollbarOpts.value;
+      const style: AsComponentStyleType = {};
+      if (width) {
+        style[varName('scrollbar-width')] = toCssUnit(width);
+      }
+      if (height) {
+        style[varName('scrollbar-height')] = toCssUnit(height);
+      }
+      return style;
+    });
+
+    const computeTableRowExpandedList = computed(() => {
+      const {
+        tableData,
+        rowExpandedFlag,
+        expandColumn,
+        rowGroupExpandedFlag,
+        treeExpandedFlag,
+      } = reactData;
+      const { visibleDataRowIdData, rowExpandedMaps } = internalData;
+      const expandList: any[] = [];
+      if (
+        tableData.length > 0 &&
+        expandColumn &&
+        rowExpandedFlag &&
+        rowGroupExpandedFlag &&
+        treeExpandedFlag
+      ) {
+        each(rowExpandedMaps, (row, rowid) => {
+          if (visibleDataRowIdData[rowid]) {
+            expandList.push(row);
+          }
+        });
+      }
+      return expandList;
+    });
+
+    const computeAutoWidthColumnList = computed(() => {
+      const { visibleColumn } = internalData;
+      const { tableColumn } = reactData;
+      return tableColumn.length > 0 || visibleColumn.length > 0
+        ? visibleColumn.filter(
+            (column) => column.width === 'auto' || column.minWidth === 'auto',
+          )
+        : [];
+    });
+
+    const computeFixedColumnSize = computed(() => {
+      const { tableColumn } = reactData;
+      const { collectColumn } = internalData;
+      let fixedSize = 0;
+      // 只判断第一层
+      if (tableColumn.length > 0 && collectColumn.length > 0) {
+        collectColumn.forEach((column) => {
+          if (column.fixed) {
+            fixedSize++;
+          }
+        });
+      }
+      return fixedSize;
+    });
+
+    const computeIsMaxFixedColumn = computed(() => {
+      const fixedColumnSize = computeFixedColumnSize.value;
+      const columnOpts = computeColumnOpts.value;
+      const { maxFixedSize } = columnOpts;
+      if (maxFixedSize) {
+        return fixedColumnSize >= maxFixedSize;
+      }
+      return false;
     });
 
     const computeKeepFields = computed(() => {
@@ -1062,45 +1180,144 @@ export const Table = defineComponent<AsTableProps>(
       return false;
     });
 
+    const computeRowGroupFields = computed(() => {
+      const aggregateOpts = computeAggregateOpts.value;
+      return aggregateOpts.groupFields ?? [];
+    });
+
+    const computeRowGroupColumns = computed(() => {
+      const { rowGroupList } = reactData;
+      const { fullColumnFieldData } = internalData;
+      const rgColumns: AsTableDefines.ColumnInfo[] = [];
+      rowGroupList.forEach((aggConf) => {
+        const colRest = fullColumnFieldData[aggConf.field];
+        if (colRest) {
+          rgColumns.push(colRest.column);
+        }
+      });
+      return rgColumns;
+    });
+
+    const computeAggFuncColumns = computed(() => {
+      const { rowGroupList, tableColumn } = reactData;
+      if (rowGroupList.length > 0) {
+        return tableColumn.filter((column) => column.aggFunc);
+      }
+      return [];
+    });
+
+    // TODO: 当前仓库的 Tabs / Modal / Splitter 尚未提供 resizeFlag，
+    // 接入父级实例后再返回对应的 reactData.resizeFlag
+    // const combineTabsResizeFlag = computed<boolean | null>(() => null);
+    // const combineModalResizeFlag = computed<boolean | null>(() => null);
+    // const combineSplitterResizeFlag = computed<boolean | null>(() => null);
+
+    const computeRendererOpts = computed(() => {
+      return Object.assign({}, cRendererConfig.value, props.rendererConfig);
+    });
+
+    const refMaps: AsTablePrivateRef = {
+      refElem,
+      refTooltip,
+      refValidTooltip,
+      refTableHeader,
+      refTableBody,
+      refTableFooter,
+      refTableLeftHeader,
+      refTableLeftBody,
+      refTableLeftFooter,
+      refTableRightHeader,
+      refTableRightBody,
+      refTableRightFooter,
+      refLeftContainer,
+      refRightContainer,
+      refColResizeBar,
+      refRowResizeBar,
+      refScrollXVirtualElem,
+      refScrollYVirtualElem,
+      refScrollXHandleElem,
+      refScrollYHandleElem,
+      refScrollXSpaceElem,
+      refScrollYSpaceElem,
+    };
+
     const computeMaps: AsTablePrivateComputed = {
-      computeIsAllCheckboxDisabled,
-      computeFloatingFilterOpts,
-      computeCellOffsetWidth,
-      computeDefaultRowHeight,
-      computeAreaOpts,
+      computeSize: mergedSize,
+      computeTableId,
       computeValidOpts,
-      computeRadioOpts,
-      computeExpandOpts,
-      computeEditOpts,
-      computeFilterOpts,
-      computeSortOpts,
-      computeMouseOpts,
-      computeFooterCellOpts,
-      computeRowOpts,
-      computeColumnOpts,
-      computeCustomOpts,
-      computeColumnDragOpts,
-      computeRendererOpts,
-      computeTreeOpts,
-      computeAggregateOpts,
-      computeRowDragOpts,
-      computeIsHeaderRenderOptimize,
-      computeCellOpts,
-      computeHeaderCellOpts,
-      computeIsBodyRenderOptimize,
-      computeIsFooterRenderOptimize,
-      computeEmptyOpts,
-      computeCheckboxOpts,
-      computeTooltipOpts,
+      computeRowField,
       computeVirtualXOpts,
       computeVirtualYOpts,
+      computeScrollbarOpts,
+      computeScrollbarXOpts,
+      computeScrollbarYOpts,
+      computeScrollbarXToTop,
+      computeScrollbarYToLeft,
+      computeColumnOpts,
+      computeCurrentColumnOpts,
+      computeScrollXThreshold,
+      computeScrollYThreshold,
+      computeRowHeightMaps,
+      computeDefaultRowHeight,
+      computeCellOpts,
+      computeHeaderCellOpts,
+      computeFooterCellOpts,
+      computeRowOpts,
+      computeAggregateOpts,
+      computeAggregateAccuracyOpts,
+      computeCurrentRowOpts,
+      computeRowDragOpts,
+      computeColumnDragOpts,
+      computeResizeOpts,
       computeResizableOpts,
       computeSeqOpts,
+      computeRadioOpts,
+      computeCheckboxOpts,
+      computeTooltipOpts,
       computeHeaderTooltipOpts,
       computeFooterTooltipOpts,
+      computeEditOpts,
       computeEditDirtyOpts,
+      computeSortOpts,
+      computeFilterOpts,
+      computeFloatingFilterOpts,
+      computeMouseOpts,
+      computeAreaOpts,
+      computeKeyboardOpts,
+      computeClipOpts,
+      computeFnrOpts,
+      computeHeaderMenu,
+      computeBodyMenu,
+      computeFooterMenu,
+      computeIsContentMenu,
+      computeMenuList,
+      computeMenuOpts,
+      computeExportOpts,
+      computeImportOpts,
+      computePrintOpts,
+      computeExpandOpts,
+      computeTreeOpts,
+      computeEmptyOpts,
+      computeLoadingOpts,
+      computeCellOffsetWidth,
+      computeCustomOpts,
+      computeCustomSimpleMode,
       computeLeftFixedWidth,
       computeRightFixedWidth,
+      computeBodyMergeCoverFixed,
+      computeFixedColumnSize,
+      computeIsMaxFixedColumn,
+      computeKeepFields,
+      computeIsAllCheckboxDisabled,
+      computeIsHeaderRenderOptimize,
+      computeIsBodyRenderOptimize,
+      computeIsFooterRenderOptimize,
+      computeVirtualScrollBars,
+      computeRowGroupFields,
+      computeRowGroupColumns,
+      computeAggFuncColumns,
+      computeUndoRedoHistoryOpts,
+      computeRendererOpts,
     };
 
     const $asTable = {
@@ -1109,8 +1326,15 @@ export const Table = defineComponent<AsTableProps>(
       props: props as AsTableProps,
       reactData,
       internalData,
+      getRefMaps: () => refMaps,
       getComputeMaps: () => computeMaps,
     } as unknown as AsTableConstructor & AsTableMethods & AsTablePrivateMethods;
+
+    const handleKeyField = () => {
+      const keyField = computeRowField.value;
+      internalData.currKeyField = keyField;
+      internalData.isCurrDeepKey = hasDeepKey(keyField);
+    };
 
     const getNextSortOrder = (column: AsTableDefines.ColumnInfo) => {
       const sortOpts = computeSortOpts.value;
@@ -1133,10 +1357,30 @@ export const Table = defineComponent<AsTableProps>(
       localStorage.setItem(customStorageKey, toJSONString(maps));
     };
 
-    const handleKeyField = () => {
-      const keyField = computeRowField.value;
-      internalData.currKeyField = keyField;
-      internalData.isCurrDeepKey = hasDeepKey(keyField);
+    const getRecoverRowMaps = (keyMaps: Record<string, any>) => {
+      const { fullAllDataRowIdData } = internalData;
+      const restKeys: Record<string, any> = {};
+      each(keyMaps, (row, rowid) => {
+        if (fullAllDataRowIdData[rowid]) {
+          restKeys[rowid] = row;
+        }
+      });
+      return restKeys;
+    };
+
+    const handleReserveRow = (reserveRowMap: any) => {
+      const { fullDataRowIdData } = internalData;
+      const reserveList: any[] = [];
+      each(reserveRowMap, (item, rowid) => {
+        if (
+          fullDataRowIdData[rowid] &&
+          $asTable.findRowIndexOf(reserveList, fullDataRowIdData[rowid].row) ===
+            -1
+        ) {
+          reserveList.push(fullDataRowIdData[rowid].row);
+        }
+      });
+      return reserveList;
     };
 
     /** 计算横向虚拟滚动显示的哪几列 */
@@ -1357,137 +1601,15 @@ export const Table = defineComponent<AsTableProps>(
       return { mergeMaps, mergeRowMaps, mergeColMaps };
     }
 
-    const handleHeaderMerge = (
+    const handleUpdateMergeBodyCells = (
       merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
     ) => {
-      const { showCustomHeader } = props;
-      const { footerTableData } = reactData;
-      const { mergeHeaderList, mergeHeaderMaps, fullColumnIdData } =
-        internalData;
-      if (merges) {
-        const { visibleColumn } = internalData;
-        if (!isArray(merges)) {
-          merges = [merges];
-        }
-        merges.forEach((item) => {
-          let { row: margeRow, col: margeCol, rowspan, colspan } = item;
-          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
-          let mergeColumnIndex = -1;
-          if (isNumber(margeCol)) {
-            mergeColumnIndex = margeCol;
-          } else {
-            const colid = margeCol ? margeCol.id : null;
-            const colRest = colid ? fullColumnIdData[colid] : null;
-            if (colRest) {
-              mergeColumnIndex = colRest._index;
-            }
-          }
-          if (
-            mergeRowIndex > -1 &&
-            mergeColumnIndex > -1 &&
-            (rowspan || colspan)
-          ) {
-            rowspan = toNumber(rowspan) || 1;
-            colspan = toNumber(colspan) || 1;
-            if (!showCustomHeader && rowspan > 1) {
-              log.error('As.error.notSupportProp', [
-                '[table] show-custom-header=false',
-                `rowspan=${rowspan}`,
-                'rowspan=1',
-              ]);
-              return;
-            }
-            if (rowspan > 1 || colspan > 1) {
-              const row = footerTableData[mergeRowIndex];
-              const column = visibleColumn[mergeColumnIndex];
-              let mergeItem =
-                mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
-              if (mergeItem) {
-                mergeItem.rowspan = rowspan;
-                mergeItem.colspan = colspan;
-                mergeItem._rowspan = rowspan;
-                mergeItem._colspan = colspan;
-              } else {
-                mergeItem = {
-                  row: mergeRowIndex,
-                  col: mergeColumnIndex,
-                  rowspan,
-                  colspan,
-                  _row: row,
-                  _col: column!,
-                  _rowspan: rowspan,
-                  _colspan: colspan,
-                };
-                mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`] =
-                  mergeItem;
-                mergeHeaderList.push(mergeItem);
-              }
-            }
-          }
-        });
-      }
-    };
-
-    const handleFooterMerge = (
-      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
-    ) => {
-      const { footerTableData } = reactData;
-      const { mergeFooterList, mergeFooterMaps, fullColumnIdData } =
-        internalData;
-      if (merges) {
-        const { visibleColumn } = internalData;
-        if (!isArray(merges)) {
-          merges = [merges];
-        }
-        merges.forEach((item) => {
-          let { row: margeRow, col: margeCol, rowspan, colspan } = item;
-          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
-          let mergeColumnIndex = -1;
-          if (isNumber(margeCol)) {
-            mergeColumnIndex = margeCol;
-          } else {
-            const colid = margeCol ? margeCol.id : null;
-            const colRest = colid ? fullColumnIdData[colid] : null;
-            if (colRest) {
-              mergeColumnIndex = colRest._index;
-            }
-          }
-          if (
-            mergeRowIndex > -1 &&
-            mergeColumnIndex > -1 &&
-            (rowspan || colspan)
-          ) {
-            rowspan = toNumber(rowspan) || 1;
-            colspan = toNumber(colspan) || 1;
-            if (rowspan > 1 || colspan > 1) {
-              const row = footerTableData[mergeRowIndex];
-              const column = visibleColumn[mergeColumnIndex];
-              let mergeItem =
-                mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
-              if (mergeItem) {
-                mergeItem.rowspan = rowspan;
-                mergeItem.colspan = colspan;
-                mergeItem._rowspan = rowspan;
-                mergeItem._colspan = colspan;
-              } else {
-                mergeItem = {
-                  row: mergeRowIndex,
-                  col: mergeColumnIndex,
-                  rowspan,
-                  colspan,
-                  _row: row,
-                  _col: column!,
-                  _rowspan: rowspan,
-                  _colspan: colspan,
-                };
-                mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`] =
-                  mergeItem;
-                mergeFooterList.push(mergeItem);
-              }
-            }
-          }
-        });
-      }
+      internalData.mergeBodyList = [];
+      internalData.mergeBodyMaps = {};
+      internalData.mergeBodyCellMaps = {};
+      internalData.mergeBodyRowMaps = {};
+      internalData.mergeBodyColMaps = {};
+      $asTable.setMergeCells(merges);
     };
 
     const handleBodyMerge = (
@@ -1563,6 +1685,643 @@ export const Table = defineComponent<AsTableProps>(
             }
           }
         });
+      }
+    };
+
+    const removeBodyMerges = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      const {
+        mergeBodyList,
+        fullColumnIdData,
+        fullAllDataRowIdData,
+        mergeBodyMaps,
+      } = internalData;
+      const rest: AsTableDefines.MergeItem[] = [];
+      if (merges) {
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        if (!isArray(merges)) {
+          merges = [merges];
+        }
+        merges.forEach((item) => {
+          const { row: margeRow, col: margeCol } = item;
+          let mergeRowIndex = -1;
+          let mergeColumnIndex = -1;
+          if (isNumber(margeRow)) {
+            mergeRowIndex = margeRow;
+          } else {
+            const rowid = margeRow ? handleGetRowId(margeRow) : null;
+            const rowRest = rowid ? fullAllDataRowIdData[rowid] : null;
+            if (rowRest) {
+              mergeRowIndex = rowRest._index;
+            }
+          }
+          if (isNumber(margeCol)) {
+            mergeColumnIndex = margeCol;
+          } else {
+            const colid = margeCol ? margeCol.id : null;
+            const colRest = colid ? fullColumnIdData[colid] : null;
+            if (colRest) {
+              mergeColumnIndex = colRest._index;
+            }
+          }
+          const mcIndex = findIndexOf(
+            mergeBodyList,
+            (item) =>
+              item.row === mergeRowIndex && item.col === mergeColumnIndex,
+          );
+          if (mcIndex > -1) {
+            const rItems = mergeBodyList.splice(mcIndex, 1);
+            const item = rItems[0];
+            if (item) {
+              rest.push(rItems[0]!);
+              if (mergeBodyMaps[`${mergeRowIndex}:${mergeColumnIndex}`]) {
+                delete mergeBodyMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
+              }
+            }
+          }
+        });
+      }
+      return rest;
+    };
+
+    const handleUpdateMergeHeaderCells = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      internalData.mergeHeaderList = [];
+      internalData.mergeHeaderMaps = {};
+      internalData.mergeHeaderCellMaps = {};
+      internalData.mergeHeaderRowMaps = {};
+      internalData.mergeBodyColMaps = {};
+      $asTable.setMergeHeaderCells(merges);
+    };
+
+    const handleHeaderMerge = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      const { showCustomHeader } = props;
+      const { footerTableData } = reactData;
+      const { mergeHeaderList, mergeHeaderMaps, fullColumnIdData } =
+        internalData;
+      if (merges) {
+        const { visibleColumn } = internalData;
+        if (!isArray(merges)) {
+          merges = [merges];
+        }
+        merges.forEach((item) => {
+          let { row: margeRow, col: margeCol, rowspan, colspan } = item;
+          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
+          let mergeColumnIndex = -1;
+          if (isNumber(margeCol)) {
+            mergeColumnIndex = margeCol;
+          } else {
+            const colid = margeCol ? margeCol.id : null;
+            const colRest = colid ? fullColumnIdData[colid] : null;
+            if (colRest) {
+              mergeColumnIndex = colRest._index;
+            }
+          }
+          if (
+            mergeRowIndex > -1 &&
+            mergeColumnIndex > -1 &&
+            (rowspan || colspan)
+          ) {
+            rowspan = toNumber(rowspan) || 1;
+            colspan = toNumber(colspan) || 1;
+            if (!showCustomHeader && rowspan > 1) {
+              log.error('As.error.notSupportProp', [
+                '[table] show-custom-header=false',
+                `rowspan=${rowspan}`,
+                'rowspan=1',
+              ]);
+              return;
+            }
+            if (rowspan > 1 || colspan > 1) {
+              const row = footerTableData[mergeRowIndex];
+              const column = visibleColumn[mergeColumnIndex];
+              let mergeItem =
+                mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
+              if (mergeItem) {
+                mergeItem.rowspan = rowspan;
+                mergeItem.colspan = colspan;
+                mergeItem._rowspan = rowspan;
+                mergeItem._colspan = colspan;
+              } else {
+                mergeItem = {
+                  row: mergeRowIndex,
+                  col: mergeColumnIndex,
+                  rowspan,
+                  colspan,
+                  _row: row,
+                  _col: column!,
+                  _rowspan: rowspan,
+                  _colspan: colspan,
+                };
+                mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`] =
+                  mergeItem;
+                mergeHeaderList.push(mergeItem);
+              }
+            }
+          }
+        });
+      }
+    };
+
+    const removeHeaderMerges = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      const { mergeHeaderList, fullColumnIdData, mergeHeaderMaps } =
+        internalData;
+      const rest: AsTableDefines.MergeItem[] = [];
+      if (merges) {
+        if (!isArray(merges)) {
+          merges = [merges];
+        }
+        merges.forEach((item) => {
+          const { row: margeRow, col: margeCol } = item;
+          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
+          let mergeColumnIndex = -1;
+          if (isNumber(margeCol)) {
+            mergeColumnIndex = margeCol;
+          } else {
+            const colid = margeCol ? margeCol.id : null;
+            const colRest = colid ? fullColumnIdData[colid] : null;
+            if (colRest) {
+              mergeColumnIndex = colRest._index;
+            }
+          }
+          const mcIndex = findIndexOf(
+            mergeHeaderList,
+            (item) =>
+              item.row === mergeRowIndex && item.col === mergeColumnIndex,
+          );
+          if (mcIndex > -1) {
+            const rItems = mergeHeaderList.splice(mcIndex, 1);
+            const item = rItems[0];
+            if (item) {
+              rest.push(item);
+              if (mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`]) {
+                delete mergeHeaderMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
+              }
+            }
+          }
+        });
+      }
+      return rest;
+    };
+    const handleUpdateMergeFooterCells = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      internalData.mergeFooterList = [];
+      internalData.mergeFooterMaps = {};
+      internalData.mergeFooterCellMaps = {};
+      internalData.mergeFooterRowMaps = {};
+      internalData.mergeFooterColMaps = {};
+      $asTable.setMergeFooterCells(merges);
+    };
+
+    const handleFooterMerge = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      const { footerTableData } = reactData;
+      const { mergeFooterList, mergeFooterMaps, fullColumnIdData } =
+        internalData;
+      if (merges) {
+        const { visibleColumn } = internalData;
+        if (!isArray(merges)) {
+          merges = [merges];
+        }
+        merges.forEach((item) => {
+          let { row: margeRow, col: margeCol, rowspan, colspan } = item;
+          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
+          let mergeColumnIndex = -1;
+          if (isNumber(margeCol)) {
+            mergeColumnIndex = margeCol;
+          } else {
+            const colid = margeCol ? margeCol.id : null;
+            const colRest = colid ? fullColumnIdData[colid] : null;
+            if (colRest) {
+              mergeColumnIndex = colRest._index;
+            }
+          }
+          if (
+            mergeRowIndex > -1 &&
+            mergeColumnIndex > -1 &&
+            (rowspan || colspan)
+          ) {
+            rowspan = toNumber(rowspan) || 1;
+            colspan = toNumber(colspan) || 1;
+            if (rowspan > 1 || colspan > 1) {
+              const row = footerTableData[mergeRowIndex];
+              const column = visibleColumn[mergeColumnIndex];
+              let mergeItem =
+                mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
+              if (mergeItem) {
+                mergeItem.rowspan = rowspan;
+                mergeItem.colspan = colspan;
+                mergeItem._rowspan = rowspan;
+                mergeItem._colspan = colspan;
+              } else {
+                mergeItem = {
+                  row: mergeRowIndex,
+                  col: mergeColumnIndex,
+                  rowspan,
+                  colspan,
+                  _row: row,
+                  _col: column!,
+                  _rowspan: rowspan,
+                  _colspan: colspan,
+                };
+                mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`] =
+                  mergeItem;
+                mergeFooterList.push(mergeItem);
+              }
+            }
+          }
+        });
+      }
+    };
+
+    const removeFooterMerges = (
+      merges: AsTableDefines.MergeOptions | AsTableDefines.MergeOptions[],
+    ) => {
+      const { mergeFooterList, fullColumnIdData, mergeFooterMaps } =
+        internalData;
+      const rest: AsTableDefines.MergeItem[] = [];
+      if (merges) {
+        if (!isArray(merges)) {
+          merges = [merges];
+        }
+        merges.forEach((item) => {
+          const { row: margeRow, col: margeCol } = item;
+          const mergeRowIndex = isNumber(margeRow) ? margeRow : -1;
+          let mergeColumnIndex = -1;
+          if (isNumber(margeCol)) {
+            mergeColumnIndex = margeCol;
+          } else {
+            const colid = margeCol ? margeCol.id : null;
+            const colRest = colid ? fullColumnIdData[colid] : null;
+            if (colRest) {
+              mergeColumnIndex = colRest._index;
+            }
+          }
+          const mcIndex = findIndexOf(
+            mergeFooterList,
+            (item) =>
+              item.row === mergeRowIndex && item.col === mergeColumnIndex,
+          );
+          if (mcIndex > -1) {
+            const rItems = mergeFooterList.splice(mcIndex, 1);
+            const item = rItems[0];
+            if (item) {
+              rest.push(item);
+              if (mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`]) {
+                delete mergeFooterMaps[`${mergeRowIndex}:${mergeColumnIndex}`];
+              }
+            }
+          }
+        });
+      }
+      return rest;
+    };
+
+    const handleSortEvent = (
+      evnt: Event | null,
+      sortConfs: AsTableDefines.SortConfs | AsTableDefines.SortConfs[],
+      isUpdate?: boolean,
+    ) => {
+      const { tableFullColumn } = internalData;
+      const sortOpts = computeSortOpts.value;
+      const { multiple, remote, orders } = sortOpts;
+      if (!isArray(sortConfs)) {
+        sortConfs = [sortConfs];
+      }
+      if (sortConfs && sortConfs.length > 0) {
+        const orderActiveMaps: Record<string, AsTableDefines.ColumnInfo> = {};
+        if (!multiple) {
+          sortConfs = [sortConfs[0]!];
+          tableFullColumn.forEach((column) => {
+            if (column.order) {
+              orderActiveMaps[column.id] = column;
+            }
+          });
+        }
+        const sortColMpps: Record<string, AsTableDefines.ColumnInfo> = {};
+        let firstColumn: any = null;
+        sortConfs.forEach((confs: any, index: number) => {
+          let { field, order } = confs;
+          const column = isString(field)
+            ? $asTable.getColumnByField(field)
+            : field;
+          if (!firstColumn) {
+            firstColumn = column;
+          }
+          if (column && column.sortable) {
+            if (orders && !orders.includes(order)) {
+              order = getNextSortOrder(column);
+            }
+            if (column.order !== order) {
+              column.order = order;
+            }
+            column.sortTime = Date.now() + index;
+            sortColMpps[column.id] = column;
+          }
+        });
+        if (!multiple) {
+          each(orderActiveMaps, (oaCol: AsTableDefines.ColumnInfo, oaId) => {
+            if (!sortColMpps[oaId]) {
+              oaCol.order = null;
+            }
+          });
+        }
+        if (isUpdate && !remote) {
+          $asTable.handleTableData(true);
+        }
+        if (evnt) {
+          $asTable.handleColumnSortEvent(evnt, firstColumn);
+        }
+        return nextTick().then(() => {
+          updateRowOffsetTop();
+          $asTable.updateCellAreas();
+          return updateStyle();
+        });
+      }
+      return nextTick();
+    };
+
+    const clearAllSort = () => {
+      const { tableFullColumn } = internalData;
+      tableFullColumn.forEach((column) => {
+        column.order = null;
+      });
+    };
+
+    const calcTableHeight = (key: 'height' | 'maxHeight' | 'minHeight') => {
+      const { editConfig, editRules } = props;
+      const { parentHeight, tableColumn } = reactData;
+      let val = props[key];
+      if (key === 'minHeight') {
+        const defMinHeight = cMinHeight.value;
+        if (eqNull(val)) {
+          if (eqEmptyValue(defMinHeight)) {
+            if (tableColumn.length === 0) {
+              // 如果全部列被隐藏
+              val = 40;
+            } else if (editRules && isEnableConf(editConfig)) {
+              // 编辑模式默认最小高度
+              val = 144;
+            }
+          } else {
+            val = defMinHeight;
+          }
+        }
+      }
+      let num = 0;
+      if (val) {
+        if (val === '100%' || val === 'auto') {
+          num = parentHeight;
+        } else {
+          const excludeHeight = $asTable.getExcludeHeight();
+          num = isScale(val)
+            ? Math.floor(((toInteger(val) || 1) / 100) * parentHeight)
+            : toNumber(val);
+          num = Math.max(40, num - excludeHeight);
+        }
+      }
+      return num;
+    };
+
+    const handleCustomRestore = (storeData: AsTableDefines.CustomStoreData) => {
+      const { aggregateConfig } = props;
+      const { collectColumn } = internalData;
+      const {
+        isCustomAlign,
+        isCustomHeaderAlign,
+        isCustomFooterAlign,
+        isCustomResizable,
+        isCustomVisible,
+        isCustomFixed,
+        isCustomSort,
+        isCustomAggGroup,
+        isCustomAggFunc,
+        isCustomPager,
+      } = handleCustomStoreConfig($asTable);
+
+      let {
+        alignData,
+        headerAlignData,
+        footerAlignData,
+        resizableData,
+        sortData,
+        visibleData,
+        fixedData,
+        aggGroupData,
+        aggFuncData,
+        pagerData,
+      } = storeData;
+      // 处理还原
+      if (
+        (isCustomAlign && alignData) ||
+        (isCustomHeaderAlign && headerAlignData) ||
+        (isCustomFooterAlign && footerAlignData) ||
+        (isCustomResizable && resizableData) ||
+        (isCustomSort && sortData) ||
+        (isCustomVisible && visibleData) ||
+        (isCustomFixed && fixedData) ||
+        (isCustomAggGroup && aggGroupData) ||
+        (isCustomAggFunc && aggFuncData) ||
+        // TODO (isCustomPager && pagerData && $xeGGWrapper)
+        (isCustomPager && pagerData)
+      ) {
+        const sortColMaps: Record<
+          string,
+          {
+            key: string;
+            pKey: null | string;
+            sNum: number;
+          }
+        > = {};
+        if (isCustomSort && sortData) {
+          if (!isArray(sortData)) {
+            const sortRests: { index: number; key: string }[] = [];
+            each(sortData, (index: number, colKey: string) => {
+              sortRests.push({ key: colKey, index });
+            });
+            sortData = orderBy(sortRests, {
+              field: 'index',
+              order: 'asc',
+            }).map((item) => ({ k: item.key }));
+          }
+          let colNum = 1;
+          eachTree(
+            sortData,
+            (sObj, index, sOjs, path, pSObj) => {
+              sortColMaps[sObj.k] = {
+                key: sObj.k,
+                sNum: colNum++,
+                pKey: pSObj ? pSObj.k : null,
+              };
+            },
+            { children: 'c' },
+          );
+        }
+        const colKeyMaps: Record<string, AsTableDefines.ColumnInfo> = {};
+        const allCols: AsTableDefines.ColumnInfo[] = [];
+        const aggGroupConfs: AsTableDefines.RowGroupItem[] = [];
+        eachTree(collectColumn, (column, index, items, path, parentColumn) => {
+          const colKey = column.getKey();
+          // 支持一级
+          if (
+            !parentColumn &&
+            isCustomFixed &&
+            fixedData &&
+            fixedData[colKey] !== undefined
+          ) {
+            column.fixed = fixedData[colKey];
+          }
+          if (
+            isCustomResizable &&
+            resizableData &&
+            isNumber(resizableData[colKey])
+          ) {
+            column.resizeWidth = resizableData[colKey];
+          }
+          if (
+            isCustomVisible &&
+            visibleData &&
+            isBoolean(visibleData[colKey])
+          ) {
+            column.visible = visibleData[colKey];
+          }
+          if (
+            isCustomAggFunc &&
+            aggFuncData &&
+            aggregateConfig &&
+            aggFuncData[colKey]
+          ) {
+            column.aggFunc = aggFuncData[colKey];
+          }
+          if (isCustomAggGroup && aggGroupData && aggGroupData[colKey]) {
+            aggGroupConfs.push({ field: column.field });
+          }
+          colKeyMaps[colKey] = column;
+          allCols.push(column);
+        });
+        if (aggregateConfig && aggGroupConfs.length > 0) {
+          const groupRest = handleGroupData(
+            internalData.tableFullData,
+            aggGroupConfs,
+          );
+          internalData.tableFullTreeData = [];
+          internalData.tableFullGroupData = groupRest.treeData;
+          reactData.isRowGroupStatus = true;
+          reactData.rowGroupList = aggGroupConfs;
+          $asTable.cacheRowMap(false);
+        }
+        // 如果自定义了顺序
+        if (isCustomSort && sortData) {
+          allCols.forEach((column) => {
+            const colKey = column.getKey();
+            const scItem = sortColMaps[colKey];
+            if (scItem) {
+              const parentColumn = scItem.pKey ? colKeyMaps[scItem.pKey] : null;
+              column.parentId = parentColumn ? parentColumn.id : null;
+              column.renderSortNumber = scItem.sNum;
+            }
+          });
+          const newCollectCols = toArrayTree(
+            orderBy(allCols, 'renderSortNumber'),
+            { key: 'id', parentKey: 'parentId', children: 'children' },
+          );
+          internalData.collectColumn = newCollectCols;
+          internalData.tableFullColumn = getColumnList(newCollectCols);
+          reactData.updateColFlag++;
+        }
+        reactData.isCustomStatus = true;
+      } else {
+        reactData.isCustomStatus = false;
+      }
+    };
+
+    const updateColumnAllOverflow = () => {
+      const { showOverflow } = props;
+      const { isGroup } = reactData;
+      const { fullAllDataRowIdData, tableFullColumn, collectColumn } =
+        internalData;
+      let isAllOverflow = !!showOverflow;
+      const handleFunc = (column: AsTableDefines.ColumnInfo) => {
+        if (isAllOverflow && column.showOverflow === false) {
+          isAllOverflow = false;
+        }
+      };
+      if (isGroup) {
+        eachTree(collectColumn, handleFunc);
+      } else {
+        tableFullColumn.forEach(handleFunc);
+      }
+      each(fullAllDataRowIdData, (rowRest: AsTableDefines.RowCacheItem) => {
+        rowRest.height = 0;
+      });
+      reactData.isAllOverflow = isAllOverflow;
+    };
+
+    /**
+     * 还原自定义列操作状态
+     * 把上一次用户对列的自定义操作（显隐 / 宽度 / 冻结 / 顺序 / 对齐 / 聚合）从存储里读回来，套用到刚建立的列树上。
+     */
+    const restoreCustomStorage = () => {
+      const { customConfig } = props;
+      const tableId = computeTableId.value;
+      const customOpts = computeCustomOpts.value;
+      const { storage, restoreStore } = customOpts;
+      const {
+        isCustomAlign,
+        isCustomHeaderAlign,
+        isCustomFooterAlign,
+        isCustomResizable,
+        isCustomVisible,
+        isCustomFixed,
+        isCustomSort,
+        isCustomAggGroup,
+        isCustomAggFunc,
+      } = handleCustomStoreConfig($asTable);
+
+      if (
+        storage &&
+        (customConfig ? isEnableConf(customOpts) : customOpts.enabled) &&
+        (isCustomAlign ||
+          isCustomHeaderAlign ||
+          isCustomFooterAlign ||
+          isCustomResizable ||
+          isCustomVisible ||
+          isCustomFixed ||
+          isCustomSort ||
+          isCustomAggGroup ||
+          isCustomAggFunc)
+      ) {
+        if (!tableId) {
+          log.error('reqProp', ['id']);
+          return;
+        }
+        const storeData: AsTableDefines.CustomStoreData =
+          getCustomStorageMap(tableId);
+        return restoreStore
+          ? Promise.resolve(
+              restoreStore({
+                $table: $asTable,
+                id: tableId,
+                type: 'restore',
+                storeData,
+              }),
+            )
+              .then((storeData) => {
+                if (!storeData) {
+                  return;
+                }
+                return handleCustomRestore(storeData);
+              })
+              .catch((error) => error)
+          : handleCustomRestore(storeData);
       }
     };
 
@@ -1769,6 +2528,388 @@ export const Table = defineComponent<AsTableProps>(
       ) {
         internalData.customHeight = 300;
       }
+    };
+
+    /**
+     * 计算自适应列宽
+     */
+    const calcColumnAutoWidth = (
+      column: AsTableDefines.ColumnInfo,
+      wrapperEl: HTMLDivElement,
+    ) => {
+      const { scrollYLoad } = reactData;
+      const columnOpts = computeColumnOpts.value;
+      const { autoOptions } = columnOpts;
+      const { isCalcHeader, isCalcBody, isCalcFooter } = autoOptions || {};
+      const querySelections: string[] = [];
+      if (isCalcHeader) {
+        querySelections.push(
+          `.${prefixCls.value}-header-cell--wrapper[colid="${column.id}"]`,
+        );
+      }
+      if (isCalcBody) {
+        querySelections.push(
+          `.${prefixCls.value}-body-cell--wrapper[colid="${column.id}"]`,
+        );
+      }
+      if (isCalcFooter) {
+        querySelections.push(
+          `.${prefixCls.value}-footer-cell--wrapper[colid="${column.id}"]`,
+        );
+      }
+      const cellElemList =
+        querySelections.length > 0
+          ? wrapperEl.querySelectorAll(querySelections.join(','))
+          : [];
+      let leftRightPadding = 0;
+      const firstCellEl = cellElemList[0];
+      if (firstCellEl && firstCellEl.parentElement) {
+        const cellStyle = getComputedStyle(firstCellEl.parentElement);
+        leftRightPadding = Math.ceil(
+          toNumber(cellStyle.paddingLeft) + toNumber(cellStyle.paddingRight),
+        );
+      }
+      let colWidth =
+        (scrollYLoad ? column.renderAutoWidth : 0) - leftRightPadding;
+      for (const element of cellElemList) {
+        const celEl = element as HTMLDivElement;
+        colWidth = Math.max(
+          colWidth,
+          celEl ? Math.ceil(celEl.scrollWidth) + 4 : 0,
+        );
+      }
+      return colWidth + leftRightPadding;
+    };
+
+    /**
+     * 自适应列宽
+     */
+    const calcCellWidth = () => {
+      const autoWidthColumnList = computeAutoWidthColumnList.value;
+      const { fullColumnIdData } = internalData;
+      const el = refElem.value;
+      if (el && autoWidthColumnList.length > 0) {
+        el.dataset.calcCol = 'Y';
+        autoWidthColumnList.forEach((column) => {
+          const colid = column.id;
+          const colRest = fullColumnIdData[colid];
+          const colWidth = calcColumnAutoWidth(column, el);
+          if (colRest) {
+            colRest.width = Math.max(colWidth, colRest.width);
+          }
+          column.renderAutoWidth = colWidth;
+        });
+        $asTable.analyColumnWidth();
+        delete el.dataset.calcCol;
+      }
+    };
+
+    /**
+     * 列宽算法，计算单元格列宽，动态分配可用剩余空间
+     * 支持 px、%、固定 混合分配
+     * 支持动态列表调整分配
+     * 支持自动分配偏移量
+     * 支持 width=60 width=60px width=10% min-width=60 min-width=60px min-width=10%
+     */
+    const autoCellWidth = () => {
+      const { elemStore } = internalData;
+      const bodyWrapperElem = getRefElem(elemStore['main-body-wrapper']);
+      if (!bodyWrapperElem) {
+        return;
+      }
+      const yHandleEl = refScrollYHandleElem.value;
+      if (!yHandleEl) {
+        return;
+      }
+      const xHandleEl = refScrollXHandleElem.value;
+      if (!xHandleEl) {
+        return;
+      }
+      const columnOpts = computeColumnOpts.value;
+      let tWidth = 0;
+      const minCellWidth = 40; // 列宽最少限制 40px
+      const bodyWidth = bodyWrapperElem.clientWidth;
+      let remainWidth = bodyWidth;
+      let meanWidth = remainWidth / 100;
+      const { columnStore } = reactData;
+      const {
+        resizeList,
+        pxMinList,
+        autoMinList,
+        pxList,
+        scaleList,
+        scaleMinList,
+        autoList,
+        remainList,
+      } = columnStore;
+
+      const parseColumnMaxWidth = (column: AsTableDefines.ColumnInfo) => {
+        const maxWidth = column.maxWidth || columnOpts.maxWidth;
+        if (maxWidth && maxWidth !== 'auto') {
+          if (isScale(maxWidth)) {
+            return Math.floor(toInteger(maxWidth) * meanWidth);
+          }
+          return toInteger(maxWidth);
+        }
+        return 0;
+      };
+
+      // 最小宽
+      pxMinList.forEach((column) => {
+        let miWidth = toInteger(column.minWidth);
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          miWidth = Math.min(miWidth, mxWidth);
+        }
+        tWidth += miWidth;
+        column.renderWidth = miWidth;
+      });
+      // 最小自适应
+      autoMinList.forEach((column) => {
+        let caWidth = Math.max(60, toInteger(column.renderAutoWidth));
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          caWidth = Math.min(caWidth, mxWidth);
+        }
+        tWidth += caWidth;
+        column.renderWidth = caWidth;
+      });
+      // 最小百分比
+      scaleMinList.forEach((column) => {
+        let smWidth = Math.floor(toInteger(column.minWidth) * meanWidth);
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          smWidth = Math.min(smWidth, mxWidth);
+        }
+        tWidth += smWidth;
+        column.renderWidth = smWidth;
+      });
+      // 固定百分比
+      scaleList.forEach((column) => {
+        let sfWidth = Math.floor(toInteger(column.width) * meanWidth);
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          sfWidth = Math.min(sfWidth, mxWidth);
+        }
+        tWidth += sfWidth;
+        column.renderWidth = sfWidth;
+      });
+      // 固定宽
+      pxList.forEach((column) => {
+        let pWidth = toInteger(column.width);
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          pWidth = Math.min(pWidth, mxWidth);
+        }
+        tWidth += pWidth;
+        column.renderWidth = pWidth;
+      });
+      // 自适应宽
+      autoList.forEach((column) => {
+        let aWidth = Math.max(60, toInteger(column.renderAutoWidth));
+        const mxWidth = parseColumnMaxWidth(column);
+        if (mxWidth) {
+          aWidth = Math.min(aWidth, mxWidth);
+        }
+        tWidth += aWidth;
+        column.renderWidth = aWidth;
+      });
+
+      // 调整了列宽
+      resizeList.forEach((column) => {
+        const reWidth = toInteger(column.resizeWidth);
+        tWidth += reWidth;
+        column.renderWidth = reWidth;
+      });
+
+      const zoomColumnList = scaleMinList
+        .concat(pxMinList)
+        .concat(autoMinList)
+        .filter((column) => !parseColumnMaxWidth(column));
+      remainWidth -= tWidth;
+      meanWidth =
+        remainWidth > 0
+          ? Math.floor(
+              remainWidth / (zoomColumnList.length + remainList.length),
+            )
+          : 0;
+      if (remainWidth > 0) {
+        zoomColumnList.forEach((column) => {
+          tWidth += meanWidth;
+          column.renderWidth += meanWidth;
+        });
+      }
+      // 剩余均分
+      remainList.forEach((column) => {
+        const width = Math.max(meanWidth, minCellWidth);
+        column.renderWidth = width;
+        tWidth += width;
+      });
+      /**
+       * 偏移量算法
+       * 如果所有列足够放的情况下，从最后动态列开始分配
+       * 排除已设置 max-width
+       */
+      const dynamicList = scaleList
+        .concat(scaleMinList)
+        .concat(pxMinList)
+        .concat(autoMinList)
+        .concat(remainList)
+        .filter((column) => !parseColumnMaxWidth(column));
+      let dynamicSize = dynamicList.length - 1;
+      if (dynamicSize > 0) {
+        let i = bodyWidth - tWidth;
+        if (i > 0) {
+          while (i > 0 && dynamicSize >= 0) {
+            i--;
+            dynamicList[dynamicSize--]!.renderWidth++;
+          }
+          tWidth = bodyWidth;
+        }
+      }
+      reactData.scrollXWidth = tWidth;
+      reactData.resizeWidthFlag++;
+      updateColumnOffsetLeft();
+      updateHeight();
+    };
+
+    /**
+     * 计算自适应行高
+     */
+    const calcCellAutoHeight = (
+      rowid: number | string,
+      rowRest: AsTableDefines.RowCacheItem,
+      wrapperEl: HTMLDivElement,
+    ) => {
+      const { fullCellHeightMaps } = internalData;
+      let chRest = fullCellHeightMaps[rowid];
+      if (!chRest) {
+        chRest = {};
+        fullCellHeightMaps[rowid] = chRest;
+      }
+      const wrapperElemList = wrapperEl.querySelectorAll(
+        `.${prefixCls.value}-cell--wrapper[rowid="${CSS.escape(rowRest.rowid)}"]`,
+      );
+      let firstCellStyle: CSSStyleDeclaration | null = null;
+      let topBottomPadding = 0;
+      let changeCH = false;
+      for (const element of wrapperElemList) {
+        const wrapperElem = element as HTMLElement;
+        const cellElem = wrapperElem.parentElement as HTMLTableCellElement;
+        const cellStyle = cellElem.style;
+        const orHeight = cellStyle.height;
+        const colid = wrapperElem.getAttribute('colid') || '';
+        cellStyle.height = '';
+        if (!firstCellStyle) {
+          firstCellStyle = getComputedStyle(cellElem);
+          topBottomPadding = firstCellStyle
+            ? Math.ceil(
+                toNumber(firstCellStyle.paddingTop) +
+                  toNumber(firstCellStyle.paddingBottom),
+              )
+            : 0;
+        }
+        const cellHeight = wrapperElem ? wrapperElem.clientHeight : 0;
+        const colHeight = Math.ceil(cellHeight + topBottomPadding);
+        if (chRest[colid] !== colHeight) {
+          changeCH = true;
+          chRest[colid] = colHeight;
+        }
+        cellStyle.height = orHeight;
+      }
+      const cellMaxHeight = getRowMaxHeight(chRest, changeCH);
+      return cellMaxHeight;
+    };
+
+    /**
+     * 自适应行高
+     */
+    const calcCellHeight = () => {
+      const { treeConfig } = props;
+      const { tableData, isAllOverflow, scrollYLoad, scrollXLoad } = reactData;
+      const { fullAllDataRowIdData } = internalData;
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      const treeOpts = computeTreeOpts.value;
+      const defaultRowHeight = computeDefaultRowHeight.value;
+      if (
+        !isAllOverflow &&
+        (scrollYLoad || scrollXLoad || (treeConfig && treeOpts.showLine))
+      ) {
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        el.dataset.calcRow = 'Y';
+        tableData.forEach((row) => {
+          const rowid = handleGetRowId(row);
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (rowRest) {
+            const reHeight = calcCellAutoHeight(rowid, rowRest, el);
+            rowRest.height = Math.max(defaultRowHeight, reHeight);
+          }
+          delete el.dataset.calcRow;
+        });
+        reactData.calcCellHeightFlag++;
+      }
+    };
+
+    /**
+     * 获取列的排序取值函数
+     * 返回一个 (row) => value 的函数，排序器会对每一行调用它，拿到该行在当前列上参与比较的值
+     * 比较大小由排序器自己完成，这里只负责“取值”
+     *
+     * @param column 当前参与排序的列信息
+     * @returns 取值函数，入参为行数据，返回该行在列上的排序值
+     */
+    const getOrderField = (column: AsTableDefines.ColumnInfo) => {
+      const { isRowGroupStatus } = reactData;
+      const { sortBy, sortType, aggFunc } = column;
+      return isRowGroupStatus && aggFunc
+        ? (row: any) => {
+            if (row.isAggregate) {
+              const aggData = row.aggData;
+              const currAggData = aggData ? aggData[column.field] : null;
+              return currAggData ? currAggData.value : null;
+            }
+            let cellValue;
+            if (sortBy) {
+              cellValue = isFunction(sortBy)
+                ? sortBy({ row, column })
+                : get(row, sortBy);
+            } else {
+              cellValue = $asTable.getCellLabel(row, column);
+            }
+            if (!sortType || sortType === 'auto') {
+              return eqEmptyValue(cellValue) || isNaN(cellValue)
+                ? cellValue
+                : toNumber(cellValue);
+            } else if (sortType === 'number') {
+              return toNumber(cellValue);
+            } else if (sortType === 'string') {
+              return toValueString(cellValue);
+            }
+            return cellValue;
+          }
+        : (row: any) => {
+            let cellValue;
+            if (sortBy) {
+              cellValue = isFunction(sortBy)
+                ? sortBy({ row, column })
+                : get(row, sortBy);
+            } else {
+              cellValue = $asTable.getCellLabel(row, column);
+            }
+            if (!sortType || sortType === 'auto') {
+              return eqEmptyValue(cellValue) || isNaN(cellValue)
+                ? cellValue
+                : toNumber(cellValue);
+            } else if (sortType === 'number') {
+              return toNumber(cellValue);
+            } else if (sortType === 'string') {
+              return toValueString(cellValue);
+            }
+            return cellValue;
+          };
     };
 
     const updateAfterTreeIndex = () => {
@@ -2655,632 +3796,141 @@ export const Table = defineComponent<AsTableProps>(
       if (currentRow) {
         $asTable.setCurrentRow(currentRow);
       }
-      // TODO if (
-      //   mouseConfig &&
-      //   mouseOpts.selected &&
-      //   editStore.selected.row &&
-      //   editStore.selected.column
-      // ) {
-      //   $asTable.addCellSelectedClass();
-      // }
+      if (
+        mouseConfig &&
+        mouseOpts.selected &&
+        editStore.selected.row &&
+        editStore.selected.column
+      ) {
+        $asTable.addCellSelectedClass();
+      }
       // TODO if ($xeGanttView && $xeGanttView.handleUpdateStyle) {
       //   $xeGanttView.handleUpdateStyle()
       // }
       return nextTick();
     };
 
-    /**
-     * 判定"要不要开纵向虚拟滚动"，把结果写进 reactData.scrollYLoad，并返回该布尔值
-     * @param fullData
-     * @returns
-     */
-    const updateScrollYStatus = (fullData?: any[]) => {
-      const { treeConfig } = props;
-      const virtualYOpts = computeVirtualYOpts.value;
-      const treeOpts = computeTreeOpts.value;
-      const { transform } = treeOpts;
-
-      // 按"谁的行数"判断阈值：优先用传入的数组，不传则退回全量数据
-      // 传拍平结果时判的是「可见行数」，不传时判的是「全量行数」—— 同一函数两种口径
-      const allList = fullData || internalData.tableFullData;
-
-      // 三个条件同时成立才开：
-      //   enabled        总开关。默认为 undefined（全局配置里被注释掉了）→ 默认不开，必须显式 enabled: true
-      //   gt > -1        排除 gt: -1 这种"关掉阈值判断"的配置
-      //   gt === 0 || gt < allList.length
-      //   gt === 0 表示总是启用；否则行数要【严格大于】gt 才开（gt:100 时 100 行不开、101 行才开）
-      let scrollYLoad =
-        !!virtualYOpts.enabled &&
-        virtualYOpts.gt > -1 &&
-        (virtualYOpts.gt === 0 || virtualYOpts.gt < allList.length);
-      // 唯一的一条否决规则：嵌套树（transform = false）不支持纵向虚拟滚动
-      // 因为它的子节点靠 body 递归渲染，不存在"第 N 个可见行"这个坐标，没法按下标切片
-      // 先打日志再强制关闭 —— 属于自动降级：用户配错了不会崩，只是没有虚拟滚动
-      if (scrollYLoad && treeConfig && !transform) {
-        log.error('notSupportProp', [
-          '[table] virtual-y-config.enabled=true',
-          'tree-config.transform=false',
-          'tree-config.transform=true',
-        ]);
-        scrollYLoad = false;
+    const checkValidate = (type: any) => {
+      if ($asTable.triggerValidate) {
+        return $asTable.triggerValidate(type);
       }
-      // 落库。这是 reactData.scrollYLoad 在整个 table 包里的【唯一写入点】
-      reactData.scrollYLoad = scrollYLoad;
-      // TODO 把新状态同步给 Gantt 视图 —— Gantt 复用 table 的行数据，需要知道开关状态
-      // syncGanttScrollYStatus()
-      return scrollYLoad;
+      return nextTick();
     };
 
     /**
-     * 展开与收起树节点
-     * @param rows
-     * @param expanded
-     * @returns
+     * 当单元格发生改变时
+     * 如果存在规则，则校验
      */
-    const handleBaseTreeExpand = (rows: any[], expanded: boolean) => {
-      const { treeNodeColumn } = reactData;
-      const {
-        fullAllDataRowIdData,
-        tableFullTreeData,
-        treeExpandedMaps,
-        treeExpandLazyLoadedMaps,
-      } = internalData;
-      const treeOpts = computeTreeOpts.value;
-      const { reserve, lazy, accordion, toggleMethod } = treeOpts;
-      const childrenField = treeOpts.childrenField;
-      const hasChildField = treeOpts.hasChildField;
-      const result: any[] = [];
-      const columnIndex = $asTable.getColumnIndex(treeNodeColumn);
-      const $columnIndex = $asTable.getVMColumnIndex(treeNodeColumn);
-      const _columnIndex = $asTable.getVTColumnIndex(treeNodeColumn);
-      const { handleGetRowId } = createHandleGetRowId($asTable);
-      let validRows = toggleMethod
-        ? rows.filter((row: any) =>
-            toggleMethod({
-              $table: $asTable,
-              expanded,
-              column: treeNodeColumn,
-              columnIndex,
-              $columnIndex,
-              _columnIndex,
-              row,
-            }),
-          )
-        : rows;
-      if (accordion) {
-        validRows =
-          validRows.length > 0 ? [validRows[validRows.length - 1]] : [];
-        // 同一级只能展开一个
-        const matchObj = findTree(
-          tableFullTreeData,
-          (item) => item === validRows[0],
-          { children: childrenField },
-        );
-        if (matchObj) {
-          matchObj.items.forEach((item) => {
-            const rowid = handleGetRowId(item);
-            if (treeExpandedMaps[rowid]) {
-              delete treeExpandedMaps[rowid];
-            }
-          });
-        }
-      }
-      if (expanded) {
-        validRows.forEach((row: any) => {
-          const rowid = handleGetRowId(row);
-          if (!treeExpandedMaps[rowid]) {
-            const rowRest = fullAllDataRowIdData[rowid];
-            if (rowRest) {
-              const isLoad =
-                lazy &&
-                row[hasChildField] &&
-                !rowRest.treeLoaded &&
-                !treeExpandLazyLoadedMaps[rowid];
-              // 是否使用懒加载
-              if (isLoad) {
-                result.push(handleAsyncTreeExpandChilds(row));
-              } else {
-                if (row[childrenField] && row[childrenField].length > 0) {
-                  treeExpandedMaps[rowid] = row;
+    const handleChangeCell = (evnt: Event, params: any) => {
+      checkValidate('blur')
+        .catch((error: any) => error)
+        .then(() => {
+          $asTable
+            .handleEdit(params, evnt)
+            .then(() => checkValidate('change'))
+            .catch((error: any) => error);
+        });
+    };
+
+    const handleDefaultSort = () => {
+      const { sortConfig } = props;
+      if (sortConfig) {
+        const sortOpts = computeSortOpts.value;
+        let { defaultSort } = sortOpts;
+        if (defaultSort) {
+          if (!isArray(defaultSort)) {
+            defaultSort = [defaultSort];
+          }
+          if (defaultSort.length > 0) {
+            (sortConfig.multiple
+              ? defaultSort
+              : defaultSort.slice(0, 1)
+            ).forEach((item: any, index: number) => {
+              const { field, order } = item;
+              if (field && order) {
+                const column = $asTable.getColumnByField(field);
+                if (column && column.sortable) {
+                  column.order = order;
+                  column.sortTime = Date.now() + index;
                 }
               }
+            });
+            if (!sortOpts.remote) {
+              $asTable.handleTableData(true).then(updateStyle);
             }
           }
-        });
-      } else {
-        validRows.forEach((item) => {
-          const rowid = handleGetRowId(item);
-          if (treeExpandedMaps[rowid]) {
-            delete treeExpandedMaps[rowid];
-          }
-        });
-      }
-      if (reserve) {
-        validRows.forEach((row: any) => handleTreeExpandReserve(row, expanded));
-      }
-      reactData.treeExpandedFlag++;
-      return Promise.all(result).then(() => {
-        updateTreeLineStyle();
-        return $asTable.recalculate();
-      });
-    };
-
-    /**
-     * 虚拟树的展开与收起
-     * @param rows
-     * @param expanded
-     * @returns
-     */
-    const handleVirtualTreeExpand = (rows: any[], expanded: boolean) => {
-      const { lastScrollLeft, lastScrollTop } = internalData;
-      return handleBaseTreeExpand(rows, expanded)
-        .then(() => {
-          handleVirtualTreeToList();
-          $asTable.handleTableData();
-          reactData.treeExpandedFlag++;
-          updateAfterDataIndex();
-          return nextTick();
-        })
-        .then(() => {
-          return handleRecalculateStyle(true, true, true);
-        })
-        .then(() => {
-          restoreScrollLocation($asTable, lastScrollLeft, lastScrollTop);
-          updateTreeLineStyle();
-          setTimeout(() => {
-            $asTable.updateCellAreas();
-          }, 30);
-        });
-    };
-
-    const handleCheckAllEvent = (evnt: Event | null, value: any) => {
-      handleCheckedAllCheckboxRow(value);
-      if (evnt) {
-        dispatchEvent(
-          'checkbox-all',
-          {
-            records: () => $asTable.getCheckboxRecords(),
-            reserves: () => $asTable.getCheckboxReserveRecords(),
-            indeterminates: () => $asTable.getCheckboxIndeterminateRecords(),
-            checked: value,
-          },
-          evnt,
-        );
-      }
-    };
-
-    /**
-     * 纵向 Y 可视渲染处理
-     */
-    const loadScrollYData = () => {
-      const { isAllOverflow, isScrollYBig } = reactData;
-      const { mergeBodyList, mergeBodyColMaps, scrollYStore } = internalData;
-      const { preloadSize, startIndex, endIndex, offsetSize } = scrollYStore;
-      const autoOffsetYSize = isAllOverflow ? offsetSize : offsetSize + 1;
-      const { toVisibleIndex, visibleSize } = handleVirtualYVisible();
-      const offsetItem: AsTableDefines.MergeCacheRow = {
-        startIndex: Math.max(
-          0,
-          isScrollYBig
-            ? toVisibleIndex - 1
-            : toVisibleIndex - 1 - offsetSize - preloadSize,
-        ),
-        endIndex: isScrollYBig
-          ? toVisibleIndex + visibleSize
-          : toVisibleIndex + visibleSize + autoOffsetYSize + preloadSize,
-      };
-      scrollYStore.visibleStartIndex = toVisibleIndex - 1;
-      scrollYStore.visibleEndIndex = toVisibleIndex + visibleSize + 1;
-      calculateMergerOffsetIndex(
-        mergeBodyList,
-        mergeBodyColMaps,
-        offsetItem,
-        'row',
-      );
-      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } =
-        offsetItem;
-      if (
-        (toVisibleIndex <= startIndex ||
-          toVisibleIndex >= endIndex - visibleSize - 1) &&
-        (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex)
-      ) {
-        scrollYStore.startIndex = offsetStartIndex;
-        scrollYStore.endIndex = offsetEndIndex;
-        $asTable.updateScrollYData();
-      }
-    };
-
-    /**
-     * 计算自适应行高
-     */
-    const calcCellAutoHeight = (
-      rowid: number | string,
-      rowRest: AsTableDefines.RowCacheItem,
-      wrapperEl: HTMLDivElement,
-    ) => {
-      const { fullCellHeightMaps } = internalData;
-      let chRest = fullCellHeightMaps[rowid];
-      if (!chRest) {
-        chRest = {};
-        fullCellHeightMaps[rowid] = chRest;
-      }
-      const wrapperElemList = wrapperEl.querySelectorAll(
-        `.${prefixCls.value}-cell--wrapper[rowid="${CSS.escape(rowRest.rowid)}"]`,
-      );
-      let firstCellStyle: CSSStyleDeclaration | null = null;
-      let topBottomPadding = 0;
-      let changeCH = false;
-      for (const element of wrapperElemList) {
-        const wrapperElem = element as HTMLElement;
-        const cellElem = wrapperElem.parentElement as HTMLTableCellElement;
-        const cellStyle = cellElem.style;
-        const orHeight = cellStyle.height;
-        const colid = wrapperElem.getAttribute('colid') || '';
-        cellStyle.height = '';
-        if (!firstCellStyle) {
-          firstCellStyle = getComputedStyle(cellElem);
-          topBottomPadding = firstCellStyle
-            ? Math.ceil(
-                toNumber(firstCellStyle.paddingTop) +
-                  toNumber(firstCellStyle.paddingBottom),
-              )
-            : 0;
         }
-        const cellHeight = wrapperElem ? wrapperElem.clientHeight : 0;
-        const colHeight = Math.ceil(cellHeight + topBottomPadding);
-        if (chRest[colid] !== colHeight) {
-          changeCH = true;
-          chRest[colid] = colHeight;
-        }
-        cellStyle.height = orHeight;
-      }
-      const cellMaxHeight = getRowMaxHeight(chRest, changeCH);
-      return cellMaxHeight;
-    };
-
-    /**
-     * 自适应行高
-     */
-    const calcCellHeight = () => {
-      const { treeConfig } = props;
-      const { tableData, isAllOverflow, scrollYLoad, scrollXLoad } = reactData;
-      const { fullAllDataRowIdData } = internalData;
-      const el = refElem.value;
-      if (!el || !el.clientWidth) {
-        return;
-      }
-      const treeOpts = computeTreeOpts.value;
-      const defaultRowHeight = computeDefaultRowHeight.value;
-      if (
-        !isAllOverflow &&
-        (scrollYLoad || scrollXLoad || (treeConfig && treeOpts.showLine))
-      ) {
-        const { handleGetRowId } = createHandleGetRowId($asTable);
-        el.dataset.calcRow = 'Y';
-        tableData.forEach((row) => {
-          const rowid = handleGetRowId(row);
-          const rowRest = fullAllDataRowIdData[rowid];
-          if (rowRest) {
-            const reHeight = calcCellAutoHeight(rowid, rowRest, el);
-            rowRest.height = Math.max(defaultRowHeight, reHeight);
-          }
-          delete el.dataset.calcRow;
-        });
-        reactData.calcCellHeightFlag++;
       }
     };
 
     /**
-     * 获取列的排序取值函数
-     * 返回一个 (row) => value 的函数，排序器会对每一行调用它，拿到该行在当前列上参与比较的值
-     * 比较大小由排序器自己完成，这里只负责“取值”
-     *
-     * @param column 当前参与排序的列信息
-     * @returns 取值函数，入参为行数据，返回该行在列上的排序值
+     * 处理默认勾选
      */
-    const getOrderField = (column: AsTableDefines.ColumnInfo) => {
-      const { isRowGroupStatus } = reactData;
-      const { sortBy, sortType, aggFunc } = column;
-      return isRowGroupStatus && aggFunc
-        ? (row: any) => {
-            if (row.isAggregate) {
-              const aggData = row.aggData;
-              const currAggData = aggData ? aggData[column.field] : null;
-              return currAggData ? currAggData.value : null;
+    const handleDefaultSelectionChecked = () => {
+      const { checkboxConfig } = props;
+      if (checkboxConfig) {
+        const { fullDataRowIdData } = internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkAll, checkRowKeys } = checkboxOpts;
+        if (checkAll) {
+          handleCheckedAllCheckboxRow(true, true);
+        } else if (checkRowKeys) {
+          const defSelection: any[] = [];
+          checkRowKeys.forEach((rowKey: any) => {
+            const rowid = encodeRowid(rowKey);
+            if (fullDataRowIdData[rowid]) {
+              defSelection.push(fullDataRowIdData[rowid].row);
             }
-            let cellValue;
-            if (sortBy) {
-              cellValue = isFunction(sortBy)
-                ? sortBy({ row, column })
-                : get(row, sortBy);
-            } else {
-              cellValue = $asTable.getCellLabel(row, column);
-            }
-            if (!sortType || sortType === 'auto') {
-              return eqEmptyValue(cellValue) || isNaN(cellValue)
-                ? cellValue
-                : toNumber(cellValue);
-            } else if (sortType === 'number') {
-              return toNumber(cellValue);
-            } else if (sortType === 'string') {
-              return toValueString(cellValue);
-            }
-            return cellValue;
-          }
-        : (row: any) => {
-            let cellValue;
-            if (sortBy) {
-              cellValue = isFunction(sortBy)
-                ? sortBy({ row, column })
-                : get(row, sortBy);
-            } else {
-              cellValue = $asTable.getCellLabel(row, column);
-            }
-            if (!sortType || sortType === 'auto') {
-              return eqEmptyValue(cellValue) || isNaN(cellValue)
-                ? cellValue
-                : toNumber(cellValue);
-            } else if (sortType === 'number') {
-              return toNumber(cellValue);
-            } else if (sortType === 'string') {
-              return toValueString(cellValue);
-            }
-            return cellValue;
-          };
-    };
-
-    /**
-     * 计算自适应列宽
-     */
-    const calcColumnAutoWidth = (
-      column: AsTableDefines.ColumnInfo,
-      wrapperEl: HTMLDivElement,
-    ) => {
-      const { scrollYLoad } = reactData;
-      const columnOpts = computeColumnOpts.value;
-      const { autoOptions } = columnOpts;
-      const { isCalcHeader, isCalcBody, isCalcFooter } = autoOptions || {};
-      const querySelections: string[] = [];
-      if (isCalcHeader) {
-        querySelections.push(
-          `.${prefixCls.value}-header-cell--wrapper[colid="${column.id}"]`,
-        );
-      }
-      if (isCalcBody) {
-        querySelections.push(
-          `.${prefixCls.value}-body-cell--wrapper[colid="${column.id}"]`,
-        );
-      }
-      if (isCalcFooter) {
-        querySelections.push(
-          `.${prefixCls.value}-footer-cell--wrapper[colid="${column.id}"]`,
-        );
-      }
-      const cellElemList =
-        querySelections.length > 0
-          ? wrapperEl.querySelectorAll(querySelections.join(','))
-          : [];
-      let leftRightPadding = 0;
-      const firstCellEl = cellElemList[0];
-      if (firstCellEl && firstCellEl.parentElement) {
-        const cellStyle = getComputedStyle(firstCellEl.parentElement);
-        leftRightPadding = Math.ceil(
-          toNumber(cellStyle.paddingLeft) + toNumber(cellStyle.paddingRight),
-        );
-      }
-      let colWidth =
-        (scrollYLoad ? column.renderAutoWidth : 0) - leftRightPadding;
-      for (const element of cellElemList) {
-        const celEl = element as HTMLDivElement;
-        colWidth = Math.max(
-          colWidth,
-          celEl ? Math.ceil(celEl.scrollWidth) + 4 : 0,
-        );
-      }
-      return colWidth + leftRightPadding;
-    };
-
-    /**
-     * 自适应列宽
-     */
-    const calcCellWidth = () => {
-      const autoWidthColumnList = computeAutoWidthColumnList.value;
-      const { fullColumnIdData } = internalData;
-      const el = refElem.value;
-      if (el && autoWidthColumnList.length > 0) {
-        el.dataset.calcCol = 'Y';
-        autoWidthColumnList.forEach((column) => {
-          const colid = column.id;
-          const colRest = fullColumnIdData[colid];
-          const colWidth = calcColumnAutoWidth(column, el);
-          if (colRest) {
-            colRest.width = Math.max(colWidth, colRest.width);
-          }
-          column.renderAutoWidth = colWidth;
-        });
-        $asTable.analyColumnWidth();
-        delete el.dataset.calcCol;
+          });
+          handleCheckedCheckboxRow(defSelection, true, true);
+        }
       }
     };
 
     /**
-     * 列宽算法，计算单元格列宽，动态分配可用剩余空间
-     * 支持 px、%、固定 混合分配
-     * 支持动态列表调整分配
-     * 支持自动分配偏移量
-     * 支持 width=60 width=60px width=10% min-width=60 min-width=60px min-width=10%
+     * 处理单选框默认勾选
      */
-    const autoCellWidth = () => {
-      const { elemStore } = internalData;
-      const bodyWrapperElem = getRefElem(elemStore['main-body-wrapper']);
-      if (!bodyWrapperElem) {
-        return;
-      }
-      const yHandleEl = refScrollYHandleElem.value;
-      if (!yHandleEl) {
-        return;
-      }
-      const xHandleEl = refScrollXHandleElem.value;
-      if (!xHandleEl) {
-        return;
-      }
-      const columnOpts = computeColumnOpts.value;
-      let tWidth = 0;
-      const minCellWidth = 40; // 列宽最少限制 40px
-      const bodyWidth = bodyWrapperElem.clientWidth;
-      let remainWidth = bodyWidth;
-      let meanWidth = remainWidth / 100;
-      const { columnStore } = reactData;
-      const {
-        resizeList,
-        pxMinList,
-        autoMinList,
-        pxList,
-        scaleList,
-        scaleMinList,
-        autoList,
-        remainList,
-      } = columnStore;
-
-      const parseColumnMaxWidth = (column: AsTableDefines.ColumnInfo) => {
-        const maxWidth = column.maxWidth || columnOpts.maxWidth;
-        if (maxWidth && maxWidth !== 'auto') {
-          if (isScale(maxWidth)) {
-            return Math.floor(toInteger(maxWidth) * meanWidth);
+    const handleDefaultRadioChecked = () => {
+      const { radioConfig } = props;
+      if (radioConfig) {
+        const { fullDataRowIdData } = internalData;
+        const radioOpts = computeRadioOpts.value;
+        const { checkRowKey: rowKey, reserve } = radioOpts;
+        const rowid = rowKey ? encodeRowid(rowKey) : null;
+        if (rowid) {
+          if (fullDataRowIdData[rowid]) {
+            handleCheckedRadioRow(fullDataRowIdData[rowid].row, true);
           }
-          return toInteger(maxWidth);
-        }
-        return 0;
-      };
-
-      // 最小宽
-      pxMinList.forEach((column) => {
-        let miWidth = toInteger(column.minWidth);
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          miWidth = Math.min(miWidth, mxWidth);
-        }
-        tWidth += miWidth;
-        column.renderWidth = miWidth;
-      });
-      // 最小自适应
-      autoMinList.forEach((column) => {
-        let caWidth = Math.max(60, toInteger(column.renderAutoWidth));
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          caWidth = Math.min(caWidth, mxWidth);
-        }
-        tWidth += caWidth;
-        column.renderWidth = caWidth;
-      });
-      // 最小百分比
-      scaleMinList.forEach((column) => {
-        let smWidth = Math.floor(toInteger(column.minWidth) * meanWidth);
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          smWidth = Math.min(smWidth, mxWidth);
-        }
-        tWidth += smWidth;
-        column.renderWidth = smWidth;
-      });
-      // 固定百分比
-      scaleList.forEach((column) => {
-        let sfWidth = Math.floor(toInteger(column.width) * meanWidth);
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          sfWidth = Math.min(sfWidth, mxWidth);
-        }
-        tWidth += sfWidth;
-        column.renderWidth = sfWidth;
-      });
-      // 固定宽
-      pxList.forEach((column) => {
-        let pWidth = toInteger(column.width);
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          pWidth = Math.min(pWidth, mxWidth);
-        }
-        tWidth += pWidth;
-        column.renderWidth = pWidth;
-      });
-      // 自适应宽
-      autoList.forEach((column) => {
-        let aWidth = Math.max(60, toInteger(column.renderAutoWidth));
-        const mxWidth = parseColumnMaxWidth(column);
-        if (mxWidth) {
-          aWidth = Math.min(aWidth, mxWidth);
-        }
-        tWidth += aWidth;
-        column.renderWidth = aWidth;
-      });
-
-      // 调整了列宽
-      resizeList.forEach((column) => {
-        const reWidth = toInteger(column.resizeWidth);
-        tWidth += reWidth;
-        column.renderWidth = reWidth;
-      });
-
-      const zoomColumnList = scaleMinList
-        .concat(pxMinList)
-        .concat(autoMinList)
-        .filter((column) => !parseColumnMaxWidth(column));
-      remainWidth -= tWidth;
-      meanWidth =
-        remainWidth > 0
-          ? Math.floor(
-              remainWidth / (zoomColumnList.length + remainList.length),
-            )
-          : 0;
-      if (remainWidth > 0) {
-        zoomColumnList.forEach((column) => {
-          tWidth += meanWidth;
-          column.renderWidth += meanWidth;
-        });
-      }
-      // 剩余均分
-      remainList.forEach((column) => {
-        const width = Math.max(meanWidth, minCellWidth);
-        column.renderWidth = width;
-        tWidth += width;
-      });
-      /**
-       * 偏移量算法
-       * 如果所有列足够放的情况下，从最后动态列开始分配
-       * 排除已设置 max-width
-       */
-      const dynamicList = scaleList
-        .concat(scaleMinList)
-        .concat(pxMinList)
-        .concat(autoMinList)
-        .concat(remainList)
-        .filter((column) => !parseColumnMaxWidth(column));
-      let dynamicSize = dynamicList.length - 1;
-      if (dynamicSize > 0) {
-        let i = bodyWidth - tWidth;
-        if (i > 0) {
-          while (i > 0 && dynamicSize >= 0) {
-            i--;
-            dynamicList[dynamicSize--]!.renderWidth++;
+          if (reserve) {
+            const rowkey = getRowkey($asTable);
+            internalData.radioReserveRow = { [rowkey]: rowid };
           }
-          tWidth = bodyWidth;
         }
       }
-      reactData.scrollXWidth = tWidth;
-      reactData.resizeWidthFlag++;
-      updateColumnOffsetLeft();
-      updateHeight();
     };
 
-    const getRecoverRowMaps = (keyMaps: Record<string, any>) => {
-      const { fullAllDataRowIdData } = internalData;
-      const restKeys: Record<string, any> = {};
-      each(keyMaps, (row, rowid) => {
-        if (fullAllDataRowIdData[rowid]) {
-          restKeys[rowid] = row;
+    /**
+     * 处理默认展开行
+     */
+    const handleDefaultRowExpand = () => {
+      const { expandConfig } = props;
+      if (expandConfig) {
+        const { fullDataRowIdData } = internalData;
+        const expandOpts = computeExpandOpts.value;
+        const { expandAll, expandRowKeys } = expandOpts;
+        if (expandAll) {
+          $asTable.setAllRowExpand(true);
+        } else if (expandRowKeys) {
+          const defExpandeds: any[] = [];
+          expandRowKeys.forEach((rowKey: any) => {
+            const rowid = encodeRowid(rowKey);
+            if (fullDataRowIdData[rowid]) {
+              defExpandeds.push(fullDataRowIdData[rowid].row);
+            }
+          });
+          $asTable.setRowExpand(defExpandeds, true);
         }
-      });
-      return restKeys;
+      }
     };
 
     const handleRadioReserveRow = (row: any) => {
@@ -3327,21 +3977,6 @@ export const Table = defineComponent<AsTableProps>(
       $asTable.handleBatchSelectRows(rows, !!value, isForce);
       $asTable.checkSelectionStatus();
       return nextTick();
-    };
-
-    const handleReserveRow = (reserveRowMap: any) => {
-      const { fullDataRowIdData } = internalData;
-      const reserveList: any[] = [];
-      each(reserveRowMap, (item, rowid) => {
-        if (
-          fullDataRowIdData[rowid] &&
-          $asTable.findRowIndexOf(reserveList, fullDataRowIdData[rowid].row) ===
-            -1
-        ) {
-          reserveList.push(fullDataRowIdData[rowid].row);
-        }
-      });
-      return reserveList;
     };
 
     const handleCheckedAllCheckboxRow = (
@@ -3626,6 +4261,31 @@ export const Table = defineComponent<AsTableProps>(
       }
     };
 
+    /**
+     * 处理默认展开树节点
+     */
+    const handleDefaultTreeExpand = () => {
+      const { treeConfig } = props;
+      if (treeConfig) {
+        const { fullAllDataRowIdData } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { expandAll, expandRowKeys } = treeOpts;
+        if (expandAll) {
+          $asTable.setAllTreeExpand(true);
+        } else if (expandRowKeys) {
+          const defExpandeds: any[] = [];
+          expandRowKeys.forEach((rowKey) => {
+            const rowid = encodeRowid(rowKey);
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              defExpandeds.push(rowRest.row);
+            }
+          });
+          $asTable.setTreeExpand(defExpandeds, true);
+        }
+      }
+    };
+
     const handleAsyncTreeExpandChilds = (row: any): Promise<void> => {
       const treeOpts = computeTreeOpts.value;
       const checkboxOpts = computeCheckboxOpts.value;
@@ -3767,6 +4427,28 @@ export const Table = defineComponent<AsTableProps>(
         } else if (rowExpandedReserveRowMap[rowid]) {
           delete rowExpandedReserveRowMap[rowid];
         }
+      }
+    };
+
+    const handleDefaultMergeCells = () => {
+      const { mergeCells } = props;
+      if (mergeCells) {
+        $asTable.setMergeCells(mergeCells);
+      }
+    };
+
+    const handleDefaultMergeHeaderItems = () => {
+      const { mergeHeaderCells } = props;
+      if (mergeHeaderCells) {
+        $asTable.setMergeHeaderCells(mergeHeaderCells);
+      }
+    };
+
+    const handleDefaultMergeFooterItems = () => {
+      const { mergeFooterCells } = props;
+      const mFooterCells = mergeFooterCells;
+      if (mFooterCells) {
+        $asTable.setMergeFooterCells(mFooterCells);
       }
     };
 
@@ -4022,6 +4704,53 @@ export const Table = defineComponent<AsTableProps>(
       });
     };
 
+    const handleResizeEvent = () => {
+      if (internalData.rsePending) {
+        return;
+      }
+      internalData.rsePending = true;
+      handleLazyRecalculate(true, true, true, {
+        minRunDelay: 200,
+      })
+        .then(() => {
+          internalData.rsePending = false;
+        })
+        .catch(() => {
+          internalData.rsePending = false;
+        });
+    };
+
+    const handleUpdateAggValues = () => {
+      const { visibleColumn } = internalData;
+      const aggCols: AsTableDefines.ColumnInfo[] = [];
+
+      // 从「可见列」里挑出配了 aggFunc 的列，收集成一批
+      visibleColumn.forEach((column) => {
+        if (column.aggFunc) {
+          aggCols.push(column);
+        }
+      });
+      reactData.aggHandleAggColumns = aggCols; // 整体替换（不是增量改）
+    };
+
+    const handleUpdateRowGroup = (groupFields?: string[]) => {
+      const aggGroupFields: string[] = [];
+      const aggGroupConfs: { field: string }[] = [];
+      if (groupFields) {
+        (XEUtils.isArray(groupFields) ? groupFields : [groupFields]).forEach(
+          (field) => {
+            aggGroupFields.push(field);
+            aggGroupConfs.push({
+              field,
+            });
+          },
+        );
+      }
+      reactData.rowGroupList = aggGroupConfs;
+      reactData.aggHandleFields = aggGroupFields;
+      handleUpdateAggValues();
+    };
+
     /**
      * 处理分组汇总行/聚合行的数据
      *
@@ -4078,97 +4807,97 @@ export const Table = defineComponent<AsTableProps>(
           aggRow.childCount = count;
         });
 
-        // TODO 需要实现额外的插件来实现这个钩子 第二步：如果表格支持透视表聚合数据处理，则交给它处理
-        // if ($asTable.handlePivotTableAggData) {
-        //   $asTable.handlePivotTableAggData(aggList);
-        // } else {
-        // 否则走本地聚合计算逻辑
-        if (aggFuncColumns.length > 0) {
-          // 遍历每一个聚合行
-          lastEach(aggList, (aggRow) => {
-            // 当前聚合行最终生成的聚合数据对象
-            const aggDtObj: Record<
-              string,
-              {
-                label: any;
-                type: string;
-                value: any;
-              }
-            > = {};
+        //  需要实现额外的插件来实现这个钩子 第二步：如果表格支持透视表聚合数据处理，则交给它处理
+        if ($asTable.handlePivotTableAggData) {
+          $asTable.handlePivotTableAggData(aggList);
+        } else {
+          // 否则走本地聚合计算逻辑
+          if (aggFuncColumns.length > 0) {
+            // 遍历每一个聚合行
+            lastEach(aggList, (aggRow) => {
+              // 当前聚合行最终生成的聚合数据对象
+              const aggDtObj: Record<
+                string,
+                {
+                  label: any;
+                  type: string;
+                  value: any;
+                }
+              > = {};
 
-            const aggData = aggRow.aggData;
-            const groupField = aggRow.groupField;
-            const groupContent = aggRow.groupContent;
+              const aggData = aggRow.aggData;
+              const groupField = aggRow.groupField;
+              const groupContent = aggRow.groupContent;
 
-            // 当前聚合行的子节点列表
-            const childList = mapChildrenField
-              ? aggRow[mapChildrenField] || []
-              : [];
+              // 当前聚合行的子节点列表
+              const childList = mapChildrenField
+                ? aggRow[mapChildrenField] || []
+                : [];
 
-            // 当前聚合行的子节点数量
-            const childCount = aggRow.childCount;
+              // 当前聚合行的子节点数量
+              const childCount = aggRow.childCount;
 
-            // 当前分组字段对应的列信息
-            const colRest =
-              fullColumnFieldData[groupField] ||
-              ({} as AsTableDefines.ColumnCacheItem);
+              // 当前分组字段对应的列信息
+              const colRest =
+                fullColumnFieldData[groupField] ||
+                ({} as AsTableDefines.ColumnCacheItem);
 
-            // 遍历所有需要聚合计算的列
-            aggFuncColumns.forEach((column) => {
-              const { field } = column;
+              // 遍历所有需要聚合计算的列
+              aggFuncColumns.forEach((column) => {
+                const { field } = column;
 
-              // 当前列已有的聚合数据
-              const currAggData = aggData ? aggData[field] : null;
+                // 当前列已有的聚合数据
+                const currAggData = aggData ? aggData[field] : null;
 
-              // 传给聚合计算方法的上下文参数
-              const ctParams = {
-                $table: $asTable,
-                groupField,
-                groupColumn: (colRest
-                  ? colRest.column
-                  : null) as AsTableDefines.ColumnInfo,
-                column,
-                groupValue: groupContent,
-                childList,
-                childCount,
-                aggValue: currAggData ? currAggData.value : 0,
-              } as any;
+                // 传给聚合计算方法的上下文参数
+                const ctParams = {
+                  $table: $asTable,
+                  groupField,
+                  groupColumn: (colRest
+                    ? colRest.column
+                    : null) as AsTableDefines.ColumnInfo,
+                  column,
+                  groupValue: groupContent,
+                  childList,
+                  childCount,
+                  aggValue: currAggData ? currAggData.value : 0,
+                } as any;
 
-              let aggVal = 0;
+                let aggVal = 0;
 
-              // 如果下层同时也是分组聚合行
-              if (childList.length > 0 && childList[0].isAggregate) {
-                // 则直接累加下层聚合行中对应字段的聚合值
-                each(childList, (row: AsTableDefines.AggregateRowInfo) => {
-                  if (!row.isAggregate) {
-                    return;
-                  }
+                // 如果下层同时也是分组聚合行
+                if (childList.length > 0 && childList[0].isAggregate) {
+                  // 则直接累加下层聚合行中对应字段的聚合值
+                  each(childList, (row: AsTableDefines.AggregateRowInfo) => {
+                    if (!row.isAggregate) {
+                      return;
+                    }
 
-                  const currAggData = row.aggData[field];
-                  if (currAggData) {
-                    aggVal += currAggData.value;
-                  }
-                });
-              } else {
-                // 否则调用配置的聚合计算方法；没有配置时退化为 childCount
-                aggVal = aggCalcMethod
-                  ? aggCalcMethod(ctParams)
-                  : aggRow.childCount;
-              }
+                    const currAggData = row.aggData[field];
+                    if (currAggData) {
+                      aggVal += currAggData.value;
+                    }
+                  });
+                } else {
+                  // 否则调用配置的聚合计算方法；没有配置时退化为 childCount
+                  aggVal = aggCalcMethod
+                    ? aggCalcMethod(ctParams)
+                    : aggRow.childCount;
+                }
 
-              // 写入当前字段的聚合结果
-              aggDtObj[field] = {
-                type: 'count',
-                value: aggVal,
-                label: aggVal,
-              };
+                // 写入当前字段的聚合结果
+                aggDtObj[field] = {
+                  type: 'count',
+                  value: aggVal,
+                  label: aggVal,
+                };
+              });
+
+              // 更新当前聚合行的聚合数据
+              aggRow.aggData = aggDtObj;
             });
-
-            // 更新当前聚合行的聚合数据
-            aggRow.aggData = aggDtObj;
-          });
+          }
         }
-        // }
       }
     };
 
@@ -4635,6 +5364,686 @@ export const Table = defineComponent<AsTableProps>(
         });
     };
 
+    /**
+     * 处理数据加载默认行为
+     * 默认执行一次，除非被重置
+     */
+    const handleLoadDefaults = () => {
+      handleDefaultSelectionChecked();
+      handleDefaultRadioChecked();
+      handleDefaultRowExpand();
+      handleDefaultTreeExpand();
+      handleDefaultRowGroupExpand();
+      handleDefaultMergeCells();
+      handleDefaultMergeHeaderItems();
+      handleDefaultMergeFooterItems();
+      nextTick(() => {
+        setTimeout(() => $asTable.recalculate(), 0);
+      });
+    };
+
+    /**
+     * 处理初始化的默认行为
+     * 只会执行一次
+     */
+    const handleInitDefaults = () => {
+      handleDefaultSort();
+    };
+
+    /**
+     * 把内部全量顺序变成渲染真正消费的数组
+     */
+    const handleTableColumn = () => {
+      const { scrollXLoad } = reactData;
+      const { visibleColumn, scrollXStore, fullColumnIdData } = internalData;
+
+      // ① 决定渲染内容：开虚拟 X → 按区间切片；否则全量
+      //    slice() 一定是新数组，所以即使全量也会让引用变化（跟 staticColumns.slice(0) 同一个套路）
+      const tableColumn = scrollXLoad
+        ? visibleColumn.slice(scrollXStore.startIndex, scrollXStore.endIndex)
+        : visibleColumn.slice(0);
+
+      // ② 顺手写"渲染中的虚拟下标 $index"（= 在切片内的位置）
+      tableColumn.forEach((column, $index) => {
+        const colRest = fullColumnIdData[column.id];
+        if (colRest) {
+          colRest.$index = $index; // getVMColumnIndex() 读的就是它
+        }
+      });
+
+      // ③ 提交到响应式状态 —— 渲染组件从这里取列
+      reactData.tableColumn = tableColumn;
+    };
+
+    const handleUpdateColumn = () => {
+      const columnList = orderBy(
+        internalData.collectColumn,
+        'renderSortNumber',
+      );
+      internalData.collectColumn = columnList;
+      const tFullColumn = getColumnList(columnList);
+      internalData.tableFullColumn = tFullColumn;
+      reactData.updateColFlag++;
+      cacheColumnMap();
+    };
+
+    const loadScrollXData = () => {
+      const { isScrollXBig } = reactData;
+      const { mergeBodyList, mergeFooterList, mergeBodyRowMaps, scrollXStore } =
+        internalData;
+      const { preloadSize, startIndex, endIndex, offsetSize } = scrollXStore;
+      const { toVisibleIndex, visibleSize } = handleVirtualXVisible();
+      const offsetItem: AsTableDefines.MergeCacheCol = {
+        startIndex: Math.max(
+          0,
+          isScrollXBig
+            ? toVisibleIndex - 1
+            : toVisibleIndex - 1 - offsetSize - preloadSize,
+        ),
+        endIndex: isScrollXBig
+          ? toVisibleIndex + visibleSize
+          : toVisibleIndex + visibleSize + offsetSize + preloadSize,
+      };
+      scrollXStore.visibleStartIndex = toVisibleIndex - 1;
+      scrollXStore.visibleEndIndex = toVisibleIndex + visibleSize + 1;
+      calculateMergerOffsetIndex(
+        mergeBodyList.concat(mergeFooterList),
+        mergeBodyRowMaps,
+        offsetItem,
+        'col',
+      );
+      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } =
+        offsetItem;
+      if (
+        (toVisibleIndex <= startIndex ||
+          toVisibleIndex >= endIndex - visibleSize - 1) &&
+        (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex)
+      ) {
+        scrollXStore.startIndex = offsetStartIndex;
+        scrollXStore.endIndex = offsetEndIndex;
+        $asTable.updateScrollXData();
+      }
+      $asTable.closeTooltip();
+    };
+
+    const parseColumns = (isReset: boolean) => {
+      const leftList: AsTableDefines.ColumnInfo[] = [];
+      const centerList: AsTableDefines.ColumnInfo[] = [];
+      const rightList: AsTableDefines.ColumnInfo[] = [];
+      const { collectColumn, tableFullColumn, fullColumnIdData, scrollXStore } =
+        internalData;
+      const { isGroup, columnStore } = reactData;
+      // 如果是分组表头，如果子列全部被隐藏，则根列也隐藏
+      if (isGroup) {
+        const leftGroupList: AsTableDefines.ColumnInfo[] = [];
+        const centerGroupList: AsTableDefines.ColumnInfo[] = [];
+        const rightGroupList: AsTableDefines.ColumnInfo[] = [];
+        eachTree(collectColumn, (column, index, items, path, parentColumn) => {
+          const isColGroup = hasChildrenList(column);
+          // 如果是分组，必须按组设置固定列，不允许给子列设置固定
+          if (parentColumn && parentColumn.fixed) {
+            column.fixed = parentColumn.fixed;
+          }
+          if (
+            parentColumn &&
+            (column.fixed || '') !== (parentColumn.fixed || '')
+          ) {
+            log.error('groupFixed');
+          }
+          if (isColGroup) {
+            // 组自身的可见性 = 子树里是否存在可见叶子（"子列全隐藏 → 根列也隐藏"）
+            column.visible = !!findTree(column.children, (subColumn) =>
+              hasChildrenList(subColumn) ? false : subColumn.visible,
+            );
+          } else if (column.visible) {
+            if (column.fixed === 'left') {
+              leftList.push(column);
+            } else if (column.fixed === 'right') {
+              rightList.push(column);
+            } else {
+              centerList.push(column);
+            }
+          }
+        });
+        collectColumn.forEach((column) => {
+          if (column.visible) {
+            if (column.fixed === 'left') {
+              leftGroupList.push(column);
+            } else if (column.fixed === 'right') {
+              rightGroupList.push(column);
+            } else {
+              centerGroupList.push(column);
+            }
+          }
+        });
+        reactData.tableGroupColumn = leftGroupList
+          .concat(centerGroupList)
+          .concat(rightGroupList);
+      } else {
+        // 重新分配列
+        tableFullColumn.forEach((column) => {
+          if (column.visible) {
+            if (column.fixed === 'left') {
+              leftList.push(column);
+            } else if (column.fixed === 'right') {
+              rightList.push(column);
+            } else {
+              centerList.push(column);
+            }
+          }
+        });
+      }
+      // 拼出"可见列"总顺序：左固定 → 中间 → 右固定
+      const visibleColumn = leftList.concat(centerList).concat(rightList);
+      internalData.visibleColumn = visibleColumn;
+      updateColumnOffsetLeft();
+      // 决定要不要开横向虚拟滚动
+      const sXLoad = updateScrollXStatus();
+      reactData.hasFixedColumn = leftList.length > 0 || rightList.length > 0;
+      // // 写回共享分类缓存
+      Object.assign(columnStore, { leftList, centerList, rightList });
+      if (sXLoad) {
+        // 虚拟 X 不支持合并
+        if (props.spanMethod) {
+          log.error('scrollErrProp', ['span-method']);
+        }
+        if (props.footerSpanMethod) {
+          log.error('scrollErrProp', ['footer-span-method']);
+        }
+        if (isReset) {
+          //  列结构重建时，把横向虚拟滚动的渲染区间重置到"第一屏"
+          const { visibleSize } = handleVirtualXVisible();
+          scrollXStore.startIndex = 0;
+          scrollXStore.endIndex = visibleSize;
+          scrollXStore.visibleSize = visibleSize;
+          scrollXStore.visibleStartIndex = 0;
+          scrollXStore.visibleEndIndex = visibleSize;
+        }
+      }
+      //  如果列被显示/隐藏，则清除合并状态
+      // 如果列被设置为固定，则清除合并状态
+      if (
+        visibleColumn.length !== internalData.visibleColumn.length ||
+        internalData.visibleColumn.some(
+          (column, index) => column !== visibleColumn[index],
+        )
+      ) {
+        $asTable.clearMergeCells();
+        $asTable.clearMergeFooterItems();
+      }
+
+      // 写"可见列下标" _index
+      visibleColumn.forEach((column, index) => {
+        const colid = column.id;
+        const colRest = fullColumnIdData[colid];
+        if (colRest) {
+          colRest._index = index;
+        }
+      });
+      // 提交渲染列 + 聚合列
+      handleTableColumn();
+      handleUpdateAggValues();
+      if (isReset) {
+        updateColumnOffsetLeft();
+        return $asTable
+          .updateFooter()
+          .then(() => {
+            return $asTable.recalculate();
+          })
+          .then(() => {
+            $asTable.updateCellAreas();
+            return $asTable.recalculate();
+          });
+      }
+      return $asTable.updateFooter();
+    };
+
+    /**
+     * 初始化列层级缓存数据
+     *
+     * 遍历整棵列树（含子列），为每一列建立两套索引缓存：
+     *   1. fullColIdData    —— 以列 id 为 key 的缓存
+     *   2. fullColFieldData —— 以列 field 为 key 的缓存
+     * 同时为每个列节点补全父级信息、排序序号等元数据。
+     */
+    const initColumnHierarchy = () => {
+      const { collectColumn } = internalData;
+      const fullColIdData: Record<string, AsTableDefines.ColumnCacheItem> = {};
+      const fullColFieldData: Record<string, AsTableDefines.ColumnCacheItem> =
+        {};
+      let sortIndex = 1;
+      eachTree(collectColumn, (column, index, items, _, parentColumn) => {
+        const { id: colid, field } = column;
+        const parentId = parentColumn ? parentColumn.id : null;
+        const rest = {
+          $index: -1,
+          _index: -1,
+          column,
+          colid,
+          index,
+          items,
+          parent: parentColumn || null,
+          width: 0,
+          oLeft: 0,
+        };
+        column.parentId = parentId;
+        column.defaultParentId = parentId;
+        column.sortNumber = sortIndex;
+        column.renderSortNumber = sortIndex;
+        if (field) {
+          if (fullColFieldData[field]) {
+            log.error('colRepet', ['field', field]);
+          }
+          fullColFieldData[field] = rest;
+        }
+        fullColIdData[colid] = rest;
+      });
+      internalData.fullColumnIdData = fullColIdData;
+      internalData.fullColumnFieldData = fullColFieldData;
+    };
+
+    const buildColumnInfo = () => {
+      const { scrollXLoad, scrollYLoad, expandColumn } = reactData;
+      const expandOpts = computeExpandOpts.value;
+      cacheColumnMap();
+      parseColumns(true).then(() => {
+        if (reactData.scrollXLoad) {
+          loadScrollXData();
+        }
+      });
+
+      $asTable.clearHeaderFormatterCache();
+      $asTable.clearMergeCells();
+      $asTable.clearMergeFooterItems();
+      $asTable.handleTableData(true);
+      $asTable.handleAggregateSummaryData();
+
+      if (
+        (scrollXLoad || scrollYLoad) &&
+        expandColumn &&
+        expandOpts.mode !== 'fixed'
+      ) {
+        log.error('scrollErrProp', ['column.type=expand']);
+      }
+      return nextTick().then(() => {
+        // TODO if ($asToolbar) {
+        //   $xeToolbar.syncUpdate({
+        //     collectColumn: internalData.collectColumn,
+        //     $table: $asTable
+        //   })
+        // }
+        if ($asTable.handleUpdateCustomColumn) {
+          $asTable.handleUpdateCustomColumn();
+        }
+        const columnOpts = computeColumnOpts.value;
+        if (
+          props.showCustomHeader &&
+          reactData.isGroup &&
+          columnOpts.resizable
+        ) {
+          log.error('notConflictProp', [
+            'show-custom-header & colgroup',
+            'column-config.resizable=false',
+          ]);
+        }
+        reactData.isColLoading = false;
+        return handleLazyRecalculate(false, true, true);
+      });
+    };
+
+    const handleInitColumn = (collectColumn: AsTableDefines.ColumnInfo[]) => {
+      internalData.collectColumn = collectColumn;
+      // 拍平列
+      const tFullColumn = getColumnList(collectColumn);
+      internalData.tableFullColumn = tFullColumn;
+      reactData.updateColFlag++;
+      // 开始加载列
+      reactData.isColLoading = true;
+      initColumnHierarchy();
+      return Promise.resolve(restoreCustomStorage()).then(() => {
+        return buildColumnInfo();
+      });
+    };
+
+    /**
+     * 根据"列数"判断要不要开启横向虚拟滚动，并把结论写回响应式状态
+     * @param fullColumn
+     * @returns
+     */
+    const updateScrollXStatus = (fullColumn?: any[]) => {
+      const virtualXOpts = computeVirtualXOpts.value;
+      const allCols = fullColumn || internalData.tableFullColumn;
+      // 如果gt为0，则总是启用
+      const scrollXLoad =
+        !!virtualXOpts.enabled &&
+        virtualXOpts.gt > -1 &&
+        (virtualXOpts.gt === 0 || virtualXOpts.gt < allCols.length);
+      reactData.scrollXLoad = scrollXLoad;
+      return scrollXLoad;
+    };
+
+    /**
+     * 判定"要不要开纵向虚拟滚动"，把结果写进 reactData.scrollYLoad，并返回该布尔值
+     * @param fullData
+     * @returns
+     */
+    const updateScrollYStatus = (fullData?: any[]) => {
+      const { treeConfig } = props;
+      const virtualYOpts = computeVirtualYOpts.value;
+      const treeOpts = computeTreeOpts.value;
+      const { transform } = treeOpts;
+
+      // 按"谁的行数"判断阈值：优先用传入的数组，不传则退回全量数据
+      // 传拍平结果时判的是「可见行数」，不传时判的是「全量行数」—— 同一函数两种口径
+      const allList = fullData || internalData.tableFullData;
+
+      // 三个条件同时成立才开：
+      //   enabled        总开关。默认为 undefined（全局配置里被注释掉了）→ 默认不开，必须显式 enabled: true
+      //   gt > -1        排除 gt: -1 这种"关掉阈值判断"的配置
+      //   gt === 0 || gt < allList.length
+      //   gt === 0 表示总是启用；否则行数要【严格大于】gt 才开（gt:100 时 100 行不开、101 行才开）
+      let scrollYLoad =
+        !!virtualYOpts.enabled &&
+        virtualYOpts.gt > -1 &&
+        (virtualYOpts.gt === 0 || virtualYOpts.gt < allList.length);
+      // 唯一的一条否决规则：嵌套树（transform = false）不支持纵向虚拟滚动
+      // 因为它的子节点靠 body 递归渲染，不存在"第 N 个可见行"这个坐标，没法按下标切片
+      // 先打日志再强制关闭 —— 属于自动降级：用户配错了不会崩，只是没有虚拟滚动
+      if (scrollYLoad && treeConfig && !transform) {
+        log.error('notSupportProp', [
+          '[table] virtual-y-config.enabled=true',
+          'tree-config.transform=false',
+          'tree-config.transform=true',
+        ]);
+        scrollYLoad = false;
+      }
+      // 落库。这是 reactData.scrollYLoad 在整个 table 包里的【唯一写入点】
+      reactData.scrollYLoad = scrollYLoad;
+      // TODO 把新状态同步给 Gantt 视图 —— Gantt 复用 table 的行数据，需要知道开关状态
+      // syncGanttScrollYStatus()
+      return scrollYLoad;
+    };
+
+    /**
+     * 展开与收起树节点
+     * @param rows
+     * @param expanded
+     * @returns
+     */
+    const handleBaseTreeExpand = (rows: any[], expanded: boolean) => {
+      const { treeNodeColumn } = reactData;
+      const {
+        fullAllDataRowIdData,
+        tableFullTreeData,
+        treeExpandedMaps,
+        treeExpandLazyLoadedMaps,
+      } = internalData;
+      const treeOpts = computeTreeOpts.value;
+      const { reserve, lazy, accordion, toggleMethod } = treeOpts;
+      const childrenField = treeOpts.childrenField;
+      const hasChildField = treeOpts.hasChildField;
+      const result: any[] = [];
+      const columnIndex = $asTable.getColumnIndex(treeNodeColumn);
+      const $columnIndex = $asTable.getVMColumnIndex(treeNodeColumn);
+      const _columnIndex = $asTable.getVTColumnIndex(treeNodeColumn);
+      const { handleGetRowId } = createHandleGetRowId($asTable);
+      let validRows = toggleMethod
+        ? rows.filter((row: any) =>
+            toggleMethod({
+              $table: $asTable,
+              expanded,
+              column: treeNodeColumn,
+              columnIndex,
+              $columnIndex,
+              _columnIndex,
+              row,
+            }),
+          )
+        : rows;
+      if (accordion) {
+        validRows =
+          validRows.length > 0 ? [validRows[validRows.length - 1]] : [];
+        // 同一级只能展开一个
+        const matchObj = findTree(
+          tableFullTreeData,
+          (item) => item === validRows[0],
+          { children: childrenField },
+        );
+        if (matchObj) {
+          matchObj.items.forEach((item) => {
+            const rowid = handleGetRowId(item);
+            if (treeExpandedMaps[rowid]) {
+              delete treeExpandedMaps[rowid];
+            }
+          });
+        }
+      }
+      if (expanded) {
+        validRows.forEach((row: any) => {
+          const rowid = handleGetRowId(row);
+          if (!treeExpandedMaps[rowid]) {
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              const isLoad =
+                lazy &&
+                row[hasChildField] &&
+                !rowRest.treeLoaded &&
+                !treeExpandLazyLoadedMaps[rowid];
+              // 是否使用懒加载
+              if (isLoad) {
+                result.push(handleAsyncTreeExpandChilds(row));
+              } else {
+                if (row[childrenField] && row[childrenField].length > 0) {
+                  treeExpandedMaps[rowid] = row;
+                }
+              }
+            }
+          }
+        });
+      } else {
+        validRows.forEach((item) => {
+          const rowid = handleGetRowId(item);
+          if (treeExpandedMaps[rowid]) {
+            delete treeExpandedMaps[rowid];
+          }
+        });
+      }
+      if (reserve) {
+        validRows.forEach((row: any) => handleTreeExpandReserve(row, expanded));
+      }
+      reactData.treeExpandedFlag++;
+      return Promise.all(result).then(() => {
+        updateTreeLineStyle();
+        return $asTable.recalculate();
+      });
+    };
+
+    /**
+     * 虚拟树的展开与收起
+     * @param rows
+     * @param expanded
+     * @returns
+     */
+    const handleVirtualTreeExpand = (rows: any[], expanded: boolean) => {
+      const { lastScrollLeft, lastScrollTop } = internalData;
+      return handleBaseTreeExpand(rows, expanded)
+        .then(() => {
+          handleVirtualTreeToList();
+          $asTable.handleTableData();
+          reactData.treeExpandedFlag++;
+          updateAfterDataIndex();
+          return nextTick();
+        })
+        .then(() => {
+          return handleRecalculateStyle(true, true, true);
+        })
+        .then(() => {
+          restoreScrollLocation($asTable, lastScrollLeft, lastScrollTop);
+          updateTreeLineStyle();
+          setTimeout(() => {
+            $asTable.updateCellAreas();
+          }, 30);
+        });
+    };
+
+    /**
+     * 展开与收起行分组节点
+     * @param rows
+     * @param expanded
+     * @returns
+     */
+    const handleRowGroupBaseExpand = (rows: any[], expanded: boolean) => {
+      const { fullAllDataRowIdData, tableFullGroupData, rowGroupExpandedMaps } =
+        internalData;
+      const aggregateOpts = computeAggregateOpts.value;
+      const { mapChildrenField, accordion } = aggregateOpts;
+      const { handleGetRowId } = createHandleGetRowId($asTable);
+      let validRows = rows;
+      if (mapChildrenField) {
+        if (accordion) {
+          validRows =
+            validRows.length > 0 ? [validRows[validRows.length - 1]] : [];
+          // 同一级只能展开一个
+          const matchObj = findTree(
+            tableFullGroupData,
+            (item) =>
+              getRowid($asTable, item) === getRowid($asTable, validRows[0]),
+            { children: mapChildrenField },
+          );
+          if (matchObj) {
+            matchObj.items.forEach((item) => {
+              const rowid = handleGetRowId(item);
+              if (rowGroupExpandedMaps[rowid]) {
+                delete rowGroupExpandedMaps[rowid];
+              }
+            });
+          }
+        }
+        if (expanded) {
+          validRows.forEach((row) => {
+            const rowid = handleGetRowId(row);
+            if (!rowGroupExpandedMaps[rowid]) {
+              const rowRest = fullAllDataRowIdData[rowid];
+              if (
+                rowRest &&
+                row[mapChildrenField] &&
+                row[mapChildrenField].length > 0
+              ) {
+                rowGroupExpandedMaps[rowid] = row;
+              }
+            }
+          });
+        } else {
+          validRows.forEach((item) => {
+            const rowid = handleGetRowId(item);
+            if (rowGroupExpandedMaps[rowid]) {
+              delete rowGroupExpandedMaps[rowid];
+            }
+          });
+        }
+      }
+      reactData.rowGroupExpandedFlag++;
+      return $asTable.recalculate();
+    };
+
+    /**
+     * 行分组的展开与收起
+     * @param rows
+     * @param expanded
+     * @returns
+     */
+    const handleRowGroupVirtualExpand = (rows: any[], expanded: boolean) => {
+      return handleRowGroupBaseExpand(rows, expanded)
+        .then(() => {
+          handleVirtualTreeToList();
+          $asTable.handleTableData();
+          reactData.rowGroupExpandedFlag++;
+          updateAfterDataIndex();
+          return nextTick();
+        })
+        .then(() => {
+          return handleLazyRecalculate(true, true, true);
+        })
+        .then(() => {
+          setTimeout(() => {
+            $asTable.updateCellAreas();
+          }, 30);
+        });
+    };
+
+    /**
+     * 处理默认展开分组行
+     */
+    const handleDefaultRowGroupExpand = () => {
+      const { isRowGroupStatus } = reactData;
+      if (isRowGroupStatus) {
+        const aggregateOpts = computeAggregateOpts.value;
+        const { expandAll, expandGroupFields } = aggregateOpts;
+        if (expandAll) {
+          $asTable.setAllRowGroupExpand(true);
+        } else if (expandGroupFields && expandGroupFields.length > 0) {
+          $asTable.setRowGroupExpandByField(expandGroupFields, true);
+        }
+      }
+    };
+
+    const handleCheckAllEvent = (evnt: Event | null, value: any) => {
+      handleCheckedAllCheckboxRow(value);
+      if (evnt) {
+        dispatchEvent(
+          'checkbox-all',
+          {
+            records: () => $asTable.getCheckboxRecords(),
+            reserves: () => $asTable.getCheckboxReserveRecords(),
+            indeterminates: () => $asTable.getCheckboxIndeterminateRecords(),
+            checked: value,
+          },
+          evnt,
+        );
+      }
+    };
+
+    /**
+     * 纵向 Y 可视渲染处理
+     */
+    const loadScrollYData = () => {
+      const { isAllOverflow, isScrollYBig } = reactData;
+      const { mergeBodyList, mergeBodyColMaps, scrollYStore } = internalData;
+      const { preloadSize, startIndex, endIndex, offsetSize } = scrollYStore;
+      const autoOffsetYSize = isAllOverflow ? offsetSize : offsetSize + 1;
+      const { toVisibleIndex, visibleSize } = handleVirtualYVisible();
+      const offsetItem: AsTableDefines.MergeCacheRow = {
+        startIndex: Math.max(
+          0,
+          isScrollYBig
+            ? toVisibleIndex - 1
+            : toVisibleIndex - 1 - offsetSize - preloadSize,
+        ),
+        endIndex: isScrollYBig
+          ? toVisibleIndex + visibleSize
+          : toVisibleIndex + visibleSize + autoOffsetYSize + preloadSize,
+      };
+      scrollYStore.visibleStartIndex = toVisibleIndex - 1;
+      scrollYStore.visibleEndIndex = toVisibleIndex + visibleSize + 1;
+      calculateMergerOffsetIndex(
+        mergeBodyList,
+        mergeBodyColMaps,
+        offsetItem,
+        'row',
+      );
+      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } =
+        offsetItem;
+      if (
+        (toVisibleIndex <= startIndex ||
+          toVisibleIndex >= endIndex - visibleSize - 1) &&
+        (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex)
+      ) {
+        scrollYStore.startIndex = offsetStartIndex;
+        scrollYStore.endIndex = offsetEndIndex;
+        $asTable.updateScrollYData();
+      }
+    };
+
     const createGetRowCacheProp = (
       prop: '$index' | '_index' | 'index' | 'seq',
     ) => {
@@ -4767,6 +6176,332 @@ export const Table = defineComponent<AsTableProps>(
       }, 240);
     };
 
+    const getWheelSpeed = (lastScrollTime: number) => {
+      let multiple = 1;
+      const currTime = Date.now();
+      if (lastScrollTime + 25 > currTime) {
+        multiple = 1.18;
+      } else if (lastScrollTime + 30 > currTime) {
+        multiple = 1.15;
+      } else if (lastScrollTime + 40 > currTime) {
+        multiple = 1.12;
+      } else if (lastScrollTime + 55 > currTime) {
+        multiple = 1.09;
+      } else if (lastScrollTime + 75 > currTime) {
+        multiple = 1.06;
+      } else if (lastScrollTime + 100 > currTime) {
+        multiple = 1.03;
+      }
+      return multiple;
+    };
+
+    const dispatchEvent = (
+      type: ValueOf<AsTableEmits>,
+      params: Record<string, any>,
+      evnt: Event | null,
+    ) => {
+      emit(
+        type,
+        createEvent(
+          evnt,
+          {
+            $table: $asTable,
+            // TODO , $grid: $xeGrid, $gantt: $xeGantt
+          },
+          params,
+        ),
+      );
+    };
+
+    const handleScrollToRowColumn = (
+      fieldOrColumn: AsTableDefines.ColumnInfo | null | string,
+      row: any,
+      options?: AsTableDefines.ScrollToRowConfig,
+    ) => {
+      const { fullColumnIdData } = internalData;
+      const column = handleFieldOrColumn($asTable, fieldOrColumn);
+      if (column && fullColumnIdData[column.id]) {
+        return colToVisible(
+          $asTable,
+          options ? options.colAlign !== false : true,
+          column,
+          row,
+        );
+      }
+      return nextTick();
+    };
+    const handleUpdateColResize = (evnt: MouseEvent, params: any) => {
+      $asTable.analyColumnWidth();
+      $asTable.recalculate().then(() => {
+        $asTable.saveCustomStore('update:width');
+        $asTable.refreshScroll().then(() => {
+          $asTable.updateCellAreas();
+        });
+        $asTable.dispatchEvent('column-resizable-change', params, evnt);
+        setTimeout(() => {
+          $asTable.recalculate(true);
+        }, 300);
+      });
+    };
+
+    const handleUpdateRowResize = (evnt: MouseEvent, params: any) => {
+      reactData.resizeHeightFlag++;
+      $asTable.recalculate().then(() => {
+        $asTable.refreshScroll().then(() => {
+          $asTable.updateCellAreas();
+        });
+        $asTable.dispatchEvent('row-resizable-change', params, evnt);
+        setTimeout(() => {
+          $asTable.recalculate(true);
+        }, 300);
+      });
+    };
+
+    /**
+     * 给每列算"累计左偏移 oLeft"（虚拟 X 定位与合并单元格用）
+     * @returns
+     */
+    const updateColumnOffsetLeft = () => {
+      const { visibleColumn, fullColumnIdData } = internalData;
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      let offsetLeft = 0;
+      for (const column of visibleColumn) {
+        const colid = column.id;
+        const colRest = fullColumnIdData[colid];
+        if (colRest) {
+          colRest.oLeft = offsetLeft;
+        }
+        offsetLeft += column.renderWidth;
+      }
+    };
+
+    const updateRowOffsetTop = () => {
+      const { expandColumn } = reactData;
+      const { afterFullData, fullAllDataRowIdData, rowExpandedMaps } =
+        internalData;
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      const expandOpts = computeExpandOpts.value;
+      const cellOpts = computeCellOpts.value;
+      const defaultRowHeight = computeDefaultRowHeight.value;
+      const { handleGetRowId } = createHandleGetRowId($asTable);
+      let offsetTop = 0;
+      for (const row of afterFullData) {
+        const rowid = handleGetRowId(row);
+        const rowRest =
+          fullAllDataRowIdData[rowid] || ({} as AsTableDefines.RowCacheItem);
+        rowRest.oTop = offsetTop;
+        offsetTop += getCellRestHeight(rowRest, cellOpts, defaultRowHeight);
+        // 是否展开行
+        if (expandColumn && rowExpandedMaps[rowid]) {
+          offsetTop += rowRest.expandHeight || expandOpts.height || 0;
+        }
+      }
+    };
+
+    /**
+     * 更新展开行样式
+     */
+    const updateRowExpandStyle = () => {
+      const { expandColumn, scrollYLoad, scrollYTop, isScrollYBig } = reactData;
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      const expandOpts = computeExpandOpts.value;
+      const { mode } = expandOpts;
+      if (expandColumn && mode === 'fixed') {
+        const { elemStore, fullAllDataRowIdData } = internalData;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const rowExpandEl = refRowExpandElem.value;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        if (rowExpandEl && bodyScrollElem) {
+          let isUpdateHeight = false;
+          arrayEach(rowExpandEl.children, (reEl) => {
+            const expandEl = reEl as HTMLDivElement;
+            const rowid = expandEl.getAttribute('rowid') || '';
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              const expandHeight = expandEl.offsetHeight;
+              const trEl = bodyScrollElem.querySelector(
+                `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"]`,
+              ) as HTMLTableCellElement;
+              let offsetTop = 0;
+              if (scrollYLoad) {
+                offsetTop =
+                  isScrollYBig && trEl
+                    ? trEl.offsetTop + trEl.offsetHeight
+                    : rowRest.oTop +
+                      getCellRestHeight(rowRest, cellOpts, defaultRowHeight);
+              } else {
+                if (trEl) {
+                  offsetTop = trEl.offsetTop + trEl.offsetHeight;
+                }
+              }
+              if (isScrollYBig) {
+                offsetTop += scrollYTop;
+              }
+              expandEl.style.top = toCssUnit(offsetTop);
+
+              if (!isUpdateHeight && rowRest.expandHeight !== expandHeight) {
+                isUpdateHeight = true;
+              }
+              rowRest.expandHeight = expandHeight;
+            }
+          });
+          if (isUpdateHeight) {
+            reactData.rowExpandHeightFlag++;
+            nextTick(() => {
+              updateRowOffsetTop();
+            });
+          }
+        }
+      }
+    };
+
+    /**
+     * 更新树连接线样式
+     */
+    const updateTreeLineStyle = () => {
+      const { treeConfig } = props;
+      if (!treeConfig) {
+        return;
+      }
+      const { tableData } = reactData;
+      const { fullAllDataRowIdData, treeExpandedMaps } = internalData;
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      const cellOpts = computeCellOpts.value;
+      const defaultRowHeight = computeDefaultRowHeight.value;
+      const treeOpts = computeTreeOpts.value;
+      const { transform, mapChildrenField } = treeOpts;
+      const childrenField = treeOpts.childrenField;
+      const { handleGetRowId } = createHandleGetRowId($asTable);
+      const expParentList: {
+        nextRow: any;
+        prevRow: any;
+        row: any;
+      }[] = [];
+
+      const handleNodeRow = (row: any, rIndex: number, rows: any[]) => {
+        const rowid = handleGetRowId(row);
+        const rowRest =
+          fullAllDataRowIdData[rowid] || ({} as AsTableDefines.RowCacheItem);
+        const childList: any[] =
+          row[transform ? mapChildrenField : childrenField];
+        const prevRow = rows[rIndex - 1] || null;
+        const nextRow = rows[rIndex + 1] || null;
+        if (childList && childList.length > 0 && treeExpandedMaps[rowid]) {
+          expParentList.push({ row, prevRow, nextRow });
+          childList.forEach((childRow, crIndex) => {
+            const childRowid = handleGetRowId(childRow);
+            if (treeExpandedMaps[childRowid]) {
+              handleNodeRow(childRow, crIndex, childList);
+            }
+          });
+        } else {
+          if (nextRow) {
+            const nextRowid = handleGetRowId(nextRow);
+            const nextRowRest =
+              fullAllDataRowIdData[nextRowid] ||
+              ({} as AsTableDefines.RowCacheItem);
+            const currCellHeight = getCellRestHeight(
+              rowRest,
+              cellOpts,
+              defaultRowHeight,
+            );
+            const nextCellHeight = getCellRestHeight(
+              nextRowRest,
+              cellOpts,
+              defaultRowHeight,
+            );
+            rowRest.oHeight = currCellHeight;
+            rowRest.lineHeight = Math.floor(
+              currCellHeight / 2 + nextCellHeight / 2,
+            );
+          } else {
+            rowRest.oHeight = 0;
+            rowRest.lineHeight = 0;
+          }
+        }
+      };
+      tableData.forEach((row, rIndex) => {
+        handleNodeRow(row, rIndex, tableData);
+      });
+
+      lastArrayEach(expParentList, ({ row, nextRow }) => {
+        const rowid = handleGetRowId(row);
+        const childList: any[] =
+          row[transform ? mapChildrenField : childrenField];
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (rowRest) {
+          const currCellHeight = getCellRestHeight(
+            rowRest,
+            cellOpts,
+            defaultRowHeight,
+          );
+          let countOffsetHeight = currCellHeight;
+          let countLineHeight = 0;
+          childList.forEach((childRow) => {
+            const childRowid = handleGetRowId(childRow);
+            const childRowRest =
+              fullAllDataRowIdData[childRowid] ||
+              ({} as AsTableDefines.RowCacheItem);
+            const childList: any[] =
+              childRow[transform ? mapChildrenField : childrenField];
+            if (
+              treeExpandedMaps[childRowid] &&
+              childList &&
+              childList.length > 0
+            ) {
+              countOffsetHeight += childRowRest.oHeight || 0;
+              countLineHeight += childRowRest.oHeight || 0;
+            } else {
+              const cellHeight = getCellRestHeight(
+                childRowRest,
+                cellOpts,
+                defaultRowHeight,
+              );
+              childRowRest.oHeight = cellHeight;
+              childRowRest.lineHeight = cellHeight;
+              countOffsetHeight += cellHeight;
+              countLineHeight += cellHeight;
+            }
+          });
+          if (nextRow) {
+            const nextRowid = handleGetRowId(nextRow);
+            const nextRowRest =
+              fullAllDataRowIdData[nextRowid] ||
+              ({} as AsTableDefines.RowCacheItem);
+            const currCellHeight = getCellRestHeight(
+              rowRest,
+              cellOpts,
+              defaultRowHeight,
+            );
+            const nextCellHeight = getCellRestHeight(
+              nextRowRest,
+              cellOpts,
+              defaultRowHeight,
+            );
+            countOffsetHeight += currCellHeight;
+            countLineHeight += Math.floor(
+              currCellHeight / 2 + nextCellHeight / 2,
+            );
+          }
+          rowRest.lineHeight = countLineHeight;
+          rowRest.oHeight = countOffsetHeight;
+        }
+      });
+    };
+
     const handleRowExpandScroll = () => {
       const { elemStore } = internalData;
       const rowExpandEl = refRowExpandElem.value;
@@ -4776,7 +6511,42 @@ export const Table = defineComponent<AsTableProps>(
       }
     };
 
+    const handleColumnVisible = (visible: boolean) => {
+      return function (
+        fieldOrColumn:
+          | AsTableDefines.ColumnInfo
+          | AsTableDefines.ColumnInfo[]
+          | string
+          | string[],
+      ) {
+        let status = false;
+        const cols = isArray(fieldOrColumn) ? fieldOrColumn : [fieldOrColumn];
+        cols.forEach((item) => {
+          const column = handleFieldOrColumn($asTable, item);
+          if (column) {
+            if (column.children && column.children.length > 0) {
+              eachTree([column], (item) => {
+                item.visible = visible;
+                item.renderVisible = visible;
+              });
+            } else {
+              column.visible = visible;
+              column.renderVisible = visible;
+            }
+            if (!status) {
+              status = true;
+            }
+          }
+        });
+        if (status) {
+          return $asTable.handleCustom();
+        }
+        return nextTick();
+      };
+    };
+
     tableMethods = {
+      dispatchEvent,
       /**
        * 用于单选行，手动清空用户的选择
        */
@@ -5002,7 +6772,6 @@ export const Table = defineComponent<AsTableProps>(
       clearMergeFooterItems() {
         return $asTable.clearMergeFooterCells();
       },
-      dispatchEvent,
 
       /**
        * 根据 row 获取相对于 data 中的索引
@@ -6216,1188 +7985,55 @@ export const Table = defineComponent<AsTableProps>(
         return nextTick();
       },
     };
-    const clearAllSort = () => {
-      const { tableFullColumn } = internalData;
-      tableFullColumn.forEach((column) => {
-        column.order = null;
-      });
-    };
-
-    const calcTableHeight = (key: 'height' | 'maxHeight' | 'minHeight') => {
-      const { editConfig, editRules } = props;
-      const { parentHeight, tableColumn } = reactData;
-      let val = props[key];
-      if (key === 'minHeight') {
-        const defMinHeight = cMinHeight.value;
-        if (eqNull(val)) {
-          if (eqEmptyValue(defMinHeight)) {
-            if (tableColumn.length === 0) {
-              // 如果全部列被隐藏
-              val = 40;
-            } else if (editRules && isEnableConf(editConfig)) {
-              // 编辑模式默认最小高度
-              val = 144;
-            }
-          } else {
-            val = defMinHeight;
-          }
-        }
-      }
-      let num = 0;
-      if (val) {
-        if (val === '100%' || val === 'auto') {
-          num = parentHeight;
-        } else {
-          const excludeHeight = $asTable.getExcludeHeight();
-          num = isScale(val)
-            ? Math.floor(((toInteger(val) || 1) / 100) * parentHeight)
-            : toNumber(val);
-          num = Math.max(40, num - excludeHeight);
-        }
-      }
-      return num;
-    };
-
-    const handleCustomRestore = (storeData: AsTableDefines.CustomStoreData) => {
-      const { aggregateConfig } = props;
-      const { collectColumn } = internalData;
-      const {
-        isCustomAlign,
-        isCustomHeaderAlign,
-        isCustomFooterAlign,
-        isCustomResizable,
-        isCustomVisible,
-        isCustomFixed,
-        isCustomSort,
-        isCustomAggGroup,
-        isCustomAggFunc,
-        isCustomPager,
-      } = handleCustomStoreConfig($asTable);
-
-      let {
-        alignData,
-        headerAlignData,
-        footerAlignData,
-        resizableData,
-        sortData,
-        visibleData,
-        fixedData,
-        aggGroupData,
-        aggFuncData,
-        pagerData,
-      } = storeData;
-      // 处理还原
-      if (
-        (isCustomAlign && alignData) ||
-        (isCustomHeaderAlign && headerAlignData) ||
-        (isCustomFooterAlign && footerAlignData) ||
-        (isCustomResizable && resizableData) ||
-        (isCustomSort && sortData) ||
-        (isCustomVisible && visibleData) ||
-        (isCustomFixed && fixedData) ||
-        (isCustomAggGroup && aggGroupData) ||
-        (isCustomAggFunc && aggFuncData) ||
-        // TODO (isCustomPager && pagerData && $xeGGWrapper)
-        (isCustomPager && pagerData)
-      ) {
-        const sortColMaps: Record<
-          string,
-          {
-            key: string;
-            pKey: null | string;
-            sNum: number;
-          }
-        > = {};
-        if (isCustomSort && sortData) {
-          if (!isArray(sortData)) {
-            const sortRests: { index: number; key: string }[] = [];
-            each(sortData, (index: number, colKey: string) => {
-              sortRests.push({ key: colKey, index });
-            });
-            sortData = orderBy(sortRests, {
-              field: 'index',
-              order: 'asc',
-            }).map((item) => ({ k: item.key }));
-          }
-          let colNum = 1;
-          eachTree(
-            sortData,
-            (sObj, index, sOjs, path, pSObj) => {
-              sortColMaps[sObj.k] = {
-                key: sObj.k,
-                sNum: colNum++,
-                pKey: pSObj ? pSObj.k : null,
-              };
-            },
-            { children: 'c' },
-          );
-        }
-        const colKeyMaps: Record<string, AsTableDefines.ColumnInfo> = {};
-        const allCols: AsTableDefines.ColumnInfo[] = [];
-        const aggGroupConfs: AsTableDefines.RowGroupItem[] = [];
-        eachTree(collectColumn, (column, index, items, path, parentColumn) => {
-          const colKey = column.getKey();
-          // 支持一级
+    /**
+     * 表格键盘事件
+     */
+    const keydownEvent = (evnt: KeyboardEvent) => {
+      const { mouseConfig, keyboardConfig } = props;
+      const { filterStore, ctxMenuStore, editStore } = reactData;
+      const mouseOpts = computeMouseOpts.value;
+      const keyboardOpts = computeKeyboardOpts.value;
+      const { actived } = editStore;
+      const isEsc = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ESCAPE);
+      if (isEsc) {
+        $asTable.preventEvent(evnt, 'event.keydown', null, () => {
+          dispatchEvent('keydown-start', {}, evnt);
           if (
-            !parentColumn &&
-            isCustomFixed &&
-            fixedData &&
-            fixedData[colKey] !== undefined
+            keyboardConfig &&
+            mouseConfig &&
+            mouseOpts.area &&
+            $asTable.handleKdClAreaEvent
           ) {
-            column.fixed = fixedData[colKey];
-          }
-          if (
-            isCustomResizable &&
-            resizableData &&
-            isNumber(resizableData[colKey])
+            $asTable.handleKdClAreaEvent(evnt);
+          } else if (
+            actived.row ||
+            filterStore.visible ||
+            ctxMenuStore.visible
           ) {
-            column.resizeWidth = resizableData[colKey];
-          }
-          if (
-            isCustomVisible &&
-            visibleData &&
-            isBoolean(visibleData[colKey])
-          ) {
-            column.visible = visibleData[colKey];
-          }
-          if (
-            isCustomAggFunc &&
-            aggFuncData &&
-            aggregateConfig &&
-            aggFuncData[colKey]
-          ) {
-            column.aggFunc = aggFuncData[colKey];
-          }
-          if (isCustomAggGroup && aggGroupData && aggGroupData[colKey]) {
-            aggGroupConfs.push({ field: column.field });
-          }
-          colKeyMaps[colKey] = column;
-          allCols.push(column);
-        });
-        if (aggregateConfig && aggGroupConfs.length > 0) {
-          const groupRest = handleGroupData(
-            internalData.tableFullData,
-            aggGroupConfs,
-          );
-          internalData.tableFullTreeData = [];
-          internalData.tableFullGroupData = groupRest.treeData;
-          reactData.isRowGroupStatus = true;
-          reactData.rowGroupList = aggGroupConfs;
-          $asTable.cacheRowMap(false);
-        }
-        // 如果自定义了顺序
-        if (isCustomSort && sortData) {
-          allCols.forEach((column) => {
-            const colKey = column.getKey();
-            const scItem = sortColMaps[colKey];
-            if (scItem) {
-              const parentColumn = scItem.pKey ? colKeyMaps[scItem.pKey] : null;
-              column.parentId = parentColumn ? parentColumn.id : null;
-              column.renderSortNumber = scItem.sNum;
+            evnt.stopPropagation();
+            // 如果按下了 Esc 键，关闭快捷菜单、筛选
+            if ($asTable.closeMenu) {
+              $asTable.closeMenu();
             }
-          });
-          const newCollectCols = toArrayTree(
-            orderBy(allCols, 'renderSortNumber'),
-            { key: 'id', parentKey: 'parentId', children: 'children' },
-          );
-          internalData.collectColumn = newCollectCols;
-          internalData.tableFullColumn = getColumnList(newCollectCols);
-          reactData.updateColFlag++;
-        }
-        reactData.isCustomStatus = true;
-      } else {
-        reactData.isCustomStatus = false;
-      }
-    };
-
-    /**
-     * 还原自定义列操作状态
-     * 把上一次用户对列的自定义操作（显隐 / 宽度 / 冻结 / 顺序 / 对齐 / 聚合）从存储里读回来，套用到刚建立的列树上。
-     */
-    const restoreCustomStorage = () => {
-      const { customConfig } = props;
-      const tableId = computeTableId.value;
-      const customOpts = computeCustomOpts.value;
-      const { storage, restoreStore } = customOpts;
-      const {
-        isCustomAlign,
-        isCustomHeaderAlign,
-        isCustomFooterAlign,
-        isCustomResizable,
-        isCustomVisible,
-        isCustomFixed,
-        isCustomSort,
-        isCustomAggGroup,
-        isCustomAggFunc,
-      } = handleCustomStoreConfig($asTable);
-
-      if (
-        storage &&
-        (customConfig ? isEnableConf(customOpts) : customOpts.enabled) &&
-        (isCustomAlign ||
-          isCustomHeaderAlign ||
-          isCustomFooterAlign ||
-          isCustomResizable ||
-          isCustomVisible ||
-          isCustomFixed ||
-          isCustomSort ||
-          isCustomAggGroup ||
-          isCustomAggFunc)
-      ) {
-        if (!tableId) {
-          log.error('reqProp', ['id']);
-          return;
-        }
-        const storeData: AsTableDefines.CustomStoreData =
-          getCustomStorageMap(tableId);
-        return restoreStore
-          ? Promise.resolve(
-              restoreStore({
-                $table: $asTable,
-                id: tableId,
-                type: 'restore',
-                storeData,
-              }),
-            )
-              .then((storeData) => {
-                if (!storeData) {
-                  return;
-                }
-                return handleCustomRestore(storeData);
-              })
-              .catch((error) => error)
-          : handleCustomRestore(storeData);
-      }
-    };
-
-    const parseColumns = (isReset: boolean) => {
-      const leftList: AsTableDefines.ColumnInfo[] = [];
-      const centerList: AsTableDefines.ColumnInfo[] = [];
-      const rightList: AsTableDefines.ColumnInfo[] = [];
-      const { collectColumn, tableFullColumn, fullColumnIdData, scrollXStore } =
-        internalData;
-      const { isGroup, columnStore } = reactData;
-      // 如果是分组表头，如果子列全部被隐藏，则根列也隐藏
-      if (isGroup) {
-        const leftGroupList: AsTableDefines.ColumnInfo[] = [];
-        const centerGroupList: AsTableDefines.ColumnInfo[] = [];
-        const rightGroupList: AsTableDefines.ColumnInfo[] = [];
-        eachTree(collectColumn, (column, index, items, path, parentColumn) => {
-          const isColGroup = hasChildrenList(column);
-          // 如果是分组，必须按组设置固定列，不允许给子列设置固定
-          if (parentColumn && parentColumn.fixed) {
-            column.fixed = parentColumn.fixed;
-          }
-          if (
-            parentColumn &&
-            (column.fixed || '') !== (parentColumn.fixed || '')
-          ) {
-            log.error('groupFixed');
-          }
-          if (isColGroup) {
-            // 组自身的可见性 = 子树里是否存在可见叶子（"子列全隐藏 → 根列也隐藏"）
-            column.visible = !!findTree(column.children, (subColumn) =>
-              hasChildrenList(subColumn) ? false : subColumn.visible,
-            );
-          } else if (column.visible) {
-            if (column.fixed === 'left') {
-              leftList.push(column);
-            } else if (column.fixed === 'right') {
-              rightList.push(column);
-            } else {
-              centerList.push(column);
-            }
-          }
-        });
-        collectColumn.forEach((column) => {
-          if (column.visible) {
-            if (column.fixed === 'left') {
-              leftGroupList.push(column);
-            } else if (column.fixed === 'right') {
-              rightGroupList.push(column);
-            } else {
-              centerGroupList.push(column);
-            }
-          }
-        });
-        reactData.tableGroupColumn = leftGroupList
-          .concat(centerGroupList)
-          .concat(rightGroupList);
-      } else {
-        // 重新分配列
-        tableFullColumn.forEach((column) => {
-          if (column.visible) {
-            if (column.fixed === 'left') {
-              leftList.push(column);
-            } else if (column.fixed === 'right') {
-              rightList.push(column);
-            } else {
-              centerList.push(column);
-            }
-          }
-        });
-      }
-      // 拼出"可见列"总顺序：左固定 → 中间 → 右固定
-      const visibleColumn = leftList.concat(centerList).concat(rightList);
-      internalData.visibleColumn = visibleColumn;
-      updateColumnOffsetLeft();
-      // 决定要不要开横向虚拟滚动
-      const sXLoad = updateScrollXStatus();
-      reactData.hasFixedColumn = leftList.length > 0 || rightList.length > 0;
-      // // 写回共享分类缓存
-      Object.assign(columnStore, { leftList, centerList, rightList });
-      if (sXLoad) {
-        // 虚拟 X 不支持合并
-        if (props.spanMethod) {
-          log.error('scrollErrProp', ['span-method']);
-        }
-        if (props.footerSpanMethod) {
-          log.error('scrollErrProp', ['footer-span-method']);
-        }
-        if (isReset) {
-          //  列结构重建时，把横向虚拟滚动的渲染区间重置到"第一屏"
-          const { visibleSize } = handleVirtualXVisible();
-          scrollXStore.startIndex = 0;
-          scrollXStore.endIndex = visibleSize;
-          scrollXStore.visibleSize = visibleSize;
-          scrollXStore.visibleStartIndex = 0;
-          scrollXStore.visibleEndIndex = visibleSize;
-        }
-      }
-      //  如果列被显示/隐藏，则清除合并状态
-      // 如果列被设置为固定，则清除合并状态
-      if (
-        visibleColumn.length !== internalData.visibleColumn.length ||
-        internalData.visibleColumn.some(
-          (column, index) => column !== visibleColumn[index],
-        )
-      ) {
-        $asTable.clearMergeCells();
-        $asTable.clearMergeFooterItems();
-      }
-
-      // 写"可见列下标" _index
-      visibleColumn.forEach((column, index) => {
-        const colid = column.id;
-        const colRest = fullColumnIdData[colid];
-        if (colRest) {
-          colRest._index = index;
-        }
-      });
-      // 提交渲染列 + 聚合列
-      handleTableColumn();
-      handleUpdateAggValues();
-      if (isReset) {
-        updateColumnOffsetLeft();
-        return $asTable
-          .updateFooter()
-          .then(() => {
-            return $asTable.recalculate();
-          })
-          .then(() => {
-            $asTable.updateCellAreas();
-            return $asTable.recalculate();
-          });
-      }
-      return $asTable.updateFooter();
-    };
-
-    const handleUpdateAggValues = () => {
-      const { visibleColumn } = internalData;
-      const aggCols: AsTableDefines.ColumnInfo[] = [];
-
-      // 从「可见列」里挑出配了 aggFunc 的列，收集成一批
-      visibleColumn.forEach((column) => {
-        if (column.aggFunc) {
-          aggCols.push(column);
-        }
-      });
-      reactData.aggHandleAggColumns = aggCols; // 整体替换（不是增量改）
-    };
-
-    /**
-     * 处理默认勾选
-     */
-    const handleDefaultSelectionChecked = () => {
-      const { checkboxConfig } = props;
-      if (checkboxConfig) {
-        const { fullDataRowIdData } = internalData;
-        const checkboxOpts = computeCheckboxOpts.value;
-        const { checkAll, checkRowKeys } = checkboxOpts;
-        if (checkAll) {
-          handleCheckedAllCheckboxRow(true, true);
-        } else if (checkRowKeys) {
-          const defSelection: any[] = [];
-          checkRowKeys.forEach((rowKey: any) => {
-            const rowid = encodeRowid(rowKey);
-            if (fullDataRowIdData[rowid]) {
-              defSelection.push(fullDataRowIdData[rowid].row);
-            }
-          });
-          handleCheckedCheckboxRow(defSelection, true, true);
-        }
-      }
-    };
-
-    /**
-     * 处理单选框默认勾选
-     */
-    const handleDefaultRadioChecked = () => {
-      const { radioConfig } = props;
-      if (radioConfig) {
-        const { fullDataRowIdData } = internalData;
-        const radioOpts = computeRadioOpts.value;
-        const { checkRowKey: rowKey, reserve } = radioOpts;
-        const rowid = rowKey ? encodeRowid(rowKey) : null;
-        if (rowid) {
-          if (fullDataRowIdData[rowid]) {
-            handleCheckedRadioRow(fullDataRowIdData[rowid].row, true);
-          }
-          if (reserve) {
-            const rowkey = getRowkey($asTable);
-            internalData.radioReserveRow = { [rowkey]: rowid };
-          }
-        }
-      }
-    };
-
-    /**
-     * 处理默认展开行
-     */
-    const handleDefaultRowExpand = () => {
-      const { expandConfig } = props;
-      if (expandConfig) {
-        const { fullDataRowIdData } = internalData;
-        const expandOpts = computeExpandOpts.value;
-        const { expandAll, expandRowKeys } = expandOpts;
-        if (expandAll) {
-          $asTable.setAllRowExpand(true);
-        } else if (expandRowKeys) {
-          const defExpandeds: any[] = [];
-          expandRowKeys.forEach((rowKey: any) => {
-            const rowid = encodeRowid(rowKey);
-            if (fullDataRowIdData[rowid]) {
-              defExpandeds.push(fullDataRowIdData[rowid].row);
-            }
-          });
-          $asTable.setRowExpand(defExpandeds, true);
-        }
-      }
-    };
-
-    /**
-     * 处理默认展开树节点
-     */
-    const handleDefaultTreeExpand = () => {
-      const { treeConfig } = props;
-      if (treeConfig) {
-        const { fullAllDataRowIdData } = internalData;
-        const treeOpts = computeTreeOpts.value;
-        const { expandAll, expandRowKeys } = treeOpts;
-        if (expandAll) {
-          $asTable.setAllTreeExpand(true);
-        } else if (expandRowKeys) {
-          const defExpandeds: any[] = [];
-          expandRowKeys.forEach((rowKey) => {
-            const rowid = encodeRowid(rowKey);
-            const rowRest = fullAllDataRowIdData[rowid];
-            if (rowRest) {
-              defExpandeds.push(rowRest.row);
-            }
-          });
-          $asTable.setTreeExpand(defExpandeds, true);
-        }
-      }
-    };
-
-    /**
-     * 展开与收起行分组节点
-     * @param rows
-     * @param expanded
-     * @returns
-     */
-    const handleRowGroupBaseExpand = (rows: any[], expanded: boolean) => {
-      const { fullAllDataRowIdData, tableFullGroupData, rowGroupExpandedMaps } =
-        internalData;
-      const aggregateOpts = computeAggregateOpts.value;
-      const { mapChildrenField, accordion } = aggregateOpts;
-      const { handleGetRowId } = createHandleGetRowId($asTable);
-      let validRows = rows;
-      if (mapChildrenField) {
-        if (accordion) {
-          validRows =
-            validRows.length > 0 ? [validRows[validRows.length - 1]] : [];
-          // 同一级只能展开一个
-          const matchObj = findTree(
-            tableFullGroupData,
-            (item) =>
-              getRowid($asTable, item) === getRowid($asTable, validRows[0]),
-            { children: mapChildrenField },
-          );
-          if (matchObj) {
-            matchObj.items.forEach((item) => {
-              const rowid = handleGetRowId(item);
-              if (rowGroupExpandedMaps[rowid]) {
-                delete rowGroupExpandedMaps[rowid];
-              }
-            });
-          }
-        }
-        if (expanded) {
-          validRows.forEach((row) => {
-            const rowid = handleGetRowId(row);
-            if (!rowGroupExpandedMaps[rowid]) {
-              const rowRest = fullAllDataRowIdData[rowid];
-              if (
-                rowRest &&
-                row[mapChildrenField] &&
-                row[mapChildrenField].length > 0
-              ) {
-                rowGroupExpandedMaps[rowid] = row;
+            $asTable.closeFilter();
+            // 如果是激活编辑状态，则取消编辑
+            if (keyboardConfig && keyboardOpts.isEsc && actived.row) {
+              const params = actived.args;
+              $asTable.handleClearEdit(evnt);
+              // 如果配置了选中功能，则为选中状态
+              if (mouseOpts.selected) {
+                nextTick(() => $asTable.handleSelected(params, evnt));
               }
             }
-          });
-        } else {
-          validRows.forEach((item) => {
-            const rowid = handleGetRowId(item);
-            if (rowGroupExpandedMaps[rowid]) {
-              delete rowGroupExpandedMaps[rowid];
-            }
-          });
-        }
-      }
-      reactData.rowGroupExpandedFlag++;
-      return $asTable.recalculate();
-    };
-
-    /**
-     * 行分组的展开与收起
-     * @param rows
-     * @param expanded
-     * @returns
-     */
-    const handleRowGroupVirtualExpand = (rows: any[], expanded: boolean) => {
-      return handleRowGroupBaseExpand(rows, expanded)
-        .then(() => {
-          handleVirtualTreeToList();
-          $asTable.handleTableData();
-          reactData.rowGroupExpandedFlag++;
-          updateAfterDataIndex();
-          return nextTick();
-        })
-        .then(() => {
-          return handleLazyRecalculate(true, true, true);
-        })
-        .then(() => {
-          setTimeout(() => {
-            $asTable.updateCellAreas();
-          }, 30);
+          }
+          dispatchEvent('keydown', {}, evnt);
+          dispatchEvent('keydown-end', {}, evnt);
         });
-    };
-
-    /**
-     * 处理默认展开分组行
-     */
-    const handleDefaultRowGroupExpand = () => {
-      const { isRowGroupStatus } = reactData;
-      if (isRowGroupStatus) {
-        const aggregateOpts = computeAggregateOpts.value;
-        const { expandAll, expandGroupFields } = aggregateOpts;
-        if (expandAll) {
-          $asTable.setAllRowGroupExpand(true);
-        } else if (expandGroupFields && expandGroupFields.length > 0) {
-          $asTable.setRowGroupExpandByField(expandGroupFields, true);
-        }
       }
     };
 
-    const handleDefaultMergeCells = () => {
-      const { mergeCells } = props;
-      if (mergeCells) {
-        $asTable.setMergeCells(mergeCells);
-      }
-    };
-
-    const handleDefaultMergeHeaderItems = () => {
-      const { mergeHeaderCells } = props;
-      if (mergeHeaderCells) {
-        $asTable.setMergeHeaderCells(mergeHeaderCells);
-      }
-    };
-
-    const handleDefaultMergeFooterItems = () => {
-      const { mergeFooterCells } = props;
-      const mFooterCells = mergeFooterCells;
-      if (mFooterCells) {
-        $asTable.setMergeFooterCells(mFooterCells);
-      }
-    };
-
-    /**
-     * 处理数据加载默认行为
-     * 默认执行一次，除非被重置
-     */
-    const handleLoadDefaults = () => {
-      handleDefaultSelectionChecked();
-      handleDefaultRadioChecked();
-      handleDefaultRowExpand();
-      handleDefaultTreeExpand();
-      handleDefaultRowGroupExpand();
-      handleDefaultMergeCells();
-      handleDefaultMergeHeaderItems();
-      handleDefaultMergeFooterItems();
-      nextTick(() => {
-        setTimeout(() => $asTable.recalculate(), 0);
-      });
-    };
-
-    const checkValidate = (type: any) => {
-      if ($asTable.triggerValidate) {
-        return $asTable.triggerValidate(type);
-      }
-      return nextTick();
-    };
-
-    /**
-     * 当单元格发生改变时
-     * 如果存在规则，则校验
-     */
-    const handleChangeCell = (evnt: Event, params: any) => {
-      checkValidate('blur')
-        .catch((error: any) => error)
-        .then(() => {
-          $asTable
-            .handleEdit(params, evnt)
-            .then(() => checkValidate('change'))
-            .catch((error: any) => error);
-        });
-    };
-
-    const handleDefaultSort = () => {
-      const { sortConfig } = props;
-      if (sortConfig) {
-        const sortOpts = computeSortOpts.value;
-        let { defaultSort } = sortOpts;
-        if (defaultSort) {
-          if (!isArray(defaultSort)) {
-            defaultSort = [defaultSort];
-          }
-          if (defaultSort.length > 0) {
-            (sortConfig.multiple
-              ? defaultSort
-              : defaultSort.slice(0, 1)
-            ).forEach((item: any, index: number) => {
-              const { field, order } = item;
-              if (field && order) {
-                const column = $asTable.getColumnByField(field);
-                if (column && column.sortable) {
-                  column.order = order;
-                  column.sortTime = Date.now() + index;
-                }
-              }
-            });
-            if (!sortOpts.remote) {
-              $asTable.handleTableData(true).then(updateStyle);
-            }
-          }
-        }
-      }
-    };
-
-    /**
-     * 处理初始化的默认行为
-     * 只会执行一次
-     */
-    const handleInitDefaults = () => {
-      handleDefaultSort();
-    };
-
-    /**
-     * 把内部全量顺序变成渲染真正消费的数组
-     */
-    const handleTableColumn = () => {
-      const { scrollXLoad } = reactData;
-      const { visibleColumn, scrollXStore, fullColumnIdData } = internalData;
-
-      // ① 决定渲染内容：开虚拟 X → 按区间切片；否则全量
-      //    slice() 一定是新数组，所以即使全量也会让引用变化（跟 staticColumns.slice(0) 同一个套路）
-      const tableColumn = scrollXLoad
-        ? visibleColumn.slice(scrollXStore.startIndex, scrollXStore.endIndex)
-        : visibleColumn.slice(0);
-
-      // ② 顺手写"渲染中的虚拟下标 $index"（= 在切片内的位置）
-      tableColumn.forEach((column, $index) => {
-        const colRest = fullColumnIdData[column.id];
-        if (colRest) {
-          colRest.$index = $index; // getVMColumnIndex() 读的就是它
-        }
-      });
-
-      // ③ 提交到响应式状态 —— 渲染组件从这里取列
-      reactData.tableColumn = tableColumn;
-    };
-
-    const handleUpdateColumn = () => {
-      const columnList = orderBy(
-        internalData.collectColumn,
-        'renderSortNumber',
-      );
-      internalData.collectColumn = columnList;
-      const tFullColumn = getColumnList(columnList);
-      internalData.tableFullColumn = tFullColumn;
-      reactData.updateColFlag++;
-      cacheColumnMap();
-    };
-
-    const loadScrollXData = () => {
-      const { isScrollXBig } = reactData;
-      const { mergeBodyList, mergeFooterList, mergeBodyRowMaps, scrollXStore } =
-        internalData;
-      const { preloadSize, startIndex, endIndex, offsetSize } = scrollXStore;
-      const { toVisibleIndex, visibleSize } = handleVirtualXVisible();
-      const offsetItem: AsTableDefines.MergeCacheCol = {
-        startIndex: Math.max(
-          0,
-          isScrollXBig
-            ? toVisibleIndex - 1
-            : toVisibleIndex - 1 - offsetSize - preloadSize,
-        ),
-        endIndex: isScrollXBig
-          ? toVisibleIndex + visibleSize
-          : toVisibleIndex + visibleSize + offsetSize + preloadSize,
-      };
-      scrollXStore.visibleStartIndex = toVisibleIndex - 1;
-      scrollXStore.visibleEndIndex = toVisibleIndex + visibleSize + 1;
-      calculateMergerOffsetIndex(
-        mergeBodyList.concat(mergeFooterList),
-        mergeBodyRowMaps,
-        offsetItem,
-        'col',
-      );
-      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } =
-        offsetItem;
-      if (
-        (toVisibleIndex <= startIndex ||
-          toVisibleIndex >= endIndex - visibleSize - 1) &&
-        (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex)
-      ) {
-        scrollXStore.startIndex = offsetStartIndex;
-        scrollXStore.endIndex = offsetEndIndex;
-        $asTable.updateScrollXData();
-      }
-      // TODO $asTable.closeTooltip();
-    };
-
-    /**
-     * 根据"列数"判断要不要开启横向虚拟滚动，并把结论写回响应式状态
-     * @param fullColumn
-     * @returns
-     */
-    const updateScrollXStatus = (fullColumn?: any[]) => {
-      const virtualXOpts = computeVirtualXOpts.value;
-      const allCols = fullColumn || internalData.tableFullColumn;
-      // 如果gt为0，则总是启用
-      const scrollXLoad =
-        !!virtualXOpts.enabled &&
-        virtualXOpts.gt > -1 &&
-        (virtualXOpts.gt === 0 || virtualXOpts.gt < allCols.length);
-      reactData.scrollXLoad = scrollXLoad;
-      return scrollXLoad;
-    };
-
-    const handleUpdateColResize = (evnt: MouseEvent, params: any) => {
-      $asTable.analyColumnWidth();
-      $asTable.recalculate().then(() => {
-        $asTable.saveCustomStore('update:width');
-        $asTable.refreshScroll().then(() => {
-          $asTable.updateCellAreas();
-        });
-        $asTable.dispatchEvent('column-resizable-change', params, evnt);
-        setTimeout(() => {
-          $asTable.recalculate(true);
-        }, 300);
-      });
-    };
-
-    const handleUpdateRowResize = (evnt: MouseEvent, params: any) => {
-      reactData.resizeHeightFlag++;
-      $asTable.recalculate().then(() => {
-        $asTable.refreshScroll().then(() => {
-          $asTable.updateCellAreas();
-        });
-        $asTable.dispatchEvent('row-resizable-change', params, evnt);
-        setTimeout(() => {
-          $asTable.recalculate(true);
-        }, 300);
-      });
-    };
-
-    /**
-     * 给每列算"累计左偏移 oLeft"（虚拟 X 定位与合并单元格用）
-     * @returns
-     */
-    const updateColumnOffsetLeft = () => {
-      const { visibleColumn, fullColumnIdData } = internalData;
-      const el = refElem.value;
-      if (!el || !el.clientWidth) {
-        return;
-      }
-      let offsetLeft = 0;
-      for (const column of visibleColumn) {
-        const colid = column.id;
-        const colRest = fullColumnIdData[colid];
-        if (colRest) {
-          colRest.oLeft = offsetLeft;
-        }
-        offsetLeft += column.renderWidth;
-      }
-    };
-
-    const updateRowOffsetTop = () => {
-      const { expandColumn } = reactData;
-      const { afterFullData, fullAllDataRowIdData, rowExpandedMaps } =
-        internalData;
-      const el = refElem.value;
-      if (!el || !el.clientWidth) {
-        return;
-      }
-      const expandOpts = computeExpandOpts.value;
-      const cellOpts = computeCellOpts.value;
-      const defaultRowHeight = computeDefaultRowHeight.value;
-      const { handleGetRowId } = createHandleGetRowId($asTable);
-      let offsetTop = 0;
-      for (const row of afterFullData) {
-        const rowid = handleGetRowId(row);
-        const rowRest =
-          fullAllDataRowIdData[rowid] || ({} as AsTableDefines.RowCacheItem);
-        rowRest.oTop = offsetTop;
-        offsetTop += getCellRestHeight(rowRest, cellOpts, defaultRowHeight);
-        // 是否展开行
-        if (expandColumn && rowExpandedMaps[rowid]) {
-          offsetTop += rowRest.expandHeight || expandOpts.height || 0;
-        }
-      }
-    };
-
-    /**
-     * 更新展开行样式
-     */
-    const updateRowExpandStyle = () => {
-      const { expandColumn, scrollYLoad, scrollYTop, isScrollYBig } = reactData;
-      const el = refElem.value;
-      if (!el || !el.clientWidth) {
-        return;
-      }
-      const expandOpts = computeExpandOpts.value;
-      const { mode } = expandOpts;
-      if (expandColumn && mode === 'fixed') {
-        const { elemStore, fullAllDataRowIdData } = internalData;
-        const cellOpts = computeCellOpts.value;
-        const defaultRowHeight = computeDefaultRowHeight.value;
-        const rowExpandEl = refRowExpandElem.value;
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        if (rowExpandEl && bodyScrollElem) {
-          let isUpdateHeight = false;
-          arrayEach(rowExpandEl.children, (reEl) => {
-            const expandEl = reEl as HTMLDivElement;
-            const rowid = expandEl.getAttribute('rowid') || '';
-            const rowRest = fullAllDataRowIdData[rowid];
-            if (rowRest) {
-              const expandHeight = expandEl.offsetHeight;
-              const trEl = bodyScrollElem.querySelector(
-                `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"]`,
-              ) as HTMLTableCellElement;
-              let offsetTop = 0;
-              if (scrollYLoad) {
-                offsetTop =
-                  isScrollYBig && trEl
-                    ? trEl.offsetTop + trEl.offsetHeight
-                    : rowRest.oTop +
-                      getCellRestHeight(rowRest, cellOpts, defaultRowHeight);
-              } else {
-                if (trEl) {
-                  offsetTop = trEl.offsetTop + trEl.offsetHeight;
-                }
-              }
-              if (isScrollYBig) {
-                offsetTop += scrollYTop;
-              }
-              expandEl.style.top = toCssUnit(offsetTop);
-
-              if (!isUpdateHeight && rowRest.expandHeight !== expandHeight) {
-                isUpdateHeight = true;
-              }
-              rowRest.expandHeight = expandHeight;
-            }
-          });
-          if (isUpdateHeight) {
-            reactData.rowExpandHeightFlag++;
-            nextTick(() => {
-              updateRowOffsetTop();
-            });
-          }
-        }
-      }
-    };
-
-    /**
-     * 更新树连接线样式
-     */
-    const updateTreeLineStyle = () => {
-      const { treeConfig } = props;
-      if (!treeConfig) {
-        return;
-      }
-      const { tableData } = reactData;
-      const { fullAllDataRowIdData, treeExpandedMaps } = internalData;
-      const el = refElem.value;
-      if (!el || !el.clientWidth) {
-        return;
-      }
-      const cellOpts = computeCellOpts.value;
-      const defaultRowHeight = computeDefaultRowHeight.value;
-      const treeOpts = computeTreeOpts.value;
-      const { transform, mapChildrenField } = treeOpts;
-      const childrenField = treeOpts.childrenField;
-      const { handleGetRowId } = createHandleGetRowId($asTable);
-      const expParentList: {
-        nextRow: any;
-        prevRow: any;
-        row: any;
-      }[] = [];
-
-      const handleNodeRow = (row: any, rIndex: number, rows: any[]) => {
-        const rowid = handleGetRowId(row);
-        const rowRest =
-          fullAllDataRowIdData[rowid] || ({} as AsTableDefines.RowCacheItem);
-        const childList: any[] =
-          row[transform ? mapChildrenField : childrenField];
-        const prevRow = rows[rIndex - 1] || null;
-        const nextRow = rows[rIndex + 1] || null;
-        if (childList && childList.length > 0 && treeExpandedMaps[rowid]) {
-          expParentList.push({ row, prevRow, nextRow });
-          childList.forEach((childRow, crIndex) => {
-            const childRowid = handleGetRowId(childRow);
-            if (treeExpandedMaps[childRowid]) {
-              handleNodeRow(childRow, crIndex, childList);
-            }
-          });
-        } else {
-          if (nextRow) {
-            const nextRowid = handleGetRowId(nextRow);
-            const nextRowRest =
-              fullAllDataRowIdData[nextRowid] ||
-              ({} as AsTableDefines.RowCacheItem);
-            const currCellHeight = getCellRestHeight(
-              rowRest,
-              cellOpts,
-              defaultRowHeight,
-            );
-            const nextCellHeight = getCellRestHeight(
-              nextRowRest,
-              cellOpts,
-              defaultRowHeight,
-            );
-            rowRest.oHeight = currCellHeight;
-            rowRest.lineHeight = Math.floor(
-              currCellHeight / 2 + nextCellHeight / 2,
-            );
-          } else {
-            rowRest.oHeight = 0;
-            rowRest.lineHeight = 0;
-          }
-        }
-      };
-      tableData.forEach((row, rIndex) => {
-        handleNodeRow(row, rIndex, tableData);
-      });
-
-      lastArrayEach(expParentList, ({ row, nextRow }) => {
-        const rowid = handleGetRowId(row);
-        const childList: any[] =
-          row[transform ? mapChildrenField : childrenField];
-        const rowRest = fullAllDataRowIdData[rowid];
-        if (rowRest) {
-          const currCellHeight = getCellRestHeight(
-            rowRest,
-            cellOpts,
-            defaultRowHeight,
-          );
-          let countOffsetHeight = currCellHeight;
-          let countLineHeight = 0;
-          childList.forEach((childRow) => {
-            const childRowid = handleGetRowId(childRow);
-            const childRowRest =
-              fullAllDataRowIdData[childRowid] ||
-              ({} as AsTableDefines.RowCacheItem);
-            const childList: any[] =
-              childRow[transform ? mapChildrenField : childrenField];
-            if (
-              treeExpandedMaps[childRowid] &&
-              childList &&
-              childList.length > 0
-            ) {
-              countOffsetHeight += childRowRest.oHeight || 0;
-              countLineHeight += childRowRest.oHeight || 0;
-            } else {
-              const cellHeight = getCellRestHeight(
-                childRowRest,
-                cellOpts,
-                defaultRowHeight,
-              );
-              childRowRest.oHeight = cellHeight;
-              childRowRest.lineHeight = cellHeight;
-              countOffsetHeight += cellHeight;
-              countLineHeight += cellHeight;
-            }
-          });
-          if (nextRow) {
-            const nextRowid = handleGetRowId(nextRow);
-            const nextRowRest =
-              fullAllDataRowIdData[nextRowid] ||
-              ({} as AsTableDefines.RowCacheItem);
-            const currCellHeight = getCellRestHeight(
-              rowRest,
-              cellOpts,
-              defaultRowHeight,
-            );
-            const nextCellHeight = getCellRestHeight(
-              nextRowRest,
-              cellOpts,
-              defaultRowHeight,
-            );
-            countOffsetHeight += currCellHeight;
-            countLineHeight += Math.floor(
-              currCellHeight / 2 + nextCellHeight / 2,
-            );
-          }
-          rowRest.lineHeight = countLineHeight;
-          rowRest.oHeight = countOffsetHeight;
-        }
-      });
-    };
-
-    /**
-     * 初始化列层级缓存数据
-     *
-     * 遍历整棵列树（含子列），为每一列建立两套索引缓存：
-     *   1. fullColIdData    —— 以列 id 为 key 的缓存
-     *   2. fullColFieldData —— 以列 field 为 key 的缓存
-     * 同时为每个列节点补全父级信息、排序序号等元数据。
-     */
-    const initColumnHierarchy = () => {
-      const { collectColumn } = internalData;
-      const fullColIdData: Record<string, AsTableDefines.ColumnCacheItem> = {};
-      const fullColFieldData: Record<string, AsTableDefines.ColumnCacheItem> =
-        {};
-      let sortIndex = 1;
-      eachTree(collectColumn, (column, index, items, _, parentColumn) => {
-        const { id: colid, field } = column;
-        const parentId = parentColumn ? parentColumn.id : null;
-        const rest = {
-          $index: -1,
-          _index: -1,
-          column,
-          colid,
-          index,
-          items,
-          parent: parentColumn || null,
-          width: 0,
-          oLeft: 0,
-        };
-        column.parentId = parentId;
-        column.defaultParentId = parentId;
-        column.sortNumber = sortIndex;
-        column.renderSortNumber = sortIndex;
-        if (field) {
-          if (fullColFieldData[field]) {
-            log.error('colRepet', ['field', field]);
-          }
-          fullColFieldData[field] = rest;
-        }
-        fullColIdData[colid] = rest;
-      });
-      internalData.fullColumnIdData = fullColIdData;
-      internalData.fullColumnFieldData = fullColFieldData;
-    };
-
-    const buildColumnInfo = () => {
-      const { scrollXLoad, scrollYLoad, expandColumn } = reactData;
-      const expandOpts = computeExpandOpts.value;
-      cacheColumnMap();
-      parseColumns(true).then(() => {
-        if (reactData.scrollXLoad) {
-          loadScrollXData();
-        }
-      });
-
-      $asTable.clearHeaderFormatterCache();
-      $asTable.clearMergeCells();
-      $asTable.clearMergeFooterItems();
-      $asTable.handleTableData(true);
-      $asTable.handleAggregateSummaryData();
-
-      if (
-        (scrollXLoad || scrollYLoad) &&
-        expandColumn &&
-        expandOpts.mode !== 'fixed'
-      ) {
-        log.error('scrollErrProp', ['column.type=expand']);
-      }
-      return nextTick().then(() => {
-        // TODO if ($asToolbar) {
-        //   $xeToolbar.syncUpdate({
-        //     collectColumn: internalData.collectColumn,
-        //     $table: $asTable
-        //   })
-        // }
-        if ($asTable.handleUpdateCustomColumn) {
-          $asTable.handleUpdateCustomColumn();
-        }
-        const columnOpts = computeColumnOpts.value;
-        if (
-          props.showCustomHeader &&
-          reactData.isGroup &&
-          columnOpts.resizable
-        ) {
-          log.error('notConflictProp', [
-            'show-custom-header & colgroup',
-            'column-config.resizable=false',
-          ]);
-        }
-        reactData.isColLoading = false;
-        return handleLazyRecalculate(false, true, true);
-      });
-    };
-
-    const handleInitColumn = (collectColumn: AsTableDefines.ColumnInfo[]) => {
-      internalData.collectColumn = collectColumn;
-      // 拍平列
-      const tFullColumn = getColumnList(collectColumn);
-      internalData.tableFullColumn = tFullColumn;
-      reactData.updateColFlag++;
-      // 开始加载列
-      reactData.isColLoading = true;
-      initColumnHierarchy();
-      return Promise.resolve(restoreCustomStorage()).then(() => {
-        return buildColumnInfo();
-      });
-    };
-
-    const callSlot = <T,>(
-      slotFunc:
-        | ((params: T) => AsComponentSlotType | AsComponentSlotType[])
-        | null
-        | string,
-      params: T,
-    ): AsComponentSlotType[] => {
-      // TODO if ($xeGGWrapper) {
-      //   return $xeGGWrapper.callSlot(slotFunc, params);
-      // }
-      if (slotFunc && isFunction(slotFunc)) {
-        return getSlotVNs(slotFunc(params));
-      }
-      return [];
+    const contextMenuEvent = (evnt: MouseEvent) => {
+      dispatchEvent('context-menu', {}, evnt);
     };
 
     const handleTargetEnterEvent = (isClear: boolean) => {
@@ -7412,84 +8048,21 @@ export const Table = defineComponent<AsTableProps>(
       }
     };
 
-    /**
-     * 处理显示 tooltip
-     * @param {Event} evnt 事件
-     * @param {Row} row 行对象
-     */
-    const handleTooltip = (
-      evnt: MouseEvent,
-      tipOpts:
-        | AsTablePropTypes.FooterTooltipConfig
-        | AsTablePropTypes.HeaderTooltipConfig
-        | AsTablePropTypes.TooltipConfig,
-      type: 'body' | 'footer' | 'header',
-      tdEl: HTMLTableCellElement,
-      overflowElem: HTMLElement | null,
-      tipElem: HTMLElement | null,
-      params: any,
-    ) => {
-      const tipOverEl = overflowElem || tdEl;
+    const clearCrossTableDragStatus = () => {
+      crossTableDragRowObj = null;
+      crossTableDragRowInfo.row = null;
+    };
 
-      if (!tipOverEl) {
-        return nextTick();
+    const clearDragStatus = () => {
+      const { dragRow, dragCol } = reactData;
+      if (dragRow || dragCol) {
+        clearColDropOrigin();
+        clearRowDropOrigin();
+        hideDropTip();
+        clearCrossTableDragStatus();
+        reactData.dragRow = null;
+        reactData.dragCol = null;
       }
-      params.cell = tdEl;
-      const { tooltipStore } = reactData;
-      const { column, row } = params;
-      const { showAll, contentMethod } = tipOpts;
-      const cellText = toString(
-        column.type === 'html' ? tipOverEl.innerText : tipOverEl.textContent,
-      ).trim();
-      const isOver = tipOverEl.scrollWidth > tipOverEl.clientWidth;
-      let isShow = false;
-      let customContent: any = null;
-      let content = '';
-      if (contentMethod) {
-        customContent = contentMethod(params);
-      }
-      // 是否全部展示
-      if (showAll) {
-        // 如果为 null 默认显示
-        if (eqNull(customContent)) {
-          isShow = true;
-          content = cellText;
-        } else if (customContent !== '' && customContent !== false) {
-          // 如果为 '' | false 则不显示
-          isShow = true;
-          content = `${customContent}`;
-        }
-      } else {
-        // 如果为 null 使用默认逻辑
-        if (eqNull(customContent)) {
-          isShow = isOver;
-          content = cellText;
-        } else if (customContent !== '' && customContent !== false) {
-          // 如果为 '' | false 则不显示
-          isShow = true;
-          content = customContent;
-        } else {
-          content = cellText;
-        }
-      }
-      if (isShow && content) {
-        const tipContent = formatText(content);
-        Object.assign(tooltipStore, {
-          row,
-          column,
-          visible: true,
-          content: tipContent,
-          type,
-          currOpts: tipOpts,
-        });
-        nextTick(() => {
-          const $tooltip = refTooltip.value;
-          if ($tooltip && $tooltip.open) {
-            $tooltip.open(isOver ? tipOverEl : tipElem, tipContent);
-          }
-        });
-      }
-      return nextTick();
     };
 
     const handleRowDragEndClearStatus = () => {
@@ -7697,55 +8270,19 @@ export const Table = defineComponent<AsTableProps>(
       }
     };
 
-    /**
-     * 表格键盘事件
-     */
-    const keydownEvent = (evnt: KeyboardEvent) => {
-      const { mouseConfig, keyboardConfig } = props;
-      const { filterStore, ctxMenuStore, editStore } = reactData;
-      const mouseOpts = computeMouseOpts.value;
-      const keyboardOpts = computeKeyboardOpts.value;
-      const { actived } = editStore;
-      const isEsc = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ESCAPE);
-      if (isEsc) {
-        $asTable.preventEvent(evnt, 'event.keydown', null, () => {
-          dispatchEvent('keydown-start', {}, evnt);
-          if (
-            keyboardConfig &&
-            mouseConfig &&
-            mouseOpts.area &&
-            $asTable.handleKdClAreaEvent
-          ) {
-            $asTable.handleKdClAreaEvent(evnt);
-          } else if (
-            actived.row ||
-            filterStore.visible ||
-            ctxMenuStore.visible
-          ) {
-            evnt.stopPropagation();
-            // 如果按下了 Esc 键，关闭快捷菜单、筛选
-            if ($asTable.closeMenu) {
-              $asTable.closeMenu();
-            }
-            $asTable.closeFilter();
-            // 如果是激活编辑状态，则取消编辑
-            if (keyboardConfig && keyboardOpts.isEsc && actived.row) {
-              const params = actived.args;
-              $asTable.handleClearEdit(evnt);
-              // 如果配置了选中功能，则为选中状态
-              if (mouseOpts.selected) {
-                nextTick(() => $asTable.handleSelected(params, evnt));
-              }
-            }
-          }
-          dispatchEvent('keydown', {}, evnt);
-          dispatchEvent('keydown-end', {}, evnt);
-        });
+    const hideDropTip = () => {
+      const rdTipEl = refDragTipElem.value;
+      const rdLineEl = refDragRowLineElem.value;
+      const cdLineEl = refDragColLineElem.value;
+      if (rdTipEl) {
+        rdTipEl.style.display = '';
       }
-    };
-
-    const contextMenuEvent = (evnt: MouseEvent) => {
-      dispatchEvent('context-menu', {}, evnt);
+      if (rdLineEl) {
+        rdLineEl.style.display = '';
+      }
+      if (cdLineEl) {
+        cdLineEl.style.display = '';
+      }
     };
 
     const clearRowDragData = () => {
@@ -7757,7 +8294,7 @@ export const Table = defineComponent<AsTableProps>(
       //   if (ganttContainerElem) {
       //     wrapperEl = ganttContainerElem;
       //   }
-      //   dtClss.push('.vxe-gantt-view--body-row', '.vxe-gantt-view--chart-row');
+      //   dtClss.push('.As-gantt-view--body-row', '.As-gantt-view--chart-row');
       // }
       hideDropTip();
       clearRowDropOrigin();
@@ -7777,36 +8314,100 @@ export const Table = defineComponent<AsTableProps>(
       reactData.dragCol = null;
     };
 
-    const hideDropTip = () => {
-      const rdTipEl = refDragTipElem.value;
-      const rdLineEl = refDragRowLineElem.value;
-      const cdLineEl = refDragColLineElem.value;
-      if (rdTipEl) {
-        rdTipEl.style.display = '';
+    /**
+     * 处理显示 tooltip
+     * @param {Event} evnt 事件
+     * @param {Row} row 行对象
+     */
+    const handleTooltip = (
+      evnt: MouseEvent,
+      tipOpts:
+        | AsTablePropTypes.FooterTooltipConfig
+        | AsTablePropTypes.HeaderTooltipConfig
+        | AsTablePropTypes.TooltipConfig,
+      type: 'body' | 'footer' | 'header',
+      tdEl: HTMLTableCellElement,
+      overflowElem: HTMLElement | null,
+      tipElem: HTMLElement | null,
+      params: any,
+    ) => {
+      const tipOverEl = overflowElem || tdEl;
+
+      if (!tipOverEl) {
+        return nextTick();
       }
-      if (rdLineEl) {
-        rdLineEl.style.display = '';
+      params.cell = tdEl;
+      const { tooltipStore } = reactData;
+      const { column, row } = params;
+      const { showAll, contentMethod } = tipOpts;
+      const cellText = toString(
+        column.type === 'html' ? tipOverEl.innerText : tipOverEl.textContent,
+      ).trim();
+      const isOver = tipOverEl.scrollWidth > tipOverEl.clientWidth;
+      let isShow = false;
+      let customContent: any = null;
+      let content = '';
+      if (contentMethod) {
+        customContent = contentMethod(params);
       }
-      if (cdLineEl) {
-        cdLineEl.style.display = '';
+      // 是否全部展示
+      if (showAll) {
+        // 如果为 null 默认显示
+        if (eqNull(customContent)) {
+          isShow = true;
+          content = cellText;
+        } else if (customContent !== '' && customContent !== false) {
+          // 如果为 '' | false 则不显示
+          isShow = true;
+          content = `${customContent}`;
+        }
+      } else {
+        // 如果为 null 使用默认逻辑
+        if (eqNull(customContent)) {
+          isShow = isOver;
+          content = cellText;
+        } else if (customContent !== '' && customContent !== false) {
+          // 如果为 '' | false 则不显示
+          isShow = true;
+          content = customContent;
+        } else {
+          content = cellText;
+        }
       }
+      if (isShow && content) {
+        const tipContent = formatText(content);
+        Object.assign(tooltipStore, {
+          row,
+          column,
+          visible: true,
+          content: tipContent,
+          type,
+          currOpts: tipOpts,
+        });
+        nextTick(() => {
+          const $tooltip = refTooltip.value;
+          if ($tooltip && $tooltip.open) {
+            $tooltip.open(isOver ? tipOverEl : tipElem, tipContent);
+          }
+        });
+      }
+      return nextTick();
     };
 
-    const clearCrossTableDragStatus = () => {
-      crossTableDragRowObj = null;
-      crossTableDragRowInfo.row = null;
-    };
-
-    const clearDragStatus = () => {
-      const { dragRow, dragCol } = reactData;
-      if (dragRow || dragCol) {
-        clearColDropOrigin();
-        clearRowDropOrigin();
-        hideDropTip();
-        clearCrossTableDragStatus();
-        reactData.dragRow = null;
-        reactData.dragCol = null;
+    const callSlot = <T,>(
+      slotFunc:
+        | ((params: T) => AsComponentSlotType | AsComponentSlotType[])
+        | null
+        | string,
+      params: T,
+    ): AsComponentSlotType[] => {
+      // TODO if ($xeGGWrapper) {
+      //   return $xeGGWrapper.callSlot(slotFunc, params);
+      // }
+      if (slotFunc && isFunction(slotFunc)) {
+        return getSlotVNs(slotFunc(params));
       }
+      return [];
     };
 
     tablePrivateMethods = {
@@ -11682,8 +12283,8 @@ export const Table = defineComponent<AsTableProps>(
                           );
                           // TODO if ($xeGantt) {
                           //   dtClss.push(
-                          //     `.vxe-gantt-view--body-row[rowid="${rowid}"]`,
-                          //     `.vxe-gantt-view--chart-row[rowid="${rowid}"]`,
+                          //     `.As-gantt-view--body-row[rowid="${rowid}"]`,
+                          //     `.As-gantt-view--chart-row[rowid="${rowid}"]`,
                           //   );
                           // }
                         });
@@ -11703,8 +12304,8 @@ export const Table = defineComponent<AsTableProps>(
                     ];
                     // TODO if ($xeGantt) {
                     //   drClss.push(
-                    //     `.vxe-gantt-view--body-row[rowid="${dragRowid}"]`,
-                    //     `.vxe-gantt-view--chart-row[rowid="${dragRowid}"]`,
+                    //     `.As-gantt-view--body-row[rowid="${dragRowid}"]`,
+                    //     `.As-gantt-view--chart-row[rowid="${dragRowid}"]`,
                     //   );
                     // }
                     const newDtTrList = wrapperEl.querySelectorAll<HTMLElement>(
@@ -12364,6 +12965,86 @@ export const Table = defineComponent<AsTableProps>(
 
     Object.assign($asTable, tableMethods, tablePrivateMethods);
 
+    /**
+     * 渲染浮固定列
+     * 分别渲染左边固定列和右边固定列
+     * 如果宽度足够情况下，则不需要渲染固定列
+     * @param fixedType 固定列类型
+     */
+    function renderViewFixed(fixedType: 'left' | 'right') {
+      const { showHeader, showFooter } = props;
+      const {
+        tableData,
+        tableColumn,
+        tableGroupColumn,
+        columnStore,
+        footerTableData,
+      } = reactData;
+      const scrollbarOpts = computeScrollbarOpts.value;
+      const scrollbarXOpts = computeScrollbarXOpts.value;
+      const scrollbarYOpts = computeScrollbarYOpts.value;
+      const { overscrollBehavior: overscrollXBehavior } = scrollbarXOpts;
+      const { overscrollBehavior: overscrollYBehavior } = scrollbarYOpts;
+      const isFixedLeft = fixedType === 'left';
+      const fixedColumn = isFixedLeft
+        ? columnStore.leftList
+        : columnStore.rightList;
+      const osXBehavior = eqNull(overscrollXBehavior)
+        ? scrollbarOpts.overscrollBehavior
+        : overscrollXBehavior;
+      const osYBehavior = eqNull(overscrollYBehavior)
+        ? scrollbarOpts.overscrollBehavior
+        : overscrollYBehavior;
+
+      return (
+        <div
+          class={[
+            `${prefixCls.value}--fixed-${fixedType}-wrapper`,
+            `sx--${scrollbarXOpts.visible}`,
+            `sy--${scrollbarYOpts.visible}`,
+            {
+              [`x-ob--${osXBehavior}`]: osXBehavior,
+              [`y-ob--${osYBehavior}`]: osYBehavior,
+            },
+          ]}
+          ref={isFixedLeft ? refLeftContainer : refRightContainer}
+        >
+          {showHeader && (
+            <TableHeaderComponent
+              fixedColumn={fixedColumn}
+              fixedType={fixedType}
+              prefixCls={prefixCls.value}
+              ref={isFixedLeft ? refTableLeftHeader : refTableRightHeader}
+              size={mergedSize.value}
+              tableColumn={tableColumn}
+              tableData={tableData}
+              tableGroupColumn={tableGroupColumn}
+            ></TableHeaderComponent>
+          )}
+          <TableBodyComponent
+            fixedColumn={fixedColumn}
+            fixedType={fixedType}
+            prefixCls={prefixCls.value}
+            ref={isFixedLeft ? refTableLeftBody : refTableRightBody}
+            size={mergedSize.value}
+            tableColumn={tableColumn}
+            tableData={tableData}
+          ></TableBodyComponent>
+          {showFooter && (
+            <TableFooterComponent
+              fixedColumn={fixedColumn}
+              fixedType={fixedType}
+              footerTableData={footerTableData}
+              prefixCls={prefixCls.value}
+              ref={isFixedLeft ? refTableLeftFooter : refTableRightFooter}
+              size={mergedSize.value}
+              tableColumn={tableColumn}
+            ></TableFooterComponent>
+          )}
+        </div>
+      );
+    }
+
     const renderEmptyBody = () => {
       const emptyOpts = computeEmptyOpts.value;
       const emptySlot = slots.empty;
@@ -12672,86 +13353,6 @@ export const Table = defineComponent<AsTableProps>(
         </div>
       );
     };
-
-    /**
-     * 渲染浮固定列
-     * 分别渲染左边固定列和右边固定列
-     * 如果宽度足够情况下，则不需要渲染固定列
-     * @param fixedType 固定列类型
-     */
-    function renderViewFixed(fixedType: 'left' | 'right') {
-      const { showHeader, showFooter } = props;
-      const {
-        tableData,
-        tableColumn,
-        tableGroupColumn,
-        columnStore,
-        footerTableData,
-      } = reactData;
-      const scrollbarOpts = computeScrollbarOpts.value;
-      const scrollbarXOpts = computeScrollbarXOpts.value;
-      const scrollbarYOpts = computeScrollbarYOpts.value;
-      const { overscrollBehavior: overscrollXBehavior } = scrollbarXOpts;
-      const { overscrollBehavior: overscrollYBehavior } = scrollbarYOpts;
-      const isFixedLeft = fixedType === 'left';
-      const fixedColumn = isFixedLeft
-        ? columnStore.leftList
-        : columnStore.rightList;
-      const osXBehavior = eqNull(overscrollXBehavior)
-        ? scrollbarOpts.overscrollBehavior
-        : overscrollXBehavior;
-      const osYBehavior = eqNull(overscrollYBehavior)
-        ? scrollbarOpts.overscrollBehavior
-        : overscrollYBehavior;
-
-      return (
-        <div
-          class={[
-            `${prefixCls.value}--fixed-${fixedType}-wrapper`,
-            `sx--${scrollbarXOpts.visible}`,
-            `sy--${scrollbarYOpts.visible}`,
-            {
-              [`x-ob--${osXBehavior}`]: osXBehavior,
-              [`y-ob--${osYBehavior}`]: osYBehavior,
-            },
-          ]}
-          ref={isFixedLeft ? refLeftContainer : refRightContainer}
-        >
-          {showHeader && (
-            <TableHeaderComponent
-              fixedColumn={fixedColumn}
-              fixedType={fixedType}
-              prefixCls={prefixCls.value}
-              ref={isFixedLeft ? refTableLeftHeader : refTableRightHeader}
-              size={mergedSize.value}
-              tableColumn={tableColumn}
-              tableData={tableData}
-              tableGroupColumn={tableGroupColumn}
-            ></TableHeaderComponent>
-          )}
-          <TableBodyComponent
-            fixedColumn={fixedColumn}
-            fixedType={fixedType}
-            prefixCls={prefixCls.value}
-            ref={isFixedLeft ? refTableLeftBody : refTableRightBody}
-            size={mergedSize.value}
-            tableColumn={tableColumn}
-            tableData={tableData}
-          ></TableBodyComponent>
-          {showFooter && (
-            <TableFooterComponent
-              fixedColumn={fixedColumn}
-              fixedType={fixedType}
-              footerTableData={footerTableData}
-              prefixCls={prefixCls.value}
-              ref={isFixedLeft ? refTableLeftFooter : refTableRightFooter}
-              size={mergedSize.value}
-              tableColumn={tableColumn}
-            ></TableFooterComponent>
-          )}
-        </div>
-      );
-    }
 
     function renderViewport() {
       const { showHeader, showFooter } = props;
