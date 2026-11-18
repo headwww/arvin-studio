@@ -3422,6 +3422,7 @@ export const Table = defineComponent<AsTableProps>(
     };
 
     const updateStyle = () => {
+      const { mouseConfig } = props;
       const {
         isGroup,
         tableColumn,
@@ -3462,6 +3463,7 @@ export const Table = defineComponent<AsTableProps>(
       const isBodyRenderOptimize = computeIsBodyRenderOptimize.value;
       const isFooterRenderOptimize = computeIsFooterRenderOptimize.value;
       const scrollbarOpts = computeScrollbarOpts.value;
+      const mouseOpts = computeMouseOpts.value;
 
       const bodyWrapperElem = getRefElem(elemStore['main-body-wrapper']);
       const bodyTableElem = getRefElem(elemStore['main-body-table']);
