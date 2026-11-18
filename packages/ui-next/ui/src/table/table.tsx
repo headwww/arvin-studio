@@ -7917,14 +7917,12 @@ export const Table = defineComponent<AsTableProps>(
           if (targetColumn && targetColumn.fixed !== fixed) {
             // 是否超过最大固定列数量
             if (!targetColumn.fixed && isMaxFixedColumn) {
-              if (AsUI.modal) {
-                AsUI.modal.message({
-                  status: 'error',
-                  content: getI18n('As.table.maxFixedCol', [
-                    columnOpts.maxFixedSize,
-                  ]),
-                });
-              }
+              message.error(
+                formatLocaleText(
+                  locale?.value.maxFixedCol,
+                  columnOpts.maxFixedSize,
+                ),
+              );
               return nextTick();
             }
             eachTree([targetColumn], (column) => {
@@ -9226,12 +9224,9 @@ export const Table = defineComponent<AsTableProps>(
             : [fieldOrColumns]
           : [];
         if (maxGroupSize && confList.length > maxGroupSize) {
-          if (AsUI.modal) {
-            AsUI.modal.message({
-              status: 'error',
-              content: getI18n('As.table.maxGroupCol', [maxGroupSize]),
-            });
-          }
+          message.error(
+            formatLocaleText(locale?.value.maxGroupCol, maxGroupSize),
+          );
           return nextTick();
         }
         if (confList.length > 0) {
@@ -10288,6 +10283,7 @@ export const Table = defineComponent<AsTableProps>(
         return nextTick();
       },
     };
+
     /**
      * 表格键盘事件
      */

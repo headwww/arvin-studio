@@ -21,6 +21,8 @@ const localeValues: Locale = {
     rowGroupContentTotal: '{0} ({1})',
     resizeColTip: 'Width: {0} pixels',
     resizeRowTip: 'Height: {0} pixels',
+    maxFixedCol: 'The maximum number of fixed columns cannot exceed {0}',
+    maxGroupCol: 'The maximum number of grouping fields cannot exceed {0}',
     treeDragChild: 'Parents cannot drag to their own children',
   },
   locale: 'en',

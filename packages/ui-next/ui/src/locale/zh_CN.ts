@@ -21,6 +21,8 @@ const localeValues: Locale = {
     rowGroupContentTotal: '{0}（{1}）',
     resizeColTip: '宽：{0} 像素',
     resizeRowTip: '高：{0} 像素',
+    maxFixedCol: '最大固定列的数量不能超过 {0} 个',
+    maxGroupCol: '最大分组字段的数量不能超过 {0} 个',
     treeDragChild: '父级不能拖拽到自己的子级中',
   },
   locale: 'zh-cn',

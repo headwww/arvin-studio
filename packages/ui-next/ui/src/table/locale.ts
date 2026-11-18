@@ -21,6 +21,14 @@ export interface TableLocale {
    * 行分组统计文案，支持 {0}、{1} 占位符
    */
   rowGroupContentTotal: VueNode;
+  /**
+   * 最大固定列数量提示，支持 {0} 占位符
+   */
+  maxFixedCol: VueNode;
+  /**
+   * 最大分组字段数量提示，支持 {0} 占位符
+   */
+  maxGroupCol: VueNode;
   seqTitle: VueNode;
   /**
    * 升序按钮提示语

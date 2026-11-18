@@ -45,6 +45,7 @@ export interface AsTableConstructor<D = any> extends AsTableMethods {
 
 export interface TableReactData<D = any> {
   aggHandleAggColumns: AsTableDefines.ColumnInfo[];
+  aggHandleFields: string[];
   calcCellHeightFlag: number;
   checkboxColumn: AsTableDefines.ColumnInfo<D> | null | undefined;
   // 存放列相关的信息
@@ -2620,70 +2621,16 @@ export namespace AsTablePropTypes {
   }) => any[] | Array<null | number | string>[];
 
   export interface FloatingFilterConfig<D = AsTablePropTypes.Row> {
-    className?: string;
+    cellClassName?: string;
     /**
-     * 自定义确认按钮内容
+     * 是否启用
      */
-    confirmButtonText?: string;
+    enabled?: boolean;
     /**
-     * 弹出层在关闭时是否销毁
+     * 是否启用浮动筛选
      */
-    destroyOnClose?: boolean;
-    filterMethod?: (params: {
-      $table: AsTableConstructor<D>;
-      cellValue: any;
-      column: AsTableDefines.ColumnInfo;
-      options: AsTableDefines.FilterOption[];
-      row: D;
-      values: any[];
-    }) => any;
-    iconMatch?: string;
-    iconNone?: string;
-    /**
-     * 筛选按钮图标的显示方法，该方法的返回值用于决定该列是否显示筛选按钮图标
-     * @param params
-     */
-    iconVisibleMethod?(params: {
-      $table: AsTableConstructor<D>;
-      column: AsTableDefines.ColumnInfo;
-    }): boolean;
-    /**
-     * 只对 tree-config.transform 有效，是否允许同时筛选子孙层级
-     */
-    isDeep?: boolean;
-    /**
-     * 是否精确筛选到每一行，默认情况下是父级被匹配到则所有子级也被匹配；如果传 true 则会对每一行进行筛选
-     */
-    isEvery?: boolean;
-    /**
-     * 筛选面板最大高度
-     */
-    maxHeight?: number;
-    /**
-     * 是否允许多列筛选
-     */
-    multiple?: boolean;
-    /**
-     * 是否使用服务端筛选，如果设置为 true 则不会对数据进行处理
-     */
-    remote?: boolean;
-    /**
-     * 自定义重置按钮内容
-     */
-    resetButtonText?: string;
-    /**
-     * 是否显示底部按钮
-     */
-    showFooter?: boolean;
-    /**
-     * 是否显示筛选按钮图标
-     */
-    showIcon?: boolean;
-    /**
-     * 是否启用元素挂载
-     */
-    transfer?: boolean;
-    zIndex?: number;
+    floatingFilters?: AsColumnPropTypes.FloatingFilters;
+    rowClassName?: string;
   }
 
   /**
@@ -5304,24 +5251,28 @@ export namespace AsTablePropTypes {
    * 筛选配置项
    */
   export interface FilterConfig<D = AsTablePropTypes.Row> {
+    className?: string;
+    /**
+     * 自定义确认按钮内容
+     */
+    confirmButtonText?: string;
+    /**
+     * 弹出层在关闭时是否销毁
+     */
+    destroyOnClose?: boolean;
     filterMethod?: (params: {
       $table: AsTableConstructor<D>;
       cellValue: any;
-      column: AsTableDefines.ColumnInfo<D>;
+      column: AsTableDefines.ColumnInfo;
       options: AsTableDefines.FilterOption[];
       row: D;
       values: any[];
     }) => any;
-    /**
-     * 自定义筛选图标（有筛选条件）
-     */
-    iconMatch?: AsComponentSlotType | AsComponentSlotType[];
-    /**
-     * 自定义筛选图标（无筛选条件）
-     */
-    iconNone?: AsComponentSlotType | AsComponentSlotType[];
+    iconMatch?: string;
+    iconNone?: string;
     /**
      * 筛选按钮图标的显示方法，该方法的返回值用于决定该列是否显示筛选按钮图标
+     * @param params
      */
     iconVisibleMethod?(params: {
       $table: AsTableConstructor<D>;
@@ -5336,14 +5287,34 @@ export namespace AsTablePropTypes {
      */
     isEvery?: boolean;
     /**
-     * 是否使用服务端排序，如果设置为 true 则不会对数据进行处理
+     * 筛选面板最大高度
+     */
+    maxHeight?: number;
+    /**
+     * 是否允许多列筛选
+     */
+    multiple?: boolean;
+    /**
+     * 是否使用服务端筛选，如果设置为 true 则不会对数据进行处理
      */
     remote?: boolean;
-
+    /**
+     * 自定义重置按钮内容
+     */
+    resetButtonText?: string;
+    /**
+     * 是否显示底部按钮
+     */
+    showFooter?: boolean;
     /**
      * 是否显示筛选按钮图标
      */
     showIcon?: boolean;
+    /**
+     * 是否启用元素挂载
+     */
+    transfer?: boolean;
+    zIndex?: number;
   }
 
   /**
@@ -6189,6 +6160,7 @@ export namespace AsTableDefines {
     filterRender: AsColumnPropTypes.FilterRender;
     filters: AsColumnPropTypes.FilterItem[];
     fixed: AsColumnPropTypes.Fixed;
+
     floatingFilters: AsColumnPropTypes.FloatingFilters;
     footerAlign: AsColumnPropTypes.FooterAlign;
     footerClassName: AsColumnPropTypes.FooterClassName;
@@ -6197,11 +6169,15 @@ export namespace AsTableDefines {
     headerAlign: AsColumnPropTypes.HeaderAlign;
     headerClassName: AsColumnPropTypes.HeaderClassName;
     headerFormatter: AsColumnPropTypes.HeaderFormatter;
-
     maxWidth: AsColumnPropTypes.MaxWidth;
-    minWidth: AsColumnPropTypes.MinWidth;
 
+    minWidth: AsColumnPropTypes.MinWidth;
     padding: AsColumnPropTypes.Padding;
+
+    /**
+     * @private
+     */
+    renderFixed: AsColumnPropTypes.Fixed;
     /**
      * @private
      */

@@ -263,6 +263,7 @@ export function createReactData(): TableReactData {
     // 渲染中的数据
     tableData: [],
     rowGroupList: [],
+    aggHandleFields: [],
     isRowGroupStatus: false,
     scrollXLeft: 0,
     scrollXWidth: 0,
