@@ -704,15 +704,29 @@ export interface TableMethods<
    */
   blur(): Promise<void>;
   /**
-   * 用于 mouse-config.area，用于清除鼠标选择的区域，可以指定清除的区域
+   * 手动清除表格所有条件，还原到初始状态
+   * 对于增删改查的场景中可能会用到，比如在数据保存之后清除表格缓存
    */
-  clearCellAreas(
-    area?: AsTableExtendCellAreaDefines.MouseCellArea | number,
-  ): Promise<any>;
+  clearAll(): Promise<void>;
   /**
-   * 用于 mouse-config.area，手动清除标记为复制粘贴的区域
+   * 用于 checkbox-config.reserve，手动清空用户保留选中的行数据
    */
-  clearCopyCellArea(): Promise<any>;
+  clearCheckboxReserve(): Promise<any>;
+  /**
+   * 用于 type=checkbox，手动清空用户的选择
+   */
+  clearCheckboxRow(): Promise<any>;
+  /**
+   * 取消指定的固定列
+   * @param fieldOrColumns 列对象或字段名,支持传多个
+   */
+  clearColumnFixed(
+    fieldOrColumns:
+      | AsColumnPropTypes.Field
+      | AsColumnPropTypes.Field[]
+      | AsTableDefines.ColumnInfo
+      | AsTableDefines.ColumnInfo[],
+  ): Promise<void>;
   /**
    * 用于 column-config.isCurrent，手动清空当前高亮的状态
    */
@@ -722,13 +736,26 @@ export interface TableMethods<
    */
   clearCurrentRow(): Promise<any>;
   /**
-   * 手动清除单元格激活状态
+   * 手动清空单元格内容，如果不传参数，则清空整个表格内容，如果传了行则清空指定行内容，如果传了指定字段，则清空该字段内容
+   * @param rows 指定行
+   * @param field 字段名
    */
-  clearEdit(row?: any): Promise<any>;
+  clearData(rows?: any | any[], field?: string): Promise<any>;
+  /**
+   * 区别就是会触发对应的事件
+   */
+  clearFilterByEvent(
+    event: Event,
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): Promise<void>;
   /**
    * 清除表尾单元格格式化缓存
    */
   clearFooterFormatterCache(isUpdate?: boolean): Promise<void>;
+  /**
+   * 清除单元格格式化缓存
+   */
+  clearFormatterCache(isUpdate?: boolean): Promise<void>;
   /**
    * 清除表头单元格格式化缓存
    */
@@ -751,23 +778,66 @@ export interface TableMethods<
    */
   clearMergeHeaderCells(): Promise<any>;
   /**
+   * 清除所有标记状态
+   */
+  clearPendingRow(): Promise<any>;
+  /**
+   * 用于 radio-config.reserve，手动清空用户保留选中的行数据
+   */
+  clearRadioReserve(): Promise<any>;
+  /**
    * 用于 type=radio，手动清空用户的选择
    */
   clearRadioRow(): Promise<any>;
   /**
+   * 用于 type=expand，手动清空展开行状态，数据会恢复成未展开的状态
+   */
+  clearRowExpand(): Promise<void>;
+  /**
+   * 用于 expand-config.lazy，手动清空懒加载展开行的状态，数据会恢复成未展开的状态，当再次展开时会重新加载
+   */
+  clearRowExpandLoaded(row: any): Promise<void>;
+  /**
+   * 用于 type=expand，手动清空用户保留行的展开状态
+   */
+  clearRowExpandReserve(): Promise<void>;
+  /**
+   * 用于行分组，手动清空所有行分组展开状态
+   */
+  clearRowGroupExpand(): Promise<void>;
+  /**
+   * 清除行分组
+   */
+  clearRowGroups(): Promise<void>;
+  /**
    * 手动清除滚动相关信息，还原到初始状态
    */
   clearScroll(): Promise<any>;
-  /**
-   * 手动清除单元格选中状态
-   */
-  clearSelected(): Promise<any>;
   /**
    * 手动清空排序条件，数据会恢复成未排序的状态；如果需要同时触发对应的事件，请使用 clearSortByEvent
    */
   clearSort(
     fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): Promise<void>;
+  /**
+   * 区别就是会触发对应的事件
+   */
+  clearSortByEvent(
+    event: Event,
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): Promise<void>;
+  /**
+   * 用于 tree-config，手动清空树形节点的展开状态，数据会恢复成未展开的状态
+   */
+  clearTreeExpand(): Promise<void>;
+  /**
+   * 用于 tree-config.lazy，手动清空懒加载树节点的状态，数据会恢复成未展开的状态，当再次展开时会重新加载
+   */
+  clearTreeExpandLoaded(rows: any | any[]): Promise<any>;
+  /**
+   * 用于 tree-config.reserve，手动清空用户保留树节点的展开状态
+   */
+  clearTreeExpandReserve(): Promise<void>;
   /**
    * 手动关闭筛选面板
    */
@@ -776,32 +846,56 @@ export interface TableMethods<
    * 关闭 tooltip 提示
    */
   closeTooltip(): Promise<any>;
-
   /**
    * 创建 data 对象
    * 对于某些特殊场景可能会用到，会自动对数据的字段名进行检测，如果不存在就自动定义
    * @param records 数据
    */
   createData(records: any[]): Promise<any[]>;
-
+  /**
+   * 创建 Row|Rows 对象
+   * 对于某些特殊场景需要对数据进行手动插入时可能会用到
+   * @param records 数据
+   */
+  createRow(records: any | any[]): Promise<any | any[]>;
   dispatchEvent(
     type: ValueOf<AsTableEmits>,
     params: Record<string, any>,
     evnt: Event | null,
   ): void;
   /**
+   * 处理单元格数据，会自动在值发生改变时执行（当需要对运算量较大的数据进行缓存时可能会用到）
+   */
+  effectCellData(
+    row: any,
+    column: AsTableDefines.ColumnInfo,
+    options: AsTableDefines.CellCacheHandleOptions,
+  ): AsTableDefines.CellCacheResultObj;
+  /**
    * 使表格获取焦点
    */
   focus(): Promise<void>;
+  /**
+   * 用于数据聚合，获取分组行的内容
+   */
+  getAggregateContentByRow(row: any): string;
+  /**
+   * 用于数据聚合，获取分组行的子行
+   */
+  getAggregateRowChildren(row: any): DT[];
+  /**
+   * 获取单元格 td 元素
+   */
+  getCellElement(
+    row: any,
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): HTMLElement | null;
   /**
    * 获取单元格显示值
    */
   getCellLabel(
     row: any,
-    fieldOrColumn:
-      | AsColumnPropTypes.Field
-      | AsTableDefines.ColumnInfo<any>
-      | null,
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): null | number | string;
   /**
    * 用于 type=checkbox，获取半选状态的行数据；如果 isFull=true 则包含完整当前列表（包含筛选）；否则返回当前列表
@@ -816,16 +910,19 @@ export interface TableMethods<
    */
   getCheckboxReserveRecords(isFull?: boolean): any[];
   /**
-   * 获取当前筛选的所有列信息
+   * 根据列获取列的唯一主键
+   * @param fieldOrColumn
    */
-  getCheckedFilters(): AsTableDefines.FilterCheckedParams[];
+  getColid(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): null | string;
   /**
    * 根据列的字段名获取列
    * @param field 字段名
    */
   getColumnByField(
     field: AsColumnPropTypes.Field | null,
-  ): AsTableDefines.ColumnInfo<DT> | null;
+  ): AsTableDefines.ColumnInfo | null;
   /**
    * 根据列的唯一主键获取列
    * @param colid 列主键
@@ -835,12 +932,52 @@ export interface TableMethods<
    * 根据 column 获取相对于 columns 中的索引
    * @param column 列对象
    */
-  getColumnIndex(column: AsTableDefines.ColumnInfo<any> | null): number;
+  getColumnIndex(column: AsTableDefines.ColumnInfo | null): number;
+  /**
+   * 根据 th/td 元素获取对应的 column 信息
+   * @param cell 单元格节点元素
+   */
+  getColumnNode(cellElem: HTMLElement): null | {
+    colid: string;
+    index: number;
+    item: AsTableDefines.ColumnInfo;
+    items: AsTableDefines.ColumnInfo[];
+    parent: AsTableDefines.ColumnInfo | null;
+  };
+  /**
+   * 获取表格的可视列，也可以指定索引获取列
+   * @param columnIndex 列索引
+   */
+  getColumns(): AsTableDefines.ColumnInfo[];
+  getColumns(columnIndex?: number): AsTableDefines.ColumnInfo;
+  /**
+   * 获取列宽
+   * @param fieldOrColumn 列对象或字段名
+   */
+  getColumnWidth(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+  ): number;
+  /**
+   * 用于 column-config.isCurrent，获取当前列
+   */
+  getCurrentColumn(): AsTableDefines.ColumnInfo | null;
+  /**
+   * 用于 row-config.isCurrent，获取当前行的行数据
+   */
+  getCurrentRecord(isFull?: boolean): DT | null;
   /**
    * 用于 custom-config，用于获取个性化设置，用于自定义保持
    */
   getCustomStoreData(): AsTableDefines.CustomStoreData;
-
+  /**
+   * 获取数据，和 data 的行为一致，也可以指定索引获取数据
+   */
+  getData(): DT[];
+  getData(rowIndex: number): DT;
+  /**
+   * 获取根元素
+   */
+  getEl(): HTMLDivElement;
   /**
    * 获取表尾单元格显示值
    */
@@ -849,20 +986,191 @@ export interface TableMethods<
     fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): null | number | string;
   /**
+   * 获取表格的全量列
+   */
+  getFullColumns(): AsTableDefines.ColumnInfo[];
+  /**
+   * 获取表格的全量数据，如果是 tree-config 则返回带层级的树结构
+   */
+  getFullData(): DT[];
+  /**
    * 获取表头单元格显示值
    */
   getHeaderCellLabel(
     fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): string;
   /**
+   * 获取临时合并的单元格
+   */
+  getMergeCells(): AsTableDefines.MergeInfo[];
+  /**
+   * 获取临时合并的表尾单元格
+   */
+  getMergeFooterCells(): AsTableDefines.MergeInfo[];
+  getMergeFooterItems(): AsTableDefines.MergeInfo[];
+  /**
+   * 获取临时合并的表头单元格
+   */
+  getMergeHeaderCells(): AsTableDefines.MergeInfo[];
+  /**
+   * 获取自定义的 params 属性
+   */
+  getParams(): any;
+  /**
+   * 根据列获取列的唯一主键
+   * @param fieldOrColumn
+   */
+  getParentColumn(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): AsTableDefines.ColumnInfo | null;
+  /**
+   * 已废弃，请使用 getTreeParentRow
+   * @deprecated
+   */
+  getParentRow(rowOrRowid: any): DT | null;
+  /**
+   * 获取待删除状态的数据
+   */
+  getPendingRecords(): DT[];
+  /**
+   * 用于 type=radio，获取当已选中的行数据
+   */
+  getRadioRecord(isFull?: boolean): DT | null;
+  /**
+   * 用于 radio-config.reserve，获取已保留选中的行数据
+   */
+  getRadioReserveRecord(isFull?: boolean): DT | null;
+  /**
+   * 根据行的唯一主键获取行
+   * @param rowid 行主键
+   */
+  getRowById(rowid: null | number | string): DT | null;
+  /**
+   * 用于 expand-config，用于展开行，获取已展开的行数据
+   */
+  getRowExpandRecords(): DT[];
+  /**
+   * 获取行分组列字段
+   */
+  getRowGroupFields(): AsColumnPropTypes.Field[];
+  /**
+   * 获取行分组列信息
+   */
+  getRowGroups(): (
+    | AsTableDefines.ColumnInfo
+    | {
+        field: AsColumnPropTypes.Field;
+      }
+  )[];
+  /**
+   * 获取指定行的高度
+   * @param rowOrId
+   */
+  getRowHeight(rowOrId: any): number;
+  /**
+   * 批量获取行高
+   */
+  getRowHeightConf(isFull?: boolean): Record<string, number>;
+  /**
+   * 根据行获取行的唯一主键
+   * @param row 行对象
+   */
+  getRowid(row: any | null): string;
+  /**
    * 根据 row 获取相对于 data 中的索引
    * @param row 行对象
    */
   getRowIndex(row: any): number;
   /**
+   * 根据 tr 元素获取对应的 row 信息
+   * @param tr 行节点元素
+   */
+  getRowNode(trElem: HTMLElement): null | {
+    index: number;
+    item: any;
+    items: any[];
+    parent?: any;
+    rowid: string;
+  };
+  /**
+   * 根据 row 获取表格内置的序号
+   * @param row 行对象
+   */
+  getRowSeq(row: any): number | string;
+  /**
+   * 获取表格的滚动状态
+   * @deprecated
+   */
+  getScroll(): {
+    scrollLeft: number;
+    scrollTop: number;
+    virtualX: boolean;
+    virtualY: boolean;
+  };
+  /**
+   * 获取表格的滚动数据
+   */
+  getScrollData(): {
+    clientHeight: number;
+    clientWidth: number;
+    isBottom: boolean;
+    isLeft: boolean;
+    isRight: boolean;
+    isTop: boolean;
+    scrollbarHeight: number;
+    scrollbarWidth: number;
+    scrollHeight: number;
+    scrollLeft: number;
+    scrollTop: number;
+    scrollWidth: number;
+    virtualX: boolean;
+    virtualY: boolean;
+  };
+  /**
    * 获取当前排序的列信息
    */
   getSortColumns(): AsTableDefines.SortCheckedParams[];
+  /**
+   * 获取当前表格的列
+   * 收集到的全量列、全量表头列、处理条件之后的全量表头列、当前渲染中的表头列
+   */
+  getTableColumn(): {
+    collectColumn: AsTableDefines.ColumnInfo[];
+    fullColumn: AsTableDefines.ColumnInfo[];
+    tableColumn: AsTableDefines.ColumnInfo[];
+    visibleColumn: AsTableDefines.ColumnInfo[];
+  };
+  /**
+   * 获取当前表格的数据
+   * 完整的全量表体数据、处理条件之后的全量表体数据、当前渲染中的表体数据、当前渲染中的表尾数据
+   */
+  getTableData(): {
+    footerData: DT[];
+    fullData: DT[];
+    tableData: DT[];
+    visibleData: DT[];
+  };
+  /**
+   * 用于 tree-config，用于树表格，获取已展开的节点
+   * 注意，即使父节点被收起，只要该节点还处于展开状态都能获取到
+   */
+  getTreeExpandRecords(): DT[];
+  /**
+   * 只对 tree-config 有效，用于树形结构，获取指定行的父级
+   */
+  getTreeParentRow(rowOrRowid: any): DT | null;
+  /**
+   * 只对 tree-config 有效，用于树形结构，获取指定行的子级
+   */
+  getTreeRowChildren(rowOrRowid: any): DT[];
+  /**
+   * 只对 tree-config 有效，用于树形结构，获取指定行的层级
+   */
+  getTreeRowLevel(rowOrRowid: any): number;
+  /**
+   * 用于 edit-config，获取已修改的单元格数据
+   */
+  getUpdateCells(): AsTableDefines.UpdateCellObj<DT>[];
   /**
    * 根据 column 获取渲染中的虚拟索引
    * @param column 列对象
@@ -884,35 +1192,160 @@ export interface TableMethods<
    */
   getVTRowIndex(row: any): number;
   /**
+   * 请使用 isPendingByRow
+   * @deprecated
+   */
+  hasPendingByRow(row: any): boolean;
+  /**
+   * 隐藏指定列
+   * @param fieldOrColumns 列对象或字段名,支持传多个
+   */
+  hideColumn(
+    fieldOrColumns:
+      | AsColumnPropTypes.Field
+      | AsColumnPropTypes.Field[]
+      | AsTableDefines.ColumnInfo
+      | AsTableDefines.ColumnInfo[],
+  ): Promise<void>;
+  /**
+   * 判断指定列是否为筛选状态，如果为空则判断所有列
+   * @param columnOrField 列对象或字段名
+   */
+  isActiveFilterByColumn(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): boolean;
+  /**
+   * 用于数据聚合，判断是否展开
+   */
+  isAggregateExpandByRow(row: any): boolean;
+  /**
+   * 用于数据聚合，判断是否展开
+   */
+  isAggregateExpandByRow(row: any): boolean;
+  /**
    * 用于数据聚合，判断是为否为聚合的行数据
    */
   isAggregateRecord(row: any): boolean;
+  /**
+   * 用于 type=checkbox，判断列头复选框是否被选中
+   */
+  isAllCheckboxChecked(): boolean;
+  /**
+   * 用于 type=checkbox，判断列头复选框是否被半选
+   */
+  isAllCheckboxIndeterminate(): boolean;
   /**
    * 用于 type=checkbox，判断复选行数据是否勾选
    * @param row 指定行
    */
   isCheckedByCheckboxRow(row: any): boolean;
   /**
+   * 用于 type=checkbox，判断复选行数据是否勾选
+   * @param key 指定主键
+   */
+  isCheckedByCheckboxRowKey(key: null | number | string | undefined): boolean;
+  /**
+   * 用于 type=radio，判断单选行数据是否勾选
+   * @param row 指定行
+   */
+  isCheckedByRadioRow(row: any | null): boolean;
+  /**
+   * 用于 type=radio，判断单选行数据是否勾选
+   * @param key 指定主键
+   */
+  isCheckedByRadioRowKey(key: null | number | string | undefined): boolean;
+  /**
+   * @deprecated 已废弃，请使用 isRowExpandByRow
+   */
+  isExpandByRow(row: any | null): boolean;
+  /**
+   * 已废弃，请使用 isActiveFilterByColumn
+   * @deprecated
+   */
+  isFilter(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): boolean;
+  /**
+   * 用于 type=checkbox，判断复选行数据是否半选
+   * @param row 指定行
+   */
+  isIndeterminateByCheckboxRow(row: any): boolean;
+  /**
+   * 用于 type=checkbox，判断复选行数据是否半选
+   * @param key 指定主键
+   */
+  isIndeterminateByCheckboxRowKey(
+    key: null | number | string | undefined,
+  ): boolean;
+  /**
    * 用于 edit-config，判断行是否为新增的临时数据
    * @param row 指定行
    */
   isInsertByRow(row: any | null): boolean;
+  /**
+   * 判断行是否为待删除状态
+   * @param row 指定行
+   */
+  isPendingByRow(row: any): boolean;
+  /**
+   * 判断行是否被删除
+   * @param row 指定行
+   */
+  isRemoveByRow(row: any | null): boolean;
   /**
    * 用于 expand-config，判断行是否为展开状态
    * @param row 指定行
    */
   isRowExpandByRow(row: any | null): boolean;
   /**
+   * 用于 expand-config.lazy，用于懒加载展开行，判断展开行是否懒加载完成
+   * @param row 指定行
+   */
+  isRowExpandLoaded(row: any | null): boolean;
+  /**
+   * 已废弃，请使用 isAggregateExpandByRow
+   * @deprecated
+   */
+  isRowGroupExpandByRow(row: any): boolean;
+  /**
+   * 已废弃，请使用 isAggregateRecord
+   * @deprecated
+   */
+  isRowGroupRecord(row: any): boolean;
+  /**
+   * 判断指定列是否为排序状态，如果为空则判断所有列
+   * @param columnOrField 列对象或字段名
+   */
+  isSort(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+  ): boolean;
+  /**
    * 用于 tree-config，判断行是否为树形节点展开状态
    * @param row 指定行
    */
   isTreeExpandByRow(row: any | null): boolean;
+  /**
+   * 用于 tree-config.lazy，用于懒加载树表格，判断树节点是否懒加载完成
+   */
+  isTreeExpandLoaded(row: any | null): boolean;
   /**
    * 只对 keep-source 开启有效，判断行数据是否发生改变
    * @param row 指定行
    * @param field 指定字段
    */
   isUpdateByRow(row: any, field?: null | string): boolean;
+  /**
+   * 加载列配置
+   * @param columns 列对象
+   */
+  loadColumn(
+    columns: (AsTableDefines.ColumnInfo | AsTableDefines.ColumnOptions)[],
+  ): Promise<any>;
+  /**
+   * 加载数据
+   * @param data 数据
+   */
+  loadData(data: any[]): Promise<any>;
 
   /**
    * 用于树结构，给行数据加载子节点
@@ -921,25 +1354,191 @@ export interface TableMethods<
    */
   loadTreeChildren(row: any, children: any[]): Promise<any[]>;
   /**
+   * 移动列到指定列的位置
+   * @param fieldOrColumn
+   * @param targetFieldOrColumn 列对象、列字段、移动偏移量
+   * @param options
+   */
+  moveColumnTo(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+    targetFieldOrColumn:
+      | AsColumnPropTypes.Field
+      | AsTableDefines.ColumnInfo
+      | number,
+    options?: {
+      /**
+       * 移动到目标列的左边或右边位置
+       */
+      dragPos?: '' | 'left' | 'right' | null;
+      /**
+       * 只对 column-drag-config.isToChildDrag 有效，移动成子级
+       */
+      dragToChild?: boolean;
+      /**
+       * 只对 row-drag-config.isCrossDrag 有效，允许跨层级移动
+       */
+      isCrossDrag?: boolean;
+    },
+  ): Promise<{
+    status: boolean;
+  }>;
+  /**
+   * 移动行到指定行的位置
+   * @param rowidOrRow
+   * @param targetRowidOrRow 行对象、行主键、移动偏移量
+   * @param options
+   */
+  moveRowTo(
+    rowidOrRow: any,
+    targetRowidOrRow: any,
+    options?: {
+      /**
+       * 移动到目标行的上方或下方位置
+       */
+      dragPos?: '' | 'bottom' | 'top' | null;
+      /**
+       * 只对 row-drag-config.isToChildDrag 有效，移动成子级
+       */
+      dragToChild?: boolean;
+      /**
+       * 只对 row-drag-config.isCrossDrag 有效，允许跨层级移动
+       */
+      isCrossDrag?: boolean;
+    },
+  ): Promise<{
+    status: boolean;
+  }>;
+  /**
    * 打开 tooltip 提示
    * @param target 目标元素
    * @param content 内容
    */
   openTooltip(target: HTMLElement, content: number | string): Promise<any>;
   /**
+   * 手动计算单元格高度，只对自定义行高时有效
+   * @param rowOrId 指定单行或多行
+   */
+  recalcRowHeight(rowOrId: any | any[]): Promise<any>;
+  /**
    * 重新计算表格，如果传 true 则进行完整计算
    * 对于某些特殊场景可能会用到，比如隐藏的表格、重新计算列宽...等
    */
   recalculate(refull?: boolean): Promise<void>;
   /**
+   * 重做
+   */
+  redo(): Promise<{ status: boolean }>;
+  /**
    * 用于数据聚合，刷新聚合函数计算值
    */
   refreshAggregateCalcValues(): Promise<void>;
+  /**
+   * 刷新列配置
+   * 对于动态修改属性、显示/隐藏列等场景下可能会用到
+   * 如果传 true 则会检查列顺序并排序
+   */
+  refreshColumn(resiveOrder?: boolean): Promise<void>;
   /**
    * 刷新滚动操作，手动同步滚动相关位置
    * 对于某些特殊的操作，比如滚动条错位、固定列不同步
    */
   refreshScroll(): Promise<void>;
+  /**
+   * 加载列配置并恢复到初始状态
+   * @param columns 列对象
+   */
+  reloadColumn(
+    columns: (AsTableDefines.ColumnInfo | AsTableDefines.ColumnOptions)[],
+  ): Promise<any>;
+  /**
+   * 加载数据并恢复到初始状态
+   * @param data 数据
+   */
+  reloadData(data: any[]): Promise<void>;
+  /**
+   * @deprecated 已废弃，请使用 reloadRowExpand
+   */
+  reloadExpandContent(row: any): Promise<void>;
+  /**
+   * 修改行数据并恢复到初始状态，比如编辑之后需要修改成未编辑状态
+   * @param rows 行对象
+   * @param record 新数据
+   * @param field 指定字段名
+   */
+  reloadRow(rows: any | any[], record?: any, field?: string): Promise<void>;
+  /**
+   * 重新懒加载展开行，并展开内容
+   * @param row 指定行
+   */
+  reloadRowExpand(row: any): Promise<void>;
+  /**
+   * @deprecated 已废弃，请使用 reloadTreeExpand
+   */
+  reloadTreeChilds(row: any): Promise<any>;
+  /**
+   * 重新懒加载树节点，并展开该节点
+   * @param rows 指定行
+   */
+  reloadTreeExpand(row: any): Promise<any>;
+  /**
+   * 删除所有新增的临时数据
+   */
+  removeInsertRow(): Promise<{ row: any; rows: any[] }>;
+  /**
+   * 取消单元格的临时合并状态，如果为数组，则取消多个合并
+   */
+  removeMergeCells(
+    merges:
+      | AsTableDefines.MergeOptions<any>
+      | AsTableDefines.MergeOptions<any>[],
+  ): Promise<AsTableDefines.MergeInfo[]>;
+  /**
+   * 取消表尾单元格的临时合并状态，如果为数组，则取消多个合并
+   */
+  removeMergeFooterCells(
+    merges:
+      | AsTableDefines.MergeOptions<any>
+      | AsTableDefines.MergeOptions<any>[],
+  ): Promise<AsTableDefines.MergeInfo[]>;
+  removeMergeFooterItems(
+    merges:
+      | AsTableDefines.MergeOptions<any>
+      | AsTableDefines.MergeOptions<any>[],
+  ): Promise<AsTableDefines.MergeInfo[]>;
+  /**
+   * 取消表头单元格的临时合并状态，如果为数组，则取消多个合并
+   */
+  removeMergeHeaderCells(
+    merges:
+      | AsTableDefines.MergeOptions<any>
+      | AsTableDefines.MergeOptions<any>[],
+  ): Promise<AsTableDefines.MergeInfo[]>;
+  /**
+   * 已废弃，被 resetCustom 替换
+   * @deprecated
+   */
+  resetColumn(
+    options?:
+      | boolean
+      | {
+          fixed?: boolean;
+          order?: boolean;
+          resizable?: boolean;
+          visible?: boolean;
+        },
+  ): Promise<void>;
+  // /**
+  //  * 将表格数据转成原始数据
+  //  * 会自动去掉主键等内部属性
+  //  * @param rows
+  //  */
+  // toOriginalRecords(rows: any[]): DT[]
+  /**
+   * 只对 keep-source 开启有效，还原指定行 row 或者整个表格的数据
+   * @param rows 指定行
+   * @param field 字段名
+   */
+  revertData(rows?: any | any[], field?: string): Promise<any>;
   /**
    * 如果有滚动条，则滚动到对应的位置
    */
@@ -955,6 +1554,26 @@ export interface TableMethods<
     y?: null | number,
   ): Promise<void>;
   /**
+   * 如果有滚动条，则滚动到对应的列
+   */
+  scrollToColumn(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+    options?: AsTableDefines.ScrollToColumnConfig,
+  ): Promise<any>;
+  /**
+   * 如果有滚动条，则滚动到最后一列
+   */
+  scrollToEndColumn(
+    options?: AsTableDefines.ScrollToColumnConfig,
+  ): Promise<any>;
+  /**
+   * 如果有滚动条，则滚动到最后一行
+   */
+  scrollToEndRow(
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+    options?: AsTableDefines.ScrollToRowConfig,
+  ): Promise<any>;
+  /**
    * 如果有滚动条，则滚动到对应的行
    */
   scrollToRow(
@@ -963,11 +1582,23 @@ export interface TableMethods<
     options?: AsTableDefines.ScrollToRowConfig,
   ): Promise<any>;
   /**
+   * 如果有滚动条，则滚动到第一列
+   */
+  scrollToStartColumn(
+    options?: AsTableDefines.ScrollToColumnConfig,
+  ): Promise<any>;
+  /**
+   * 如果有滚动条，则滚动到第一行
+   */
+  scrollToStartRow(
+    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+    options?: AsTableDefines.ScrollToRowConfig,
+  ): Promise<any>;
+  /**
    * 用于 type=checkbox，设置所有行的选中状态
    * @param checked 是否选中
    */
   setAllCheckboxRow(checked: boolean): Promise<any>;
-
   /**
    * 用于 expand-config，设置所有行的展开与否
    * 如果是关闭所有行，可以使用 clearRowExpand 快速清除
@@ -986,6 +1617,51 @@ export interface TableMethods<
    */
   setAllTreeExpand(checked: boolean): Promise<void>;
   /**
+   * 用于 type=checkbox，设置行为选中状态，第二个参数为选中与否
+   * @param rows 指定行
+   * @param checked 是否选中
+   */
+  setCheckboxRow(rows: any | any[], checked: boolean): Promise<any>;
+  /**
+   * 用于 type=checkbox，设置行为选中状态，第二个参数为选中与否
+   * @param keys 指定主键
+   * @param checked 是否选中
+   */
+  setCheckboxRowByKey(
+    keys: (number | string)[] | null | number | string | undefined,
+    checked: boolean,
+  ): Promise<any>;
+  // 后续可能废弃
+  setCheckboxRowKey(
+    keys: (number | string)[] | null | number | string | undefined,
+    checked: boolean,
+  ): Promise<any>;
+  /**
+   * 设置指定列为固定列
+   * @param fieldOrColumns 列对象或字段名,支持传多个
+   */
+  setColumnFixed(
+    fieldOrColumns:
+      | AsColumnPropTypes.Field
+      | AsColumnPropTypes.Field[]
+      | AsTableDefines.ColumnInfo
+      | AsTableDefines.ColumnInfo[],
+    fixed: AsColumnPropTypes.Fixed,
+  ): Promise<void>;
+  /**
+   * 设置列宽
+   * @param fieldOrColumns 列对象或字段名,支持传多个
+   * @param width 宽度 %，px
+   */
+  setColumnWidth(
+    fieldOrColumns:
+      | AsColumnPropTypes.Field
+      | AsColumnPropTypes.Field[]
+      | AsTableDefines.ColumnInfo
+      | AsTableDefines.ColumnInfo[],
+    width: number | string,
+  ): Promise<{ status: boolean }>;
+  /**
    * 用于 column-config.isCurrent，设置某列行为高亮状态
    * @param columnOrField 列对象或字段名
    */
@@ -998,6 +1674,20 @@ export interface TableMethods<
    */
   setCurrentRow(row: any): Promise<any>;
   /**
+   * 用于 custom-config，用于手动恢复个性化设置，恢复为初始状态
+   */
+  setCustomStoreData(
+    storeData: AsTableDefines.CustomStoreData | null,
+  ): Promise<void>;
+  /**
+   * 区别就是会触发对应的事件
+   */
+  setFilterByEvent(
+    event: Event,
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo,
+    options: AsColumnPropTypes.Filters,
+  ): Promise<void>;
+  /**
    * 临时合并单元格，如果为数组则合并多个
    */
   setMergeCells(
@@ -1005,11 +1695,15 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
-
   /**
    * 临时合并表尾单元格，如果为数组则合并多个
    */
   setMergeFooterCells(
+    merges:
+      | AsTableDefines.MergeOptions<any>
+      | AsTableDefines.MergeOptions<any>[],
+  ): Promise<any>;
+  setMergeFooterItems(
     merges:
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
@@ -1022,6 +1716,27 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<any>;
+  /**
+   * 将指定行设置为取消/标记待删除状态
+   */
+  setPendingRow(rows: any | any[], status: boolean): Promise<any>;
+  /**
+   * 用于 type=radio，设置某一行为选中状态
+   * @param key 指定主键
+   */
+  setRadioByRowKey(key: null | number | string | undefined): Promise<any>;
+  /**
+   * 用于 type=radio，设置某一行为选中状态
+   * @param row 指定行
+   */
+  setRadioRow(row: any): Promise<any>;
+  setRadioRowKey(key: null | number | string | undefined): Promise<any>;
+  /**
+   * 修改行数据
+   * @param rows 行对象
+   * @param record 新数据
+   */
+  setRow(rows: any | any[], record?: any): Promise<void>;
   /**
    * 用于 expand-config，设置展开行，二个参数设置这一行展开与否
    * @param rows 指定行
@@ -1044,11 +1759,62 @@ export interface TableMethods<
     expanded: boolean,
   ): Promise<void>;
   /**
+   * 设置行分组
+   */
+  setRowGroups(
+    fieldOrColumns:
+      | (AsColumnPropTypes.Field | AsTableDefines.ColumnInfo)[]
+      | AsColumnPropTypes.Field
+      | AsTableDefines.ColumnInfo
+      | null,
+  ): Promise<void>;
+  /**
+   * 设置行高
+   * @param rowOrId 指定单行或多行
+   * @param height 高度
+   */
+  setRowHeight(
+    rowOrId: any | any[],
+    height: number | string,
+  ): Promise<{ status: boolean }>;
+  /**
+   * 批量设置行高
+   * @param heightConf
+   */
+  setRowHeightConf(
+    heightConf: Record<string, number>,
+  ): Promise<{ status: boolean }>;
+  /**
+   * 手动对表格进行排序，update 是否同时更新数据，如果不传，则可以手动调用 updateData() 更新数据；如果需要同时触发对应的事件，请使用 setSortByEvent
+   */
+  setSort(
+    sortConfs: AsTableDefines.SortConfs | AsTableDefines.SortConfs[],
+    update?: boolean,
+  ): Promise<void>;
+  /**
+   * 区别就是会触发对应的事件
+   */
+  setSortByEvent(
+    event: Event,
+    sortConfs: AsTableDefines.SortConfs | AsTableDefines.SortConfs[],
+  ): Promise<void>;
+  /**
    * 用于 tree-config，设置展开树形节点，二个参数设置这一行展开与否
    * @param rows 指定行
    * @param checked 是否选中
    */
   setTreeExpand(rows: any | any[], checked: boolean): Promise<void>;
+  /**
+   * 显示指定列
+   * @param fieldOrColumns 列对象或字段名,支持传多个
+   */
+  showColumn(
+    fieldOrColumn:
+      | AsColumnPropTypes.Field
+      | AsColumnPropTypes.Field[]
+      | AsTableDefines.ColumnInfo
+      | AsTableDefines.ColumnInfo[],
+  ): Promise<void>;
   /**
    * 手动对表格进行排序，建议使用 setSort 方法
    * @param sortConfs 字段名、多列排序
@@ -1063,16 +1829,84 @@ export interface TableMethods<
     sortConfs: AsTableDefines.SortConfs[],
     order?: AsTablePropTypes.SortOrder,
   ): Promise<void>;
-
+  /**
+   * 该方法已废弃！！！
+   * 同步 data 数据；如果用了该方法，那么组件将不再记录增删改的状态，只能自行实现对应逻辑
+   * 对于某些特殊的场景，比如深层树节点元素发生变动时可能会用到
+   * @deprecated
+   */
+  syncData(): Promise<void>;
+  /**
+   * 用于 type=checkbox，切换所有行的选中状态
+   */
+  toggleAllCheckboxRow(): Promise<any>;
+  /**
+   * 用于 type=checkbox，切换某一行的选中状态
+   * @param row 指定行
+   */
+  toggleCheckboxRow(row: any): Promise<any>;
+  /**
+   * 切换指定行的取消/标记待删除状态
+   */
+  togglePendingRow(rows: any | any[]): Promise<any>;
+  /**
+   * 用于 type=expand，切换展开行的状态
+   * @param row 指定行
+   */
+  toggleRowExpand(row: any): Promise<void>;
+  /**
+   * 用于 tree-config，切换展开树形节点的状态
+   * @param row 指定行
+   */
+  toggleTreeExpand(row: any): Promise<any>;
+  /**
+   * 撤销
+   */
+  undo(): Promise<{ status: boolean }>;
   /**
    * 用于 mouse-config.area，更新已选区域的单元格样式
    */
   updateCellAreas(): Promise<void>;
-
+  /**
+   * 更新单元格显示值
+   */
+  updateCellLabel(
+    row: any,
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): null | number | string;
+  /**
+   * 手动处理数据，用于手动排序与筛选
+   * 对于手动更改了排序、筛选...等条件后需要重新处理数据时可能会用到
+   */
+  updateData(): Promise<void>;
   /**
    * 手动更新表尾
    */
   updateFooter(): Promise<any>;
+  /**
+   * 更新表尾单元格显示值
+   */
+  updateFooterCellLabel(
+    row: any,
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): null | number | string;
+  /**
+   * 更新表头单元格显示值
+   */
+  updateHeaderCellLabel(
+    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
+  ): string;
+  /**
+   * 更新单元格状态
+   * @param params 插槽对象
+   */
+  updateStatus(
+    params: {
+      column: AsTableDefines.ColumnInfo;
+      row: DT;
+    },
+    cellValue?: any,
+  ): Promise<any>;
 }
 export interface AsTableMethods<D = any> extends TableMethods<D> {}
 
@@ -1706,6 +2540,7 @@ export interface TablePrivateRef {
 export interface AsTablePrivateRef extends TablePrivateRef {}
 
 export namespace AsTablePropTypes {
+  export type Params = any;
   export type Round = boolean;
   export type Loading = boolean;
   export interface LoadingConfig {
@@ -1785,16 +2620,70 @@ export namespace AsTablePropTypes {
   }) => any[] | Array<null | number | string>[];
 
   export interface FloatingFilterConfig<D = AsTablePropTypes.Row> {
-    cellClassName?: string;
+    className?: string;
     /**
-     * 是否启用
+     * 自定义确认按钮内容
      */
-    enabled?: boolean;
+    confirmButtonText?: string;
     /**
-     * 是否启用浮动筛选
+     * 弹出层在关闭时是否销毁
      */
-    floatingFilters?: AsColumnPropTypes.FloatingFilters;
-    rowClassName?: string;
+    destroyOnClose?: boolean;
+    filterMethod?: (params: {
+      $table: AsTableConstructor<D>;
+      cellValue: any;
+      column: AsTableDefines.ColumnInfo;
+      options: AsTableDefines.FilterOption[];
+      row: D;
+      values: any[];
+    }) => any;
+    iconMatch?: string;
+    iconNone?: string;
+    /**
+     * 筛选按钮图标的显示方法，该方法的返回值用于决定该列是否显示筛选按钮图标
+     * @param params
+     */
+    iconVisibleMethod?(params: {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+    }): boolean;
+    /**
+     * 只对 tree-config.transform 有效，是否允许同时筛选子孙层级
+     */
+    isDeep?: boolean;
+    /**
+     * 是否精确筛选到每一行，默认情况下是父级被匹配到则所有子级也被匹配；如果传 true 则会对每一行进行筛选
+     */
+    isEvery?: boolean;
+    /**
+     * 筛选面板最大高度
+     */
+    maxHeight?: number;
+    /**
+     * 是否允许多列筛选
+     */
+    multiple?: boolean;
+    /**
+     * 是否使用服务端筛选，如果设置为 true 则不会对数据进行处理
+     */
+    remote?: boolean;
+    /**
+     * 自定义重置按钮内容
+     */
+    resetButtonText?: string;
+    /**
+     * 是否显示底部按钮
+     */
+    showFooter?: boolean;
+    /**
+     * 是否显示筛选按钮图标
+     */
+    showIcon?: boolean;
+    /**
+     * 是否启用元素挂载
+     */
+    transfer?: boolean;
+    zIndex?: number;
   }
 
   /**
@@ -4751,6 +5640,7 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    * 聚合函数计算精度配置项
    */
   aggregateAccuracyConfig?: AsTablePropTypes.AggregateAccuracyConfig<D>;
+
   /**
    * 数据聚合配置项
    */
@@ -4978,6 +5868,10 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
    */
   mouseConfig?: AsTablePropTypes.MouseConfig;
   /**
+   * 自定义参数（可以用来存放一些自定义的数据）
+   */
+  params?: AsTablePropTypes.Params;
+  /**
    * 打印配置项
    */
   printConfig?: AsTablePropTypes.PrintConfig<D>;
@@ -5090,6 +5984,35 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
 }
 
 export namespace AsTableDefines {
+  export interface CellCacheHandleOptions {
+    getResult?(params: CellCacheHandleParams): any;
+    isChanged?(params: CellCacheHandleParams): boolean;
+    key: string;
+    setValue?(params: CellCacheHandleParams): any;
+  }
+
+  export interface UpdateCellObj<D = any> {
+    column: AsTableDefines.ColumnInfo | null;
+    field: string;
+    newValue: any;
+    oldValue: any;
+    row: D;
+    rowid: string;
+  }
+  export interface CellCacheHandleParams {
+    $table: AsTableConstructor;
+    cellValue: any;
+    colid: string;
+    column: AsTableDefines.ColumnInfo;
+    oldValue: any;
+    row: any;
+    rowid: string;
+  }
+
+  export interface CellCacheResultObj extends CellCacheHandleParams {
+    cellResult: any;
+  }
+
   export interface MenuSlotParams {}
   export interface ScrollToRowConfig extends ScrollToColumnConfig {
     /**
@@ -5152,12 +6075,23 @@ export namespace AsTableDefines {
     /**
      * @private
      */
+    defaultAlign: AsColumnPropTypes.Align | undefined;
+    /**
+     * @private
+     */
     defaultFixed: AsColumnPropTypes.Fixed | undefined;
     /**
      * @private
      */
+    defaultFooterAlign: AsColumnPropTypes.FooterAlign | undefined;
+    /**
+     * @private
+     */
+    defaultHeaderAlign: AsColumnPropTypes.HeaderAlign | undefined;
+    /**
+     * @private
+     */
     defaultVisible: boolean;
-
     /**
      * @private
      */
@@ -5177,7 +6111,15 @@ export namespace AsTableDefines {
     /**
      * @private
      */
+    renderAggFn: AsColumnPropTypes.AggFunc;
+    /**
+     * @private
+     */
     renderAutoWidth: number;
+    /**
+     * @private
+     */
+    renderResizeWidth: number;
     /**
      * @private
      */

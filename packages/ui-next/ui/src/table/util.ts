@@ -954,7 +954,7 @@ export function restoreScrollLocation(
 export const eqCellValue = (newRow: any, oldRow: any, field: string) => {
   const val1 = get(newRow, field);
   const val2 = get(oldRow, field);
-  // eslint-disable-next-line no-useless-assignment
+
   let result = false;
   if (eqEmptyValue(val1) && eqEmptyValue(val2)) {
     result = true;
@@ -1319,4 +1319,91 @@ export function colToVisible(
     }
   }
   return Promise.resolve();
+}
+
+export function clearTableDefaultStatus(
+  $asTable: AsTableConstructor & AsTablePrivateMethods,
+) {
+  const { props, internalData } = $asTable;
+
+  internalData.initStatus = false;
+  const actionList = [
+    $asTable.clearSort(),
+    $asTable.clearCurrentRow(),
+    $asTable.clearCurrentColumn(),
+    $asTable.clearRadioRow(),
+    $asTable.clearRadioReserve(),
+    $asTable.clearCheckboxRow(),
+    $asTable.clearCheckboxReserve(),
+    $asTable.clearRowExpand(),
+    $asTable.clearTreeExpand(),
+    $asTable.clearTreeExpandReserve(),
+    $asTable.clearPendingRow(),
+  ];
+  if ($asTable.clearFilter) {
+    actionList.push($asTable.clearFilter());
+  }
+  if ($asTable.clearSelected && (props.keyboardConfig || props.mouseConfig)) {
+    actionList.push($asTable.clearSelected());
+  }
+  if ($asTable.clearCellAreas && props.mouseConfig) {
+    actionList.push($asTable.clearCellAreas(), $asTable.clearCopyCellArea());
+  }
+  return Promise.all(actionList).then(() => {
+    return $asTable.clearScroll();
+  });
+}
+
+export function clearTableAllStatus(
+  $asTable: AsTableConstructor & AsTablePrivateMethods,
+) {
+  if ($asTable.clearFilter) {
+    $asTable.clearFilter();
+  }
+  return clearTableDefaultStatus($asTable);
+}
+
+export function setCellValue(
+  row: any,
+  column: AsTableDefines.ColumnInfo | null,
+  value: any,
+) {
+  if (column) {
+    set(row, column.field, value);
+  }
+}
+
+export function handleRowidOrRow(
+  $xeTable: AsTableConstructor,
+  rowidOrRow: any,
+) {
+  if (rowidOrRow) {
+    const rowid =
+      isString(rowidOrRow) || isNumber(rowidOrRow)
+        ? rowidOrRow
+        : getRowid($xeTable, rowidOrRow);
+    return $xeTable.getRowById(rowid);
+  }
+  return null;
+}
+
+export function getRootColumn(
+  $xeTable: AsTableConstructor & AsTablePrivateMethods,
+  column: ColumnInfo,
+) {
+  const { internalData } = $xeTable;
+
+  const { fullColumnIdData } = internalData;
+  if (!column) {
+    return null;
+  }
+  let parentColId = column.parentId;
+  while (fullColumnIdData[parentColId]) {
+    const column = fullColumnIdData[parentColId]!.column;
+    parentColId = column.parentId;
+    if (!parentColId) {
+      return column;
+    }
+  }
+  return column;
 }

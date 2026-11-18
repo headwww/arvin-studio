@@ -46,9 +46,11 @@ import {
   browse,
   clone,
   clsx,
+  destructuring,
   each,
   eachTree,
   eqNull,
+  filterTree,
   findIndexOf,
   findTree,
   first,
@@ -65,10 +67,12 @@ import {
   last,
   lastArrayEach,
   lastEach,
+  mapTree,
   objectEach,
   orderBy,
   searchTree,
   set,
+  toArray,
   toArrayTree,
   toInteger,
   toJSONString,
@@ -114,13 +118,14 @@ import Spin from '../spin';
 import { genCssVar } from '../theme/util/genStyleUtils';
 import version from '../version';
 import TableBodyComponent from './body';
-import { formatLocaleText } from './cell';
+import { Cell, formatLocaleText } from './cell';
 import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
 import { getCrossTableDragRowInfo } from './store';
 import useStyle from './style';
 import {
+  clearTableAllStatus,
   colToVisible,
   createHandleGetRowId,
   createHandleUpdateRowId,
@@ -140,17 +145,21 @@ import {
   getFuncText,
   getLastChildColumn,
   getRefElem,
+  getRootColumn,
   getRowid,
   getRowkey,
   getRowMaxHeight,
   getRowUniqueId,
   handleCustomStoreConfig,
   handleFieldOrColumn,
+  handleRowidOrRow,
   hasChildrenList,
   hasDeepKey,
   isEnableConf,
   restoreScrollLocation,
   rowToVisible,
+  setCellValue,
+  toFilters,
   toTreePathSeq,
 } from './util';
 
@@ -689,7 +698,7 @@ export const Table = defineComponent<AsTableProps>(
     const computeFilterOpts = computed(() => {
       return Object.assign(
         {},
-        config.table.filterConfig,
+        config.table.filterConfig as AsTablePropTypes.FilterOpts,
         cFilterConfig.value,
         props.filterConfig,
       ) as AsTablePropTypes.FilterOpts;
@@ -3433,6 +3442,7 @@ export const Table = defineComponent<AsTableProps>(
         scrollXWidth,
         columnStore,
         isColLoading,
+        editStore,
       } = reactData;
 
       const {
@@ -4739,7 +4749,7 @@ export const Table = defineComponent<AsTableProps>(
       const aggGroupFields: string[] = [];
       const aggGroupConfs: { field: string }[] = [];
       if (groupFields) {
-        (XEUtils.isArray(groupFields) ? groupFields : [groupFields]).forEach(
+        (isArray(groupFields) ? groupFields : [groupFields]).forEach(
           (field) => {
             aggGroupFields.push(field);
             aggGroupConfs.push({
@@ -6549,12 +6559,129 @@ export const Table = defineComponent<AsTableProps>(
 
     tableMethods = {
       dispatchEvent,
+      getEl() {
+        return refElem.value;
+      },
       /**
-       * 用于单选行，手动清空用户的选择
+       * 重置表格的一切数据状态
        */
-      clearRadioRow() {
-        reactData.selectRadioRow = null;
+      clearAll() {
+        return clearTableAllStatus($asTable);
+      },
+      /**
+       * 手动处理数据，用于手动排序与筛选
+       * 对于手动更改了排序、筛选...等条件后需要重新处理数据时可能会用到
+       */
+      updateData() {
+        const { scrollXLoad, scrollYLoad } = reactData;
+        return $asTable
+          .handleTableData(true)
+          .then(() => {
+            $asTable.updateFooter();
+            if (scrollXLoad || scrollYLoad) {
+              if (scrollXLoad) {
+                $asTable.updateScrollXSpace();
+              }
+              if (scrollYLoad) {
+                $asTable.updateScrollYSpace();
+              }
+              return $asTable.refreshScroll();
+            }
+          })
+          .then(() => {
+            $asTable.updateCellAreas();
+            return handleLazyRecalculate(true, true, true);
+          })
+          .then(() => {
+            // 存在滚动行为未结束情况
+            setTimeout(() => handleLazyRecalculate(false, true, true), 50);
+          });
+      },
+      /**
+       * 重新加载数据，不会清空表格状态
+       * @param {Array} datas 数据
+       */
+      loadData(datas) {
+        const { initStatus } = internalData;
+        return loadTableData(datas, false, false).then(() => {
+          internalData.inited = true;
+          internalData.initStatus = true;
+          if (!initStatus) {
+            handleLoadDefaults();
+          }
+          return handleLazyRecalculate(false, true, true);
+        });
+      },
+      /**
+       * 重新加载数据，会清空表格状态
+       * @param {Array} datas 数据
+       */
+      reloadData(datas) {
+        return $asTable
+          .clearAll()
+          .then(() => {
+            internalData.inited = true;
+            internalData.initStatus = true;
+            return loadTableData(datas, true, true);
+          })
+          .then(() => {
+            handleLoadDefaults();
+            return handleLazyRecalculate(false, true, true);
+          });
+      },
+      /**
+       * 修改行数据
+       */
+      setRow(rows, record) {
+        if (rows && record) {
+          const rest: any[] = isArray(rows) ? rows : [rows];
+          const rowkey = getRowkey($asTable);
+          rest.forEach((row) => {
+            const rowid = getRowid($asTable, row);
+            const newRecord = clone(Object.assign({}, record), true);
+            set(newRecord, rowkey, rowid);
+            Object.assign(row, newRecord);
+          });
+        }
         return nextTick();
+      },
+      /**
+       * 局部加载行数据并恢复到初始状态
+       * 对于行数据需要局部更改的场景中可能会用到
+       * @param {Row} row 行对象
+       * @param {Object} record 新数据
+       * @param {String} field 字段名
+       */
+      reloadRow(row, record, field?: string) {
+        const { keepSource } = props;
+        const { tableData } = reactData;
+        const { sourceDataRowIdData } = internalData;
+        if (keepSource) {
+          if ($asTable.isAggregateRecord(row)) {
+            return nextTick();
+          }
+          const rowkey = getRowkey($asTable);
+          const rowid = get(row, rowkey);
+          const oRow = sourceDataRowIdData[rowid];
+          if (oRow && row) {
+            if (field) {
+              const newValue = clone(get(record || row, field), true);
+              set(row, field, newValue);
+              set(oRow, field, newValue);
+            } else {
+              const newRecord = clone(Object.assign({}, record), true);
+              set(newRecord, rowkey, rowid);
+              destructuring(oRow, Object.assign(row, newRecord));
+            }
+          }
+          reactData.tableData = tableData.slice(0);
+        } else {
+          log.error('reqProp', ['keep-source']);
+        }
+        return nextTick();
+      },
+      getParams() {
+        return props.params;
       },
       /**
        * 用于树结构，给行数据加载子节点
@@ -6624,157 +6751,92 @@ export const Table = defineComponent<AsTableProps>(
           return rows;
         });
       },
-      clearFooterFormatterCache(isUpdate) {
-        const { tableData, tableColumn } = reactData;
-        const { footerFullDataRowData } = internalData;
-        each(
-          footerFullDataRowData,
-          (rowRest: AsTableDefines.FooterRowCacheItem) => {
-            if (rowRest.formatData) {
-              rowRest.formatData = undefined;
-            }
-          },
+      /**
+       * 加载列配置
+       * 对于表格列需要重载、局部递增场景下可能会用到
+       * @param {ColumnInfo} columns 列配置
+       */
+      loadColumn(columns) {
+        const { lastScrollLeft, lastScrollTop } = internalData;
+        const collectColumn = mapTree(columns, (column) =>
+          reactive(Cell.createColumn($asTable, column)),
         );
-        if (isUpdate) {
-          tableData.forEach((row) => {
-            tableColumn.forEach((column) => {
-              $asTable.getFooterCellLabel(row, column);
-            });
-          });
-        }
-        return nextTick();
-      },
-
-      getFooterCellLabel(row, fieldOrColumn) {
-        const column = handleFieldOrColumn($asTable, fieldOrColumn);
-        if (!column) {
-          return null;
-        }
-        const { footerFormatter } = column;
-        const _columnIndex = $asTable.getVTColumnIndex(column);
-        let itemValue = isArray(row)
-          ? row[_columnIndex]
-          : get(row, column.field);
-        let cellLabel: any = itemValue;
-        if (footerFormatter) {
-          let formatData:
-            | Record<string, AsTableDefines.RowCacheFormatObj>
-            | undefined;
-          const { footerTableData } = reactData;
-          const { footerFullDataRowData } = internalData;
-          const colid = column.id;
-          const $rowIndex = footerTableData.indexOf(row);
-
-          let rowRest: any = null;
-          if ($rowIndex !== -1) {
-            rowRest = footerFullDataRowData[$rowIndex];
-            if (!rowRest) {
-              rowRest = footerFullDataRowData[$rowIndex] = {};
-            }
-            formatData = rowRest.formatData;
-            if (!formatData) {
-              formatData = footerFullDataRowData[$rowIndex]!.formatData = {};
-            }
-            if (
-              rowRest &&
-              formatData[colid] &&
-              formatData[colid].value === itemValue
-            ) {
-              return formatData[colid].label;
-            }
+        return handleInitColumn(collectColumn).then(() => {
+          let targetScrollLeft = lastScrollLeft;
+          let targetScrollTop = lastScrollTop;
+          const virtualXOpts = computeVirtualXOpts.value;
+          const virtualYOpts = computeVirtualYOpts.value;
+          // 是否在更新数据之后自动滚动重置滚动条
+          if (virtualXOpts.scrollToLeftOnChange) {
+            targetScrollLeft = 0;
           }
-          const footerFormatParams = {
-            $table: $asTable,
-            cellValue: itemValue,
-            itemValue,
-            row,
-            items: row,
-            $rowIndex,
-            column,
-            _columnIndex,
-            columnIndex: $asTable.getColumnIndex(column),
-          };
-          if (isString(footerFormatter)) {
-            const gFormatOpts = formats.get(footerFormatter);
-            const fcFormatMethod = gFormatOpts
-              ? gFormatOpts.tableFooterCellFormatMethod
-              : null;
-            cellLabel = fcFormatMethod
-              ? fcFormatMethod(footerFormatParams)
-              : '';
-          } else if (isArray(footerFormatter)) {
-            const gFormatOpts = formats.get(footerFormatter[0]);
-            const fcFormatMethod = gFormatOpts
-              ? gFormatOpts.tableFooterCellFormatMethod
-              : null;
-            cellLabel = fcFormatMethod
-              ? fcFormatMethod(footerFormatParams, ...footerFormatter.slice(1))
-              : '';
-          } else {
-            cellLabel = footerFormatter(footerFormatParams);
+          if (virtualYOpts.scrollToTopOnChange) {
+            targetScrollTop = 0;
           }
-          if (formatData) {
-            formatData[colid] = { value: itemValue, label: cellLabel };
-          }
-        }
-        return cellLabel;
-      },
-      clearHistory() {
-        return $asTable.handleClearStack();
-      },
-      /**
-       * 清除所有单元格合并
-       */
-      clearMergeCells() {
-        internalData.mergeBodyList = [];
-        internalData.mergeBodyMaps = {};
-        internalData.mergeBodyCellMaps = {};
-        internalData.mergeBodyRowMaps = {};
-        internalData.mergeBodyColMaps = {};
-        reactData.mergeBodyFlag++;
-        return nextTick().then(() => {
-          return updateStyle();
-        });
-      },
-
-      setMergeHeaderCells(merges) {
-        handleHeaderMerge(merges);
-        $asTable.handleUpdateHeaderMerge();
-        return nextTick().then(() => {
-          return updateStyle();
+          restoreScrollLocation($asTable, targetScrollLeft, targetScrollTop);
         });
       },
       /**
-       * 清除所有表尾合并
+       * 加载列配置并恢复到初始状态
+       * 对于表格列需要重载、局部递增场景下可能会用到
+       * @param {ColumnInfo} columns 列配置
        */
-      clearMergeFooterCells() {
-        internalData.mergeFooterList = [];
-        internalData.mergeFooterMaps = {};
-        internalData.mergeFooterCellMaps = {};
-        internalData.mergeFooterRowMaps = {};
-        internalData.mergeFooterColMaps = {};
-        reactData.mergeFootFlag++;
-        return nextTick().then(() => {
-          return updateStyle();
+      reloadColumn(columns) {
+        return $asTable.clearAll().then(() => {
+          return $asTable.loadColumn(columns);
         });
       },
-      setMergeFooterCells(merges) {
-        if (props.footerSpanMethod) {
-          log.error('errConflicts', [
-            'merge-footer-cells | merge-footer-items',
-            'footer-span-method',
-          ]);
+      /**
+       * 根据 tr 元素获取对应的 row 信息
+       * @param {Element} tr 元素
+       */
+      getRowNode(tr) {
+        if (tr) {
+          const { fullAllDataRowIdData } = internalData;
+          const rowid = tr.getAttribute('rowid');
+          if (rowid) {
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              return {
+                rowid: rowRest.rowid,
+                item: rowRest.row,
+                index: rowRest.index,
+                items: rowRest.items,
+                parent: rowRest.parent,
+              };
+            }
+          }
         }
-        handleFooterMerge(merges);
-        $asTable.handleUpdateFooterMerge();
-        return nextTick().then(() => {
-          return updateStyle();
-        });
+        return null;
       },
-      clearMergeFooterItems() {
-        return $asTable.clearMergeFooterCells();
+      /**
+       * 根据 th/td 元素获取对应的 column 信息
+       * @param {Element} cell 元素
+       */
+      getColumnNode(cell) {
+        if (cell) {
+          const { fullColumnIdData } = internalData;
+          const colid = cell.getAttribute('colid');
+          if (colid) {
+            const colRest = fullColumnIdData[colid];
+            if (colRest) {
+              return {
+                colid: colRest.colid,
+                item: colRest.column,
+                index: colRest.index,
+                items: colRest.items,
+                parent: colRest.parent,
+              };
+            }
+          }
+        }
+        return null;
       },
-
+      /**
+       * 根据 row 获取序号
+       * @param {Row} row 行对象
+       */
+      getRowSeq: createGetRowCacheProp('seq'),
       /**
        * 根据 row 获取相对于 data 中的索引
        * @param {Row} row 行对象
@@ -6786,21 +6848,26 @@ export const Table = defineComponent<AsTableProps>(
        */
       getVTRowIndex: createGetRowCacheProp('_index') as (row: any) => number,
       /**
-       * 根据 column 获取相对于 columns 中的索引
-       * @param {ColumnInfo} column 列配置
-       */
-      getColumnIndex: createGetColumnCacheProp('index'),
-      /**
-       * 根据 column 获取渲染中的虚拟索引
-       * @param {ColumnInfo} column 列配置
-       */
-      getVMColumnIndex: createGetColumnCacheProp('$index'),
-      /**
        * 根据 row 获取渲染中的虚拟索引
        * @param {Row} row 行对象
        */
       getVMRowIndex: createGetRowCacheProp('$index') as (row: any) => number,
 
+      /**
+       * 根据 column 获取相对于 columns 中的索引
+       * @param {ColumnInfo} column 列配置
+       */
+      getColumnIndex: createGetColumnCacheProp('index'),
+      /**
+       * 根据 column 获取相对于当前表格列中的索引
+       * @param {ColumnInfo} column 列配置
+       */
+      getVTColumnIndex: createGetColumnCacheProp('_index'),
+      /**
+       * 根据 column 获取渲染中的虚拟索引
+       * @param {ColumnInfo} column 列配置
+       */
+      getVMColumnIndex: createGetColumnCacheProp('$index'),
       /**
        * 创建 data 对象
        * 对于某些特殊场景可能会用到，会自动对数据的字段名进行检测，如果不存在就自动定义
@@ -6812,26 +6879,219 @@ export const Table = defineComponent<AsTableProps>(
         });
       },
       /**
-       * 根据列的唯一主键获取列
-       * @param {String} colid 列主键
+       * 创建 Row|Rows 对象
+       * 对于某些特殊场景需要对数据进行手动插入时可能会用到
+       * @param {Array/Object} records 新数据
        */
-      getColumnById(colid) {
-        const { fullColumnIdData } = internalData;
-        return colid && fullColumnIdData[colid]
-          ? fullColumnIdData[colid].column
-          : null;
+      createRow(records) {
+        const isArr = isArray(records);
+        if (!isArr) {
+          records = [records || {}];
+        }
+        return $asTable
+          .createData(records)
+          .then((rows) => (isArr ? rows : rows[0]));
       },
       /**
-       * 根据列的字段名获取列
+       * 还原数据
+       * 如果不传任何参数，则还原整个表格
+       * 如果传 row 则还原一行
+       * 如果传 rows 则还原多行
+       * 如果还额外传了 field 则还原指定的单元格数据
+       */
+      revertData(rows: any, field) {
+        const { keepSource, treeConfig } = props;
+        const {
+          fullAllDataRowIdData,
+          fullDataRowIdData,
+          tableSourceData,
+          sourceDataRowIdData,
+          tableFullData,
+          afterFullData,
+          removeRowMaps,
+        } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { transform } = treeOpts;
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        if (!keepSource) {
+          log.error('reqProp', ['keep-source']);
+          return nextTick();
+        }
+        let targetRows = rows;
+        if (rows) {
+          if (!isArray(rows)) {
+            targetRows = [rows];
+          }
+        } else {
+          targetRows = toArray($asTable.getUpdateRecords());
+        }
+        let reDelFlag = false;
+        if (targetRows.length > 0) {
+          targetRows.forEach((item: any) => {
+            const rowid = handleGetRowId(item);
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              const row = rowRest.row;
+              if (!$asTable.isInsertByRow(row)) {
+                const oRow = sourceDataRowIdData[rowid];
+                if (oRow && row) {
+                  if (field) {
+                    set(row, field, clone(get(oRow, field), true));
+                  } else {
+                    destructuring(row, clone(oRow, true));
+                  }
+                  if (
+                    !fullDataRowIdData[rowid] &&
+                    $asTable.isRemoveByRow(row)
+                  ) {
+                    if (removeRowMaps[rowid]) {
+                      delete removeRowMaps[rowid];
+                    }
+                    tableFullData.unshift(row);
+                    afterFullData.unshift(row);
+                    reDelFlag = true;
+                  }
+                }
+              }
+            }
+          });
+        }
+        if (rows) {
+          if (reDelFlag) {
+            reactData.removeRowFlag++;
+            $asTable.updateFooter();
+            $asTable.cacheRowMap(false);
+            $asTable.handleTableData(treeConfig && transform);
+            if (!(treeConfig && transform)) {
+              $asTable.updateAfterDataIndex();
+            }
+            $asTable.checkSelectionStatus();
+            if (reactData.scrollYLoad) {
+              $asTable.updateScrollYSpace();
+            }
+          }
+          return nextTick().then(() => {
+            $asTable.updateCellAreas();
+            return handleLazyRecalculate(false, true, true);
+          });
+        }
+        return $asTable.reloadData(tableSourceData);
+      },
+      /**
+       * 清空单元格内容
+       * 如果不创参数，则清空整个表格内容
+       * 如果传 row 则清空一行内容
+       * 如果传 rows 则清空多行内容
+       * 如果还额外传了 field 则清空指定单元格内容
+       * @param {Array/Row} rows 行数据
        * @param {String} field 字段名
        */
-      getColumnByField(field) {
-        const fullColumnFieldData = internalData.fullColumnFieldData;
-        return field && fullColumnFieldData[field]
-          ? fullColumnFieldData[field].column
-          : null;
+      clearData(rows: any, field: string) {
+        const { tableFullData, visibleColumn } = internalData;
+        if (arguments.length === 0) {
+          rows = tableFullData;
+        } else if (rows && !isArray(rows)) {
+          rows = [rows];
+        }
+        if (field) {
+          rows.forEach((row: any) => set(row, field, null));
+        } else {
+          rows.forEach((row: any) => {
+            visibleColumn.forEach((column) => {
+              if (column.field) {
+                setCellValue(row, column, null);
+              }
+            });
+          });
+        }
+        return nextTick();
       },
+      effectCellData(row, column, options) {
+        const { fullCellStoreMaps } = internalData;
+        const editOpts = computeEditOpts.value;
+        const { key, isChanged, setValue, getResult } = options;
+        const rowid = getRowid($asTable, row);
+        const colid = column.id;
+        let rowStore = fullCellStoreMaps[rowid];
+        const cellValue = get(row, column.field);
+        const restParams: AsTableDefines.CellCacheHandleParams = {
+          $table: $asTable,
+          row,
+          rowid,
+          column,
+          colid,
+          cellValue,
+          oldValue: null,
+        };
 
+        if (editOpts.cache === false && key === 'render_table_cell') {
+          const rest = restParams as AsTableDefines.CellCacheResultObj;
+          rest.cellResult = getResult ? getResult(restParams) : cellValue;
+          return rest;
+        }
+
+        if (!rowStore) {
+          rowStore = {};
+          fullCellStoreMaps[rowid] = rowStore;
+        }
+        let cellStore = rowStore[colid];
+        if (!cellStore) {
+          cellStore = {
+            value: undefined,
+            result: {},
+          };
+          rowStore[colid] = cellStore;
+        }
+        const restData = rowStore[colid]!;
+        const oldValue = restData.value;
+        restParams.oldValue = oldValue;
+        if (isChanged ? !isChanged(restParams) : oldValue !== cellValue) {
+          restData.value = setValue ? setValue(restParams) : cellValue;
+          restData.result = {};
+        }
+        const storeData = restData.result;
+        if (isUndefined(storeData[key])) {
+          storeData[key] = getResult ? getResult(restParams) : cellValue;
+        }
+        const cellResult = storeData[key];
+        const rest = restParams as AsTableDefines.CellCacheResultObj;
+        rest.cellResult = cellResult;
+        return rest;
+      },
+      getCellElement(row, fieldOrColumn) {
+        const { elemStore } = internalData;
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (!column) {
+          return null;
+        }
+        const rowid = getRowid($asTable, row);
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
+        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
+        let bodyElem;
+        if (column) {
+          if (column.fixed) {
+            if (column.fixed === 'left') {
+              if (leftScrollElem) {
+                bodyElem = leftScrollElem;
+              }
+            } else {
+              if (rightScrollElem) {
+                bodyElem = rightScrollElem;
+              }
+            }
+          }
+          if (!bodyElem) {
+            bodyElem = bodyScrollElem;
+          }
+          if (bodyElem) {
+            return bodyElem.querySelector(
+              `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"] .${column.id}`,
+            );
+          }
+        }
+        return null;
+      },
       getCellLabel(row, fieldOrColumn) {
         const column = handleFieldOrColumn($asTable, fieldOrColumn);
         if (!column) {
@@ -6936,6 +7196,46 @@ export const Table = defineComponent<AsTableProps>(
         }
         return cellLabel;
       },
+      updateCellLabel(row, fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (!column) {
+          return null;
+        }
+        const { fullAllDataRowIdData } = internalData;
+        const rowid = getRowid($asTable, row);
+        if (rowid) {
+          const colid = column.id;
+          const rowid = getRowid($asTable, row);
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (rowRest) {
+            const formatData = rowRest.formatData;
+            if (formatData) {
+              delete formatData[colid];
+            }
+          }
+        }
+        return $asTable.getFooterCellLabel(row, column);
+      },
+      clearFormatterCache(isUpdate) {
+        const { tableData, tableColumn } = reactData;
+        const { fullAllDataRowIdData } = internalData;
+        each(
+          fullAllDataRowIdData,
+          (rowRest: AsTableDefines.FooterRowCacheItem) => {
+            if (rowRest.formatData) {
+              rowRest.formatData = undefined;
+            }
+          },
+        );
+        if (isUpdate) {
+          tableData.forEach((row) => {
+            tableColumn.forEach((column) => {
+              $asTable.getCellLabel(row, column);
+            });
+          });
+        }
+        return nextTick();
+      },
       getHeaderCellLabel(fieldOrColumn) {
         const column = handleFieldOrColumn($asTable, fieldOrColumn);
         if (!column) {
@@ -6990,6 +7290,19 @@ export const Table = defineComponent<AsTableProps>(
 
         return cellLabel;
       },
+      updateHeaderCellLabel(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (!column) {
+          return '';
+        }
+        const { headerFullDataColData } = internalData;
+        const colid = column.id;
+        const colRest = headerFullDataColData[colid];
+        if (colRest) {
+          colRest.formatObj = undefined;
+        }
+        return $asTable.getHeaderCellLabel(column);
+      },
       clearHeaderFormatterCache(isUpdate) {
         const { tableColumn } = reactData;
         const { headerFullDataColData } = internalData;
@@ -7009,18 +7322,119 @@ export const Table = defineComponent<AsTableProps>(
         return nextTick();
       },
 
-      isCheckedByCheckboxRow(row) {
-        const { updateCheckboxFlag } = reactData;
-        const { selectCheckboxMaps } = internalData;
-        const checkboxOpts = computeCheckboxOpts.value;
-        const { checkField } = checkboxOpts;
-        if (checkField) {
-          return get(row, checkField);
+      getFooterCellLabel(row, fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (!column) {
+          return null;
         }
-        return (
-          !!updateCheckboxFlag && !!selectCheckboxMaps[getRowid($asTable, row)]
-        );
+        const { footerFormatter } = column;
+        const _columnIndex = $asTable.getVTColumnIndex(column);
+        let itemValue = isArray(row)
+          ? row[_columnIndex]
+          : get(row, column.field);
+        let cellLabel: any = itemValue;
+        if (footerFormatter) {
+          let formatData:
+            | Record<string, AsTableDefines.RowCacheFormatObj>
+            | undefined;
+          const { footerTableData } = reactData;
+          const { footerFullDataRowData } = internalData;
+          const colid = column.id;
+          const $rowIndex = footerTableData.indexOf(row);
+
+          let rowRest: any = null;
+          if ($rowIndex !== -1) {
+            rowRest = footerFullDataRowData[$rowIndex];
+            if (!rowRest) {
+              rowRest = footerFullDataRowData[$rowIndex] = {};
+            }
+            formatData = rowRest.formatData;
+            if (!formatData) {
+              formatData = footerFullDataRowData[$rowIndex]!.formatData = {};
+            }
+            if (
+              rowRest &&
+              formatData[colid] &&
+              formatData[colid].value === itemValue
+            ) {
+              return formatData[colid].label;
+            }
+          }
+          const footerFormatParams = {
+            $table: $asTable,
+            cellValue: itemValue,
+            itemValue,
+            row,
+            items: row,
+            $rowIndex,
+            column,
+            _columnIndex,
+            columnIndex: $asTable.getColumnIndex(column),
+          };
+          if (isString(footerFormatter)) {
+            const gFormatOpts = formats.get(footerFormatter);
+            const fcFormatMethod = gFormatOpts
+              ? gFormatOpts.tableFooterCellFormatMethod
+              : null;
+            cellLabel = fcFormatMethod
+              ? fcFormatMethod(footerFormatParams)
+              : '';
+          } else if (isArray(footerFormatter)) {
+            const gFormatOpts = formats.get(footerFormatter[0]);
+            const fcFormatMethod = gFormatOpts
+              ? gFormatOpts.tableFooterCellFormatMethod
+              : null;
+            cellLabel = fcFormatMethod
+              ? fcFormatMethod(footerFormatParams, ...footerFormatter.slice(1))
+              : '';
+          } else {
+            cellLabel = footerFormatter(footerFormatParams);
+          }
+          if (formatData) {
+            formatData[colid] = { value: itemValue, label: cellLabel };
+          }
+        }
+        return cellLabel;
       },
+      updateFooterCellLabel(row, fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (!column) {
+          return null;
+        }
+        const { footerTableData } = reactData;
+        const { footerFullDataRowData } = internalData;
+        const colid = column.id;
+        const $rowIndex = footerTableData.indexOf(row);
+        const rowRest = footerFullDataRowData[$rowIndex];
+        if (rowRest) {
+          const formatData = rowRest.formatData;
+          if (formatData) {
+            delete formatData[colid];
+          }
+        }
+        return $asTable.getFooterCellLabel(row, column);
+      },
+      clearFooterFormatterCache(isUpdate) {
+        const { tableData, tableColumn } = reactData;
+        const { footerFullDataRowData } = internalData;
+        each(
+          footerFullDataRowData,
+          (rowRest: AsTableDefines.FooterRowCacheItem) => {
+            if (rowRest.formatData) {
+              rowRest.formatData = undefined;
+            }
+          },
+        );
+        if (isUpdate) {
+          tableData.forEach((row) => {
+            tableColumn.forEach((column) => {
+              $asTable.getFooterCellLabel(row, column);
+            });
+          });
+        }
+        return nextTick();
+      },
+
       /**
        * 检查是否为临时行数据
        */
@@ -7028,11 +7442,17 @@ export const Table = defineComponent<AsTableProps>(
         const rowid = getRowid($asTable, row);
         return !!reactData.insertRowFlag && !!internalData.insertRowMaps[rowid];
       },
+      isRemoveByRow(row) {
+        const rowid = getRowid($asTable, row);
+        return !!reactData.removeRowFlag && !!internalData.removeRowMaps[rowid];
+      },
       /**
-       * 根据 column 获取相对于当前表格列中的索引
-       * @param {ColumnInfo} column 列配置
+       * 删除所有新增的临时数据
        */
-      getVTColumnIndex: createGetColumnCacheProp('_index'),
+      removeInsertRow() {
+        const { insertRowMaps } = internalData;
+        return $asTable.remove(values(insertRowMaps));
+      },
       /**
        * 只对 keep-source 开启有效，判断行数据是否发生改变
        * @param row 指定行
@@ -7067,6 +7487,672 @@ export const Table = defineComponent<AsTableProps>(
           }
         }
         return false;
+      },
+      getUpdateCells() {
+        const { keepSource, treeConfig } = props;
+        const {
+          tableFullData,
+          tableFullTreeData,
+          fullDataRowIdData,
+          sourceDataRowIdData,
+          fullColumnFieldData,
+        } = internalData;
+        const treeOpts: any = computeTreeOpts.value;
+        const keepFields = computeKeepFields.value;
+        const cellList: AsTableDefines.UpdateCellObj[] = [];
+        if (keepSource) {
+          const { handleGetRowId } = createHandleGetRowId($asTable);
+          const handleCell = (item: any) => {
+            const rowid = handleGetRowId(item);
+            const rowRest = fullDataRowIdData[rowid];
+            // 新增的数据不需要检测
+            if (!rowRest) {
+              return;
+            }
+            const row = rowRest.row;
+            const oRow = sourceDataRowIdData[rowid];
+            if (!oRow) {
+              return;
+            }
+            for (const field of keepFields) {
+              const { result, newValue, oldValue } = eqCellValue(
+                row,
+                oRow,
+                field,
+              );
+              if (!result) {
+                const column = fullColumnFieldData[field]
+                  ? fullColumnFieldData[field].column
+                  : null;
+                cellList.push({
+                  row,
+                  rowid,
+                  column,
+                  field,
+                  newValue,
+                  oldValue,
+                });
+              }
+            }
+          };
+          if (treeConfig) {
+            eachTree(tableFullTreeData, handleCell, treeOpts);
+          } else {
+            tableFullData.forEach(handleCell);
+          }
+        }
+        return cellList;
+      },
+      /**
+       * 获取表格的可视列，也可以指定索引获取列
+       * @param {Number} columnIndex 索引
+       */
+      getColumns(columnIndex?: number): any {
+        const { visibleColumn } = internalData;
+        return isUndefined(columnIndex)
+          ? visibleColumn.slice(0)
+          : visibleColumn[columnIndex];
+      },
+      /**
+       * 根据列获取列的唯一主键
+       */
+      getColid(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        return column ? column.id : null;
+      },
+      /**
+       * 根据列的唯一主键获取列
+       * @param {String} colid 列主键
+       */
+      getColumnById(colid) {
+        const { fullColumnIdData } = internalData;
+        return colid && fullColumnIdData[colid]
+          ? fullColumnIdData[colid].column
+          : null;
+      },
+      /**
+       * 根据列的字段名获取列
+       * @param {String} field 字段名
+       */
+      getColumnByField(field) {
+        const fullColumnFieldData = internalData.fullColumnFieldData;
+        return field && fullColumnFieldData[field]
+          ? fullColumnFieldData[field].column
+          : null;
+      },
+      getParentColumn(fieldOrColumn) {
+        const { fullColumnIdData } = internalData;
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        return column && column.parentId && fullColumnIdData[column.parentId]
+          ? fullColumnIdData[column.parentId]!.column
+          : null;
+      },
+      /**
+       * 获取当前表格的列
+       * 收集到的全量列、全量表头列、处理条件之后的全量表头列、当前渲染中的表头列
+       */
+      getTableColumn() {
+        return {
+          collectColumn: internalData.collectColumn.slice(0),
+          fullColumn: internalData.tableFullColumn.slice(0),
+          visibleColumn: internalData.visibleColumn.slice(0),
+          tableColumn: reactData.tableColumn.slice(0),
+        };
+      },
+      /**
+       * 移动列到指定列的位置
+       * @param fieldOrColumn
+       * @param targetFieldOrColumn
+       * @param options
+       */
+      moveColumnTo(fieldOrColumn, targetFieldOrColumn, options) {
+        const { fullColumnIdData, visibleColumn } = internalData;
+        const { dragToChild, dragPos, isCrossDrag } = Object.assign(
+          {},
+          options,
+        );
+        const dragCol = handleFieldOrColumn($asTable, fieldOrColumn);
+        let prevDragCol: AsTableDefines.ColumnInfo | null = null;
+        const colRest = dragCol ? fullColumnIdData[dragCol.id] : null;
+        let defPos: 'left' | 'right' = 'left';
+        if (isNumber(targetFieldOrColumn)) {
+          if (colRest && targetFieldOrColumn) {
+            let currList = colRest.items;
+            let offsetIndex = colRest._index + targetFieldOrColumn;
+            if (isCrossDrag) {
+              currList = visibleColumn;
+              offsetIndex = colRest._index + targetFieldOrColumn;
+            }
+            if (offsetIndex > 0 && offsetIndex < currList.length - 1) {
+              prevDragCol = currList[offsetIndex] as any;
+            }
+            if (targetFieldOrColumn > 0) {
+              defPos = 'right';
+            }
+          }
+        } else {
+          prevDragCol = handleFieldOrColumn($asTable, targetFieldOrColumn);
+          const targetColRest = prevDragCol
+            ? fullColumnIdData[prevDragCol.id]
+            : null;
+          if (
+            colRest &&
+            targetColRest &&
+            targetColRest._index > colRest._index
+          ) {
+            defPos = 'right';
+          }
+        }
+        return $asTable.handleColDragSwapEvent(
+          null,
+          true,
+          dragCol,
+          prevDragCol,
+          dragPos || defPos,
+          dragToChild === true,
+        );
+      },
+      /**
+       * 移动行到指定行的位置
+       * @param rowidOrRow
+       * @param targetRowidOrRow
+       * @param options
+       */
+      moveRowTo(rowidOrRow, targetRowidOrRow, options) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData, afterFullData } = internalData;
+        const { dragToChild, dragPos, isCrossDrag } = Object.assign(
+          {},
+          options,
+        );
+        const treeOpts = computeTreeOpts.value;
+        const dragRow = handleRowidOrRow($asTable, rowidOrRow);
+        let prevDragRow: any = null;
+        let defPos: 'bottom' | 'top' = 'top';
+        const rowRest = dragRow
+          ? fullAllDataRowIdData[getRowid($asTable, dragRow)]
+          : null;
+        if (isNumber(targetRowidOrRow)) {
+          if (rowRest && targetRowidOrRow) {
+            let currList = afterFullData;
+            let offsetIndex = rowRest._index + targetRowidOrRow;
+            if (treeConfig) {
+              currList = rowRest.items;
+              if (treeOpts.transform) {
+                offsetIndex = rowRest.treeIndex + targetRowidOrRow;
+                if (isCrossDrag) {
+                  currList = afterFullData;
+                  offsetIndex = rowRest._index + targetRowidOrRow;
+                }
+              }
+            }
+            if (offsetIndex >= 0 && offsetIndex <= currList.length - 1) {
+              prevDragRow = currList[offsetIndex];
+            }
+            if (targetRowidOrRow > 0) {
+              defPos = 'bottom';
+            }
+          }
+        } else {
+          prevDragRow = handleRowidOrRow($asTable, targetRowidOrRow);
+          const targetRowRest = prevDragRow
+            ? fullAllDataRowIdData[getRowid($asTable, prevDragRow)]
+            : null;
+          if (
+            rowRest &&
+            targetRowRest &&
+            targetRowRest._index > rowRest._index
+          ) {
+            defPos = 'bottom';
+          }
+        }
+        const rest = $asTable.handleRowDragSwapEvent(
+          null,
+          true,
+          dragRow,
+          prevDragRow,
+          dragPos || defPos,
+          dragToChild === true,
+        );
+        return rest;
+      },
+      /**
+       * 获取表格的全量列
+       */
+      getFullColumns() {
+        const { collectColumn } = internalData;
+        return collectColumn.slice(0);
+      },
+      /**
+       * 获取数据，和 data 的行为一致，也可以指定索引获取数据
+       */
+      getData(rowIndex?: number) {
+        const tableSynchData = props.data || internalData.tableSynchData;
+        return isUndefined(rowIndex)
+          ? tableSynchData.slice(0)
+          : tableSynchData[rowIndex];
+      },
+      /**
+       * 用于多选行，获取已选中的数据
+       */
+      getCheckboxRecords(isFull) {
+        const { treeConfig } = props;
+        const { updateCheckboxFlag } = reactData;
+        const {
+          tableFullData,
+          afterFullData,
+          tableFullTreeData,
+          fullDataRowIdData,
+          afterFullRowMaps,
+          selectCheckboxMaps,
+        } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { transform, mapChildrenField } = treeOpts;
+        const { checkField } = checkboxOpts;
+        const childrenField = treeOpts.childrenField;
+        let rowList: any[] = [];
+        if (updateCheckboxFlag) {
+          if (checkField) {
+            if (treeConfig) {
+              // 如果开启 transform 默认就是完整数据
+              const currTableData = isFull
+                ? transform
+                  ? tableFullTreeData
+                  : tableFullData
+                : transform
+                  ? tableFullTreeData
+                  : afterFullData;
+              rowList = filterTree(
+                currTableData,
+                (row) => get(row, checkField),
+                { children: transform ? mapChildrenField : childrenField },
+              );
+            } else {
+              const currTableData = isFull ? tableFullData : afterFullData;
+              rowList = currTableData.filter((row) => get(row, checkField));
+            }
+          } else {
+            const currMaps =
+              isFull || (treeConfig && !transform)
+                ? fullDataRowIdData
+                : afterFullRowMaps;
+            each(selectCheckboxMaps, (row, rowid) => {
+              if (currMaps[rowid]) {
+                rowList.push(fullDataRowIdData[rowid]!.row);
+              }
+            });
+          }
+        }
+        return rowList;
+      },
+      /**
+       * 只对 tree-config 有效，获取行的子级
+       */
+      getTreeRowChildren(rowOrRowid) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { transform, mapChildrenField } = treeOpts;
+        const childrenField = treeOpts.childrenField;
+        if (rowOrRowid && treeConfig) {
+          let rowid;
+          rowid = isString(rowOrRowid)
+            ? rowOrRowid
+            : getRowid($asTable, rowOrRowid);
+          if (rowid) {
+            const rest = fullAllDataRowIdData[rowid];
+            const row = rest ? rest.row : null;
+            if (row) {
+              return row[transform ? mapChildrenField : childrenField] || [];
+            }
+          }
+        }
+        return [];
+      },
+      /**
+       * 只对 tree-config 有效，用于树形结构，获取指定行的层级
+       */
+      getTreeRowLevel(rowOrRowid) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData } = internalData;
+        if (rowOrRowid && treeConfig) {
+          let rowid;
+          rowid = isString(rowOrRowid)
+            ? rowOrRowid
+            : getRowid($asTable, rowOrRowid);
+          if (rowid) {
+            const rest = fullAllDataRowIdData[rowid];
+            if (rest) {
+              return rest.level;
+            }
+          }
+        }
+        return -1;
+      },
+      /**
+       * 只对 tree-config 有效，获取行的父级
+       */
+      getTreeParentRow(rowOrRowid) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData } = internalData;
+        if (rowOrRowid && treeConfig) {
+          let rowid;
+          rowid = isString(rowOrRowid)
+            ? rowOrRowid
+            : getRowid($asTable, rowOrRowid);
+          if (rowid) {
+            const rest = fullAllDataRowIdData[rowid];
+            if (rest) {
+              return rest.parent;
+            }
+          }
+        }
+        return null;
+      },
+      getParentRow(rowOrRowid) {
+        log.warn('delFunc', ['getParentRow', 'getTreeParentRow']);
+        return $asTable.getTreeParentRow(rowOrRowid);
+      },
+      /**
+       * 根据行的唯一主键获取行
+       * @param {String/Number} rowid 行主键
+       */
+      getRowById(cellValue) {
+        const { fullAllDataRowIdData } = internalData;
+        const rowid = eqNull(cellValue)
+          ? ''
+          : encodeURIComponent(cellValue || '');
+        return fullAllDataRowIdData[rowid]
+          ? fullAllDataRowIdData[rowid].row
+          : null;
+      },
+      /**
+       * 根据行获取行的唯一主键
+       * @param {Row} row 行对象
+       */
+      getRowid(row) {
+        return getRowid($asTable, row);
+      },
+      /**
+       * 获取处理后的表格数据
+       * 如果存在筛选条件，继续处理
+       * 如果存在排序，继续处理
+       */
+      getTableData() {
+        const { tableData, footerTableData } = reactData;
+        const { tableFullData, afterFullData, tableFullTreeData } =
+          internalData;
+        return {
+          fullData: props.treeConfig
+            ? tableFullTreeData.slice(0)
+            : tableFullData.slice(0),
+          visibleData: afterFullData.slice(0),
+          tableData: tableData.slice(0),
+          footerData: footerTableData.slice(0),
+        };
+      },
+      /**
+       * 获取表格的全量数据，如果是 tree-config 则返回带层级的树结构
+       */
+      getFullData() {
+        const { treeConfig } = props;
+        const { tableFullData, tableFullTreeData } = internalData;
+        if (treeConfig) {
+          return tableFullTreeData.slice(0);
+        }
+        return tableFullData.slice(0);
+      },
+      /**
+       * 设置为固定列
+       */
+      setColumnFixed(fieldOrColumn, fixed) {
+        let status = false;
+        const cols = isArray(fieldOrColumn) ? fieldOrColumn : [fieldOrColumn];
+        const columnOpts = computeColumnOpts.value;
+        const isMaxFixedColumn = computeIsMaxFixedColumn.value;
+        for (const item of cols) {
+          const column = handleFieldOrColumn($asTable, item);
+          const targetColumn = getRootColumn($asTable, column as any);
+          if (targetColumn && targetColumn.fixed !== fixed) {
+            // 是否超过最大固定列数量
+            if (!targetColumn.fixed && isMaxFixedColumn) {
+              if (AsUI.modal) {
+                AsUI.modal.message({
+                  status: 'error',
+                  content: getI18n('As.table.maxFixedCol', [
+                    columnOpts.maxFixedSize,
+                  ]),
+                });
+              }
+              return nextTick();
+            }
+            eachTree([targetColumn], (column) => {
+              column.fixed = fixed;
+              column.renderFixed = fixed;
+            });
+            $asTable.saveCustomStore('update:fixed');
+            if (!status) {
+              status = true;
+            }
+          }
+        }
+        if (status) {
+          return $asTable.refreshColumn();
+        }
+        return nextTick();
+      },
+      /**
+       * 取消指定固定列
+       */
+      clearColumnFixed(fieldOrColumn) {
+        let status = false;
+        const cols = isArray(fieldOrColumn) ? fieldOrColumn : [fieldOrColumn];
+        cols.forEach((item) => {
+          const column = handleFieldOrColumn($asTable, item);
+          const targetColumn = getRootColumn($asTable, column as any);
+          if (targetColumn && targetColumn.fixed) {
+            eachTree([targetColumn], (column) => {
+              column.fixed = null;
+              column.renderFixed = null;
+            });
+            $asTable.saveCustomStore('update:fixed');
+            if (!status) {
+              status = true;
+            }
+          }
+        });
+        if (status) {
+          return $asTable.refreshColumn();
+        }
+        return nextTick();
+      },
+      /**
+       * 隐藏指定列
+       */
+      hideColumn: handleColumnVisible(false),
+      /**
+       * 显示指定列
+       */
+      showColumn: handleColumnVisible(true),
+      setColumnWidth(fieldOrColumn, width) {
+        const { elemStore } = internalData;
+        let status = false;
+        const cols = isArray(fieldOrColumn) ? fieldOrColumn : [fieldOrColumn];
+        let cWidth = toInteger(width);
+        if (isScale(width)) {
+          const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+          const bodyWidth = bodyScrollElem ? bodyScrollElem.clientWidth - 1 : 0;
+          cWidth = Math.floor(cWidth * bodyWidth);
+        }
+        if (cWidth) {
+          cols.forEach((item) => {
+            const column = handleFieldOrColumn($asTable, item);
+            if (column) {
+              column.resizeWidth = cWidth;
+              if (!status) {
+                status = true;
+              }
+            }
+          });
+          if (status) {
+            return $asTable.refreshColumn().then(() => {
+              return { status };
+            });
+          }
+        }
+        return nextTick().then(() => {
+          return { status };
+        });
+      },
+      getColumnWidth(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column) {
+          return column.renderWidth;
+        }
+        return 0;
+      },
+      /**
+       * 手动重置列的显示隐藏、列宽拖动的状态、固定列、排序列；
+       * 如果为 true 则重置所有状态
+       * 如果已关联工具栏，则会同步更新
+       */
+      resetColumn(options) {
+        log.warn('delFunc', ['resetColumn', 'resetCustom']);
+        return $asTable.resetCustom(options);
+      },
+      /**
+       * 刷新列信息
+       * 将固定的列左边、右边分别靠边
+       * 如果传 true 则会检查列顺序并排序
+       */
+      refreshColumn(initSort) {
+        if (initSort) {
+          handleUpdateColumn();
+        }
+        return parseColumns(true)
+          .then(() => {
+            return $asTable.refreshScroll();
+          })
+          .then(() => {
+            return handleLazyRecalculate(false, true, true);
+          });
+      },
+      setRowHeightConf(heightConf) {
+        const { fullAllDataRowIdData } = internalData;
+        let status = false;
+        if (heightConf) {
+          each(heightConf, (height, rowid) => {
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              const rHeight = toInteger(height);
+              if (rHeight) {
+                rowRest.resizeHeight = rHeight;
+                if (!status) {
+                  status = true;
+                }
+              }
+            }
+          });
+          if (status) {
+            internalData.isResizeCellHeight = true;
+            reactData.resizeHeightFlag++;
+          }
+        }
+        return nextTick().then(() => {
+          updateRowOffsetTop();
+          return { status };
+        });
+      },
+      getRowHeightConf(isFull) {
+        const { fullAllDataRowIdData, afterFullData } = internalData;
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const rest: Record<string, number> = {};
+        afterFullData.forEach((row) => {
+          const rowid = handleGetRowId(row);
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (rowRest) {
+            const resizeHeight = rowRest.resizeHeight;
+            if (resizeHeight || isFull) {
+              const currCellHeight = getCellRestHeight(
+                rowRest,
+                cellOpts,
+                defaultRowHeight,
+              );
+              rest[rowid] = currCellHeight;
+            }
+          }
+        });
+        return rest;
+      },
+      recalcRowHeight(rowOrId) {
+        const { fullAllDataRowIdData } = internalData;
+        const rows = isArray(rowOrId) ? rowOrId : [rowOrId];
+        const el = refElem.value;
+        if (el) {
+          const { handleGetRowId } = createHandleGetRowId($asTable);
+          el.dataset.calcRow = 'Y';
+          rows.forEach((row) => {
+            const rowid =
+              isString(row) || isNumber(row) ? row : handleGetRowId(row);
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              rowRest.resizeHeight = calcCellAutoHeight(rowid, rowRest, el);
+            }
+            delete el.dataset.calcRow;
+          });
+          reactData.calcCellHeightFlag++;
+        }
+        return nextTick();
+      },
+      setRowHeight(rowOrId, height) {
+        const { fullAllDataRowIdData } = internalData;
+        let status = false;
+        const rows = isArray(rowOrId) ? rowOrId : [rowOrId];
+        let rHeight = toInteger(height);
+        if (isScale(height)) {
+          const tableBody = refTableBody.value;
+          const bodyElem = tableBody ? (tableBody.$el as HTMLDivElement) : null;
+          const bodyHeight = bodyElem ? bodyElem.clientHeight - 1 : 0;
+          rHeight = Math.floor(rHeight * bodyHeight);
+        }
+        if (rHeight) {
+          const { handleGetRowId } = createHandleGetRowId($asTable);
+          rows.forEach((row) => {
+            const rowid =
+              isString(row) || isNumber(row) ? row : handleGetRowId(row);
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              rowRest.resizeHeight = rHeight;
+              if (!status) {
+                status = true;
+              }
+            }
+          });
+          if (status) {
+            internalData.isResizeCellHeight = true;
+            reactData.resizeHeightFlag++;
+          }
+        }
+        return nextTick().then(() => {
+          return { status };
+        });
+      },
+      getRowHeight(rowOrId) {
+        const { fullAllDataRowIdData } = internalData;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const rowid =
+          isString(rowOrId) || isNumber(rowOrId)
+            ? rowOrId
+            : getRowid($asTable, rowOrId);
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (rowRest) {
+          return getCellRestHeight(rowRest, cellOpts, defaultRowHeight);
+        }
+        return 0;
       },
       /**
        * 刷新滚动操作，手动同步滚动相关位置（对于某些特殊的操作，比如滚动条错位、固定列不同步）
@@ -7118,6 +8204,13 @@ export const Table = defineComponent<AsTableProps>(
         const isForce = !!reFull;
         return handleLazyRecalculate(isForce, isForce, isForce);
       },
+      openTooltip(target, content) {
+        const $commTip = refCommTooltip.value;
+        if ($commTip && $commTip.open) {
+          return $commTip.open(target, content);
+        }
+        return nextTick();
+      },
       /**
        * 关闭 tooltip
        */
@@ -7143,14 +8236,327 @@ export const Table = defineComponent<AsTableProps>(
         }
         return nextTick();
       },
-
-      isAggregateRecord(row) {
-        const { isRowGroupStatus } = reactData;
-        return isRowGroupStatus && row.isAggregate;
+      /**
+       * 判断列头复选框是否被选中
+       */
+      isAllCheckboxChecked() {
+        return reactData.isAllSelected;
       },
-      refreshAggregateCalcValues() {
-        updateGroupData();
+      /**
+       * 判断列头复选框是否被半选
+       */
+      isAllCheckboxIndeterminate() {
+        return !reactData.isAllSelected && reactData.isIndeterminate;
+      },
+      /**
+       * 获取复选框半选状态的行数据
+       */
+      getCheckboxIndeterminateRecords(isFull) {
+        const { treeConfig } = props;
+        const { fullDataRowIdData, treeIndeterminateRowMaps } = internalData;
+        if (treeConfig) {
+          const fullRest: any[] = [];
+          const defRest: any[] = [];
+          each(treeIndeterminateRowMaps, (item, rowid) => {
+            if (!item) {
+              return;
+            }
+
+            fullRest.push(item);
+            if (fullDataRowIdData[rowid]) {
+              defRest.push(item);
+            }
+          });
+          if (isFull) {
+            return fullRest;
+          }
+          return defRest;
+        }
+        return [];
+      },
+      /**
+       * 用于多选行，设置行为选中状态，第二个参数为选中与否
+       * @param {Array/Row} rows 行数据
+       * @param {Boolean} value 是否选中
+       */
+      setCheckboxRow(rows, checked) {
+        if (rows && !isArray(rows)) {
+          rows = [rows];
+        }
+        return handleCheckedCheckboxRow(rows, checked, true);
+      },
+      setCheckboxRowByKey(keys: any, checked) {
+        const { fullAllDataRowIdData } = internalData;
+        if (!isArray(keys)) {
+          keys = [keys];
+        }
+        const rows: any = [];
+        keys.forEach((rowKey: string) => {
+          const rowid = encodeRowid(rowKey);
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (rowRest) {
+            rows.push(rowRest.row);
+          }
+        });
+        return handleCheckedCheckboxRow(rows, checked, true);
+      },
+      setCheckboxRowKey(keys, checked) {
+        return $asTable.setCheckboxRowByKey(keys, checked);
+      },
+      isCheckedByCheckboxRow(row) {
+        const { updateCheckboxFlag } = reactData;
+        const { selectCheckboxMaps } = internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField } = checkboxOpts;
+        if (checkField) {
+          return get(row, checkField);
+        }
+        return (
+          !!updateCheckboxFlag && !!selectCheckboxMaps[getRowid($asTable, row)]
+        );
+      },
+      isCheckedByCheckboxRowKey(rowKey: any) {
+        const { updateCheckboxFlag } = reactData;
+        const { fullAllDataRowIdData, selectCheckboxMaps } = internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField } = checkboxOpts;
+        const rowid = encodeRowid(rowKey);
+        if (checkField) {
+          const rowRest = fullAllDataRowIdData[rowid];
+          if (rowRest) {
+            return get(rowRest.row, checkField);
+          }
+          return false;
+        }
+        return !!updateCheckboxFlag && !!selectCheckboxMaps[rowid];
+      },
+      isIndeterminateByCheckboxRow(row) {
+        const { treeIndeterminateRowMaps } = internalData;
+        return (
+          !!treeIndeterminateRowMaps[getRowid($asTable, row)] &&
+          !$asTable.isCheckedByCheckboxRow(row)
+        );
+      },
+      isIndeterminateByCheckboxRowKey(rowKey: any) {
+        const { treeIndeterminateRowMaps } = internalData;
+        const rowid = encodeRowid(rowKey);
+        return (
+          !!treeIndeterminateRowMaps[rowid] &&
+          !$asTable.isCheckedByCheckboxRowKey(rowid)
+        );
+      },
+      /**
+       * 多选，切换某一行的选中状态
+       */
+      toggleCheckboxRow(row) {
+        const { selectCheckboxMaps } = internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField } = checkboxOpts;
+        const checked = checkField
+          ? !get(row, checkField)
+          : !selectCheckboxMaps[getRowid($asTable, row)];
+        $asTable.handleBatchSelectRows([row], checked, true);
+        $asTable.checkSelectionStatus();
         return nextTick();
+      },
+      /**
+       * 用于多选行，设置所有行的选中状态
+       * @param {Boolean} value 是否选中
+       */
+      setAllCheckboxRow(value) {
+        return handleCheckedAllCheckboxRow(value, true);
+      },
+      /**
+       * 获取单选框保留选中的行
+       */
+      getRadioReserveRecord(isFull) {
+        const { treeConfig } = props;
+        const { fullDataRowIdData, radioReserveRow, afterFullData } =
+          internalData;
+        const radioOpts = computeRadioOpts.value;
+        const treeOpts = computeTreeOpts.value;
+        const childrenField = treeOpts.childrenField;
+        if (radioOpts.reserve && radioReserveRow) {
+          const rowid = getRowid($asTable, radioReserveRow);
+          if (isFull) {
+            if (!fullDataRowIdData[rowid]) {
+              return radioReserveRow;
+            }
+          } else {
+            const rowkey = getRowkey($asTable);
+            if (treeConfig) {
+              const matchObj = findTree(
+                afterFullData,
+                (row) => rowid === get(row, rowkey),
+                { children: childrenField },
+              );
+              if (matchObj) {
+                return radioReserveRow;
+              }
+            } else {
+              if (afterFullData.every((row) => rowid !== get(row, rowkey))) {
+                return radioReserveRow;
+              }
+            }
+          }
+        }
+        return null;
+      },
+      clearRadioReserve() {
+        internalData.radioReserveRow = null;
+        return nextTick();
+      },
+      /**
+       * 获取复选框保留选中的行
+       */
+      getCheckboxReserveRecords(isFull) {
+        const { treeConfig } = props;
+        const { afterFullData, fullDataRowIdData, checkboxReserveRowMap } =
+          internalData;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const treeOpts = computeTreeOpts.value;
+        const childrenField = treeOpts.childrenField;
+        const reserveSelection: any[] = [];
+        if (checkboxOpts.reserve) {
+          const { handleGetRowId } = createHandleGetRowId($asTable);
+          const afterFullIdMaps: { [key: string]: number } = {};
+          if (treeConfig) {
+            eachTree(
+              afterFullData,
+              (row) => {
+                afterFullIdMaps[handleGetRowId(row)] = 1;
+              },
+              { children: childrenField },
+            );
+          } else {
+            afterFullData.forEach((row) => {
+              afterFullIdMaps[handleGetRowId(row)] = 1;
+            });
+          }
+          each(checkboxReserveRowMap, (oldRow, oldRowid) => {
+            if (oldRow) {
+              if (isFull) {
+                if (!fullDataRowIdData[oldRowid]) {
+                  reserveSelection.push(oldRow);
+                }
+              } else {
+                if (!afterFullIdMaps[oldRowid]) {
+                  reserveSelection.push(oldRow);
+                }
+              }
+            }
+          });
+        }
+        return reserveSelection;
+      },
+      clearCheckboxReserve() {
+        internalData.checkboxReserveRowMap = {};
+        return nextTick();
+      },
+      /**
+       * 多选，切换所有行的选中状态
+       */
+      toggleAllCheckboxRow() {
+        handleCheckAllEvent(null, !reactData.isAllSelected);
+        return nextTick();
+      },
+      /**
+       * 用于多选行，手动清空用户的选择
+       * 清空行为不管是否被禁用还是保留记录，都将彻底清空选中状态
+       */
+      clearCheckboxRow() {
+        const { treeConfig } = props;
+        const { tableFullData } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const childrenField = treeOpts.childrenField;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField, reserve } = checkboxOpts;
+        // indeterminateField 仅支持读取
+        const indeterminateField = checkboxOpts.indeterminateField;
+        if (checkField) {
+          const handleClearChecked = (item: any) => {
+            if (treeConfig && indeterminateField) {
+              set(item, indeterminateField, false);
+            }
+            set(item, checkField, false);
+          };
+          if (treeConfig) {
+            eachTree(tableFullData, handleClearChecked, {
+              children: childrenField,
+            });
+          } else {
+            tableFullData.forEach(handleClearChecked);
+          }
+        }
+        if (reserve) {
+          tableFullData.forEach((row) => handleCheckboxReserveRow(row, false));
+        }
+        reactData.isAllSelected = false;
+        reactData.isIndeterminate = false;
+        internalData.selectCheckboxMaps = {};
+        internalData.treeIndeterminateRowMaps = {};
+        reactData.updateCheckboxFlag++;
+        return nextTick();
+      },
+      /**
+       * 用于当前行，设置某一行为高亮状态
+       * @param {Row} row 行对象
+       */
+      setCurrentRow(row) {
+        // const $xeGanttView = internalData.xeGanttView;
+        const rowOpts = computeRowOpts.value;
+        const el = refElem.value;
+        $asTable.clearCurrentRow();
+        internalData.currentRow = row;
+        if (rowOpts.isCurrent && el) {
+          const rowId = getRowid($asTable, row);
+          const escapedRowId = CSS.escape(rowId);
+          const selector = `[rowid="${escapedRowId}"]`;
+          arrayEach(el.querySelectorAll(selector), (elem) =>
+            addClass(elem, 'row--current'),
+          );
+        }
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateCurrentRow) {
+        //   $xeGanttView.handleUpdateCurrentRow(row);
+        // }
+        return nextTick();
+      },
+      isCheckedByRadioRow(row) {
+        const { selectRadioRow } = reactData;
+        if (row && selectRadioRow) {
+          return $asTable.eqRow(selectRadioRow, row);
+        }
+        return false;
+      },
+      isCheckedByRadioRowKey(key) {
+        const { selectRadioRow } = reactData;
+        if (selectRadioRow) {
+          return key === getRowid($asTable, selectRadioRow);
+        }
+        return false;
+      },
+      /**
+       * 用于单选行，设置某一行为选中状态
+       * @param {Row} row 行对象
+       */
+      setRadioRow(row) {
+        return handleCheckedRadioRow(row, true);
+      },
+      /**
+       * 用于单选行，设置某一行为选中状态
+       * @param key 行主键
+       */
+      setRadioByRowKey(rowKey: any) {
+        const { fullAllDataRowIdData } = internalData;
+        const rowid = encodeRowid(rowKey);
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (rowRest) {
+          return handleCheckedRadioRow(rowRest.row, true);
+        }
+        return nextTick();
+      },
+      setRadioRowKey(rowKey) {
+        return $asTable.setRadioByRowKey(rowKey);
       },
       /**
        * 用于当前行，手动清空当前高亮的状态
@@ -7171,34 +8577,56 @@ export const Table = defineComponent<AsTableProps>(
         return nextTick();
       },
       /**
-       * 设置所有树节点的展开与否
-       * @param {Boolean} expanded 是否展开
+       * 用于单选行，手动清空用户的选择
        */
-      setAllTreeExpand(expanded: boolean) {
-        const { tableFullTreeData } = internalData;
-        const treeOpts = computeTreeOpts.value;
-        const { transform, lazy } = treeOpts;
-        const childrenField = treeOpts.childrenField;
-        const expandeds: any[] = [];
-        eachTree(
-          tableFullTreeData,
-          (row) => {
-            const rowChildren = row[childrenField];
-            if (lazy || (rowChildren && rowChildren.length > 0)) {
-              expandeds.push(row);
+      clearRadioRow() {
+        reactData.selectRadioRow = null;
+        return nextTick();
+      },
+      /**
+       * 用于当前行，获取当前行的数据
+       */
+      getCurrentRecord(isFull) {
+        const { fullDataRowIdData, afterFullRowMaps, currentRow } =
+          internalData;
+        const rowOpts = computeRowOpts.value;
+        if (rowOpts.isCurrent) {
+          const rowid = getRowid($asTable, currentRow);
+          if (isFull) {
+            if (fullDataRowIdData[rowid]) {
+              return currentRow;
             }
-          },
-          { children: childrenField },
-        );
-        return $asTable.setTreeExpand(expandeds, expanded).then(() => {
-          if (!transform) {
-            return;
+          } else {
+            if (afterFullRowMaps[rowid]) {
+              return currentRow;
+            }
           }
-
-          handleVirtualTreeToList();
-          reactData.treeExpandedFlag++;
-          return $asTable.recalculate();
-        });
+        }
+        return null;
+      },
+      /**
+       * 用于单选行，获取当已选中的数据
+       */
+      getRadioRecord(isFull) {
+        const { fullDataRowIdData, afterFullRowMaps } = internalData;
+        const { selectRadioRow } = reactData;
+        if (selectRadioRow) {
+          const rowid = getRowid($asTable, selectRadioRow);
+          if (isFull) {
+            if (fullDataRowIdData[rowid]) {
+              return selectRadioRow;
+            }
+          } else {
+            if (afterFullRowMaps[rowid]) {
+              return selectRadioRow;
+            }
+          }
+        }
+        return null;
+      },
+      getCurrentColumn() {
+        const columnOpts = computeColumnOpts.value;
+        return columnOpts.isCurrent ? internalData.currentCol : null;
       },
       /**
        * 用于当前列，设置某列行为高亮状态
@@ -7228,7 +8656,679 @@ export const Table = defineComponent<AsTableProps>(
         reactData.currColFlag++; // 刷新当前列状态
         return nextTick();
       },
+      setPendingRow(rows: any | any[], status: boolean) {
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        const { pendingRowMaps } = internalData;
+        if (rows && !isArray(rows)) {
+          rows = [rows];
+        }
+        if (status) {
+          rows.forEach((row: any) => {
+            const rowid = handleGetRowId(row);
+            if (rowid && !pendingRowMaps[rowid]) {
+              pendingRowMaps[rowid] = row;
+            }
+          });
+        } else {
+          rows.forEach((row: any) => {
+            const rowid = handleGetRowId(row);
+            if (rowid && pendingRowMaps[rowid]) {
+              delete pendingRowMaps[rowid];
+            }
+          });
+        }
+        reactData.pendingRowFlag++;
+        return nextTick();
+      },
+      togglePendingRow(rows: any | any[]) {
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        const { pendingRowMaps } = internalData;
+        if (rows && !isArray(rows)) {
+          rows = [rows];
+        }
+        rows.forEach((row: any) => {
+          const rowid = handleGetRowId(row);
+          if (rowid) {
+            if (pendingRowMaps[rowid]) {
+              delete pendingRowMaps[rowid];
+            } else {
+              pendingRowMaps[rowid] = row;
+            }
+          }
+        });
+        reactData.pendingRowFlag++;
+        return nextTick();
+      },
+      hasPendingByRow(row) {
+        return $asTable.isPendingByRow(row);
+      },
+      isPendingByRow(row) {
+        const { pendingRowMaps } = internalData;
+        const rowid = getRowid($asTable, row);
+        return !!pendingRowMaps[rowid];
+      },
+      getPendingRecords() {
+        const { fullAllDataRowIdData, pendingRowMaps } = internalData;
+        const insertRecords: any[] = [];
+        each(pendingRowMaps, (row, rowid) => {
+          if (fullAllDataRowIdData[rowid]) {
+            insertRecords.push(row);
+          }
+        });
+        return insertRecords;
+      },
+      clearPendingRow() {
+        internalData.pendingRowMaps = {};
+        reactData.pendingRowFlag++;
+        return nextTick();
+      },
+      sort(sortConfs: any, sortOrder?: AsTablePropTypes.SortOrder) {
+        const sortOpts = computeSortOpts.value;
+        const { multiple, remote, orders } = sortOpts;
+        if (sortConfs && isString(sortConfs)) {
+          sortConfs = [{ field: sortConfs, order: sortOrder }];
+        }
+        if (!isArray(sortConfs)) {
+          sortConfs = [sortConfs];
+        }
+        if (sortConfs.length > 0) {
+          if (!multiple) {
+            clearAllSort();
+          }
+          (multiple ? sortConfs : [sortConfs[0]]).forEach(
+            (confs: any, index: number) => {
+              let { field, order } = confs;
+              const column = isString(field)
+                ? $asTable.getColumnByField(field)
+                : field;
+              if (column && column.sortable) {
+                if (orders && !orders.includes(order)) {
+                  order = getNextSortOrder(column);
+                }
+                if (column.order !== order) {
+                  column.order = order;
+                }
+                column.sortTime = Date.now() + index;
+              }
+            },
+          );
+          // 如果是服务端排序，则跳过本地排序处理
+          if (!remote) {
+            $asTable.handleTableData(true);
+          }
+          return nextTick().then(() => {
+            updateRowOffsetTop();
+            $asTable.updateCellAreas();
+            return updateStyle();
+          });
+        }
+        return nextTick();
+      },
+      setSort(sortConfs, isUpdate) {
+        return handleSortEvent(null, sortConfs, isUpdate);
+      },
+      setSortByEvent(evnt, sortConfs) {
+        return handleSortEvent(evnt, sortConfs, true);
+      },
+      /**
+       * 清空指定列的排序条件
+       * 如果为空则清空所有列的排序条件
+       * @param {String} fieldOrColumn 列或字段名
+       */
+      clearSort(fieldOrColumn) {
+        const sortOpts = computeSortOpts.value;
+        if (fieldOrColumn) {
+          const column = handleFieldOrColumn($asTable, fieldOrColumn);
+          if (column) {
+            column.order = null;
+          }
+        } else {
+          clearAllSort();
+        }
+        if (!sortOpts.remote) {
+          $asTable.handleTableData(true);
+        }
+        return nextTick().then(() => {
+          updateRowOffsetTop();
+          return updateStyle();
+        });
+      },
+      clearSortByEvent(evnt, fieldOrColumn) {
+        const { tableFullColumn } = internalData;
+        const sortOpts = computeSortOpts.value;
+        const { multiple } = sortOpts;
+        const sortCols: AsTableDefines.ColumnInfo[] = [];
+        let column: AsTableDefines.ColumnInfo<any> | null = null;
+        if (evnt) {
+          if (fieldOrColumn) {
+            column = handleFieldOrColumn($asTable, fieldOrColumn);
+            if (column) {
+              column.order = null;
+            }
+          } else {
+            tableFullColumn.forEach((column) => {
+              if (!column.order) {
+                return;
+              }
 
+              column.order = null;
+              sortCols.push(column);
+            });
+          }
+          if (!sortOpts.remote) {
+            $asTable.handleTableData(true);
+          }
+
+          if (!multiple) {
+            column = sortCols[0]!;
+          }
+
+          if (column) {
+            $asTable.handleColumnSortEvent(evnt, column);
+          }
+
+          if (multiple && sortCols.length > 0) {
+            const params = {
+              $table: $asTable,
+              $event: evnt,
+              cols: sortCols,
+              sortList: [],
+            };
+            dispatchEvent('clear-all-sort', params, evnt);
+          }
+        }
+        return nextTick().then(() => {
+          updateRowOffsetTop();
+          return updateStyle();
+        });
+      },
+      isSort(fieldOrColumn) {
+        if (fieldOrColumn) {
+          const column = handleFieldOrColumn($asTable, fieldOrColumn);
+          return column ? column.sortable && !!column.order : false;
+        }
+        return $asTable.getSortColumns().length > 0;
+      },
+      getSortColumns() {
+        const sortOpts = computeSortOpts.value;
+        const { multiple, chronological } = sortOpts;
+        const sortList: AsTableDefines.SortCheckedParams[] = [];
+        const { tableFullColumn } = internalData;
+        tableFullColumn.forEach((column) => {
+          const { field, order } = column;
+          if (column.sortable && order) {
+            sortList.push({
+              column,
+              field,
+              order,
+              sortTime: column.sortTime,
+            });
+          }
+        });
+        if (multiple && chronological && sortList.length > 1) {
+          return orderBy(sortList, 'sortTime');
+        }
+        return sortList;
+      },
+      setFilterByEvent(evnt, fieldOrColumn, options) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column && column.filters) {
+          column.filters = toFilters(options || [], column.id);
+          return $asTable.handleColumnConfirmFilter(column, evnt);
+        }
+        return nextTick();
+      },
+      /**
+       * 关闭筛选
+       * @param {Event} evnt 事件
+       */
+      closeFilter() {
+        const { filterStore } = reactData;
+        const { column, visible } = filterStore;
+        filterStore.isAllSelected = false;
+        filterStore.isIndeterminate = false;
+        filterStore.visible = false;
+        if (visible) {
+          const field = column ? column.field : null;
+          dispatchEvent(
+            'filter-visible',
+            {
+              column,
+              property: field,
+              field,
+              filterList: () => $asTable.getCheckedFilters(),
+              visible: false,
+            },
+            null,
+          );
+        }
+        return nextTick();
+      },
+      /**
+       * 判断指定列是否为筛选状态，如果为空则判断所有列
+       * @param {String} fieldOrColumn 字段名
+       */
+      isActiveFilterByColumn(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column) {
+          return (
+            column.filters && column.filters.some((option) => option.checked)
+          );
+        }
+        return $asTable.getCheckedFilters().length > 0;
+      },
+      isFilter(fieldOrColumn) {
+        return $asTable.isActiveFilterByColumn(fieldOrColumn);
+      },
+      clearFilterByEvent(evnt, fieldOrColumn) {
+        const { filterStore } = reactData;
+        const { tableFullColumn } = internalData;
+        const filterOpts = computeFilterOpts.value;
+        const { multiple } = filterOpts;
+        const filterCols: AsTableDefines.ColumnInfo[] = [];
+        let column: AsTableDefines.ColumnInfo<any> | null = null;
+        if (fieldOrColumn) {
+          column = handleFieldOrColumn($asTable, fieldOrColumn);
+          if (column) {
+            $asTable.handleClearFilter(column);
+          }
+        } else {
+          tableFullColumn.forEach((column) => {
+            if (!column.filters) {
+              return;
+            }
+
+            filterCols.push(column);
+            $asTable.handleClearFilter(column);
+          });
+        }
+        if (!fieldOrColumn || column !== filterStore.column) {
+          Object.assign(filterStore, {
+            isAllSelected: false,
+            isIndeterminate: false,
+            style: null,
+            options: [],
+            column: null,
+            multiple: false, // 选项是覅多选
+            visible: false,
+          });
+        }
+
+        if (!filterOpts.remote) {
+          $asTable.updateData();
+        }
+
+        if (!multiple) {
+          column = filterCols[0] as any;
+        }
+
+        if (column) {
+          const filterList = () => $asTable.getCheckedFilters();
+          const values: any[] = [];
+          const datas: any[] = [];
+          column.filters.forEach((item: any) => {
+            if (!item.checked) {
+              return;
+            }
+
+            values.push(item.value);
+            datas.push(item.data);
+          });
+          const params = {
+            $table: $asTable,
+            $event: evnt as Event,
+            column,
+            field: column.field,
+            property: column.field,
+            values,
+            datas,
+            filters: filterList,
+            filterList,
+          };
+          $asTable.dispatchEvent('filter-change', params, evnt);
+          $asTable.dispatchEvent('clear-filter', params, evnt);
+        }
+
+        if (multiple && filterCols.length > 0) {
+          const params = {
+            $table: $asTable,
+            $event: evnt,
+            cols: filterCols,
+            filterList: [],
+          };
+          dispatchEvent('clear-all-filter', params, evnt);
+        }
+
+        return nextTick();
+      },
+      /**
+       * 判断展开行是否懒加载完成
+       * @param {Row} row 行对象
+       */
+      isRowExpandLoaded(row) {
+        const { fullAllDataRowIdData } = internalData;
+        const rowRest = fullAllDataRowIdData[getRowid($asTable, row)]!;
+        return rowRest && !!rowRest.expandLoaded;
+      },
+      clearRowExpandLoaded(row) {
+        const { fullAllDataRowIdData, rowExpandLazyLoadedMaps } = internalData;
+        const expandOpts = computeExpandOpts.value;
+        const { lazy } = expandOpts;
+        const rowid = getRowid($asTable, row);
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (lazy && rowRest) {
+          rowRest.expandLoaded = false;
+          delete rowExpandLazyLoadedMaps[rowid];
+        }
+        reactData.rowExpandedFlag++;
+        return nextTick();
+      },
+      /**
+       * 重新懒加载展开行，并展开内容
+       * @param {Row} row 行对象
+       */
+      reloadRowExpand(row) {
+        const { rowExpandLazyLoadedMaps } = internalData;
+        const expandOpts = computeExpandOpts.value;
+        const { lazy } = expandOpts;
+        const rowid = getRowid($asTable, row);
+        if (lazy && !rowExpandLazyLoadedMaps[rowid]) {
+          $asTable
+            .clearRowExpandLoaded(row)
+            .then(() => handleAsyncRowExpand(row));
+        }
+        return nextTick();
+      },
+      reloadExpandContent(row) {
+        log.warn('delFunc', ['reloadExpandContent', 'reloadRowExpand']);
+        // 即将废弃
+        return $asTable.reloadRowExpand(row);
+      },
+      /**
+       * 切换展开行
+       */
+      toggleRowExpand(row) {
+        return $asTable.setRowExpand(row, !$asTable.isRowExpandByRow(row));
+      },
+      /**
+       * 设置所有行的展开与否
+       * @param {Boolean} expanded 是否展开
+       */
+      setAllRowExpand(expanded) {
+        const treeOpts = computeTreeOpts.value;
+        const { tableFullData, tableFullTreeData } = internalData;
+        const childrenField = treeOpts.childrenField;
+        let expandedRows: any[] = [];
+        if (props.treeConfig) {
+          eachTree(
+            tableFullTreeData,
+            (row) => {
+              expandedRows.push(row);
+            },
+            { children: childrenField },
+          );
+        } else {
+          expandedRows = tableFullData;
+        }
+        return $asTable.setRowExpand(expandedRows, expanded);
+      },
+      /**
+       * 设置展开行，二个参数设置这一行展开与否
+       * 支持单行
+       * 支持多行
+       * @param {Array/Row} rows 行数据
+       * @param {Boolean} expanded 是否展开
+       */
+      setRowExpand(rows, expanded) {
+        const { expandColumn } = reactData;
+        let { fullAllDataRowIdData, rowExpandedMaps, rowExpandLazyLoadedMaps } =
+          internalData;
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        const expandOpts = computeExpandOpts.value;
+        const { reserve, lazy, accordion, toggleMethod } = expandOpts;
+        const lazyRests: any[] = [];
+        const columnIndex = expandColumn
+          ? $asTable.getColumnIndex(expandColumn)
+          : -1;
+        const $columnIndex = expandColumn
+          ? $asTable.getVMColumnIndex(expandColumn)
+          : -1;
+        if (rows) {
+          if (!isArray(rows)) {
+            rows = [rows];
+          }
+          if (accordion) {
+            // 只能同时展开一个
+            rowExpandedMaps = {};
+            internalData.rowExpandedMaps = rowExpandedMaps;
+            rows = rows.slice(-1);
+          }
+          const validRows: any[] = toggleMethod
+            ? rows.filter((row: any) =>
+                toggleMethod({
+                  $table: $asTable,
+                  expanded,
+                  column: expandColumn as AsTableDefines.ColumnInfo,
+                  columnIndex,
+                  $columnIndex,
+                  row,
+                  rowIndex: $asTable.getRowIndex(row),
+                  $rowIndex: $asTable.getVMRowIndex(row),
+                }),
+              )
+            : rows;
+          if (expanded) {
+            validRows.forEach((row) => {
+              const rowid = handleGetRowId(row);
+              if (!rowExpandedMaps[rowid]) {
+                const rowRest = fullAllDataRowIdData[rowid];
+                const isLoad =
+                  lazy &&
+                  !rowRest?.expandLoaded &&
+                  !rowExpandLazyLoadedMaps[rowid];
+                if (isLoad) {
+                  lazyRests.push(handleAsyncRowExpand(row));
+                } else {
+                  rowExpandedMaps[rowid] = row;
+                }
+              }
+            });
+          } else {
+            validRows.forEach((item) => {
+              const rowid = handleGetRowId(item);
+              if (rowExpandedMaps[rowid]) {
+                delete rowExpandedMaps[rowid];
+              }
+            });
+          }
+          if (reserve) {
+            validRows.forEach((row) => handleRowExpandReserve(row, expanded));
+          }
+        }
+        reactData.rowExpandedFlag++;
+        return Promise.all(lazyRests)
+          .then(() => nextTick())
+          .then(() => handleLazyRecalculate(true, true, true))
+          .then(() => {
+            updateRowOffsetTop();
+            updateRowExpandStyle();
+            handleRowExpandScroll();
+            return $asTable.updateCellAreas();
+          });
+      },
+      /**
+       * 判断行是否为展开状态
+       * @param {Row} row 行对象
+       */
+      isRowExpandByRow(row) {
+        const { rowExpandedFlag } = reactData;
+        const { rowExpandedMaps } = internalData;
+        const rowid = getRowid($asTable, row);
+        return !!rowExpandedFlag && !!rowExpandedMaps[rowid];
+      },
+      isExpandByRow(row) {
+        // 已废弃
+        log.warn('delFunc', ['isExpandByRow', 'isRowExpandByRow']);
+        return $asTable.isRowExpandByRow(row);
+      },
+      /**
+       * 手动清空展开行状态，数据会恢复成未展开的状态
+       */
+      clearRowExpand() {
+        const { tableFullData, scrollYStore } = internalData;
+        const expandOpts = computeExpandOpts.value;
+        const { reserve } = expandOpts;
+        const expList = $asTable.getRowExpandRecords();
+        internalData.rowExpandedMaps = {};
+        if (reserve) {
+          tableFullData.forEach((row) => handleRowExpandReserve(row, false));
+        }
+        reactData.rowExpandedFlag++;
+        scrollYStore.startIndex = 0;
+        scrollYStore.endIndex = 1;
+        return nextTick()
+          .then(() => {
+            if (expList.length > 0) {
+              return handleLazyRecalculate(true, true, true);
+            }
+          })
+          .then(() => {
+            updateRowOffsetTop();
+            updateRowExpandStyle();
+            handleRowExpandScroll();
+            return $asTable.updateCellAreas();
+          });
+      },
+      clearRowExpandReserve() {
+        internalData.rowExpandedReserveRowMap = {};
+        return nextTick();
+      },
+      getRowExpandRecords() {
+        const rest: any[] = [];
+        each(internalData.rowExpandedMaps, (item) => {
+          if (item) {
+            rest.push(item);
+          }
+        });
+        return rest;
+      },
+      setRowGroups(fieldOrColumns) {
+        const { aggregateConfig } = props;
+        const aggregateOpts = computeAggregateOpts.value;
+        const { maxGroupSize } = aggregateOpts;
+        if (!aggregateConfig) {
+          log.error('reqProp', ['aggregate-config']);
+          return nextTick();
+        }
+        const confList = fieldOrColumns
+          ? isArray(fieldOrColumns)
+            ? fieldOrColumns
+            : [fieldOrColumns]
+          : [];
+        if (maxGroupSize && confList.length > maxGroupSize) {
+          if (AsUI.modal) {
+            AsUI.modal.message({
+              status: 'error',
+              content: getI18n('As.table.maxGroupCol', [maxGroupSize]),
+            });
+          }
+          return nextTick();
+        }
+        if (confList.length > 0) {
+          handleUpdateRowGroup(
+            confList.map((fieldOrColumn) => {
+              return isString(fieldOrColumn)
+                ? fieldOrColumn
+                : fieldOrColumn.field;
+            }),
+          );
+          return loadTableData(internalData.tableSynchData, false, true);
+        }
+        return nextTick();
+      },
+      getRowGroups() {
+        const { aggregateConfig } = props;
+        const { fullColumnFieldData } = internalData;
+        if (aggregateConfig) {
+          const { rowGroupList } = reactData;
+          return rowGroupList.map(({ field }) => {
+            const colRet = fullColumnFieldData[field];
+            if (colRet) {
+              return colRet.column;
+            }
+            return { field };
+          });
+        }
+        return [];
+      },
+      getRowGroupFields() {
+        return $asTable.getRowGroups().map((item) => item.field);
+      },
+      clearRowGroups() {
+        const { aggregateConfig } = props;
+        if (!aggregateConfig) {
+          log.error('reqProp', ['aggregate-config']);
+          return nextTick();
+        }
+        handleUpdateRowGroup([]);
+        return loadTableData(internalData.tableSynchData, false, true);
+      },
+      isRowGroupRecord(row) {
+        log.warn('delFunc', ['isRowGroupRecord', 'isAggregateRecord']);
+        return $asTable.isAggregateRecord(row);
+      },
+      isRowGroupExpandByRow(row) {
+        log.warn('delFunc', [
+          'isRowGroupExpandByRow',
+          'isAggregateExpandByRow',
+        ]);
+        return $asTable.isAggregateExpandByRow(row);
+      },
+
+      isAggregateRecord(row) {
+        const { isRowGroupStatus } = reactData;
+        return isRowGroupStatus && row.isAggregate;
+      },
+      getAggregateContentByRow(row) {
+        const { isRowGroupStatus } = reactData;
+        return isRowGroupStatus && row && row.isAggregate
+          ? row.groupContent
+          : '';
+      },
+      getAggregateRowChildren(row) {
+        const aggregateOpts = computeAggregateOpts.value;
+        const { childrenField, mapChildrenField } = aggregateOpts;
+
+        const { isRowGroupStatus } = reactData;
+        return isRowGroupStatus &&
+          row &&
+          row.isAggregate &&
+          childrenField &&
+          mapChildrenField
+          ? row[mapChildrenField] || []
+          : [];
+      },
+      refreshAggregateCalcValues() {
+        updateGroupData();
+        return nextTick();
+      },
+      isAggregateExpandByRow(row) {
+        const { rowGroupExpandedFlag } = reactData;
+        const { rowGroupExpandedMaps } = internalData;
+        return (
+          !!rowGroupExpandedFlag &&
+          !!rowGroupExpandedMaps[getRowid($asTable, row)]
+        );
+      },
+      setRowGroupExpand(rows, expanded) {
+        if (rows) {
+          if (!isArray(rows)) {
+            rows = [rows];
+          }
+          return handleRowGroupVirtualExpand(rows, expanded);
+        }
+        return nextTick();
+      },
       setRowGroupExpandByField(groupFields, expanded) {
         const { isRowGroupStatus } = reactData;
         const aggregateOpts = computeAggregateOpts.value;
@@ -7283,59 +9383,133 @@ export const Table = defineComponent<AsTableProps>(
         reactData.rowGroupExpandedFlag++;
         return handleLazyRecalculate(true, true, true);
       },
-      /**
-       * 用于多选行，设置所有行的选中状态
-       * @param {Boolean} value 是否选中
-       */
-      setAllCheckboxRow(value) {
-        return handleCheckedAllCheckboxRow(value, true);
+      clearRowGroupExpand() {
+        internalData.rowGroupExpandedMaps = {};
+        handleVirtualTreeToList();
+        $asTable.handleTableData();
+        updateAfterDataIndex();
+        reactData.rowGroupExpandedFlag++;
+        return handleLazyRecalculate(true, true, true);
+      },
+      getTreeExpandRecords() {
+        const rest: any[] = [];
+        each(internalData.treeExpandedMaps, (item) => {
+          if (item) {
+            rest.push(item);
+          }
+        });
+        return rest;
       },
       /**
-       * 设置所有行的展开与否
-       * @param {Boolean} expanded 是否展开
-       */
-      setAllRowExpand(expanded) {
-        const treeOpts = computeTreeOpts.value;
-        const { tableFullData, tableFullTreeData } = internalData;
-        const childrenField = treeOpts.childrenField;
-        let expandedRows: any[] = [];
-        if (props.treeConfig) {
-          eachTree(
-            tableFullTreeData,
-            (row) => {
-              expandedRows.push(row);
-            },
-            { children: childrenField },
-          );
-        } else {
-          expandedRows = tableFullData;
-        }
-        return $asTable.setRowExpand(expandedRows, expanded);
-      },
-      /**
-       * 用于当前行，设置某一行为高亮状态
+       * 判断树节点是否懒加载完成
        * @param {Row} row 行对象
        */
-      setCurrentRow(row) {
-        // const $xeGanttView = internalData.xeGanttView;
-        const rowOpts = computeRowOpts.value;
-        const el = refElem.value;
-        $asTable.clearCurrentRow();
-        internalData.currentRow = row;
-        if (rowOpts.isCurrent && el) {
-          const rowId = getRowid($asTable, row);
-          const escapedRowId = CSS.escape(rowId);
-          const selector = `[rowid="${escapedRowId}"]`;
-          arrayEach(el.querySelectorAll(selector), (elem) =>
-            addClass(elem, 'row--current'),
-          );
+      isTreeExpandLoaded(row) {
+        const { fullAllDataRowIdData } = internalData;
+        const rowRest = fullAllDataRowIdData[getRowid($asTable, row)]!;
+        return rowRest && !!rowRest.treeLoaded;
+      },
+      clearTreeExpandLoaded(rows: any) {
+        const { fullAllDataRowIdData, treeExpandedMaps } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { transform } = treeOpts;
+        if (rows) {
+          if (!isArray(rows)) {
+            rows = [rows];
+          }
+          rows.forEach((row: any) => {
+            const rowid = getRowid($asTable, row);
+            const rowRest = fullAllDataRowIdData[rowid];
+            if (rowRest) {
+              rowRest.treeLoaded = false;
+              if (treeExpandedMaps[rowid]) {
+                delete treeExpandedMaps[rowid];
+              }
+            }
+          });
+        } else {
+          each(fullAllDataRowIdData, (rowRest) => {
+            rowRest.treeLoaded = false;
+          });
+          internalData.treeExpandedMaps = {};
         }
-        // TODO if ($xeGanttView && $xeGanttView.handleUpdateCurrentRow) {
-        //   $xeGanttView.handleUpdateCurrentRow(row);
-        // }
+        if (transform) {
+          handleVirtualTreeToList();
+          $asTable.handleTableData();
+        }
+        reactData.treeExpandedFlag++;
         return nextTick();
       },
+      /**
+       * 重新懒加载树节点，并展开该节点
+       * @param {Row} row 行对象
+       */
+      reloadTreeExpand(row) {
+        const { treeExpandLazyLoadedMaps } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const hasChildField = treeOpts.hasChildField;
+        const { transform, lazy } = treeOpts;
+        const rowid = getRowid($asTable, row);
+        if (lazy && row[hasChildField] && !treeExpandLazyLoadedMaps[rowid]) {
+          return $asTable
+            .clearTreeExpandLoaded(row)
+            .then(() => {
+              return handleAsyncTreeExpandChilds(row);
+            })
+            .then(() => {
+              if (transform) {
+                handleVirtualTreeToList();
+                $asTable.handleTableData();
+              }
+              reactData.treeExpandedFlag++;
+            })
+            .then(() => {
+              return $asTable.recalculate();
+            });
+        }
+        return nextTick();
+      },
+      reloadTreeChilds(row) {
+        log.warn('delFunc', ['reloadTreeChilds', 'reloadTreeExpand']);
+        // 即将废弃
+        return $asTable.reloadTreeExpand(row);
+      },
+      /**
+       * 切换/展开树节点
+       */
+      toggleTreeExpand(row) {
+        return $asTable.setTreeExpand(row, !$asTable.isTreeExpandByRow(row));
+      },
+      /**
+       * 设置所有树节点的展开与否
+       * @param {Boolean} expanded 是否展开
+       */
+      setAllTreeExpand(expanded: boolean) {
+        const { tableFullTreeData } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const { transform, lazy } = treeOpts;
+        const childrenField = treeOpts.childrenField;
+        const expandeds: any[] = [];
+        eachTree(
+          tableFullTreeData,
+          (row) => {
+            const rowChildren = row[childrenField];
+            if (lazy || (rowChildren && rowChildren.length > 0)) {
+              expandeds.push(row);
+            }
+          },
+          { children: childrenField },
+        );
+        return $asTable.setTreeExpand(expandeds, expanded).then(() => {
+          if (!transform) {
+            return;
+          }
 
+          handleVirtualTreeToList();
+          reactData.treeExpandedFlag++;
+          return $asTable.recalculate();
+        });
+      },
       /**
        * 设置展开树形节点，二个参数设置这一行展开与否
        * 支持单行
@@ -7359,86 +9533,6 @@ export const Table = defineComponent<AsTableProps>(
         }
         return nextTick();
       },
-      updateCellAreas() {
-        const { mouseConfig } = props;
-        const mouseOpts = computeMouseOpts.value;
-        if (
-          mouseConfig &&
-          mouseOpts.area &&
-          $asTable.handleRecalculateCellAreaEvent
-        ) {
-          return $asTable.handleRecalculateCellAreaEvent();
-        }
-        return nextTick();
-      },
-      /**
-       * 更新表尾合计
-       */
-      updateFooter() {
-        const { showFooter, footerData, footerMethod } = props;
-        const { visibleColumn, afterFullData } = internalData;
-        let footData: any[] = [];
-        if (showFooter && footerData && footerData.length > 0) {
-          footData = footerData.slice(0);
-        } else if (showFooter && footerMethod) {
-          footData =
-            visibleColumn.length > 0
-              ? footerMethod({
-                  columns: visibleColumn,
-                  data: afterFullData,
-                  $table: $asTable,
-                  // TODO $grid: $xeGrid,
-                  // $gantt: $xeGantt,
-                })
-              : [];
-        }
-        reactData.footerTableData = footData;
-        $asTable.clearFooterFormatterCache();
-        $asTable.handleUpdateFooterMerge();
-        $asTable.dispatchEvent(
-          'footer-data-change',
-          {
-            visibleColumn: internalData.visibleColumn,
-            footData,
-          },
-          null,
-        );
-        return nextTick();
-      },
-
-      getSortColumns() {
-        const sortOpts = computeSortOpts.value;
-        const { multiple, chronological } = sortOpts;
-        const sortList: AsTableDefines.SortCheckedParams[] = [];
-        const { tableFullColumn } = internalData;
-        tableFullColumn.forEach((column) => {
-          const { field, order } = column;
-          if (column.sortable && order) {
-            sortList.push({
-              column,
-              field,
-              order,
-              sortTime: column.sortTime,
-            });
-          }
-        });
-        if (multiple && chronological && sortList.length > 1) {
-          return orderBy(sortList, 'sortTime');
-        }
-        return sortList;
-      },
-
-      /**
-       * 判断行是否为展开状态
-       * @param {Row} row 行对象
-       */
-      isRowExpandByRow(row) {
-        const { rowExpandedFlag } = reactData;
-        const { rowExpandedMaps } = internalData;
-        const rowid = getRowid($asTable, row);
-        return !!rowExpandedFlag && !!rowExpandedMaps[rowid];
-      },
-
       /**
        * 判断行是否为树形节点展开状态
        * @param {Row} row 行对象
@@ -7451,28 +9545,83 @@ export const Table = defineComponent<AsTableProps>(
         );
       },
       /**
-       * 设置合并单元格 [{ row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }]
+       * 手动清空树形节点的展开状态，数据会恢复成未展开的状态
        */
-      setMergeCells(merges) {
-        if (props.spanMethod) {
-          log.error('errConflicts', ['merge-cells', 'span-method']);
+      clearTreeExpand() {
+        const { tableFullTreeData } = internalData;
+        const treeOpts = computeTreeOpts.value;
+        const childrenField = treeOpts.childrenField;
+        const { transform, reserve } = treeOpts;
+        const expList = $asTable.getTreeExpandRecords();
+        internalData.treeExpandedMaps = {};
+        if (reserve) {
+          eachTree(
+            tableFullTreeData,
+            (row) => handleTreeExpandReserve(row, false),
+            { children: childrenField },
+          );
         }
-        handleBodyMerge(merges);
-        $asTable.handleUpdateBodyMerge();
-        return nextTick().then(() => {
-          const { expandColumn } = reactData;
-          const { mergeBodyList } = internalData;
-          if (expandColumn && mergeBodyList.length > 0) {
-            log.error('errConflicts', [
-              'type=expand',
-              'merge-cells | span-method',
-            ]);
-          }
-          $asTable.updateCellAreas();
-          return updateStyle();
-        });
+        return $asTable
+          .handleTableData()
+          .then(() => {
+            if (transform) {
+              handleVirtualTreeToList();
+              $asTable.handleTableData();
+            }
+            reactData.treeExpandedFlag++;
+          })
+          .then(() => {
+            updateTreeLineStyle();
+            if (expList.length > 0) {
+              return $asTable.recalculate();
+            }
+          });
       },
-
+      clearTreeExpandReserve() {
+        internalData.treeExpandedReserveRowMap = {};
+        return nextTick();
+      },
+      /**
+       * 获取表格的滚动状态
+       */
+      getScroll() {
+        return $asTable.getScrollData();
+      },
+      /**
+       * 获取表格的滚动数据
+       */
+      getScrollData() {
+        const { scrollXLoad, scrollYLoad, scrollbarHeight, scrollbarWidth } =
+          reactData;
+        const { elemStore } = internalData;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const scrollTop = bodyScrollElem ? bodyScrollElem.scrollTop : 0;
+        const scrollLeft = bodyScrollElem ? bodyScrollElem.scrollLeft : 0;
+        const clientHeight = bodyScrollElem ? bodyScrollElem.clientHeight : 0;
+        const clientWidth = bodyScrollElem ? bodyScrollElem.clientWidth : 0;
+        const scrollHeight = bodyScrollElem ? bodyScrollElem.scrollHeight : 0;
+        const scrollWidth = bodyScrollElem ? bodyScrollElem.scrollWidth : 0;
+        const isTop = scrollTop <= 0;
+        const isBottom = scrollTop + clientHeight >= scrollHeight;
+        const isLeft = scrollLeft <= 0;
+        const isRight = scrollLeft + clientWidth >= scrollWidth;
+        return {
+          virtualX: scrollXLoad,
+          virtualY: scrollYLoad,
+          isTop,
+          isBottom,
+          isLeft,
+          isRight,
+          scrollbarHeight,
+          scrollbarWidth,
+          scrollTop,
+          scrollLeft,
+          scrollHeight,
+          scrollWidth,
+          clientHeight,
+          clientWidth,
+        };
+      },
       /**
        * 如果有滚动条，则滚动到对应的位置
        */
@@ -7580,30 +9729,45 @@ export const Table = defineComponent<AsTableProps>(
         });
       },
       /**
-       * 关闭筛选
-       * @param {Event} evnt 事件
+       * 如果有滚动条，则滚动到第一行
        */
-      closeFilter() {
-        const { filterStore } = reactData;
-        const { column, visible } = filterStore;
-        filterStore.isAllSelected = false;
-        filterStore.isIndeterminate = false;
-        filterStore.visible = false;
-        if (visible) {
-          const field = column ? column.field : null;
-          dispatchEvent(
-            'filter-visible',
-            {
-              column,
-              property: field,
-              field,
-              filterList: () => $asTable.getCheckedFilters(),
-              visible: false,
-            },
-            null,
-          );
-        }
-        return nextTick();
+      scrollToStartRow(fieldOrColumn, options) {
+        const { afterFullData } = internalData;
+        return $asTable.scrollToRow(afterFullData[0], fieldOrColumn, options);
+      },
+      /**
+       * 如果有滚动条，则滚动到最后一行
+       */
+      scrollToEndRow(fieldOrColumn, options) {
+        const { afterFullData } = internalData;
+        return $asTable.scrollToRow(
+          afterFullData[afterFullData.length - 1],
+          fieldOrColumn,
+          options,
+        );
+      },
+      /**
+       * 如果有滚动条，则滚动到对应的列
+       */
+      scrollToColumn(fieldOrColumn, options) {
+        return handleScrollToRowColumn(fieldOrColumn, null, options);
+      },
+      /**
+       * 如果有滚动条，则滚动到第一列
+       */
+      scrollToStartColumn(options) {
+        const { visibleColumn } = internalData;
+        return $asTable.scrollToColumn(visibleColumn[0]!, options);
+      },
+      /**
+       * 如果有滚动条，则滚动到最后一列
+       */
+      scrollToEndColumn(options) {
+        const { visibleColumn } = internalData;
+        return $asTable.scrollToColumn(
+          visibleColumn[visibleColumn.length - 1]!,
+          options,
+        );
       },
       /**
        * 手动清除滚动相关信息，还原到初始状态
@@ -7646,163 +9810,300 @@ export const Table = defineComponent<AsTableProps>(
         });
       },
 
-      sort(sortConfs: any, sortOrder?: AsTablePropTypes.SortOrder) {
-        const sortOpts = computeSortOpts.value;
-        const { multiple, remote, orders } = sortOpts;
-        if (sortConfs && isString(sortConfs)) {
-          sortConfs = [{ field: sortConfs, order: sortOrder }];
+      /**
+       * 更新表尾合计
+       */
+      updateFooter() {
+        const { showFooter, footerData, footerMethod } = props;
+        const { visibleColumn, afterFullData } = internalData;
+        let footData: any[] = [];
+        if (showFooter && footerData && footerData.length > 0) {
+          footData = footerData.slice(0);
+        } else if (showFooter && footerMethod) {
+          footData =
+            visibleColumn.length > 0
+              ? footerMethod({
+                  columns: visibleColumn,
+                  data: afterFullData,
+                  $table: $asTable,
+                  // TODO $grid: $xeGrid,
+                  // $gantt: $xeGantt,
+                })
+              : [];
         }
-        if (!isArray(sortConfs)) {
-          sortConfs = [sortConfs];
-        }
-        if (sortConfs.length > 0) {
-          if (!multiple) {
-            clearAllSort();
-          }
-          (multiple ? sortConfs : [sortConfs[0]]).forEach(
-            (confs: any, index: number) => {
-              let { field, order } = confs;
-              const column = isString(field)
-                ? $asTable.getColumnByField(field)
-                : field;
-              if (column && column.sortable) {
-                if (orders && !orders.includes(order)) {
-                  order = getNextSortOrder(column);
-                }
-                if (column.order !== order) {
-                  column.order = order;
-                }
-                column.sortTime = Date.now() + index;
-              }
-            },
-          );
-          // 如果是服务端排序，则跳过本地排序处理
-          if (!remote) {
-            $asTable.handleTableData(true);
-          }
-          return nextTick().then(() => {
-            updateRowOffsetTop();
-            $asTable.updateCellAreas();
-            return updateStyle();
-          });
-        }
+        reactData.footerTableData = footData;
+        $asTable.clearFooterFormatterCache();
+        $asTable.handleUpdateFooterMerge();
+        $asTable.dispatchEvent(
+          'footer-data-change',
+          {
+            visibleColumn: internalData.visibleColumn,
+            footData,
+          },
+          null,
+        );
         return nextTick();
       },
       /**
-       * 清空指定列的排序条件
-       * 如果为空则清空所有列的排序条件
-       * @param {String} fieldOrColumn 列或字段名
+       * 更新列状态 updateStatus({ row, column }, cellValue)
+       * 如果组件值 v-model 发生 change 时，调用改函数用于更新某一列编辑状态
+       * 如果单元格配置了校验规则，则会进行校验
        */
-      clearSort(fieldOrColumn) {
-        const sortOpts = computeSortOpts.value;
-        if (fieldOrColumn) {
-          const column = handleFieldOrColumn($asTable, fieldOrColumn);
-          if (column) {
-            column.order = null;
-          }
-        } else {
-          clearAllSort();
-        }
-        if (!sortOpts.remote) {
-          $asTable.handleTableData(true);
-        }
+      updateStatus(slotParams, cellValue) {
         return nextTick().then(() => {
-          updateRowOffsetTop();
+          const { editRules } = props;
+          const { isActivated } = internalData;
+          if (isActivated && slotParams && editRules) {
+            return $asTable.handleCellRuleUpdateStatus(
+              'change',
+              slotParams,
+              cellValue,
+            );
+          }
+        });
+      },
+      /**
+       * 设置合并单元格 [{ row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }]
+       */
+      setMergeCells(merges) {
+        if (props.spanMethod) {
+          log.error('errConflicts', ['merge-cells', 'span-method']);
+        }
+        handleBodyMerge(merges);
+        $asTable.handleUpdateBodyMerge();
+        return nextTick().then(() => {
+          const { expandColumn } = reactData;
+          const { mergeBodyList } = internalData;
+          if (expandColumn && mergeBodyList.length > 0) {
+            log.error('errConflicts', [
+              'type=expand',
+              'merge-cells | span-method',
+            ]);
+          }
+          $asTable.updateCellAreas();
           return updateStyle();
         });
       },
       /**
-       * 设置展开行，二个参数设置这一行展开与否
-       * 支持单行
-       * 支持多行
-       * @param {Array/Row} rows 行数据
-       * @param {Boolean} expanded 是否展开
+       * 移除单元格合并 [{row:Row|number, col:ColumnInfo|number}]
        */
-      setRowExpand(rows, expanded) {
-        const { expandColumn } = reactData;
-        let { fullAllDataRowIdData, rowExpandedMaps, rowExpandLazyLoadedMaps } =
-          internalData;
-        const { handleGetRowId } = createHandleGetRowId($asTable);
-        const expandOpts = computeExpandOpts.value;
-        const { reserve, lazy, accordion, toggleMethod } = expandOpts;
-        const lazyRests: any[] = [];
-        const columnIndex = expandColumn
-          ? $asTable.getColumnIndex(expandColumn)
-          : -1;
-        const $columnIndex = expandColumn
-          ? $asTable.getVMColumnIndex(expandColumn)
-          : -1;
-        if (rows) {
-          if (!isArray(rows)) {
-            rows = [rows];
-          }
-          if (accordion) {
-            // 只能同时展开一个
-            rowExpandedMaps = {};
-            internalData.rowExpandedMaps = rowExpandedMaps;
-            rows = rows.slice(-1);
-          }
-          const validRows: any[] = toggleMethod
-            ? rows.filter((row: any) =>
-                toggleMethod({
-                  $table: $asTable,
-                  expanded,
-                  column: expandColumn as AsTableDefines.ColumnInfo,
-                  columnIndex,
-                  $columnIndex,
-                  row,
-                  rowIndex: $asTable.getRowIndex(row),
-                  $rowIndex: $asTable.getVMRowIndex(row),
-                }),
-              )
-            : rows;
-          if (expanded) {
-            validRows.forEach((row) => {
-              const rowid = handleGetRowId(row);
-              if (!rowExpandedMaps[rowid]) {
-                const rowRest = fullAllDataRowIdData[rowid];
-                const isLoad =
-                  lazy &&
-                  !rowRest?.expandLoaded &&
-                  !rowExpandLazyLoadedMaps[rowid];
-                if (isLoad) {
-                  lazyRests.push(handleAsyncRowExpand(row));
-                } else {
-                  rowExpandedMaps[rowid] = row;
-                }
-              }
-            });
-          } else {
-            validRows.forEach((item) => {
-              const rowid = handleGetRowId(item);
-              if (rowExpandedMaps[rowid]) {
-                delete rowExpandedMaps[rowid];
-              }
-            });
-          }
-          if (reserve) {
-            validRows.forEach((row) => handleRowExpandReserve(row, expanded));
-          }
+      removeMergeCells(merges) {
+        if (props.spanMethod) {
+          log.error('errConflicts', ['merge-cells', 'span-method']);
         }
-        reactData.rowExpandedFlag++;
-        return Promise.all(lazyRests)
-          .then(() => nextTick())
-          .then(() => handleLazyRecalculate(true, true, true))
-          .then(() => {
-            updateRowOffsetTop();
-            updateRowExpandStyle();
-            handleRowExpandScroll();
-            return $asTable.updateCellAreas();
-          });
+        const rest = removeBodyMerges(merges);
+        $asTable.handleUpdateBodyMerge();
+        return nextTick().then(() => {
+          $asTable.updateCellAreas();
+          updateStyle();
+          return rest;
+        });
       },
-      setRowGroupExpand(rows, expanded) {
-        if (rows) {
-          if (!isArray(rows)) {
-            rows = [rows];
-          }
-          return handleRowGroupVirtualExpand(rows, expanded);
+      /**
+       * 获取所有被合并的单元格
+       */
+      getMergeCells() {
+        return internalData.mergeBodyList.slice(0);
+      },
+      /**
+       * 清除所有单元格合并
+       */
+      clearMergeCells() {
+        internalData.mergeBodyList = [];
+        internalData.mergeBodyMaps = {};
+        internalData.mergeBodyCellMaps = {};
+        internalData.mergeBodyRowMaps = {};
+        internalData.mergeBodyColMaps = {};
+        reactData.mergeBodyFlag++;
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+
+      setMergeHeaderCells(merges) {
+        handleHeaderMerge(merges);
+        $asTable.handleUpdateHeaderMerge();
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+      /**
+       * 移除表头单元格合并 [{row:Row|number, col:ColumnInfo|number}]
+       */
+      removeMergeHeaderCells(merges) {
+        const rest = removeHeaderMerges(merges);
+        $asTable.handleUpdateHeaderMerge();
+        return nextTick().then(() => {
+          updateStyle();
+          return rest;
+        });
+      },
+      /**
+       * 获取所有被合并的表头单元格
+       */
+      getMergeHeaderCells() {
+        return internalData.mergeHeaderList.slice(0);
+      },
+      /**
+       * 清除所有表头单元格合并
+       */
+      clearMergeHeaderCells() {
+        internalData.mergeHeaderList = [];
+        internalData.mergeHeaderMaps = {};
+        internalData.mergeHeaderCellMaps = {};
+        internalData.mergeHeaderRowMaps = {};
+        internalData.mergeBodyColMaps = {};
+        reactData.mergeHeadFlag++;
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+      setMergeFooterCells(merges) {
+        if (props.footerSpanMethod) {
+          log.error('errConflicts', [
+            'merge-footer-cells | merge-footer-items',
+            'footer-span-method',
+          ]);
+        }
+        handleFooterMerge(merges);
+        $asTable.handleUpdateFooterMerge();
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+      setMergeFooterItems(merges) {
+        return $asTable.setMergeFooterCells(merges);
+      },
+      removeMergeFooterCells(merges) {
+        if (props.footerSpanMethod) {
+          log.error('errConflicts', [
+            'merge-footer-cells | merge-footer-items',
+            'footer-span-method',
+          ]);
+        }
+        const rest = removeFooterMerges(merges);
+        $asTable.handleUpdateFooterMerge();
+        return nextTick().then(() => {
+          updateStyle();
+          return rest;
+        });
+      },
+      removeMergeFooterItems(merges) {
+        // log.error('delFunc', ['removeMergeFooterItems', 'removeMergeFooterCells'])
+        return $asTable.removeMergeFooterCells(merges);
+      },
+      /**
+       * 获取所有被合并的表尾
+       */
+      getMergeFooterCells() {
+        return internalData.mergeFooterList.slice(0);
+      },
+      getMergeFooterItems() {
+        // log.error('delFunc', ['getMergeFooterItems', 'getMergeFooterCells'])
+        return $asTable.getMergeFooterCells();
+      },
+      /**
+       * 清除所有表尾合并
+       */
+      clearMergeFooterCells() {
+        internalData.mergeFooterList = [];
+        internalData.mergeFooterMaps = {};
+        internalData.mergeFooterCellMaps = {};
+        internalData.mergeFooterRowMaps = {};
+        internalData.mergeFooterColMaps = {};
+        reactData.mergeFootFlag++;
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+      clearMergeFooterItems() {
+        return $asTable.clearMergeFooterCells();
+      },
+
+      updateCellAreas() {
+        const { mouseConfig } = props;
+        const mouseOpts = computeMouseOpts.value;
+        if (
+          mouseConfig &&
+          mouseOpts.area &&
+          $asTable.handleRecalculateCellAreaEvent
+        ) {
+          return $asTable.handleRecalculateCellAreaEvent();
         }
         return nextTick();
+      },
+      undo() {
+        return $asTable.handleUndoStackEvent(null);
+      },
+      redo() {
+        return $asTable.handleRedoStackEvent(null);
+      },
+      clearHistory() {
+        return $asTable.handleClearStack();
+      },
+      /**
+       * 用于 custom-config，用于手动恢复自定义列设置信息，恢复表格重置为初始状态
+       * @param storeData
+       * @returns
+       */
+      setCustomStoreData(storeData) {
+        if (!storeData) {
+          return nextTick();
+        }
+        const customOpts = computeCustomOpts.value;
+        const { checkMethod } = customOpts;
+        // 重置状态
+        clearTableAllStatus($asTable);
+        // 恢复列
+        const allCols: AsTableDefines.ColumnInfo[] = [];
+        eachTree(internalData.collectColumn, (column) => {
+          column.resizeWidth = 0;
+          column.fixed = column.defaultFixed;
+          column.renderSortNumber = column.sortNumber;
+          column.parentId = column.defaultParentId;
+          if (!checkMethod || checkMethod({ $table: $asTable, column })) {
+            column.visible = column.defaultVisible;
+          }
+          column.align = column.defaultAlign;
+          column.headerAlign = column.defaultHeaderAlign;
+          column.footerAlign = column.defaultFooterAlign;
+          column.aggFunc = column.defaultAggFunc;
+          column.renderAggFn = column.defaultAggFunc;
+          column.renderResizeWidth = column.renderWidth;
+          allCols.push(column);
+        });
+        const newCollectCols = toArrayTree(
+          orderBy(allCols, 'renderSortNumber'),
+          { key: 'id', parentKey: 'parentId', children: 'children' },
+        );
+        internalData.collectColumn = newCollectCols;
+        internalData.tableFullColumn = getColumnList(newCollectCols);
+
+        reactData.updateColFlag++;
+        reactData.isColLoading = true;
+        initColumnHierarchy();
+        return Promise.resolve(handleCustomRestore(storeData))
+          .then(() => {
+            return buildColumnInfo();
+          })
+          .then(() => {
+            // 恢复数据聚合分组
+            const { isRowGroupStatus, rowGroupList } = reactData;
+            if (isRowGroupStatus && !!$asTable.handlePivotTableAggData) {
+              const rowGroupFields = computeRowGroupFields.value;
+              if (
+                rowGroupFields ? rowGroupFields.length : rowGroupList.length
+              ) {
+                if (rowGroupFields && rowGroupFields.length > 0) {
+                  $asTable.setRowGroups(rowGroupFields);
+                } else {
+                  $asTable.clearRowGroups();
+                }
+              } else {
+                $asTable.handleUpdateAggData();
+              }
+            }
+          });
       },
       /**
        * 用于 custom-config，用于获取自定义列设置信息，用于自定义保持
