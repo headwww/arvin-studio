@@ -286,16 +286,24 @@ export const Table = defineComponent<AsTableProps>(
     const refTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refCommTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refValidTooltip = ref() as Ref<AsSharedTooltipInstance>;
+
     const refTableViewportElem = ref<HTMLDivElement>();
+    const refTableHeader = ref() as Ref<ComponentPublicInstance>;
     const refTableBody = ref() as Ref<ComponentPublicInstance>;
     const refTableFooter = ref() as Ref<ComponentPublicInstance>;
+    const refTableLeftHeader = ref() as Ref<ComponentPublicInstance>;
+    const refTableLeftBody = ref() as Ref<ComponentPublicInstance>;
+    const refTableLeftFooter = ref() as Ref<ComponentPublicInstance>;
+    const refTableRightHeader = ref() as Ref<ComponentPublicInstance>;
+    const refTableRightBody = ref() as Ref<ComponentPublicInstance>;
+    const refTableRightFooter = ref() as Ref<ComponentPublicInstance>;
+
+    const refTeleportWrapper = ref<HTMLDivElement>();
 
     const refLeftContainer = ref() as Ref<HTMLDivElement>;
     const refRightContainer = ref() as Ref<HTMLDivElement>;
     const refColResizeBar = ref() as Ref<HTMLDivElement>;
     const refRowResizeBar = ref() as Ref<HTMLDivElement>;
-    const refTeleportWrapper = ref<HTMLDivElement>();
-
     const refEmptyPlaceholder = ref() as Ref<HTMLDivElement>;
 
     const refDragTipElem = ref<HTMLDivElement>();
@@ -317,6 +325,23 @@ export const Table = defineComponent<AsTableProps>(
     const refScrollYBottomCornerElem = ref<HTMLDivElement>();
     const refScrollXSpaceElem = ref<HTMLDivElement>();
     const refScrollYSpaceElem = ref<HTMLDivElement>();
+
+    const computeTableId = computed(() => {
+      const { id } = props;
+      if (id) {
+        if (isFunction(id)) {
+          // TODO return `${id({ $table: $asTable, $grid: $asGrid, $gantt: $xeGantt }) || ''}`
+          return `${id({ $table: $asTable }) || ''}`;
+        }
+        return `${id}`;
+      }
+      return '';
+    });
+
+    const computeRowField = computed(() => {
+      const rowOpts = computeRowOpts.value;
+      return `${rowOpts.keyField || '_AS_ROW_KEY'}`;
+    });
 
     const getWheelSpeed = (lastScrollTime: number) => {
       let multiple = 1;
@@ -373,18 +398,6 @@ export const Table = defineComponent<AsTableProps>(
       return nextTick();
     };
 
-    const computeTableId = computed(() => {
-      const { id } = props;
-      if (id) {
-        if (isFunction(id)) {
-          // TODO return `${id({ $table: $asTable, $grid: $asGrid, $gantt: $xeGantt }) || ''}`
-          return `${id({ $table: $asTable }) || ''}`;
-        }
-        return `${id}`;
-      }
-      return '';
-    });
-
     const computeIsHeaderRenderOptimize = computed(() => {
       // 表格级配置：两个"合并方法" + 表头溢出总开关
       const {
@@ -412,11 +425,6 @@ export const Table = defineComponent<AsTableProps>(
         }
       }
       return isOptimizeMode;
-    });
-
-    const computeRowField = computed(() => {
-      const rowOpts = computeRowOpts.value;
-      return `${rowOpts.keyField || '_AS_ROW_KEY'}`;
     });
 
     const computeFooterCellOpts = computed(() => {
@@ -12714,6 +12722,7 @@ export const Table = defineComponent<AsTableProps>(
               fixedColumn={fixedColumn}
               fixedType={fixedType}
               prefixCls={prefixCls.value}
+              ref={isFixedLeft ? refTableLeftHeader : refTableRightHeader}
               size={mergedSize.value}
               tableColumn={tableColumn}
               tableData={tableData}
@@ -12724,6 +12733,7 @@ export const Table = defineComponent<AsTableProps>(
             fixedColumn={fixedColumn}
             fixedType={fixedType}
             prefixCls={prefixCls.value}
+            ref={isFixedLeft ? refTableLeftBody : refTableRightBody}
             size={mergedSize.value}
             tableColumn={tableColumn}
             tableData={tableData}
@@ -12734,6 +12744,7 @@ export const Table = defineComponent<AsTableProps>(
               fixedType={fixedType}
               footerTableData={footerTableData}
               prefixCls={prefixCls.value}
+              ref={isFixedLeft ? refTableLeftFooter : refTableRightFooter}
               size={mergedSize.value}
               tableColumn={tableColumn}
             ></TableFooterComponent>
@@ -12788,6 +12799,7 @@ export const Table = defineComponent<AsTableProps>(
             {showHeader && (
               <TableHeaderComponent
                 prefixCls={prefixCls.value}
+                ref={refTableHeader}
                 size={mergedSize.value}
                 tableColumn={tableColumn}
                 tableData={tableData}
