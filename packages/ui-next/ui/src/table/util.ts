@@ -42,6 +42,7 @@ export function isEnableConf(conf: any): boolean {
 
 export function createInternalData(): TableInternalData {
   return {
+    tZindex: 0,
     // 懒加载中的展开行的集合
     rowExpandLazyLoadedMaps: {},
     initStatus: false,
@@ -254,6 +255,10 @@ export function createReactData(): TableReactData {
     isColLoading: false,
     updateCheckboxFlag: 1,
     updateColFlag: 0,
+    // 存放数据校验相关信息
+    validStore: {
+      visible: false,
+    },
     validErrorMaps: {},
     removeRowFlag: 1,
     // 低性能的静态列
@@ -290,6 +295,21 @@ export function createReactData(): TableReactData {
     rowGroupColumn: null,
     // 展开列信息
     expandColumn: null,
+    // 自定义列相关的信息
+    customStore: {
+      btnEl: null,
+      isAll: false,
+      isIndeterminate: false,
+      activeBtn: false,
+      activeWrapper: false,
+      visible: false,
+      maxHeight: null,
+      defPopupStyle: {},
+      panePopupStyle: {},
+      oldSortMaps: {},
+      oldFixedMaps: {},
+      oldVisibleMaps: {},
+    },
     dragCol: null,
     dragRow: null,
     calcCellHeightFlag: 1,
@@ -302,6 +322,10 @@ export function createReactData(): TableReactData {
     radioColumn: null,
     // 树节点列信息
     treeNodeColumn: null,
+    // 刷新列标识，当列筛选被改变时，触发表格刷新数据
+    upDataFlag: 0,
+    // 刷新列标识，当列的特定属性被改变时，触发表格刷新列
+    reColumnFlag: 0,
     mergeHeadFlag: 1,
     mergeBodyFlag: 1,
     mergeFootFlag: 1,

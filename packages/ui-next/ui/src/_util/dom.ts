@@ -327,6 +327,28 @@ export function wheelScrollTopTo(
   });
 }
 
+/**
+ * 判断是否由内部可复用控件触发，输入框带有 vxe-reusekeep-control
+ */
+function hasReusekeepControl(
+  elem: EventTarget | HTMLElement | null,
+  prefixCls: string,
+) {
+  if (elem) {
+    return hasClass(elem as HTMLElement, `${prefixCls}-reusekeep-control`);
+  }
+  return false;
+}
+
+export function hasAxternalInputTarget(
+  target: Element | EventTarget | null,
+  prefixCls: string,
+) {
+  return hasEventInputTarget(target)
+    ? !hasReusekeepControl(target, prefixCls)
+    : false;
+}
+
 export function getPopupContainer(
   appendTo:
     | ((params: any) => HTMLElement | string)

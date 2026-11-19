@@ -42,6 +42,7 @@ export type AsGlobalEventKey = {
   P: 'P';
   PAGE_DOWN: 'PageDown';
   PAGE_UP: 'PageUp';
+  PROCESS: 'Process';
   R: 'R';
   SPACEBAR: ' ';
   TAB: 'Tab';
@@ -103,6 +104,7 @@ export const GLOBAL_EVENT_KEYS: AsGlobalEventKey = {
   Y: 'Y',
   Z: 'Z',
   R: 'R',
+  PROCESS: 'Process',
   P: 'P',
 };
 

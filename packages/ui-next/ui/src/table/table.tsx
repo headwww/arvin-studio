@@ -27,7 +27,9 @@ import {
   nextTick,
   onActivated,
   onBeforeUnmount,
+  onDeactivated,
   onMounted,
+  onUnmounted,
   provide,
   reactive,
   ref,
@@ -57,13 +59,17 @@ import {
   floor,
   get,
   has,
+  includeArrays,
+  includes,
   isArray,
   isBoolean,
   isEmpty,
   isFunction,
   isNumber,
+  isObject,
   isString,
   isUndefined,
+  keys,
   last,
   lastArrayEach,
   lastEach,
@@ -82,6 +88,7 @@ import {
   toTreeArray,
   toValueString,
   uniqueId,
+  values,
 } from '@arvin-studio/kit';
 
 import { ArvinStudio, message, SharedTooltip } from '..';
@@ -97,8 +104,10 @@ import {
   getEventTargetNode,
   getPaddingTopBottomSize,
   getTpImg,
+  hasAxternalInputTarget,
   hasClass,
   hasControlKey,
+  initTpImg,
   isPx,
   isScale,
   removeClass,
@@ -112,10 +121,12 @@ import useLog from '../_util/logger';
 import { getSlotVNs } from '../_util/vn';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
+import { useLocaleContext } from '../locale';
 import enUS from '../locale/en_US';
 import useLocale from '../locale/useLocale';
 import Spin from '../spin';
 import { genCssVar } from '../theme/util/genStyleUtils';
+import { getLastZIndex, nextZIndex } from '../tooltip/util';
 import version from '../version';
 import TableBodyComponent from './body';
 import { Cell, formatLocaleText } from './cell';
@@ -169,8 +180,16 @@ const maxXWidth = 5e6;
 const maxYHeight = 5e6;
 const sourceType = 'table';
 
-const { renderer, formats, createEvent, globalEvents, GLOBAL_EVENT_KEYS } =
-  ArvinStudio;
+const {
+  renderer,
+  formats,
+  createEvent,
+  globalEvents,
+  GLOBAL_EVENT_KEYS,
+  interceptor,
+  hooks,
+  globalResize,
+} = ArvinStudio;
 const defaults = {
   size: 'medium',
   showHeader: true,
@@ -544,6 +563,11 @@ export const Table = defineComponent<AsTableProps>(
         cAggregateConfig.value,
         props.aggregateConfig,
       );
+    });
+
+    const computeAggregateMode = computed(() => {
+      const aggregateOpts = computeAggregateOpts.value;
+      return aggregateOpts.mode;
     });
 
     const computeAggregateAccuracyOpts = computed(() => {
@@ -6242,6 +6266,14 @@ export const Table = defineComponent<AsTableProps>(
       }
       return nextTick();
     };
+
+    const handleUpdateResize = () => {
+      const el = refElem.value;
+      if (el && el.clientWidth && el.clientHeight) {
+        $asTable.recalculate();
+      }
+    };
+
     const handleUpdateColResize = (evnt: MouseEvent, params: any) => {
       $asTable.analyColumnWidth();
       $asTable.recalculate().then(() => {
@@ -10285,6 +10317,278 @@ export const Table = defineComponent<AsTableProps>(
     };
 
     /**
+     * 全局按下事件处理
+     */
+    const handleGlobalMousedownEvent = (evnt: MouseEvent) => {
+      const { editStore } = reactData;
+      const { editRules } = props;
+      const el = refElem.value;
+      const editOpts = computeEditOpts.value;
+      const validOpts = computeValidOpts.value;
+      const { actived } = editStore;
+      const $validTooltip = refValidTooltip.value;
+      // TODO const tableFilter = refTableFilter.value;
+      // const tableCustom = refTableCustom.value;
+      // const tableMenu = refTableMenu.value;
+      // 筛选
+      // if (tableFilter) {
+      //   if (getEventTargetNode(evnt, el, 'vxe-cell--filter').flag) {
+      //     // 如果点击了筛选按钮
+      //   } else if (
+      //     getEventTargetNode(evnt, tableFilter.getRefMaps().refElem.value).flag
+      //   ) {
+      //     // 如果点击筛选容器
+      //   } else {
+      //     if (
+      //       !getEventTargetNode(evnt, document.body, 'vxe-table--ignore-clear')
+      //         .flag
+      //     ) {
+      //       $asTable.preventEvent(
+      //         evnt,
+      //         'event.clearFilter',
+      //         internalData._currFilterParams,
+      //         $asTable.closeFilter,
+      //       );
+      //     }
+      //   }
+      // }
+      // // 自定义列
+      // if (tableCustom) {
+      //   if (
+      //     customStore.btnEl === evnt.target ||
+      //     getEventTargetNode(evnt, document.body, 'vxe-toolbar-custom-target')
+      //       .flag
+      //   ) {
+      //     // 如果点击了自定义列按钮
+      //   } else if (
+      //     getEventTargetNode(evnt, tableCustom.getRefMaps().refElem.value).flag
+      //   ) {
+      //     // 如果点击自定义列容器
+      //   } else {
+      //     if (
+      //       !getEventTargetNode(evnt, document.body, 'vxe-table--ignore-clear')
+      //         .flag &&
+      //       customStore.visible &&
+      //       $asTable.closeCustom
+      //     ) {
+      //       $asTable.preventEvent(evnt, 'event.clearCustom', {}, () => {
+      //         $asTable.closeCustom();
+      //         $asTable.dispatchEvent('custom', { type: 'close' }, evnt);
+      //       });
+      //     }
+      //   }
+      // }
+
+      // 如果已激活了编辑状态
+      if (actived.row && editOpts.autoClear !== false) {
+        // 如果是激活状态，点击了单元格之外
+        const cell = actived.args.cell;
+        if (!cell || !getEventTargetNode(evnt, cell).flag) {
+          if (
+            $validTooltip &&
+            getEventTargetNode(evnt, $validTooltip.$el as HTMLDivElement).flag
+          ) {
+            // 如果是激活状态，且点击了校验提示框
+          } else // 如果是激活状态，点击了单元格之外
+          if (
+            (!internalData._lastCallTime ||
+              internalData._lastCallTime + 50 < Date.now()) &&
+            !getEventTargetNode(
+              evnt,
+              document.body,
+              `${prefixCls.value}--ignore-clear`,
+            ).flag
+          ) {
+            // 如果手动调用了激活单元格，避免触发源被移除后导致重复关闭
+            $asTable.preventEvent(evnt, 'event.clearEdit', actived.args, () => {
+              let isClear;
+              if (editOpts.mode === 'row') {
+                const rowTargetNode = getEventTargetNode(
+                  evnt,
+                  el,
+                  `${prefixCls.value}-body--row`,
+                );
+                const rowNodeRest = rowTargetNode.flag
+                  ? $asTable.getRowNode(rowTargetNode.targetElem)
+                  : null;
+                // row 方式，如果点击了不同行
+                isClear = rowNodeRest
+                  ? !$asTable.eqRow(rowNodeRest.item, actived.args.row)
+                  : false;
+              } else {
+                // cell 方式，如果是非编辑列
+                isClear = !getEventTargetNode(evnt, el, 'col--edit').flag;
+              }
+              // 如果点击表头行，则清除激活状态
+              if (!isClear) {
+                isClear = getEventTargetNode(
+                  evnt,
+                  el,
+                  `${prefixCls.value}-header--row`,
+                ).flag;
+              }
+              // 如果点击表尾行，则清除激活状态
+              if (!isClear) {
+                isClear = getEventTargetNode(
+                  evnt,
+                  el,
+                  `${prefixCls.value}-footer--row`,
+                ).flag;
+              }
+              // 如果固定了高度且点击了行之外的空白处，则清除激活状态
+              if (!isClear && props.height && !reactData.overflowY) {
+                const bodyWrapperElem = evnt.target as HTMLDivElement;
+                if (
+                  hasClass(bodyWrapperElem, `${prefixCls.value}--body-wrapper`)
+                ) {
+                  isClear = evnt.offsetY < bodyWrapperElem.clientHeight;
+                }
+              }
+              if (
+                isClear ||
+                // 如果点击了当前表格之外
+                !getEventTargetNode(evnt, el).flag
+              ) {
+                setTimeout(() => {
+                  $asTable.handleClearEdit(evnt).then(() => {
+                    // 如果存在校验，点击了表格之外则清除
+                    if (
+                      !internalData.isActivated &&
+                      editRules &&
+                      validOpts.autoClear
+                    ) {
+                      reactData.validErrorMaps = {};
+                    }
+                  });
+                }, 0);
+              }
+            });
+          }
+        }
+      }
+      // TODO else if (
+      //   mouseConfig &&
+      //   !getEventTargetNode(evnt, el).flag &&
+      //   !(
+      //     $xeGGWrapper &&
+      //     getEventTargetNode(evnt, $xeGGWrapper.getRefMaps().refElem.value).flag
+      //   ) &&
+      //   !(
+      //     tableMenu &&
+      //     getEventTargetNode(evnt, tableMenu.getRefMaps().refElem.value).flag
+      //   ) &&
+      //   !(
+      //     $xeToolbar &&
+      //     getEventTargetNode(evnt, $xeToolbar.getRefMaps().refElem.value).flag
+      //   )
+      // ) {
+      //   if ($asTable.clearSelected) {
+      //     $asTable.clearSelected();
+      //   }
+      //   if (areaOpts.autoClear && $asTable.getCellAreas) {
+      //     const cellAreas = $asTable.getCellAreas();
+      //     if (
+      //       cellAreas &&
+      //       cellAreas.length > 0 &&
+      //       !getEventTargetNode(
+      //         evnt,
+      //         document.body,
+      //         'vxe-table--ignore-areas-clear',
+      //       ).flag
+      //     ) {
+      //       $asTable.preventEvent(evnt, 'event.clearAreas', {}, () => {
+      //         $asTable.clearCellAreas();
+      //         $asTable.clearCopyCellArea();
+      //         dispatchEvent('clear-cell-area-selection', { cellAreas }, evnt);
+      //       });
+      //     }
+      //   }
+      // }
+      // 如果配置了快捷菜单且，点击了其他地方则关闭
+      // if (
+      //   $asTable.closeMenu &&
+      //   ctxMenuStore.visible &&
+      //   tableMenu &&
+      //   !getEventTargetNode(evnt, tableMenu.getRefMaps().refElem.value).flag
+      // ) {
+      //   $asTable.closeMenu();
+      // }
+      // if (
+      //   !(
+      //     actived.row &&
+      //     getEventTargetNode(
+      //       evnt,
+      //       document.body,
+      //       `${prefixCls.value}-table--ignore-clear`,
+      //     ).flag
+      //   )
+      // ) {
+      //   const isActivated = getEventTargetNode(
+      //     evnt,
+      //     $xeGGWrapper ? $xeGGWrapper.getRefMaps().refElem.value : el,
+      //   ).flag;
+      //   // 如果存在校验，点击了表格之外则清除
+      //   if (!isActivated && editRules && validOpts.autoClear) {
+      //     reactData.validErrorMaps = {};
+      //   }
+      //   // 最后激活的表格
+      //   internalData.isActivated = isActivated;
+      // }
+    };
+
+    /**
+     * 窗口失焦事件处理
+     */
+    const handleGlobalBlurEvent = () => {
+      $asTable.closeFilter();
+      if ($asTable.closeMenu) {
+        $asTable.closeMenu();
+      }
+    };
+
+    /** 当页面、表格或任意滚动容器发生滚动时，它会把已经打开的筛选面板和自定义列弹窗重新定位到正确位置。 */
+    const reUpdateCustomStyleEvent = (evnt: MouseEvent) => {
+      // const { customStore } = reactData;
+      // const customOpts = computeCustomOpts.value;
+      // const { popupOptions } = customOpts;
+      // const { transfer } = popupOptions || {};
+      // if (transfer && customStore.visible) {
+      //   const tableCustom = refTableCustom.value;
+      //   if (
+      //     tableCustom &&
+      //     $asTable.handleCustomStyle &&
+      //     !checkTargetElement(
+      //       evnt.target,
+      //       [tableCustom.getRefMaps().refElem.value as HTMLDivElement],
+      //       evnt.currentTarget,
+      //     )
+      //   ) {
+      //     $asTable.handleCustomStyle().then(() => {
+      //       $asTable.handleCustomStyle();
+      //     });
+      //   }
+      // }
+    };
+
+    const handleGlobalScrollEvent = (evnt: MouseEvent) => {
+      const { filterStore } = reactData;
+      if (filterStore.visible) {
+        $asTable.handleFilterStyle();
+      }
+      reUpdateCustomStyleEvent(evnt);
+    };
+
+    /**
+     * 全局滚动事件
+     */
+    const handleGlobalMousewheelEvent = () => {
+      $asTable.closeTooltip();
+      if ($asTable.closeMenu) {
+        $asTable.closeMenu();
+      }
+    };
+
+    /**
      * 表格键盘事件
      */
     const keydownEvent = (evnt: KeyboardEvent) => {
@@ -10333,6 +10637,692 @@ export const Table = defineComponent<AsTableProps>(
 
     const contextMenuEvent = (evnt: MouseEvent) => {
       dispatchEvent('context-menu', {}, evnt);
+    };
+
+    /**
+     * 全局键盘事件
+     */
+    const handleGlobalKeydownEvent = (evnt: KeyboardEvent) => {
+      // 该行为只对当前激活的表格有效
+      if (internalData.isActivated) {
+        $asTable.preventEvent(evnt, 'event.keydown', null, () => {
+          const { mouseConfig, keyboardConfig, treeConfig, editConfig } = props;
+          const { ctxMenuStore, editStore } = reactData;
+          const { afterFullData, visibleColumn, currentRow } = internalData;
+          const isContentMenu = computeIsContentMenu.value;
+          const bodyMenu = computeBodyMenu.value;
+          const keyboardOpts = computeKeyboardOpts.value;
+          const mouseOpts = computeMouseOpts.value;
+          const editOpts = computeEditOpts.value;
+          const treeOpts = computeTreeOpts.value;
+          const menuList = computeMenuList.value;
+          const rowOpts = computeRowOpts.value;
+          const columnOpts = computeColumnOpts.value;
+          const {
+            isLastEnterAppendRow,
+            beforeEnterMethod,
+            enterMethod,
+            isLastTabAppendRow,
+            beforeTabMethod,
+            tabMethod,
+          } = keyboardOpts;
+          const { selected, actived } = editStore;
+          const childrenField = treeOpts.childrenField;
+          // eslint-disable-next-line unicorn/prefer-keyboard-event-key
+          const keyCode = evnt.keyCode;
+          const isProcess = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.PROCESS,
+          );
+          const isEsc = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ESCAPE);
+          const hasBackspaceKey = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.BACKSPACE,
+          );
+          const isTab = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.TAB);
+          const isEnter = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ENTER);
+          const isSpacebar = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.SPACEBAR,
+          );
+          const isLeftArrow = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.ARROW_LEFT,
+          );
+          const isUpArrow = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.ARROW_UP,
+          );
+          const isRightArrow = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.ARROW_RIGHT,
+          );
+          const isDwArrow = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.ARROW_DOWN,
+          );
+          const hasDeleteKey = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.DELETE,
+          );
+          const isY = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.Y);
+          const isZ = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.Z);
+          const isF2 = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.F2);
+          const isContextMenu = globalEvents.hasKey(
+            evnt,
+            GLOBAL_EVENT_KEYS.CONTEXT_MENU,
+          );
+          const isControlKey = hasControlKey(evnt);
+          const hasShiftKey = evnt.shiftKey;
+          const isAltKey = evnt.altKey;
+          const operArrow =
+            isLeftArrow || isUpArrow || isRightArrow || isDwArrow;
+          const operCtxMenu =
+            isContentMenu &&
+            ctxMenuStore.visible &&
+            (isEnter || isSpacebar || operArrow);
+          const isEditStatus =
+            isEnableConf(editConfig) && actived.column && actived.row;
+          const beforeEditMethod = editOpts.beforeEditMethod;
+          const selectRow = selected.row;
+          const selectColumn = selected.column;
+          if (operCtxMenu) {
+            // 如果配置了右键菜单; 支持方向键操作、回车
+            evnt.preventDefault();
+            if (
+              ctxMenuStore.showChild &&
+              hasChildrenList(ctxMenuStore.selected)
+            ) {
+              $asTable.moveCtxMenu(
+                evnt,
+                ctxMenuStore,
+                'selectChild',
+                isLeftArrow,
+                false,
+                ctxMenuStore.selected.children,
+              );
+            } else {
+              $asTable.moveCtxMenu(
+                evnt,
+                ctxMenuStore,
+                'selected',
+                isRightArrow,
+                true,
+                menuList,
+              );
+            }
+          } else if (
+            keyboardConfig &&
+            mouseConfig &&
+            mouseOpts.area &&
+            $asTable.handleKdClAreaEvent
+          ) {
+            $asTable.handleKdClAreaEvent(evnt);
+          } else if (isEsc) {
+            // 如果按下了 Esc 键，关闭快捷菜单、筛选
+            if ($asTable.closeMenu) {
+              $asTable.closeMenu();
+            }
+            $asTable.closeFilter();
+            // 如果是激活编辑状态，则取消编辑
+            if (keyboardConfig && keyboardOpts.isEsc && actived.row) {
+              const params = actived.args;
+              $asTable.handleClearEdit(evnt);
+              // 如果配置了选中功能，则为选中状态
+              if (mouseOpts.selected) {
+                nextTick(() => $asTable.handleSelected(params, evnt));
+              }
+            }
+          } else if (
+            isSpacebar &&
+            keyboardConfig &&
+            keyboardOpts.isChecked &&
+            selectRow &&
+            selectColumn &&
+            (selectColumn.type === 'checkbox' || selectColumn.type === 'radio')
+          ) {
+            // 空格键支持选中复选框
+            evnt.preventDefault();
+            if (selectColumn.type === 'checkbox') {
+              $asTable.handleToggleCheckRowEvent(evnt, selected.args);
+            } else {
+              $asTable.triggerRadioRowEvent(evnt, selected.args);
+            }
+          } else if (isF2 && isEnableConf(editConfig)) {
+            // 如果按下了 F2 键
+            if (!isEditStatus && selectRow && selectColumn) {
+              evnt.preventDefault();
+              $asTable.handleEdit(selected.args, evnt);
+            }
+          } else if (isContextMenu) {
+            // 如果按下上下文键
+            internalData._keyCtx =
+              selectRow && selectColumn && bodyMenu.length > 0;
+            clearTimeout(internalData.keyCtxTimeout);
+            internalData.keyCtxTimeout = setTimeout(() => {
+              internalData._keyCtx = false;
+            }, 1000);
+          } else if (
+            isEnter &&
+            !isAltKey &&
+            keyboardConfig &&
+            keyboardOpts.isEnter &&
+            (selectRow ||
+              actived.row ||
+              (treeConfig && rowOpts.isCurrent && currentRow))
+          ) {
+            // 退出选中
+            if (isControlKey) {
+              // 如果是激活编辑状态，则取消编辑
+              if (actived.row) {
+                const params = actived.args;
+                $asTable.handleClearEdit(evnt);
+                // 如果配置了选中功能，则为选中状态
+                if (mouseOpts.selected) {
+                  nextTick(() => {
+                    $asTable.handleSelected(params, evnt);
+                  });
+                }
+              }
+            } else {
+              // 如果是激活状态，退则出到上一行/下一行
+              if (selectRow || actived.row) {
+                const activeRow = selectRow || actived.row;
+                const activeColumn = selectColumn || actived.column;
+                if (activeColumn) {
+                  const activeParams = selectRow ? selected.args : actived.args;
+                  if (hasShiftKey) {
+                    if (keyboardOpts.enterToTab) {
+                      $asTable.moveTabSelected(activeParams, hasShiftKey, evnt);
+                    } else {
+                      $asTable.moveEnterSelected(
+                        activeParams,
+                        isLeftArrow,
+                        true,
+                        isRightArrow,
+                        false,
+                        evnt,
+                      );
+                    }
+                  } else {
+                    const _rowIndex = $asTable.getVTRowIndex(activeRow);
+                    const _columnIndex =
+                      $asTable.getVTColumnIndex(activeColumn);
+                    if (keyboardOpts.enterToTab) {
+                      const ttrParams = {
+                        row: activeRow,
+                        rowIndex: $asTable.getRowIndex(activeRow),
+                        $rowIndex: $asTable.getVMRowIndex(activeRow),
+                        _rowIndex,
+                        column: activeColumn,
+                        columnIndex: $asTable.getColumnIndex(activeColumn),
+                        $columnIndex: $asTable.getVMColumnIndex(activeColumn),
+                        _columnIndex,
+                        $table: $asTable,
+                      };
+                      if (
+                        !beforeTabMethod ||
+                        beforeTabMethod(ttrParams) !== false
+                      ) {
+                        evnt.preventDefault();
+                        // 最后一行按下Tab键，自动追加一行
+                        if (isLastTabAppendRow) {
+                          const newColumn = visibleColumn[0];
+                          if (
+                            _rowIndex >= afterFullData.length - 1 &&
+                            _columnIndex >= visibleColumn.length - 1
+                          ) {
+                            if (actived.row) {
+                              $asTable.handleClearEdit(evnt);
+                            }
+                            $asTable
+                              .insertAt({}, -1)
+                              .then(({ row: newRow }) => {
+                                $asTable.scrollToRow(newRow, newColumn);
+                                $asTable.handleSelected(
+                                  {
+                                    ...activeParams,
+                                    row: newRow,
+                                    column: newColumn,
+                                  },
+                                  evnt,
+                                );
+                              });
+                            $asTable.dispatchEvent(
+                              'tab-append-row',
+                              ttrParams,
+                              evnt,
+                            );
+                            return;
+                          }
+                        }
+                        if (tabMethod) {
+                          tabMethod(ttrParams);
+                        } else {
+                          $asTable.moveTabSelected(
+                            activeParams,
+                            hasShiftKey,
+                            evnt,
+                          );
+                        }
+                      }
+                    } else {
+                      const etrParams = {
+                        row: activeRow,
+                        rowIndex: $asTable.getRowIndex(activeRow),
+                        $rowIndex: $asTable.getVMRowIndex(activeRow),
+                        _rowIndex,
+                        column: activeColumn,
+                        columnIndex: $asTable.getColumnIndex(activeColumn),
+                        $columnIndex: $asTable.getVMColumnIndex(activeColumn),
+                        _columnIndex,
+                        $table: $asTable,
+                      };
+                      if (
+                        !beforeEnterMethod ||
+                        beforeEnterMethod(etrParams) !== false
+                      ) {
+                        evnt.preventDefault();
+                        // 最后一行按下回车键，自动追加一行
+                        if (
+                          isLastEnterAppendRow &&
+                          _rowIndex >= afterFullData.length - 1
+                        ) {
+                          $asTable.insertAt({}, -1).then(({ row: newRow }) => {
+                            $asTable.scrollToRow(newRow, activeColumn);
+                            $asTable.handleSelected(
+                              { ...activeParams, row: newRow },
+                              evnt,
+                            );
+                          });
+                          $asTable.dispatchEvent(
+                            'enter-append-row',
+                            etrParams,
+                            evnt,
+                          );
+                          return;
+                        }
+                        if (enterMethod) {
+                          enterMethod(etrParams);
+                        } else {
+                          if (actived.row) {
+                            $asTable.handleClearEdit(evnt);
+                          }
+                          $asTable.moveEnterSelected(
+                            activeParams,
+                            isLeftArrow,
+                            false,
+                            isRightArrow,
+                            true,
+                            evnt,
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              } else if (treeConfig && rowOpts.isCurrent && currentRow) {
+                // 如果是树形表格当前行回车移动到子节点
+                const childrens = currentRow[childrenField];
+                if (childrens && childrens.length > 0) {
+                  evnt.preventDefault();
+                  const targetRow = childrens[0];
+                  const params = {
+                    $table: $asTable,
+                    row: targetRow,
+                    rowIndex: $asTable.getRowIndex(targetRow),
+                    $rowIndex: $asTable.getVMRowIndex(targetRow),
+                  };
+                  $asTable
+                    .setTreeExpand(currentRow, true)
+                    .then(() => $asTable.scrollToRow(targetRow))
+                    .then(() => $asTable.triggerCurrentRowEvent(evnt, params));
+                }
+              }
+            }
+          } else if (operArrow && keyboardConfig && keyboardOpts.isArrow) {
+            if (!isEditStatus) {
+              // 如果按下了方向键
+              if (mouseOpts.selected && selectRow && selectColumn) {
+                $asTable.moveArrowSelected(
+                  selected.args,
+                  isLeftArrow,
+                  isUpArrow,
+                  isRightArrow,
+                  isDwArrow,
+                  evnt,
+                );
+              } else {
+                // 当前行按键上下移动
+                if ((isUpArrow || isDwArrow) && rowOpts.isCurrent) {
+                  $asTable.moveCurrentRow(isUpArrow, isDwArrow, evnt);
+                }
+                // 当前行按键左右移动
+                if ((isLeftArrow || isRightArrow) && columnOpts.isCurrent) {
+                  $asTable.moveCurrentColumn(isLeftArrow, isRightArrow, evnt);
+                }
+              }
+            }
+          } else if (isTab && keyboardConfig && keyboardOpts.isTab) {
+            // 如果按下了 Tab 键切换
+            if (selectRow || actived.row) {
+              const activeRow = selectRow || actived.row;
+              const activeColumn = selectColumn || actived.column;
+              if (activeColumn) {
+                const activeParams = selectRow ? selected.args : actived.args;
+                const _rowIndex = $asTable.getVTRowIndex(activeRow);
+                const _columnIndex = $asTable.getVTColumnIndex(activeColumn);
+                const ttrParams = {
+                  row: activeRow,
+                  rowIndex: $asTable.getRowIndex(activeRow),
+                  $rowIndex: $asTable.getVMRowIndex(activeRow),
+                  _rowIndex,
+                  column: activeColumn as AsTableDefines.ColumnInfo,
+                  columnIndex: $asTable.getColumnIndex(activeColumn),
+                  $columnIndex: $asTable.getVMColumnIndex(activeColumn),
+                  _columnIndex,
+                  $table: $asTable,
+                };
+                if (!beforeTabMethod || beforeTabMethod(ttrParams) !== false) {
+                  evnt.preventDefault();
+                  // 最后一行按下Tab键，自动追加一行
+                  if (isLastTabAppendRow) {
+                    const newColumn = visibleColumn[0];
+                    if (
+                      _rowIndex >= afterFullData.length - 1 &&
+                      _columnIndex >= visibleColumn.length - 1
+                    ) {
+                      if (actived.row) {
+                        $asTable.handleClearEdit(evnt);
+                      }
+                      $asTable.insertAt({}, -1).then(({ row: newRow }) => {
+                        $asTable.scrollToRow(newRow, newColumn);
+                        $asTable.handleSelected(
+                          { ...activeParams, row: newRow, column: newColumn },
+                          evnt,
+                        );
+                      });
+                      $asTable.dispatchEvent('tab-append-row', ttrParams, evnt);
+                      return;
+                    }
+                  }
+                  if (tabMethod) {
+                    tabMethod(ttrParams);
+                  } else {
+                    if (actived.row) {
+                      $asTable.handleClearEdit(evnt);
+                    }
+                    $asTable.moveTabSelected(activeParams, hasShiftKey, evnt);
+                  }
+                }
+              }
+            }
+          } else if (
+            keyboardConfig &&
+            keyboardOpts.isDel &&
+            hasDeleteKey &&
+            isEnableConf(editConfig) &&
+            (selectRow || selectColumn)
+          ) {
+            // 如果是删除键
+            if (!isEditStatus) {
+              const { delMethod } = keyboardOpts;
+              const params = {
+                row: selectRow,
+                rowIndex: $asTable.getRowIndex(selectRow),
+                column: selectColumn as AsTableDefines.ColumnInfo,
+                columnIndex: $asTable.getColumnIndex(selectColumn),
+                $table: $asTable,
+                // TODO $grid: $xeGrid,
+                // $gantt: $xeGantt,
+              };
+              // 是否被禁用
+              if (!beforeEditMethod || beforeEditMethod(params)) {
+                if (delMethod) {
+                  delMethod(params);
+                } else {
+                  const selectCellValue = getCellValue(selectRow, selectColumn);
+                  if (selectCellValue !== null) {
+                    $asTable.handlePushStack();
+                    setCellValue(selectRow, selectColumn, null);
+                  }
+                }
+                // 如果按下 del 键，更新表尾数据
+                $asTable.updateFooter();
+                dispatchEvent('cell-delete-value', params, evnt);
+              }
+            }
+          } else if (
+            hasBackspaceKey &&
+            keyboardConfig &&
+            keyboardOpts.isBack &&
+            isEnableConf(editConfig) &&
+            (selectRow || selectColumn)
+          ) {
+            if (!isEditStatus) {
+              const { backMethod } = keyboardOpts;
+              // 如果是删除键
+              if (
+                keyboardOpts.isDel &&
+                isEnableConf(editConfig) &&
+                (selectRow || selectColumn)
+              ) {
+                const params = {
+                  row: selectRow,
+                  rowIndex: $asTable.getRowIndex(selectRow),
+                  $rowIndex: $asTable.getVMRowIndex(selectRow),
+                  _rowIndex: $asTable.getVTRowIndex(selectRow),
+                  column: selectColumn as AsTableDefines.ColumnInfo,
+                  columnIndex: $asTable.getColumnIndex(selectColumn),
+                  $columnIndex: $asTable.getVMColumnIndex(selectColumn),
+                  _columnIndex: $asTable.getVTColumnIndex(selectColumn),
+                  $table: $asTable,
+                  // TODO $grid: $xeGrid,
+                  // $gantt: $xeGantt,
+                };
+                // 是否被禁用
+                if (!beforeEditMethod || beforeEditMethod(params)) {
+                  if (backMethod) {
+                    backMethod(params);
+                  } else {
+                    $asTable.handleEdit(params, evnt, {
+                      isClear: true,
+                    });
+                  }
+                  dispatchEvent('cell-backspace-value', params, evnt);
+                }
+              }
+            }
+          } else if (
+            hasBackspaceKey &&
+            keyboardConfig &&
+            treeConfig &&
+            keyboardOpts.isBack &&
+            rowOpts.isCurrent &&
+            currentRow
+          ) {
+            // 如果树形表格回退键关闭当前行返回父节点
+            const { parent: parentRow } = findTree(
+              internalData.afterTreeFullData,
+              (item) => item === currentRow,
+              { children: childrenField },
+            );
+            if (parentRow) {
+              evnt.preventDefault();
+              const params = {
+                row: parentRow,
+                rowIndex: $asTable.getRowIndex(parentRow),
+                $rowIndex: $asTable.getVMRowIndex(parentRow),
+                $table: $asTable,
+                // TODO $grid: $xeGrid,
+                // $gantt: $xeGantt,
+              };
+              $asTable
+                .setTreeExpand(parentRow, false)
+                .then(() => $asTable.scrollToRow(parentRow))
+                .then(() => $asTable.triggerCurrentRowEvent(evnt, params));
+            }
+          } else if (
+            keyboardConfig &&
+            keyboardOpts.isUndoRedo &&
+            isControlKey &&
+            (isZ || isY) &&
+            !hasAxternalInputTarget(evnt.target, prefixCls.value)
+          ) {
+            if (evnt.target) {
+              if (isY || (hasShiftKey && isZ)) {
+                // 恢复被撤销的操作：Ctrl + Y 或 Ctrl + Shift + Z
+                evnt.preventDefault();
+                $asTable.handleRedoStackEvent(evnt);
+              } else if (isZ) {
+                // ‌撤销上一步操作‌：Ctrl + Z
+                evnt.preventDefault();
+                $asTable.handleUndoStackEvent(evnt);
+              }
+            }
+          } else if (
+            keyboardConfig &&
+            isEnableConf(editConfig) &&
+            keyboardOpts.isEdit &&
+            !isControlKey &&
+            (isSpacebar ||
+              isProcess ||
+              evnt.key === 'Process' ||
+              (keyCode >= 48 && keyCode <= 57) ||
+              (keyCode >= 65 && keyCode <= 90) ||
+              (keyCode >= 96 && keyCode <= 111) ||
+              (keyCode >= 186 && keyCode <= 192) ||
+              (keyCode >= 219 && keyCode <= 222))
+          ) {
+            const { editMode, editMethod } = keyboardOpts;
+            // 启用编辑后，空格键功能将失效
+            // if (isSpacebar) {
+            //   evnt.preventDefault()
+            // }
+            // 如果是按下非功能键之外允许直接编辑
+            if (
+              selectColumn &&
+              selectRow &&
+              isEnableConf(selectColumn.editRender)
+            ) {
+              const beforeEditMethod = editOpts.beforeEditMethod;
+              const params = {
+                row: selectRow,
+                rowIndex: $asTable.getRowIndex(selectRow),
+                $rowIndex: $asTable.getVMRowIndex(selectRow),
+                _rowIndex: $asTable.getVTRowIndex(selectRow),
+                column: selectColumn,
+                columnIndex: $asTable.getColumnIndex(selectColumn),
+                $columnIndex: $asTable.getVMColumnIndex(selectColumn),
+                _columnIndex: $asTable.getVTColumnIndex(selectColumn),
+                $table: $asTable,
+                // TODO $grid: $xeGrid,
+                // $gantt: $xeGantt,
+              };
+              if (!beforeEditMethod || beforeEditMethod(params)) {
+                if (editMethod) {
+                  editMethod(params);
+                } else {
+                  let isClearValue = false;
+                  // 追加方式与覆盖式
+                  // eslint-disable-next-line unicorn/prefer-ternary
+                  if (editMode !== 'insert') {
+                    isClearValue = true;
+                  }
+                  $asTable.handleEdit(params, evnt, {
+                    isClear: isClearValue,
+                  });
+                }
+              }
+            }
+          }
+          dispatchEvent('keydown', {}, evnt);
+        });
+      }
+    };
+
+    const handleGlobalPasteEvent = (evnt: ClipboardEvent) => {
+      const { keyboardConfig, mouseConfig } = props;
+      const { editStore, filterStore } = reactData;
+      const { isActivated } = internalData;
+      const mouseOpts = computeMouseOpts.value;
+      const keyboardOpts = computeKeyboardOpts.value;
+      const { actived } = editStore;
+      if (isActivated && !filterStore.visible) {
+        if (
+          !(actived.row || actived.column) &&
+          keyboardConfig &&
+          keyboardOpts.isClip &&
+          mouseConfig &&
+          mouseOpts.area &&
+          $asTable.handlePeClAreaEvent
+        ) {
+          $asTable.handlePeClAreaEvent(evnt);
+        }
+        dispatchEvent('paste', {}, evnt);
+      }
+    };
+
+    const handleGlobalCopyEvent = (evnt: ClipboardEvent) => {
+      const { keyboardConfig, mouseConfig } = props;
+      const { editStore, filterStore } = reactData;
+      const { isActivated } = internalData;
+      const mouseOpts = computeMouseOpts.value;
+      const keyboardOpts = computeKeyboardOpts.value;
+      const { actived } = editStore;
+      if (isActivated && !filterStore.visible) {
+        if (
+          !(actived.row || actived.column) &&
+          keyboardConfig &&
+          keyboardOpts.isClip &&
+          mouseConfig &&
+          mouseOpts.area &&
+          $asTable.handleCyClAreaEvent
+        ) {
+          $asTable.handleCyClAreaEvent(evnt);
+        }
+        dispatchEvent('copy', {}, evnt);
+      }
+    };
+
+    const handleGlobalCutEvent = (evnt: ClipboardEvent) => {
+      const { keyboardConfig, mouseConfig } = props;
+      const { editStore, filterStore } = reactData;
+      const { isActivated } = internalData;
+      const mouseOpts = computeMouseOpts.value;
+      const keyboardOpts = computeKeyboardOpts.value;
+      const { actived } = editStore;
+      if (isActivated && !filterStore.visible) {
+        if (
+          !(actived.row || actived.column) &&
+          keyboardConfig &&
+          keyboardOpts.isClip &&
+          mouseConfig &&
+          mouseOpts.area &&
+          $asTable.handleCutCellAreaEvent
+        ) {
+          $asTable.handleCutCellAreaEvent(evnt);
+        }
+        dispatchEvent('cut', {}, evnt);
+      }
+    };
+
+    const handleGlobalResizeEvent = () => {
+      const { filterStore } = reactData;
+      if (filterStore.visible) {
+        $asTable.handleFilterStyle();
+      }
+      if ($asTable.closeMenu) {
+        $asTable.closeMenu();
+      }
+      const el = refElem.value;
+      if (!el || !el.clientWidth) {
+        return;
+      }
+      if (internalData.rsePending) {
+        return;
+      }
+      handleResizeEvent();
     };
 
     const handleTargetEnterEvent = (isClear: boolean) => {
@@ -10691,6 +11681,169 @@ export const Table = defineComponent<AsTableProps>(
         });
       }
       return nextTick();
+    };
+
+    const truncateStackHistory = () => {
+      const { stackHistoryStore } = internalData;
+      const { undoStacks } = stackHistoryStore;
+      const undoRedoHistoryOpts = computeUndoRedoHistoryOpts.value;
+      const { stackSize } = undoRedoHistoryOpts;
+      if (undoStacks.length > toNumber(stackSize)) {
+        undoStacks.shift();
+      }
+    };
+
+    /**
+     * 生成快照数据
+     */
+    const getSnapshotStackData = () => {
+      const { editStore } = reactData;
+      const { afterFullData, elemStore, insertRowMaps, removeRowMaps } =
+        internalData;
+      const { selected, actived } = editStore;
+      const { row: selectRow, column: selectColumn } = selected;
+      const { row: editRow, column: editColumn } = actived;
+      const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+      const stackObj: AsTableDefines.HistoryStackObj = {
+        selectActiveInfo:
+          selectRow && selectColumn
+            ? {
+                rowid: getRowid($asTable, selectRow),
+                colid: selectColumn.id,
+              }
+            : undefined,
+        editActiveInfo:
+          editRow && editColumn
+            ? {
+                rowid: getRowid($asTable, editRow),
+                colid: editColumn.id,
+              }
+            : undefined,
+        scrollInfo: {
+          top: bodyScrollElem ? bodyScrollElem.scrollTop : 0,
+          left: bodyScrollElem ? bodyScrollElem.scrollLeft : 0,
+        },
+        insertData: clone(values(insertRowMaps), true),
+        removeData: clone(values(removeRowMaps), true),
+        visibleData: clone(afterFullData, true),
+        visibleTreeData: [],
+        visibleColumn: [],
+      };
+      return $asTable.getCellAreaPushStackObj
+        ? $asTable.getCellAreaPushStackObj(stackObj)
+        : stackObj;
+    };
+
+    /**
+     * 刷新栈视图
+     */
+    const handleUpdateSnapshotStackData = (
+      stackObj: AsTableDefines.HistoryStackObj | null | undefined,
+    ) => {
+      const { treeConfig } = props;
+      const { editStore } = reactData;
+      const { fullAllDataRowIdData, fullColumnIdData } = internalData;
+      if (!stackObj) {
+        return;
+      }
+      const treeOpts = computeTreeOpts.value;
+      const { transform } = treeOpts;
+      const {
+        visibleData,
+        editActiveInfo,
+        selectActiveInfo,
+        scrollInfo,
+        insertData,
+        removeData,
+      } = stackObj;
+
+      const iRowMaps: Record<string, any> = {};
+      insertData.forEach((item) => {
+        const rowid = getRowid($asTable, item);
+        const rest = fullAllDataRowIdData[rowid];
+        let row = item;
+        if (rest) {
+          row = rest.row;
+          Object.assign(row, item);
+        }
+        iRowMaps[rowid] = row;
+      });
+
+      const rRowMaps: Record<string, any> = {};
+      removeData.forEach((item) => {
+        const rowid = getRowid($asTable, item);
+        const rest = fullAllDataRowIdData[rowid];
+        let row = item;
+        if (rest) {
+          row = rest.row;
+          Object.assign(row, item);
+        }
+        rRowMaps[rowid] = row;
+      });
+
+      const afterFullList = visibleData.map((item) => {
+        const rowid = getRowid($asTable, item);
+        const rest = fullAllDataRowIdData[rowid];
+        let row = item;
+        if (rest) {
+          row = rest.row;
+          Object.assign(row, item);
+        }
+        return row;
+      });
+
+      internalData.insertRowMaps = iRowMaps;
+      internalData.removeRowMaps = rRowMaps;
+      internalData.afterFullData = afterFullList;
+
+      $asTable.cacheRowMap(false);
+      $asTable.handleTableData(treeConfig && transform);
+      $asTable.updateFooter();
+      $asTable.handleUpdateBodyMerge();
+      if (!(treeConfig && transform)) {
+        $asTable.updateAfterDataIndex();
+      }
+      $asTable.checkSelectionStatus();
+      if (reactData.scrollYLoad) {
+        $asTable.updateScrollYSpace();
+      }
+
+      if ($asTable.handleCellAreaSnapshotStackData) {
+        $asTable.handleCellAreaSnapshotStackData(stackObj);
+      } else {
+        const { selected } = editStore;
+        const mouseOpts = computeMouseOpts.value;
+        let selectRowid = '';
+        let selectColid = '';
+        if (editActiveInfo) {
+          selectRowid = editActiveInfo.rowid;
+          selectColid = editActiveInfo.colid;
+        } else if (selectActiveInfo) {
+          selectRowid = selectActiveInfo.rowid;
+          selectColid = selectActiveInfo.colid;
+        }
+        if (selectRowid && selectColid && mouseOpts.selected) {
+          const editRow = fullAllDataRowIdData[selectRowid]
+            ? fullAllDataRowIdData[selectRowid]!.row
+            : null;
+          const editColumn = fullColumnIdData[selectColid]
+            ? fullColumnIdData[selectColid]!.column
+            : null;
+          if (editRow && editColumn) {
+            const params = {
+              row: editRow,
+              column: editColumn,
+            };
+            selected.row = editRow;
+            selected.column = editColumn;
+            selected.args = params;
+            nextTick(() => {
+              $asTable.addCellSelectedClass();
+              $asTable.scrollTo(scrollInfo);
+            });
+          }
+        }
+      }
     };
 
     const callSlot = <T,>(
@@ -11537,308 +12690,564 @@ export const Table = defineComponent<AsTableProps>(
           }
         }
       },
-      // 更新横向 X 可视渲染上下剩余空间大小
-      updateScrollXSpace() {
-        const { scrollXLoad, overflowX, scrollXWidth } = reactData;
-        const { visibleColumn, scrollXStore, elemStore, fullColumnIdData } =
-          internalData;
-        // TODO const $xeGanttView = internalData.xeGanttView
-        const mouseOpts = computeMouseOpts.value;
-        const tableBody = refTableBody.value;
-        const tableBodyElem = tableBody
-          ? (tableBody.$el as HTMLDivElement)
-          : null;
-        if (tableBodyElem) {
-          const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-          const bodyTableElem = getRefElem(elemStore['main-body-table']);
-          const headerTableElem = getRefElem(elemStore['main-header-table']);
-          const footerTableElem = getRefElem(elemStore['main-footer-table']);
-          let xSpaceLeft = 0;
-          const firstColumn = visibleColumn[scrollXStore.startIndex];
-          if (firstColumn) {
-            const colRest =
-              fullColumnIdData[firstColumn.id] ||
-              ({} as AsTableDefines.ColumnCacheItem);
-            xSpaceLeft = colRest.oLeft;
-          }
+      /**
+       * @private
+       */
+      saveCustomStore(type) {
+        const { customConfig } = props;
+        const tableId = computeTableId.value;
+        const customOpts = computeCustomOpts.value;
+        const { updateStore, storage } = customOpts;
+        const {
+          isCustomAlign,
+          isCustomHeaderAlign,
+          isCustomFooterAlign,
+          isCustomResizable,
+          isCustomVisible,
+          isCustomFixed,
+          isCustomSort,
+          isCustomAggGroup,
+          isCustomAggFunc,
+          isCustomPager,
+        } = handleCustomStoreConfig($asTable);
 
-          const clientWidth = bodyScrollElem ? bodyScrollElem.clientWidth : 0;
-          // 虚拟渲染
-          let isScrollXBig = false;
-          let ySpaceWidth = scrollXWidth;
-          if (scrollXWidth > maxXWidth) {
-            // 触右
-            xSpaceLeft =
-              bodyScrollElem &&
-              bodyTableElem &&
-              bodyScrollElem.scrollLeft + clientWidth >= maxXWidth
-                ? maxXWidth - bodyTableElem.clientWidth
-                : (maxXWidth - clientWidth) *
-                  (xSpaceLeft / (scrollXWidth - clientWidth));
-            ySpaceWidth = maxXWidth;
-            isScrollXBig = true;
+        if (type !== 'reset') {
+          // fix：修复拖动列宽，重置按钮无法点击的问题
+          reactData.isCustomStatus = true;
+        }
+        if (
+          storage &&
+          (customConfig ? isEnableConf(customOpts) : customOpts.enabled) &&
+          (isCustomAlign ||
+            isCustomHeaderAlign ||
+            isCustomFooterAlign ||
+            isCustomResizable ||
+            isCustomVisible ||
+            isCustomFixed ||
+            isCustomSort ||
+            isCustomAggGroup ||
+            isCustomAggFunc ||
+            isCustomPager)
+        ) {
+          if (!tableId) {
+            log.error('reqProp', ['id']);
+            return nextTick();
           }
-          if (!(scrollXLoad && overflowX)) {
-            xSpaceLeft = 0;
-          }
-
-          if (headerTableElem) {
-            headerTableElem.style.transform = headerTableElem.getAttribute(
-              'xvm',
-            )
-              ? `translate(${xSpaceLeft}px, 0px)`
-              : '';
-          }
-          if (bodyTableElem) {
-            bodyTableElem.style.transform = `translate(${xSpaceLeft}px, ${reactData.scrollYTop || 0}px)`;
-          }
-          if (footerTableElem) {
-            footerTableElem.style.transform = footerTableElem.getAttribute(
-              'xvm',
-            )
-              ? `translate(${xSpaceLeft}px, 0px)`
-              : '';
-          }
-          const containerList = ['main'];
-          containerList.forEach((name) => {
-            const layoutList = ['header', 'body', 'footer'];
-            layoutList.forEach((layout) => {
-              const xSpaceElem = getRefElem(
-                elemStore[`${name}-${layout}-xSpace`],
-              );
-              if (xSpaceElem) {
-                xSpaceElem.style.width = scrollXLoad ? `${ySpaceWidth}px` : '';
-              }
+          const storeData: AsTableDefines.CustomStoreData =
+            type === 'reset'
+              ? {
+                  pagerData: {},
+                  alignData: {},
+                  headerAlignData: {},
+                  footerAlignData: {},
+                  resizableData: {},
+                  sortData: [],
+                  visibleData: {},
+                  fixedData: {},
+                  aggGroupData: {},
+                  aggFuncData: {},
+                }
+              : $asTable.getCustomStoreData();
+          if (updateStore) {
+            return updateStore({
+              $table: $asTable,
+              id: tableId,
+              type,
+              storeData,
             });
-          });
+          } else {
+            setCustomStorageMap(tableId, type === 'reset' ? null : storeData);
+          }
+        }
+        return nextTick();
+      },
+      /**
+       * @private
+       */
+      handleCustom() {
+        const { mouseConfig } = props;
+        if (mouseConfig) {
+          if ($asTable.clearSelected) {
+            $asTable.clearSelected();
+          }
+          if ($asTable.clearCellAreas) {
+            $asTable.clearCellAreas();
+            $asTable.clearCopyCellArea();
+          }
+        }
+        $asTable.analyColumnWidth();
+        return $asTable.refreshColumn(true);
+      },
+      handleUpdateDataQueue() {
+        reactData.upDataFlag++;
+      },
+      handleRefreshColumnQueue() {
+        reactData.reColumnFlag++;
+      },
+      handleFilterOptions(column) {
+        if (!column) {
+          return;
+        }
 
-          reactData.scrollXLeft = xSpaceLeft;
-          reactData.scrollXWidth = ySpaceWidth;
-          reactData.isScrollXBig = isScrollXBig;
+        const { filterStore } = reactData;
+        const { filterRender, filters } = column;
+        const rendererOpts = computeRendererOpts.value;
+        const filterOptions = filters || [];
+        const compConf =
+          isEnableConf(filterRender) && filterRender.name
+            ? rendererOpts[filterRender.name] || renderer.get(filterRender.name)
+            : null;
+        const frMethod =
+          column.filterRecoverMethod ||
+          (compConf ? compConf.tableFilterRecoverMethod : null);
+        filterStore.column = column;
+        // 复原状态
+        filterOptions.forEach((option: any) => {
+          const { _checked, checked } = option;
+          option._checked = checked;
+          if (!checked && _checked !== checked && frMethod) {
+            frMethod({ option, column, $table: $asTable });
+          }
+        });
+        $asTable.checkFilterOptions();
+      },
+      preventEvent(evnt, type, args, next, end) {
+        let evntList = interceptor.get(type);
+        let rest = null;
+        let isStop = false;
+        for (const func of evntList) {
+          const fnRest = func(
+            Object.assign(
+              {
+                $table: $asTable,
+                // TODO $grid: $xeGrid,
+                // gantt: $xeGantt,
+                $event: evnt,
+              },
+              args,
+            ),
+          );
+          if (fnRest === false) {
+            isStop = true;
+            break;
+          } else if (fnRest && fnRest.status === false) {
+            rest = fnRest.result;
+            isStop = true;
+            break;
+          }
+        }
+        if (!isStop && next) {
+          rest = next();
+        }
+        if (end) {
+          end();
+        }
+        return rest;
+      },
+      updateCheckboxStatus() {
+        const { treeConfig } = props;
+        const { isRowGroupStatus } = reactData;
+        const {
+          afterTreeFullData,
+          afterGroupFullData,
+          selectCheckboxMaps,
+          treeIndeterminateRowMaps,
+        } = internalData;
+        const aggregateOpts = computeAggregateOpts.value;
+        const treeOpts = computeTreeOpts.value;
+        const childrenField = treeOpts.childrenField;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField, indeterminateField, checkStrictly, checkMethod } =
+          checkboxOpts;
+        if (checkStrictly) {
+          return;
+        }
+        if (isRowGroupStatus || treeConfig) {
+          const { handleGetRowId } = createHandleGetRowId($asTable);
+          const childRowMaps: Record<string, number> = {};
+          const childRowList: any[][] = [];
 
-          const scrollXSpaceEl = refScrollXSpaceElem.value;
-          if (scrollXSpaceEl) {
-            scrollXSpaceEl.style.width = `${ySpaceWidth}px`;
+          if (isRowGroupStatus) {
+            // 行分组
+            const mapChildrenField = aggregateOpts.mapChildrenField;
+            if (mapChildrenField) {
+              eachTree(
+                afterGroupFullData,
+                (row: any) => {
+                  const rowid = handleGetRowId(row);
+                  const childList = row[mapChildrenField];
+                  if (
+                    childList &&
+                    childList.length > 0 &&
+                    !childRowMaps[rowid]
+                  ) {
+                    childRowMaps[rowid] = 1;
+                    childRowList.unshift([row, rowid, childList]);
+                  }
+                },
+                { children: mapChildrenField },
+              );
+            }
+          } else if (treeConfig) {
+            // 树结构
+            const { transform, mapChildrenField } = treeOpts;
+            eachTree(
+              afterTreeFullData,
+              (row: any) => {
+                const rowid = handleGetRowId(row);
+                const childList =
+                  row[transform ? mapChildrenField : childrenField];
+                if (childList && childList.length > 0 && !childRowMaps[rowid]) {
+                  childRowMaps[rowid] = 1;
+                  childRowList.unshift([row, rowid, childList]);
+                } else {
+                  if (indeterminateField) {
+                    set(row, indeterminateField, false);
+                  }
+                }
+              },
+              { children: transform ? mapChildrenField : childrenField },
+            );
           }
 
-          calcScrollbar();
-          if (isScrollXBig && mouseOpts.area) {
-            log.error('notProp', ['mouse-config.area']);
-          }
-          // TODO if ($xeGanttView && $xeGanttView.handleUpdateSXSpace) {
-          //   $xeGanttView.handleUpdateSXSpace()
-          // }
-          return nextTick().then(() => {
-            updateStyle();
+          childRowList.forEach((vals) => {
+            const row = vals[0];
+            const rowid: string = vals[1];
+            const childList: any[] = vals[2];
+            let sLen = 0; // 已选
+            let hLen = 0; // 半选
+            let vLen = 0; // 有效子行
+            const cLen = childList.length; // 子行
+            childList.forEach(
+              checkMethod
+                ? (item) => {
+                    const childRowid = handleGetRowId(item);
+                    const isSelect = checkField
+                      ? get(item, checkField)
+                      : selectCheckboxMaps[childRowid];
+                    if (checkMethod({ $table: $asTable, row: item })) {
+                      if (isSelect) {
+                        sLen++;
+                      } else if (treeIndeterminateRowMaps[childRowid]) {
+                        hLen++;
+                      }
+                      vLen++;
+                    } else {
+                      if (isSelect) {
+                        sLen++;
+                      } else if (treeIndeterminateRowMaps[childRowid]) {
+                        hLen++;
+                      }
+                    }
+                  }
+                : (item) => {
+                    const childRowid = handleGetRowId(item);
+                    const isSelect = checkField
+                      ? get(item, checkField)
+                      : selectCheckboxMaps[childRowid];
+                    if (isSelect) {
+                      sLen++;
+                    } else if (treeIndeterminateRowMaps[childRowid]) {
+                      hLen++;
+                    }
+                    vLen++;
+                  },
+            );
+
+            let isSelected = false;
+            if (cLen > 0) {
+              if (vLen > 0) {
+                isSelected = (sLen > 0 || hLen > 0) && sLen >= vLen;
+              } else {
+                // 如果存在子项禁用
+                if (sLen > 0 && sLen >= vLen) {
+                  isSelected = true;
+                  // eslint-disable-next-line unicorn/no-duplicate-if-branches
+                } else if (selectCheckboxMaps[rowid]) {
+                  isSelected = true;
+                } else {
+                  isSelected = false;
+                }
+              }
+            } else {
+              // 如果无子项
+              isSelected = selectCheckboxMaps[rowid];
+            }
+            const halfSelect = !isSelected && (sLen > 0 || hLen > 0);
+
+            if (checkField) {
+              set(row, checkField, isSelected);
+            }
+            if (indeterminateField) {
+              set(row, indeterminateField, halfSelect);
+            }
+            if (isSelected) {
+              if (!checkField) {
+                selectCheckboxMaps[rowid] = row;
+              }
+              if (treeIndeterminateRowMaps[rowid]) {
+                delete treeIndeterminateRowMaps[rowid];
+              }
+            } else {
+              if (!checkField && selectCheckboxMaps[rowid]) {
+                delete selectCheckboxMaps[rowid];
+              }
+              if (halfSelect) {
+                treeIndeterminateRowMaps[rowid] = row;
+              } else {
+                if (treeIndeterminateRowMaps[rowid]) {
+                  delete treeIndeterminateRowMaps[rowid];
+                }
+              }
+            }
           });
         }
+        reactData.updateCheckboxFlag++;
       },
-      // 更新纵向 Y 可视渲染上下剩余空间大小
-      updateScrollYSpace() {
+      updateAllCheckboxStatus() {
+        const { treeConfig } = props;
+        const { isRowGroupStatus } = reactData;
         const {
-          isAllOverflow,
-          overflowY,
-          scrollYLoad,
-          scrollYHeight,
-          expandColumn,
-        } = reactData;
-        const {
-          scrollYStore,
-          elemStore,
-          isResizeCellHeight,
           afterFullData,
-          fullAllDataRowIdData,
-          rowExpandedMaps,
+          afterTreeFullData,
+          afterGroupFullData,
+          checkboxReserveRowMap,
+          selectCheckboxMaps,
+          treeIndeterminateRowMaps,
         } = internalData;
-        const { startIndex } = scrollYStore;
-        const mouseOpts = computeMouseOpts.value;
-        const expandOpts = computeExpandOpts.value;
-        const cellOpts = computeCellOpts.value;
-        const defaultRowHeight = computeDefaultRowHeight.value;
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const bodyTableElem = getRefElem(elemStore['main-body-table']);
-        const leftBodyTableElem = getRefElem(elemStore['left-body-table']);
-        const rightbodyTableElem = getRefElem(elemStore['right-body-table']);
-        const containerList = ['main', 'left', 'right'];
-        let ySpaceTop = 0;
-        let sYHeight = scrollYHeight;
-        let isScrollYBig = false;
-        if (scrollYLoad) {
-          const isCustomCellHeight = isResizeCellHeight || cellOpts.height;
-          if (!isCustomCellHeight && !expandColumn && isAllOverflow) {
-            sYHeight = afterFullData.length * defaultRowHeight;
-            if (sYHeight > maxYHeight) {
-              isScrollYBig = true;
-            }
-            ySpaceTop = Math.max(0, startIndex * defaultRowHeight);
-          } else {
-            const firstRow = afterFullData[startIndex];
-            if (firstRow) {
-              let rowid = getRowid($asTable, firstRow);
-              let rowRest =
-                fullAllDataRowIdData[rowid] ||
-                ({} as AsTableDefines.RowCacheItem);
-              ySpaceTop = rowRest.oTop || 0;
+        const aggregateOpts = computeAggregateOpts.value;
+        const { mapChildrenField } = aggregateOpts;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField, checkMethod, showReserveStatus } = checkboxOpts;
+        const { handleGetRowId } = createHandleGetRowId($asTable);
 
-              const lastRow = afterFullData[afterFullData.length - 1];
-              rowid = getRowid($asTable, lastRow);
-              rowRest =
-                fullAllDataRowIdData[rowid] ||
-                ({} as AsTableDefines.RowCacheItem);
-              if (rowRest) {
-                const rHeight = getCellRestHeight(
-                  rowRest,
-                  cellOpts,
-                  defaultRowHeight,
-                );
-                // 如果为空时还没计算完数据，保持原高度不变
-                if (rHeight) {
-                  sYHeight = (rowRest.oTop || 0) + rHeight;
-                  // 是否展开行
-                  if (expandColumn && rowExpandedMaps[rowid]) {
-                    sYHeight += rowRest.expandHeight || expandOpts.height || 0;
+        let sLen = 0; // 已选
+        let dsLen = 0; // 禁用的已选
+        let hLen = 0; // 半选
+        let dhLen = 0; // 禁用的半选
+        let vLen = 0; // 有效行
+
+        const rootList = treeConfig
+          ? afterTreeFullData
+          : isRowGroupStatus
+            ? afterGroupFullData
+            : afterFullData;
+        rootList.forEach(
+          checkMethod
+            ? (row) => {
+                const childRowid = handleGetRowId(row);
+                const selected = checkField
+                  ? get(row, checkField)
+                  : selectCheckboxMaps[childRowid];
+                if (isRowGroupStatus && $asTable.isAggregateRecord(row)) {
+                  const childList: any[] = row[mapChildrenField || ''];
+                  if (selected) {
+                    vLen++;
+                    sLen++;
+                  } else if (treeIndeterminateRowMaps[childRowid]) {
+                    vLen++;
+                    hLen++;
+                  } else if (
+                    childList &&
+                    childList.some((item) =>
+                      checkMethod({ $table: $asTable, row: item }),
+                    )
+                  ) {
+                    vLen++;
+                  }
+                } else if (checkMethod({ $table: $asTable, row })) {
+                  if (selected) {
+                    sLen++;
+                  } else if (treeIndeterminateRowMaps[childRowid]) {
+                    hLen++;
+                  }
+                  vLen++;
+                } else {
+                  if (selected) {
+                    dsLen++;
+                  } else if (treeIndeterminateRowMaps[childRowid]) {
+                    dhLen++;
                   }
                 }
               }
-              if (sYHeight > maxYHeight) {
-                isScrollYBig = true;
+            : (row) => {
+                const childRowid = handleGetRowId(row);
+                const selected = checkField
+                  ? get(row, checkField)
+                  : selectCheckboxMaps[childRowid];
+                if (selected) {
+                  sLen++;
+                } else if (treeIndeterminateRowMaps[childRowid]) {
+                  hLen++;
+                }
+                vLen++;
+              },
+        );
+
+        const isSelected =
+          rootList.length > 0
+            ? // eslint-disable-next-line unicorn/prefer-minimal-ternary
+              vLen > 0
+              ? sLen >= vLen
+              : sLen >= rootList.length
+            : false;
+        let halfSelect =
+          !isSelected && (sLen > 0 || hLen > 0 || dsLen > 0 || dhLen > 0);
+
+        // 如果复选框启用保留记录，当保留数据存在时显示半选
+        if (!isSelected && !halfSelect && showReserveStatus) {
+          halfSelect = !isEmpty(checkboxReserveRowMap);
+        }
+
+        reactData.isAllSelected = isSelected;
+        reactData.isIndeterminate = halfSelect;
+      },
+      checkSelectionStatus() {
+        $asTable.updateCheckboxStatus();
+        $asTable.updateAllCheckboxStatus();
+      },
+      /**
+       * 切换选中
+       * 多选，行选中事件
+       */
+      handleBatchSelectRows(rows, checked, isForce) {
+        const { treeConfig } = props;
+        const { isRowGroupStatus } = reactData;
+        const { selectCheckboxMaps } = internalData;
+        const aggregateOpts = computeAggregateOpts.value;
+        const treeOpts = computeTreeOpts.value;
+        const { transform, mapChildrenField } = treeOpts;
+        const childrenField = treeOpts.childrenField;
+        const checkboxOpts = computeCheckboxOpts.value;
+        const { checkField, checkStrictly, checkMethod } = checkboxOpts;
+        const { handleGetRowId } = createHandleGetRowId($asTable);
+        // indeterminateField 仅支持读取
+        const indeterminateField = checkboxOpts.indeterminateField;
+        if (checkField) {
+          // 树结构
+          if ((treeConfig || isRowGroupStatus) && !checkStrictly) {
+            // 更新子节点状态
+            eachTree(
+              rows,
+              (row) => {
+                if (
+                  !(
+                    isForce ||
+                    !checkMethod ||
+                    checkMethod({ $table: $asTable, row })
+                  )
+                ) {
+                  return;
+                }
+
+                set(row, checkField, checked);
+                if (indeterminateField) {
+                  set(row, indeterminateField, false);
+                }
+                handleCheckboxReserveRow(row, checked);
+              },
+              { children: transform ? mapChildrenField : childrenField },
+            );
+            reactData.updateCheckboxFlag++;
+            return;
+          }
+          // 列表
+          rows.forEach((row) => {
+            if (
+              !(
+                isForce ||
+                !checkMethod ||
+                checkMethod({ $table: $asTable, row })
+              )
+            ) {
+              return;
+            }
+
+            set(row, checkField, checked);
+            handleCheckboxReserveRow(row, checked);
+          });
+          reactData.updateCheckboxFlag++;
+          return;
+        }
+
+        // 树结构
+        if (!checkStrictly) {
+          if (isRowGroupStatus) {
+            // 更新行分组节点状态
+            eachTree(
+              rows,
+              (row) => {
+                const rowid = handleGetRowId(row);
+                if (
+                  isForce ||
+                  !checkMethod ||
+                  checkMethod({ $table: $asTable, row })
+                ) {
+                  if (checked) {
+                    selectCheckboxMaps[rowid] = row;
+                  } else {
+                    if (selectCheckboxMaps[rowid]) {
+                      delete selectCheckboxMaps[rowid];
+                    }
+                  }
+                  handleCheckboxReserveRow(row, checked);
+                }
+              },
+              { children: aggregateOpts.mapChildrenField },
+            );
+            reactData.updateCheckboxFlag++;
+            return;
+          } else if (treeConfig) {
+            // 更新子节点状态
+            eachTree(
+              rows,
+              (row) => {
+                const rowid = handleGetRowId(row);
+                if (
+                  isForce ||
+                  !checkMethod ||
+                  checkMethod({ $table: $asTable, row })
+                ) {
+                  if (checked) {
+                    selectCheckboxMaps[rowid] = row;
+                  } else {
+                    if (selectCheckboxMaps[rowid]) {
+                      delete selectCheckboxMaps[rowid];
+                    }
+                  }
+                  handleCheckboxReserveRow(row, checked);
+                }
+              },
+              { children: transform ? mapChildrenField : childrenField },
+            );
+            reactData.updateCheckboxFlag++;
+            return;
+          }
+        }
+
+        // 列表
+        rows.forEach((row) => {
+          const rowid = handleGetRowId(row);
+          if (
+            isForce ||
+            !checkMethod ||
+            checkMethod({ $table: $asTable, row })
+          ) {
+            if (checked) {
+              if (!selectCheckboxMaps[rowid]) {
+                selectCheckboxMaps[rowid] = row;
               }
             } else {
-              sYHeight = bodyTableElem ? bodyTableElem.clientHeight : 0;
+              if (selectCheckboxMaps[rowid]) {
+                delete selectCheckboxMaps[rowid];
+              }
             }
-          }
-        } else {
-          if (bodyTableElem) {
-            sYHeight = bodyTableElem.clientHeight;
-          }
-        }
-        const clientHeight = bodyScrollElem ? bodyScrollElem.clientHeight : 0;
-        // 虚拟渲染
-        let ySpaceHeight = sYHeight;
-        let scrollYTop = ySpaceTop;
-        if (isScrollYBig) {
-          // 触底
-          scrollYTop =
-            bodyScrollElem &&
-            bodyTableElem &&
-            bodyScrollElem.scrollTop + clientHeight >= maxYHeight
-              ? maxYHeight - bodyTableElem.clientHeight
-              : (maxYHeight - clientHeight) *
-                (ySpaceTop / (scrollYHeight - clientHeight));
-          ySpaceHeight = maxYHeight;
-        }
-        if (!(scrollYLoad && overflowY)) {
-          scrollYTop = 0;
-        }
-
-        if (leftBodyTableElem) {
-          leftBodyTableElem.style.transform = `translate(0px, ${scrollYTop}px)`;
-        }
-        if (bodyTableElem) {
-          bodyTableElem.style.transform = `translate(${reactData.scrollXLeft || 0}px, ${scrollYTop}px)`;
-        }
-        if (rightbodyTableElem) {
-          rightbodyTableElem.style.transform = `translate(0px, ${scrollYTop}px)`;
-        }
-
-        containerList.forEach((name) => {
-          const layoutList = ['header', 'body', 'footer'];
-          layoutList.forEach((layout) => {
-            const ySpaceElem = getRefElem(
-              elemStore[`${name}-${layout}-ySpace`],
-            );
-            if (ySpaceElem) {
-              ySpaceElem.style.height = ySpaceHeight ? `${ySpaceHeight}px` : '';
-            }
-          });
-        });
-
-        const scrollYSpaceEl = refScrollYSpaceElem.value;
-        if (scrollYSpaceEl) {
-          scrollYSpaceEl.style.height = ySpaceHeight ? `${ySpaceHeight}px` : '';
-        }
-        const rowExpandYSpaceEl = refRowExpandYSpaceElem.value;
-        if (rowExpandYSpaceEl) {
-          rowExpandYSpaceEl.style.height = ySpaceHeight
-            ? `${ySpaceHeight}px`
-            : '';
-        }
-        reactData.scrollYTop = scrollYTop;
-        reactData.scrollYHeight = isScrollYBig ? sYHeight : ySpaceHeight;
-        reactData.isScrollYBig = isScrollYBig;
-
-        calcScrollbar();
-        if (isScrollYBig && mouseOpts.area) {
-          log.error('notProp', ['mouse-config.area']);
-        }
-        // TODO if ($xeGanttView && $xeGanttView.handleUpdateSYSpace) {
-        //   $xeGanttView.handleUpdateSYSpace();
-        // }
-        return nextTick().then(() => {
-          return updateStyle();
-        });
-      },
-      updateScrollXData() {
-        const { isAllOverflow } = reactData;
-        handleTableColumn();
-        $asTable.updateScrollXSpace();
-        return nextTick().then(() => {
-          handleTableColumn();
-          $asTable.updateScrollXSpace();
-          if (!isAllOverflow) {
-            $asTable.updateScrollYSpace();
+            handleCheckboxReserveRow(row, checked);
+            reactData.updateCheckboxFlag++;
           }
         });
       },
-      updateScrollYData() {
-        $asTable.handleTableData();
-        $asTable.updateScrollYSpace();
-        return nextTick().then(() => {
-          $asTable.handleTableData();
-          $asTable.updateScrollYSpace();
-        });
-      },
 
-      /**
-       * 行 hover 事件
-       */
-      triggerHoverEvent(evnt, { row }) {
-        $asTable.setHoverRow(row);
-      },
-
-      setHoverRow(row) {
-        // TODO const $xeGanttView = internalData.xeGanttView;
-        $asTable.clearHoverRow();
-        const rowid = getRowid($asTable, row);
-        const el = refElem.value;
-        if (el) {
-          arrayEach(
-            el.querySelectorAll(
-              `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"]`,
-            ),
-            (elem) => addClass(elem, 'row--hover'),
-          );
-        }
-        internalData.hoverRow = row;
-        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
-        //   $xeGanttView.handleUpdateHoverRow(row);
-        // }
-      },
-
-      clearHoverRow() {
-        // TODO const $xeGanttView = internalData.xeGanttView;
-        const el = refElem.value;
-        if (el) {
-          arrayEach(
-            el.querySelectorAll(`.${prefixCls.value}-body--row.row--hover`),
-            (elem) => removeClass(elem, 'row--hover'),
-          );
-        }
-        internalData.hoverRow = null;
-        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
-        //   $xeGanttView.handleUpdateHoverRow()
-        // }
-      },
       handleUpdateHeaderMerge() {
         const { mergeHeaderList } = internalData;
         const { mergeMaps, mergeRowMaps, mergeColMaps } =
@@ -11847,533 +13256,6 @@ export const Table = defineComponent<AsTableProps>(
         internalData.mergeHeaderRowMaps = mergeRowMaps;
         internalData.mergeHeaderColMaps = mergeColMaps;
         reactData.mergeHeadFlag++;
-      },
-      /**
-       * 横向 X 可视渲染事件处理
-       */
-      triggerScrollXEvent() {
-        const virtualXOpts = computeVirtualXOpts.value;
-        if (virtualXOpts.immediate) {
-          loadScrollXData();
-        } else {
-          lazyScrollXData();
-        }
-      },
-      /**
-       * 纵向 Y 可视渲染事件处理
-       */
-      triggerScrollYEvent() {
-        const virtualYOpts = computeVirtualYOpts.value;
-        if (virtualYOpts.immediate) {
-          loadScrollYData();
-        } else {
-          lazyScrollYData();
-        }
-      },
-
-      triggerBodyWheelEvent(evnt) {
-        const { target, deltaY, deltaX, shiftKey } = evnt;
-        if (target && /^textarea$/i.test((target as HTMLElement).tagName)) {
-          return;
-        }
-        // 如果滚轮未移动或者触摸板未变化位置
-        if (!deltaY && !deltaX) {
-          return;
-        }
-
-        const { scrollXLoad, scrollYLoad, overflowX, overflowY, expandColumn } =
-          reactData;
-        const leftFixedWidth = computeLeftFixedWidth.value;
-        const rightFixedWidth = computeRightFixedWidth.value;
-
-        const { elemStore, lastScrollTop, lastScrollLeft } = internalData;
-        const rowOpts = computeRowOpts.value;
-        const scrollbarXOpts = computeScrollbarXOpts.value;
-        const scrollbarYOpts = computeScrollbarYOpts.value;
-        const xHandleEl = refScrollXHandleElem.value;
-        const yHandleEl = refScrollYHandleElem.value;
-        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
-        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
-        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
-        const rowExpandEl = refRowExpandElem.value;
-        if (!bodyScrollElem) {
-          return;
-        }
-
-        const wheelSpeed = getWheelSpeed(internalData.lastSTime);
-        const deltaTop = shiftKey ? 0 : deltaY * wheelSpeed;
-        const deltaLeft = (shiftKey ? deltaX || deltaY : deltaX) * wheelSpeed;
-
-        const currScrollTop = bodyScrollElem.scrollTop;
-        const currScrollLeft = bodyScrollElem.scrollLeft;
-
-        const scrollTop = Math.max(0, currScrollTop + deltaTop);
-        const scrollLeft = Math.max(0, currScrollLeft + deltaLeft);
-        const isRollX = overflowX && scrollLeft !== lastScrollLeft;
-        const isRollY = overflowY && scrollTop !== lastScrollTop;
-
-        // 如果禁用滚动
-        if (isRollX && scrollbarXOpts.visible === 'hidden') {
-          evnt.preventDefault();
-          return;
-        }
-        if (isRollY) {
-          // 如果禁用滚动
-          if (scrollbarYOpts.visible === 'hidden') {
-            evnt.preventDefault();
-            return;
-          }
-          const isTopWheel = deltaTop < 0;
-          // 如果滚动位置已经是顶部或底部，则不需要触发
-          if (
-            isTopWheel
-              ? currScrollTop <= 0
-              : currScrollTop >=
-                bodyScrollElem.scrollHeight - bodyScrollElem.clientHeight
-          ) {
-            return;
-          }
-        }
-
-        // 展开行处理，如果展开行嵌入表格中
-        if ($asParentTable) {
-          if (
-            isRollY &&
-            checkTargetElement(
-              evnt.target,
-              [leftScrollElem, bodyScrollElem, rightScrollElem],
-              evnt.currentTarget,
-            )
-          ) {
-            evnt.stopPropagation();
-            return;
-          }
-          if (
-            isRollX &&
-            checkTargetElement(
-              evnt.target,
-              [headerScrollElem, bodyScrollElem, footerScrollElem],
-              evnt.currentTarget,
-            )
-          ) {
-            evnt.stopPropagation();
-            return;
-          }
-        }
-
-        if (!(isRollX || leftFixedWidth || rightFixedWidth || expandColumn)) {
-          return;
-        }
-
-        if (rowOpts.isHover) {
-          $asTable.clearHoverRow();
-        }
-
-        // 用于鼠标纵向滚轮处理
-        if (isRollX) {
-          evnt.preventDefault();
-          internalData.inWheelScroll = true;
-          wheelScrollLeftTo(scrollLeft, (offsetLeft: number) => {
-            internalData.inWheelScroll = true;
-            const currLeftNum = offsetLeft;
-            setScrollLeft(xHandleEl, currLeftNum);
-            setScrollLeft(bodyScrollElem, currLeftNum);
-            setScrollLeft(headerScrollElem, currLeftNum);
-            setScrollLeft(footerScrollElem, currLeftNum);
-            if (scrollXLoad) {
-              $asTable.triggerScrollXEvent(evnt);
-            }
-            $asTable.handleScrollEvent(
-              evnt,
-              isRollY,
-              isRollX,
-              bodyScrollElem.scrollTop,
-              currLeftNum,
-              {
-                type: 'table',
-                fixed: '',
-              },
-            );
-          });
-        }
-        if (isRollY) {
-          evnt.preventDefault();
-          internalData.inWheelScroll = true;
-          wheelScrollTopTo(scrollTop, (offsetTop: number) => {
-            internalData.inWheelScroll = true;
-            const currTopNum = offsetTop;
-            setScrollTop(yHandleEl, currTopNum);
-            setScrollTop(bodyScrollElem, currTopNum);
-            setScrollTop(leftScrollElem, currTopNum);
-            setScrollTop(rightScrollElem, currTopNum);
-            setScrollTop(rowExpandEl, currTopNum);
-            // TODO syncGanttScrollTop(currTopNum);
-            if (scrollYLoad) {
-              $asTable.triggerScrollYEvent(evnt);
-            }
-            $asTable.handleScrollEvent(
-              evnt,
-              isRollY,
-              isRollX,
-              offsetTop,
-              bodyScrollElem.scrollLeft,
-              {
-                type: 'table',
-                fixed: '',
-              },
-            );
-          });
-        }
-      },
-
-      triggerVirtualScrollXEvent(evnt) {
-        const { scrollXLoad } = reactData;
-        const {
-          elemStore,
-          inWheelScroll,
-          lastScrollTop,
-          inHeaderScroll,
-          inBodyScroll,
-          inFooterScroll,
-        } = internalData;
-        if (inHeaderScroll || inBodyScroll || inFooterScroll) {
-          return;
-        }
-        if (inWheelScroll) {
-          return;
-        }
-        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
-        const yHandleEl = refScrollYHandleElem.value;
-        const wrapperEl = evnt.currentTarget as HTMLDivElement;
-        const { scrollLeft } = wrapperEl;
-        const yBodyEl = yHandleEl || bodyScrollElem;
-        const scrollTop = yBodyEl ? yBodyEl.scrollTop : 0;
-        const isRollX = true;
-        const isRollY = scrollTop !== lastScrollTop;
-
-        internalData.inVirtualScroll = true;
-        setScrollLeft(bodyScrollElem, scrollLeft);
-        setScrollLeft(headerScrollElem, scrollLeft);
-        setScrollLeft(footerScrollElem, scrollLeft);
-        if (scrollXLoad) {
-          $asTable.triggerScrollXEvent(evnt);
-        }
-        $asTable.handleScrollEvent(
-          evnt,
-          isRollY,
-          isRollX,
-          scrollTop,
-          scrollLeft,
-          {
-            type: 'table',
-            fixed: '',
-          },
-        );
-      },
-      triggerVirtualScrollYEvent(evnt) {
-        const { scrollYLoad } = reactData;
-        const {
-          elemStore,
-          inWheelScroll,
-          lastScrollLeft,
-          inHeaderScroll,
-          inBodyScroll,
-          inFooterScroll,
-        } = internalData;
-        if (inHeaderScroll || inBodyScroll || inFooterScroll) {
-          return;
-        }
-        if (inWheelScroll) {
-          return;
-        }
-        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
-        const rowExpandEl = refRowExpandElem.value;
-        const xHandleEl = refScrollXHandleElem.value;
-        const wrapperEl = evnt.currentTarget as HTMLDivElement;
-        const { scrollTop } = wrapperEl;
-        const xBodyEl = xHandleEl || bodyScrollElem;
-        const scrollLeft = xBodyEl ? xBodyEl.scrollLeft : 0;
-        const isRollX = scrollLeft !== lastScrollLeft;
-        const isRollY = true;
-        internalData.inVirtualScroll = true;
-        setScrollTop(bodyScrollElem, scrollTop);
-        setScrollTop(leftScrollElem, scrollTop);
-        setScrollTop(rightScrollElem, scrollTop);
-        setScrollTop(rowExpandEl, scrollTop);
-        // TODO syncGanttScrollTop(scrollTop);
-        if (scrollYLoad) {
-          $asTable.triggerScrollYEvent(evnt);
-        }
-        $asTable.handleScrollEvent(
-          evnt,
-          isRollY,
-          isRollX,
-          scrollTop,
-          scrollLeft,
-          {
-            type: 'table',
-            fixed: '',
-          },
-        );
-      },
-
-      /**
-       * 对于树形结构中，可以直接滚动到指定深层节点中
-       * 对于某些特定的场景可能会用到，比如定位到某一节点
-       * @param {Row} row 行对象
-       */
-      scrollToTreeRow(row) {
-        const { treeConfig } = props;
-        const { isRowGroupStatus } = reactData;
-        const { tableFullData } = internalData;
-        const rests: Promise<any>[] = [];
-        if (treeConfig || isRowGroupStatus) {
-          const aggregateOpts = computeAggregateOpts.value;
-          const treeOpts = computeTreeOpts.value;
-          const childrenField = treeOpts.childrenField;
-          const matchObj = findTree(
-            tableFullData,
-            (item) => $asTable.eqRow(item, row),
-            {
-              children: isRowGroupStatus
-                ? aggregateOpts.mapChildrenField
-                : childrenField,
-            },
-          );
-          if (matchObj) {
-            const nodes = matchObj.nodes;
-            nodes.forEach((row, index) => {
-              if (
-                index < nodes.length - 1 &&
-                !$asTable.isTreeExpandByRow(row)
-              ) {
-                rests.push($asTable.setTreeExpand(row, true));
-              }
-            });
-          }
-        }
-        return Promise.all(rests).then(() => rowToVisible($asTable, row));
-      },
-
-      triggerBodyScrollEvent(evnt, fixedType) {
-        const { scrollYLoad, scrollXLoad } = reactData;
-        const {
-          elemStore,
-          intoRunScroll,
-          lastScrollTop,
-          lastScrollLeft,
-          inWheelScroll,
-          inVirtualScroll,
-          inHeaderScroll,
-          inBodyScroll,
-          scrollRenderType,
-          inFooterScroll,
-        } = internalData;
-        if (
-          inWheelScroll ||
-          inVirtualScroll ||
-          inHeaderScroll ||
-          inFooterScroll
-        ) {
-          return;
-        }
-        const xHandleEl = refScrollXHandleElem.value;
-        const yHandleEl = refScrollYHandleElem.value;
-        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
-        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
-        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
-        const rowExpandEl = refRowExpandElem.value;
-        if (intoRunScroll) {
-          return;
-        }
-        if (!bodyScrollElem) {
-          return;
-        }
-        if (!xHandleEl) {
-          return;
-        }
-        if (!yHandleEl) {
-          return;
-        }
-        if (inBodyScroll && scrollRenderType !== fixedType) {
-          return;
-        }
-
-        let scrollTop = yHandleEl.scrollTop;
-        let scrollLeft = xHandleEl.scrollLeft;
-        if (leftScrollElem && fixedType === 'left') {
-          scrollTop = leftScrollElem.scrollTop;
-        } else if (rightScrollElem && fixedType === 'right') {
-          scrollTop = rightScrollElem.scrollTop;
-        } else {
-          scrollTop = bodyScrollElem.scrollTop;
-          scrollLeft = bodyScrollElem.scrollLeft;
-        }
-        const isRollX = scrollLeft !== lastScrollLeft;
-        const isRollY = scrollTop !== lastScrollTop;
-        internalData.inBodyScroll = true;
-        internalData.scrollRenderType = fixedType;
-        if (isRollY) {
-          if (fixedType === 'left') {
-            setScrollTop(bodyScrollElem, scrollTop);
-            setScrollTop(rightScrollElem, scrollTop);
-          } else if (fixedType === 'right') {
-            setScrollTop(bodyScrollElem, scrollTop);
-            setScrollTop(leftScrollElem, scrollTop);
-          } else {
-            setScrollTop(leftScrollElem, scrollTop);
-            setScrollTop(rightScrollElem, scrollTop);
-          }
-          setScrollTop(yHandleEl, scrollTop);
-          setScrollTop(rowExpandEl, scrollTop);
-          // TODO syncGanttScrollTop(scrollTop);
-          if (scrollYLoad) {
-            $asTable.triggerScrollYEvent(evnt);
-          }
-        }
-        if (isRollX) {
-          setScrollLeft(xHandleEl, scrollLeft);
-          setScrollLeft(headerScrollElem, scrollLeft);
-          setScrollLeft(footerScrollElem, scrollLeft);
-          if (scrollXLoad) {
-            $asTable.triggerScrollXEvent(evnt);
-          }
-        }
-        $asTable.handleScrollEvent(
-          evnt,
-          isRollY,
-          isRollX,
-          scrollTop,
-          scrollLeft,
-          {
-            type: 'body',
-            fixed: fixedType,
-          },
-        );
-      },
-      triggerHeaderScrollEvent(evnt, fixedType) {
-        const { scrollXLoad } = reactData;
-        const {
-          elemStore,
-          intoRunScroll,
-          inWheelScroll,
-          inVirtualScroll,
-          inBodyScroll,
-          inFooterScroll,
-        } = internalData;
-        if (
-          inWheelScroll ||
-          inVirtualScroll ||
-          inBodyScroll ||
-          inFooterScroll
-        ) {
-          return;
-        }
-        const yHandleEl = refScrollYHandleElem.value;
-        const xHandleEl = refScrollXHandleElem.value;
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
-        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
-        if (intoRunScroll) {
-          return;
-        }
-        if (!headerScrollElem) {
-          return;
-        }
-        if (!xHandleEl) {
-          return;
-        }
-        if (!yHandleEl) {
-          return;
-        }
-        const scrollTop = yHandleEl.scrollTop;
-        const scrollLeft = headerScrollElem.scrollLeft;
-        const isRollX = true;
-        const isRollY = false;
-        internalData.inHeaderScroll = true;
-        setScrollLeft(xHandleEl, scrollLeft);
-        setScrollLeft(footerScrollElem, scrollLeft);
-        setScrollLeft(bodyScrollElem, scrollLeft);
-        if (scrollXLoad) {
-          $asTable.triggerScrollXEvent(evnt);
-        }
-        $asTable.handleScrollEvent(
-          evnt,
-          isRollY,
-          isRollX,
-          scrollTop,
-          scrollLeft,
-          {
-            type: 'header',
-            fixed: fixedType,
-          },
-        );
-      },
-      triggerFooterScrollEvent(evnt, fixedType) {
-        const { scrollXLoad } = reactData;
-        const {
-          elemStore,
-          intoRunScroll,
-          inWheelScroll,
-          inVirtualScroll,
-          inHeaderScroll,
-          inBodyScroll,
-        } = internalData;
-        if (
-          inWheelScroll ||
-          inVirtualScroll ||
-          inHeaderScroll ||
-          inBodyScroll
-        ) {
-          return;
-        }
-        const yHandleEl = refScrollYHandleElem.value;
-        const xHandleEl = refScrollXHandleElem.value;
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
-        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
-        if (intoRunScroll) {
-          return;
-        }
-        if (!footerScrollElem) {
-          return;
-        }
-        if (!xHandleEl) {
-          return;
-        }
-        if (!yHandleEl) {
-          return;
-        }
-        const scrollTop = yHandleEl.scrollTop;
-        const scrollLeft = footerScrollElem.scrollLeft;
-        const isRollX = true;
-        const isRollY = false;
-        internalData.inFooterScroll = true;
-        setScrollLeft(xHandleEl, scrollLeft);
-        setScrollLeft(headerScrollElem, scrollLeft);
-        setScrollLeft(bodyScrollElem, scrollLeft);
-        if (scrollXLoad) {
-          $asTable.triggerScrollXEvent(evnt);
-        }
-        $asTable.handleScrollEvent(
-          evnt,
-          isRollY,
-          isRollX,
-          scrollTop,
-          scrollLeft,
-          {
-            type: 'footer',
-            fixed: fixedType,
-          },
-        );
       },
       /**
        * 处理合并
@@ -12872,772 +13754,25 @@ export const Table = defineComponent<AsTableProps>(
         params = Object.assign({ cell }, params);
         $asTable.dispatchEvent('footer-cell-dblclick', params, evnt);
       },
-      handleClearStack() {
-        const { stackHistoryStore } = internalData;
-        stackHistoryStore.undoStacks = [];
-        stackHistoryStore.redoStacks = [];
-        return nextTick();
-      },
-
-      /** 处理固定列的显示状态，修正左右滚动阴影 */
-      checkScrolling() {
-        const { elemStore } = internalData;
-        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
-        const leftContainerElem = refLeftContainer.value;
-        const rightContainerElem = refRightContainer.value;
-        const xHandleEl = refScrollXHandleElem.value;
-        const bodtTargetEl = xHandleEl || bodyScrollElem;
-        if (bodtTargetEl) {
-          if (leftContainerElem) {
-            if (bodtTargetEl.scrollLeft > 0) {
-              addClass(leftContainerElem, 'scrolling--middle');
-            } else {
-              removeClass(leftContainerElem, 'scrolling--middle');
-            }
-          }
-          if (rightContainerElem) {
-            if (
-              bodtTargetEl.clientWidth <
-              bodtTargetEl.scrollWidth - Math.ceil(bodtTargetEl.scrollLeft)
-            ) {
-              addClass(rightContainerElem, 'scrolling--middle');
-            } else {
-              removeClass(rightContainerElem, 'scrolling--middle');
-            }
-          }
-        }
-      },
-      handleHeaderCellDragDragendEvent(evnt) {
-        const { dragCol } = reactData;
-        const { prevDragCol, prevDragPos, prevDragToChild } = internalData;
-        $asTable.handleColDragSwapEvent(
-          evnt,
-          true,
-          dragCol,
-          prevDragCol,
-          prevDragPos,
-          prevDragToChild,
-        );
-      },
-      handleHeaderCellDragDragoverEvent(evnt) {
-        const { dragCol } = reactData;
-        const columnDragOpts = computeColumnDragOpts.value;
-        const { isToChildDrag, isPeerDrag, isCrossDrag } = columnDragOpts;
-        if (!dragCol) {
-          evnt.preventDefault();
-          return;
-        }
-        const isControlKey = hasControlKey(evnt);
-        const thEl = evnt.currentTarget as HTMLElement;
-        const colid = thEl.getAttribute('colid');
-        const column = $asTable.getColumnById(colid);
-        if (column) {
-          evnt.preventDefault();
-          const { clientX } = evnt;
-          const offsetX = clientX - thEl.getBoundingClientRect().x;
-          const dragPos = offsetX < thEl.clientWidth / 2 ? 'left' : 'right';
-          internalData.prevDragToChild = !!(
-            isCrossDrag &&
-            isToChildDrag &&
-            isControlKey
-          );
-          internalData.prevDragCol = column;
-          internalData.prevDragPos = dragPos;
-          if (
-            column.fixed ||
-            (dragCol && dragCol.id === column.id) ||
-            (!isCrossDrag &&
-              (isPeerDrag
-                ? dragCol.parentId !== column.parentId
-                : column.parentId))
-          ) {
-            showDropTip(evnt, null, thEl, false, dragPos);
-            return;
-          }
-          showDropTip(evnt, null, thEl, true, dragPos);
-          dispatchEvent(
-            'column-dragover',
-            {
-              oldColumn: dragCol,
-              targetColumn: column,
-              dragPos,
-            },
-            evnt,
-          );
-
-          // 边缘滚动
-          const el = refElem.value;
-          if (!el) {
-            return;
-          }
-          const xHandleEl = refScrollXHandleElem.value;
-          const tableBody = refTableBody.value;
-          const tableBodyElem = tableBody
-            ? (tableBody.$el as HTMLDivElement)
-            : null;
-          const scrollTargetEl = xHandleEl || tableBodyElem;
-          if (scrollTargetEl) {
-            const wrapperRect = el.getBoundingClientRect();
-            const tableWrapperWidth = el.clientWidth;
-            const leftContainerElem = refLeftContainer.value;
-            const leftContainerWidth = leftContainerElem
-              ? leftContainerElem.clientWidth
-              : 0;
-            const rightContainerElem = refRightContainer.value;
-            const rightContainerWidth = rightContainerElem
-              ? rightContainerElem.clientWidth
-              : 0;
-            const srartX = wrapperRect.x + leftContainerWidth;
-            const endX =
-              wrapperRect.x + tableWrapperWidth - rightContainerWidth;
-            const distSize = 28;
-            const startDistSize = clientX - srartX;
-            const endDistSize = endX - clientX;
-            if (startDistSize > 0 && startDistSize <= distSize) {
-              const scrollRatio = Math.floor(
-                tableWrapperWidth / (startDistSize > distSize / 2 ? 240 : 120),
-              );
-              scrollTargetEl.scrollLeft -=
-                scrollRatio * (distSize - startDistSize);
-            } else if (endDistSize > 0 && endDistSize <= distSize) {
-              const scrollRatio = Math.floor(
-                tableWrapperWidth / (endDistSize > distSize / 2 ? 240 : 120),
-              );
-              scrollTargetEl.scrollLeft +=
-                scrollRatio * (distSize - endDistSize);
-            }
-          }
-        }
-      },
-      handleHeaderCellDragMousedownEvent(evnt, params) {
-        evnt.stopPropagation();
-        const columnDragOpts = computeColumnDragOpts.value;
-        const { trigger, dragStartMethod } = columnDragOpts;
-        const { column } = params;
-        const dragEl = evnt.currentTarget as HTMLElement;
-        const thEl =
-          trigger === 'cell'
-            ? dragEl
-            : (dragEl.parentElement?.parentElement as HTMLElement);
-        clearColDropOrigin();
-        if (dragStartMethod && !dragStartMethod(params)) {
-          thEl.draggable = false;
-          reactData.dragRow = null;
-          reactData.dragCol = null;
-          clearCrossTableDragStatus();
-          hideDropTip();
-          return;
-        }
-        reactData.dragCol = column;
-        reactData.dragRow = null;
-        thEl.draggable = true;
-        clearCrossTableDragStatus();
-        updateColDropOrigin(column);
-        updateColDropTipContent(thEl);
-        dispatchEvent('column-dragstart', params, evnt);
-      },
-      handleHeaderCellDragMouseupEvent() {
-        clearColDropOrigin();
-        hideDropTip();
-        clearCrossTableDragStatus();
-        reactData.dragRow = null;
-        reactData.dragCol = null;
-      },
-
-      handleScrollEvent(evnt, isRollY, isRollX, scrollTop, scrollLeft, params) {
-        const { lastScrollLeft, lastScrollTop } = internalData;
-        const xHandleEl = refScrollXHandleElem.value;
-        const yHandleEl = refScrollYHandleElem.value;
-        if (!xHandleEl || !yHandleEl) {
-          return;
-        }
-        const rowOpts = computeRowOpts.value;
-        const validTip = refValidTooltip.value;
-        const tooltip = refTooltip.value;
-        const bodyHeight = yHandleEl.clientHeight;
-        const bodyWidth = xHandleEl.clientWidth;
-        const scrollHeight = yHandleEl.scrollHeight;
-        const scrollWidth = xHandleEl.scrollWidth;
-        let isTop = false;
-        let isBottom = false;
-        let isLeft = false;
-        let isRight = false;
-        let direction = '';
-        let isTopBoundary = false;
-        let isBottomBoundary = false;
-        let isLeftBoundary = false;
-        let isRightBoundary = false;
-        if (isRollX) {
-          const xThreshold = computeScrollXThreshold.value;
-          isLeft = scrollLeft <= 0;
-          if (!isLeft) {
-            isRight = scrollLeft + bodyWidth >= scrollWidth;
-          }
-          if (scrollLeft > lastScrollLeft) {
-            direction = 'right';
-            if (scrollLeft + bodyWidth >= scrollWidth - xThreshold) {
-              isRightBoundary = true;
-            }
-          } else {
-            direction = 'left';
-            if (scrollLeft <= xThreshold) {
-              isLeftBoundary = true;
-            }
-          }
-          $asTable.checkScrolling();
-          internalData.lastScrollLeft = scrollLeft;
-        }
-        if (isRollY) {
-          const yThreshold = computeScrollYThreshold.value;
-          isTop = scrollTop <= 1;
-          if (!isTop) {
-            isBottom = scrollTop + bodyHeight >= scrollHeight - 1;
-          }
-          if (scrollTop > lastScrollTop) {
-            direction = 'bottom';
-            if (scrollTop + bodyHeight >= scrollHeight - yThreshold) {
-              isBottomBoundary = true;
-            }
-          } else {
-            direction = 'top';
-            if (scrollTop <= yThreshold) {
-              isTopBoundary = true;
-            }
-          }
-          internalData.lastScrollTop = scrollTop;
-        }
-        internalData.lastSTime = Date.now();
-        const evntParams = {
-          source: sourceType,
-          scrollTop,
-          scrollLeft,
-          bodyHeight,
-          bodyWidth,
-          scrollHeight,
-          scrollWidth,
-          isX: isRollX,
-          isY: isRollY,
-          isTop,
-          isBottom,
-          isLeft,
-          isRight,
-          direction,
-          ...params,
-        };
-        updateRowExpandStyle();
-        checkLastSyncScroll(isRollX, isRollY);
-        if (isRollX) {
-          $asTable.closeFilter();
-        }
-        if (rowOpts.isHover) {
-          $asTable.clearHoverRow();
-        }
-        if (validTip && validTip.reactData.visible) {
-          validTip.close();
-        }
-        if (tooltip && tooltip.reactData.visible) {
-          tooltip.close();
-        }
-        if (
-          isBottomBoundary ||
-          isTopBoundary ||
-          isRightBoundary ||
-          isLeftBoundary
-        ) {
-          dispatchEvent('scroll-boundary', evntParams, evnt);
-        }
-        dispatchEvent('scroll', evntParams, evnt);
-      },
-
-      eqRow(row1, row2) {
-        if (row1 && row2) {
-          if (row1 === row2) {
-            return true;
-          }
-          return getRowid($asTable, row1) === getRowid($asTable, row2);
-        }
-        return false;
-      },
-      findRowIndexOf(list, row) {
-        return row
-          ? findIndexOf(list, (item) => $asTable.eqRow(item, row))
-          : -1;
-      },
-
-      updateCheckboxStatus() {
-        const { treeConfig } = props;
-        const { isRowGroupStatus } = reactData;
-        const {
-          afterTreeFullData,
-          afterGroupFullData,
-          selectCheckboxMaps,
-          treeIndeterminateRowMaps,
-        } = internalData;
-        const aggregateOpts = computeAggregateOpts.value;
-        const treeOpts = computeTreeOpts.value;
-        const childrenField = treeOpts.childrenField;
-        const checkboxOpts = computeCheckboxOpts.value;
-        const { checkField, indeterminateField, checkStrictly, checkMethod } =
-          checkboxOpts;
-        if (checkStrictly) {
-          return;
-        }
-        if (isRowGroupStatus || treeConfig) {
-          const { handleGetRowId } = createHandleGetRowId($asTable);
-          const childRowMaps: Record<string, number> = {};
-          const childRowList: any[][] = [];
-
-          if (isRowGroupStatus) {
-            // 行分组
-            const mapChildrenField = aggregateOpts.mapChildrenField;
-            if (mapChildrenField) {
-              eachTree(
-                afterGroupFullData,
-                (row: any) => {
-                  const rowid = handleGetRowId(row);
-                  const childList = row[mapChildrenField];
-                  if (
-                    childList &&
-                    childList.length > 0 &&
-                    !childRowMaps[rowid]
-                  ) {
-                    childRowMaps[rowid] = 1;
-                    childRowList.unshift([row, rowid, childList]);
-                  }
-                },
-                { children: mapChildrenField },
-              );
-            }
-          } else if (treeConfig) {
-            // 树结构
-            const { transform, mapChildrenField } = treeOpts;
-            eachTree(
-              afterTreeFullData,
-              (row: any) => {
-                const rowid = handleGetRowId(row);
-                const childList =
-                  row[transform ? mapChildrenField : childrenField];
-                if (childList && childList.length > 0 && !childRowMaps[rowid]) {
-                  childRowMaps[rowid] = 1;
-                  childRowList.unshift([row, rowid, childList]);
-                } else {
-                  if (indeterminateField) {
-                    set(row, indeterminateField, false);
-                  }
-                }
-              },
-              { children: transform ? mapChildrenField : childrenField },
-            );
-          }
-
-          childRowList.forEach((vals) => {
-            const row = vals[0];
-            const rowid: string = vals[1];
-            const childList: any[] = vals[2];
-            let sLen = 0; // 已选
-            let hLen = 0; // 半选
-            let vLen = 0; // 有效子行
-            const cLen = childList.length; // 子行
-            childList.forEach(
-              checkMethod
-                ? (item) => {
-                    const childRowid = handleGetRowId(item);
-                    const isSelect = checkField
-                      ? get(item, checkField)
-                      : selectCheckboxMaps[childRowid];
-                    if (checkMethod({ $table: $asTable, row: item })) {
-                      if (isSelect) {
-                        sLen++;
-                      } else if (treeIndeterminateRowMaps[childRowid]) {
-                        hLen++;
-                      }
-                      vLen++;
-                    } else {
-                      if (isSelect) {
-                        sLen++;
-                      } else if (treeIndeterminateRowMaps[childRowid]) {
-                        hLen++;
-                      }
-                    }
-                  }
-                : (item) => {
-                    const childRowid = handleGetRowId(item);
-                    const isSelect = checkField
-                      ? get(item, checkField)
-                      : selectCheckboxMaps[childRowid];
-                    if (isSelect) {
-                      sLen++;
-                    } else if (treeIndeterminateRowMaps[childRowid]) {
-                      hLen++;
-                    }
-                    vLen++;
-                  },
-            );
-
-            let isSelected = false;
-            if (cLen > 0) {
-              if (vLen > 0) {
-                isSelected = (sLen > 0 || hLen > 0) && sLen >= vLen;
-              } else {
-                // 如果存在子项禁用
-                if (sLen > 0 && sLen >= vLen) {
-                  isSelected = true;
-                  // eslint-disable-next-line unicorn/no-duplicate-if-branches
-                } else if (selectCheckboxMaps[rowid]) {
-                  isSelected = true;
-                } else {
-                  isSelected = false;
-                }
-              }
-            } else {
-              // 如果无子项
-              isSelected = selectCheckboxMaps[rowid];
-            }
-            const halfSelect = !isSelected && (sLen > 0 || hLen > 0);
-
-            if (checkField) {
-              set(row, checkField, isSelected);
-            }
-            if (indeterminateField) {
-              set(row, indeterminateField, halfSelect);
-            }
-            if (isSelected) {
-              if (!checkField) {
-                selectCheckboxMaps[rowid] = row;
-              }
-              if (treeIndeterminateRowMaps[rowid]) {
-                delete treeIndeterminateRowMaps[rowid];
-              }
-            } else {
-              if (!checkField && selectCheckboxMaps[rowid]) {
-                delete selectCheckboxMaps[rowid];
-              }
-              if (halfSelect) {
-                treeIndeterminateRowMaps[rowid] = row;
-              } else {
-                if (treeIndeterminateRowMaps[rowid]) {
-                  delete treeIndeterminateRowMaps[rowid];
-                }
-              }
-            }
-          });
-        }
-        reactData.updateCheckboxFlag++;
-      },
-      updateAllCheckboxStatus() {
-        const { treeConfig } = props;
-        const { isRowGroupStatus } = reactData;
-        const {
-          afterFullData,
-          afterTreeFullData,
-          afterGroupFullData,
-          checkboxReserveRowMap,
-          selectCheckboxMaps,
-          treeIndeterminateRowMaps,
-        } = internalData;
-        const aggregateOpts = computeAggregateOpts.value;
-        const { mapChildrenField } = aggregateOpts;
-        const checkboxOpts = computeCheckboxOpts.value;
-        const { checkField, checkMethod, showReserveStatus } = checkboxOpts;
-        const { handleGetRowId } = createHandleGetRowId($asTable);
-
-        let sLen = 0; // 已选
-        let dsLen = 0; // 禁用的已选
-        let hLen = 0; // 半选
-        let dhLen = 0; // 禁用的半选
-        let vLen = 0; // 有效行
-
-        const rootList = treeConfig
-          ? afterTreeFullData
-          : isRowGroupStatus
-            ? afterGroupFullData
-            : afterFullData;
-        rootList.forEach(
-          checkMethod
-            ? (row) => {
-                const childRowid = handleGetRowId(row);
-                const selected = checkField
-                  ? get(row, checkField)
-                  : selectCheckboxMaps[childRowid];
-                if (isRowGroupStatus && $asTable.isAggregateRecord(row)) {
-                  const childList: any[] = row[mapChildrenField || ''];
-                  if (selected) {
-                    vLen++;
-                    sLen++;
-                  } else if (treeIndeterminateRowMaps[childRowid]) {
-                    vLen++;
-                    hLen++;
-                  } else if (
-                    childList &&
-                    childList.some((item) =>
-                      checkMethod({ $table: $asTable, row: item }),
-                    )
-                  ) {
-                    vLen++;
-                  }
-                } else if (checkMethod({ $table: $asTable, row })) {
-                  if (selected) {
-                    sLen++;
-                  } else if (treeIndeterminateRowMaps[childRowid]) {
-                    hLen++;
-                  }
-                  vLen++;
-                } else {
-                  if (selected) {
-                    dsLen++;
-                  } else if (treeIndeterminateRowMaps[childRowid]) {
-                    dhLen++;
-                  }
-                }
-              }
-            : (row) => {
-                const childRowid = handleGetRowId(row);
-                const selected = checkField
-                  ? get(row, checkField)
-                  : selectCheckboxMaps[childRowid];
-                if (selected) {
-                  sLen++;
-                } else if (treeIndeterminateRowMaps[childRowid]) {
-                  hLen++;
-                }
-                vLen++;
-              },
-        );
-
-        const isSelected =
-          rootList.length > 0
-            ? // eslint-disable-next-line unicorn/prefer-minimal-ternary
-              vLen > 0
-              ? sLen >= vLen
-              : sLen >= rootList.length
-            : false;
-        let halfSelect =
-          !isSelected && (sLen > 0 || hLen > 0 || dsLen > 0 || dhLen > 0);
-
-        // 如果复选框启用保留记录，当保留数据存在时显示半选
-        if (!isSelected && !halfSelect && showReserveStatus) {
-          halfSelect = !isEmpty(checkboxReserveRowMap);
-        }
-
-        reactData.isAllSelected = isSelected;
-        reactData.isIndeterminate = halfSelect;
-      },
-      checkSelectionStatus() {
-        $asTable.updateCheckboxStatus();
-        $asTable.updateAllCheckboxStatus();
-      },
-      /**
-       * 切换选中
-       * 多选，行选中事件
-       */
-      handleBatchSelectRows(rows, checked, isForce) {
-        const { treeConfig } = props;
-        const { isRowGroupStatus } = reactData;
+      handleToggleCheckRowEvent(evnt, params) {
         const { selectCheckboxMaps } = internalData;
-        const aggregateOpts = computeAggregateOpts.value;
-        const treeOpts = computeTreeOpts.value;
-        const { transform, mapChildrenField } = treeOpts;
-        const childrenField = treeOpts.childrenField;
         const checkboxOpts = computeCheckboxOpts.value;
-        const { checkField, checkStrictly, checkMethod } = checkboxOpts;
-        const { handleGetRowId } = createHandleGetRowId($asTable);
-        // indeterminateField 仅支持读取
-        const indeterminateField = checkboxOpts.indeterminateField;
-        if (checkField) {
-          // 树结构
-          if ((treeConfig || isRowGroupStatus) && !checkStrictly) {
-            // 更新子节点状态
-            eachTree(
-              rows,
-              (row) => {
-                if (
-                  !(
-                    isForce ||
-                    !checkMethod ||
-                    checkMethod({ $table: $asTable, row })
-                  )
-                ) {
-                  return;
-                }
-
-                set(row, checkField, checked);
-                if (indeterminateField) {
-                  set(row, indeterminateField, false);
-                }
-                handleCheckboxReserveRow(row, checked);
-              },
-              { children: transform ? mapChildrenField : childrenField },
-            );
-            reactData.updateCheckboxFlag++;
-            return;
-          }
-          // 列表
-          rows.forEach((row) => {
-            if (
-              !(
-                isForce ||
-                !checkMethod ||
-                checkMethod({ $table: $asTable, row })
-              )
-            ) {
-              return;
-            }
-
-            set(row, checkField, checked);
-            handleCheckboxReserveRow(row, checked);
-          });
-          reactData.updateCheckboxFlag++;
+        const { checkField, trigger } = checkboxOpts;
+        const { row } = params;
+        if (trigger === 'manual') {
           return;
         }
 
-        // 树结构
-        if (!checkStrictly) {
-          if (isRowGroupStatus) {
-            // 更新行分组节点状态
-            eachTree(
-              rows,
-              (row) => {
-                const rowid = handleGetRowId(row);
-                if (
-                  isForce ||
-                  !checkMethod ||
-                  checkMethod({ $table: $asTable, row })
-                ) {
-                  if (checked) {
-                    selectCheckboxMaps[rowid] = row;
-                  } else {
-                    if (selectCheckboxMaps[rowid]) {
-                      delete selectCheckboxMaps[rowid];
-                    }
-                  }
-                  handleCheckboxReserveRow(row, checked);
-                }
-              },
-              { children: aggregateOpts.mapChildrenField },
-            );
-            reactData.updateCheckboxFlag++;
-            return;
-          } else if (treeConfig) {
-            // 更新子节点状态
-            eachTree(
-              rows,
-              (row) => {
-                const rowid = handleGetRowId(row);
-                if (
-                  isForce ||
-                  !checkMethod ||
-                  checkMethod({ $table: $asTable, row })
-                ) {
-                  if (checked) {
-                    selectCheckboxMaps[rowid] = row;
-                  } else {
-                    if (selectCheckboxMaps[rowid]) {
-                      delete selectCheckboxMaps[rowid];
-                    }
-                  }
-                  handleCheckboxReserveRow(row, checked);
-                }
-              },
-              { children: transform ? mapChildrenField : childrenField },
-            );
-            reactData.updateCheckboxFlag++;
-            return;
-          }
+        let checked = false;
+        checked = checkField
+          ? !get(row, checkField)
+          : !selectCheckboxMaps[getRowid($asTable, row)];
+        if (evnt) {
+          $asTable.triggerCheckRowEvent(evnt, params, checked);
+        } else {
+          $asTable.handleBatchSelectRows([row], checked);
+          $asTable.checkSelectionStatus();
         }
-
-        // 列表
-        rows.forEach((row) => {
-          const rowid = handleGetRowId(row);
-          if (
-            isForce ||
-            !checkMethod ||
-            checkMethod({ $table: $asTable, row })
-          ) {
-            if (checked) {
-              if (!selectCheckboxMaps[rowid]) {
-                selectCheckboxMaps[rowid] = row;
-              }
-            } else {
-              if (selectCheckboxMaps[rowid]) {
-                delete selectCheckboxMaps[rowid];
-              }
-            }
-            handleCheckboxReserveRow(row, checked);
-            reactData.updateCheckboxFlag++;
-          }
-        });
-      },
-
-      /**
-       * @private
-       */
-      saveCustomStore(type) {
-        const { customConfig } = props;
-        const tableId = computeTableId.value;
-        const customOpts = computeCustomOpts.value;
-        const { updateStore, storage } = customOpts;
-        const {
-          isCustomAlign,
-          isCustomHeaderAlign,
-          isCustomFooterAlign,
-          isCustomResizable,
-          isCustomVisible,
-          isCustomFixed,
-          isCustomSort,
-          isCustomAggGroup,
-          isCustomAggFunc,
-          isCustomPager,
-        } = handleCustomStoreConfig($asTable);
-
-        if (type !== 'reset') {
-          // fix：修复拖动列宽，重置按钮无法点击的问题
-          reactData.isCustomStatus = true;
-        }
-        if (
-          storage &&
-          (customConfig ? isEnableConf(customOpts) : customOpts.enabled) &&
-          (isCustomAlign ||
-            isCustomHeaderAlign ||
-            isCustomFooterAlign ||
-            isCustomResizable ||
-            isCustomVisible ||
-            isCustomFixed ||
-            isCustomSort ||
-            isCustomAggGroup ||
-            isCustomAggFunc ||
-            isCustomPager)
-        ) {
-          if (!tableId) {
-            log.error('reqProp', ['id']);
-            return nextTick();
-          }
-          const storeData: AsTableDefines.CustomStoreData =
-            type === 'reset'
-              ? {
-                  pagerData: {},
-                  alignData: {},
-                  headerAlignData: {},
-                  footerAlignData: {},
-                  resizableData: {},
-                  sortData: [],
-                  visibleData: {},
-                  fixedData: {},
-                  aggGroupData: {},
-                  aggFuncData: {},
-                }
-              : $asTable.getCustomStoreData();
-          if (updateStore) {
-            return updateStore({
-              $table: $asTable,
-              id: tableId,
-              type,
-              storeData,
-            });
-          } else {
-            setCustomStorageMap(tableId, type === 'reset' ? null : storeData);
-          }
-        }
-        return nextTick();
       },
       triggerCheckRowEvent(evnt: MouseEvent, params, checked) {
         const { treeConfig } = props;
@@ -14137,6 +14272,31 @@ export const Table = defineComponent<AsTableProps>(
           }
           $asTable.handleColumnSortEvent(evnt, column);
         }
+      },
+      handleCellRuleUpdateStatus(type, cellParams, cellValue) {
+        const { validStore } = reactData;
+        const { row, column } = cellParams;
+        if ($asTable.hasCellRules && $asTable.hasCellRules(type, row, column)) {
+          const cell = $asTable.getCellElement(row, column);
+          if (cell) {
+            const customVal = !isUndefined(cellValue);
+            return $asTable
+              .validCellRules(type, row, column, cellValue)
+              .then(() => {
+                if (customVal && validStore.visible) {
+                  setCellValue(row, column, cellValue);
+                }
+                $asTable.clearValidate(row, column);
+              })
+              .catch(({ rule }: any) => {
+                if (customVal) {
+                  setCellValue(row, column, cellValue);
+                }
+                $asTable.showValidTooltip({ rule, row, column, cell });
+              });
+          }
+        }
+        return nextTick();
       },
       /**
        * 表头单元格按下事件
@@ -14641,6 +14801,437 @@ export const Table = defineComponent<AsTableProps>(
         handleRowDragEndClearStatus();
         return Promise.resolve(errRest);
       },
+      handleCrossTableRowDragCancelEvent() {
+        handleRowDragEndClearStatus();
+      },
+      /**
+       * 处理跨表拖拽完成
+       */
+      handleCrossTableRowDragFinishEvent(evnt) {
+        const { tableData } = reactData;
+        const { fullAllDataRowIdData } = internalData;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { animation, isCrossTableDrag } = rowDragOpts;
+        const treeOpts = computeTreeOpts.value;
+        const { mapChildrenField } = treeOpts;
+        const el = refElem.value;
+        if (isCrossTableDrag && crossTableDragRowObj && crossTableDragRowInfo) {
+          const { row: dragRow } = crossTableDragRowInfo;
+          if (dragRow) {
+            const dragRowid = getRowid($asTable, dragRow);
+            const dragRowRest = fullAllDataRowIdData[dragRowid];
+            let dragRowHeight = 0;
+            let rsIndex = -1;
+            if (dragRowRest) {
+              if (animation) {
+                dragRowHeight = getCellRestHeight(
+                  dragRowRest,
+                  cellOpts,
+                  defaultRowHeight,
+                );
+              }
+              rsIndex = dragRowRest.$index;
+            }
+            const dragRangeList =
+              rsIndex > -1 && rsIndex < tableData.length - 1
+                ? tableData.slice(rsIndex + 1)
+                : [];
+            const dragList = toTreeArray([dragRow], {
+              updated: true,
+              children: mapChildrenField,
+            });
+            $asTable.remove(dragList).then(() => {
+              if (!(animation && dragRowHeight && dragRangeList.length > 0)) {
+                return;
+              }
+
+              // TODO const $xeGanttView = internalData.xeGanttView;
+              let wrapperEl = el;
+              // if ($xeGantt && $xeGanttView) {
+              //   const { refGanttContainerElem } = $xeGantt.getRefMaps();
+              //   const ganttContainerElem = refGanttContainerElem.value;
+              //   if (ganttContainerElem) {
+              //     wrapperEl = ganttContainerElem;
+              //   }
+              // }
+
+              const dtClss: string[] = [];
+              dragRangeList.forEach((row) => {
+                const rowid = getRowid($asTable, row);
+                dtClss.push(`.${prefixCls.value}-body--row[rowid="${rowid}"]`);
+                // TODO if ($xeGantt) {
+                //   dtClss.push(
+                //     `.${prefixCls.value}-gantt-view--body-row[rowid="${rowid}"]`,
+                //     `.${prefixCls.value}-gantt-view--chart-row[rowid="${rowid}"]`,
+                //   );
+                // }
+              });
+              const dtTrList = wrapperEl.querySelectorAll<HTMLElement>(
+                dtClss.join(','),
+              );
+              moveRowAnimateToTb(dtTrList, dragRowHeight);
+            });
+            dispatchEvent(
+              'row-remove-dragend',
+              {
+                row: dragRow,
+              },
+              evnt,
+            );
+            handleRowDragEndClearStatus();
+          }
+        }
+      },
+      /**
+       * 处理跨表拖至新的空表
+       */
+      handleCrossTableRowDragoverEmptyEvent(evnt) {
+        const { tableData } = reactData;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isCrossTableDrag } = rowDragOpts;
+        if (
+          isCrossTableDrag &&
+          crossTableDragRowObj &&
+          tableData.length === 0
+        ) {
+          const { $oldTable, $newTable } = crossTableDragRowObj;
+          if ($oldTable) {
+            const oldTableReactData = $oldTable.reactData;
+            if ($oldTable.xID !== $asTable.xID) {
+              if ($newTable && $newTable.xID !== $asTable.xID) {
+                $newTable.hideCrossTableRowDropClearStatus();
+              }
+              evnt.preventDefault();
+              $oldTable.hideCrossTableRowDropClearStatus();
+              crossTableDragRowObj.$newTable = $asTable;
+              internalData.prevDragRow = null;
+              reactData.dragTipText = oldTableReactData.dragTipText;
+              showDropTip(
+                evnt,
+                evnt.currentTarget as HTMLDivElement,
+                null,
+                true,
+                '',
+              );
+            }
+          }
+        }
+      },
+      /**
+       * 处理跨表拖插入
+       */
+      handleCrossTableRowDragInsertEvent(evnt) {
+        const { treeConfig } = props;
+        const { prevDragRow, prevDragPos, prevDragToChild } = internalData;
+        const rowDragOpts = computeRowDragOpts.value;
+        const {
+          animation,
+          isSelfToChildDrag,
+          isCrossTableDrag,
+          dragEndMethod,
+          dragToChildMethod,
+        } = rowDragOpts;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const treeOpts = computeTreeOpts.value;
+        const { parentField, mapChildrenField } = treeOpts;
+        const childrenField = treeOpts.childrenField;
+        // 跨表拖拽
+        if (isCrossTableDrag && crossTableDragRowObj && crossTableDragRowInfo) {
+          const { row: oldRow } = crossTableDragRowInfo;
+          const { $oldTable } = crossTableDragRowObj;
+          const el = refElem.value;
+          if ($oldTable && oldRow) {
+            const dragRow = oldRow;
+            let dragOffsetIndex = -1;
+            if (prevDragRow) {
+              dragOffsetIndex = prevDragPos === 'bottom' ? 1 : 0;
+            }
+            const dragParams = {
+              oldRow: dragRow,
+              newRow: prevDragRow,
+              dragRow,
+              dragPos: prevDragPos as 'bottom' | 'top',
+              dragToChild: !!prevDragToChild,
+              offsetIndex: dragOffsetIndex as 0 | 1,
+            };
+            const isDragToChildFlag =
+              isSelfToChildDrag && dragToChildMethod
+                ? dragToChildMethod(dragParams)
+                : prevDragToChild;
+            const errRest = {
+              status: false,
+            };
+            if (dragEndMethod) {
+              handleRowDragEndClearStatus();
+            }
+            Promise.resolve(
+              dragEndMethod ? dragEndMethod(dragParams) : true,
+            ).then((status) => {
+              if (!status) {
+                if ($oldTable && $oldTable.xID !== $asTable.xID) {
+                  $oldTable.handleCrossTableRowDragCancelEvent(evnt);
+                }
+                handleRowDragEndClearStatus();
+                return errRest;
+              }
+              let insertRest: Promise<any> = Promise.resolve();
+              if (treeConfig) {
+                const dragList = toTreeArray([dragRow], {
+                  updated: true,
+                  children: mapChildrenField,
+                });
+                $oldTable.handleCrossTableRowDragFinishEvent(evnt);
+                dragRow[parentField] = prevDragRow
+                  ? prevDragRow[parentField]
+                  : null;
+                dragList.forEach((row) => {
+                  row[childrenField] = undefined;
+                  row[mapChildrenField] = undefined;
+                });
+                if (prevDragRow) {
+                  insertRest =
+                    prevDragPos === 'bottom'
+                      ? $asTable.insertNextAt(dragList, prevDragRow)
+                      : $asTable.insertAt(dragList, prevDragRow);
+                } else {
+                  insertRest = $asTable.insert(dragList);
+                }
+              } else {
+                $oldTable.handleCrossTableRowDragFinishEvent(evnt);
+                if (prevDragRow) {
+                  insertRest =
+                    prevDragPos === 'bottom'
+                      ? $asTable.insertNextAt(dragRow, prevDragRow)
+                      : $asTable.insertAt(dragRow, prevDragRow);
+                } else {
+                  insertRest = $asTable.insert(dragRow);
+                }
+              }
+              dispatchEvent(
+                'row-insert-dragend',
+                {
+                  oldRow,
+                  newRow: prevDragRow,
+                  dragRow,
+                  dragPos: prevDragPos as any,
+                  dragToChild: isDragToChildFlag,
+                  offsetIndex: dragOffsetIndex,
+                },
+                evnt,
+              );
+              clearRowDragData();
+
+              insertRest.then(() => {
+                const { tableData } = reactData;
+                const { fullAllDataRowIdData } = internalData;
+                const oldRowid = getRowid($asTable, dragRow);
+                const oldRowRest = fullAllDataRowIdData[oldRowid];
+                let dragRowHeight = 0;
+                let rsIndex = -1;
+                if (oldRowRest) {
+                  if (animation) {
+                    dragRowHeight = getCellRestHeight(
+                      oldRowRest,
+                      cellOpts,
+                      defaultRowHeight,
+                    );
+                  }
+                  rsIndex = oldRowRest.$index;
+                }
+                const dragRangeList =
+                  rsIndex > -1 ? tableData.slice(rsIndex) : [];
+                if (animation && dragRowHeight && dragRangeList.length > 0) {
+                  // TODO const $xeGanttView = internalData.xeGanttView;
+                  let wrapperEl = el;
+                  // if ($xeGantt && $xeGanttView) {
+                  //   const { refGanttContainerElem } = $xeGantt.getRefMaps();
+                  //   const ganttContainerElem = refGanttContainerElem.value;
+                  //   if (ganttContainerElem) {
+                  //     wrapperEl = ganttContainerElem;
+                  //   }
+                  // }
+
+                  const dtClss: string[] = [];
+                  dragRangeList.forEach((row) => {
+                    const rowid = getRowid($asTable, row);
+                    dtClss.push(
+                      `.${prefixCls.value}-body--row[rowid="${rowid}"]`,
+                    );
+                    // TODO if ($xeGantt) {
+                    //   dtClss.push(
+                    //     `.${prefixCls.value}-gantt-view--body-row[rowid="${rowid}"]`,
+                    //     `.${prefixCls.value}-gantt-view--chart-row[rowid="${rowid}"]`,
+                    //   );
+                    // }
+                  });
+                  const dtTrList = wrapperEl.querySelectorAll<HTMLElement>(
+                    dtClss.join(','),
+                  );
+                  moveRowAnimateToTb(dtTrList, -dragRowHeight);
+                }
+              });
+            });
+          }
+        }
+      },
+      hideCrossTableRowDropClearStatus() {
+        hideDropTip();
+      },
+      handleRowDragDragendEvent(evnt) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData, prevDragToChild } = internalData;
+        const { dragRow } = reactData;
+        const treeOpts = computeTreeOpts.value;
+        const { lazy } = treeOpts;
+        const hasChildField = treeOpts.hasChildField;
+        const { prevDragRow, prevDragPos } = internalData;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isCrossTableDrag } = rowDragOpts;
+        // 跨表拖拽
+        if (isCrossTableDrag && crossTableDragRowObj) {
+          const { $newTable } = crossTableDragRowObj;
+          if ($newTable && $newTable.xID !== $asTable.xID) {
+            $newTable.handleCrossTableRowDragInsertEvent(evnt);
+            return;
+          }
+        }
+        if (treeConfig && lazy && prevDragToChild) {
+          // 懒加载
+          const newRowid = getRowid($asTable, prevDragRow);
+          const rowRest = fullAllDataRowIdData[newRowid];
+          if (prevDragRow[hasChildField]) {
+            if (rowRest && rowRest.treeLoaded) {
+              $asTable.handleRowDragSwapEvent(
+                evnt,
+                true,
+                dragRow,
+                prevDragRow,
+                prevDragPos,
+                prevDragToChild,
+              );
+            }
+          } else {
+            $asTable.handleRowDragSwapEvent(
+              evnt,
+              true,
+              dragRow,
+              prevDragRow,
+              prevDragPos,
+              prevDragToChild,
+            );
+          }
+        } else {
+          $asTable.handleRowDragSwapEvent(
+            evnt,
+            true,
+            dragRow,
+            prevDragRow,
+            prevDragPos,
+            prevDragToChild,
+          );
+        }
+      },
+      handleRowDragDragoverEvent(evnt) {
+        const { treeConfig } = props;
+        const { fullAllDataRowIdData } = internalData;
+        const { dragRow } = reactData;
+        const treeOpts = computeTreeOpts.value;
+        const { lazy, transform, parentField } = treeOpts;
+        const hasChildField = treeOpts.hasChildField;
+        const rowDragOpts = computeRowDragOpts.value;
+        const { isPeerDrag, isCrossDrag, isToChildDrag, isCrossTableDrag } =
+          rowDragOpts;
+        if (
+          !dragRow &&
+          !(
+            isCrossTableDrag &&
+            (!treeConfig || isCrossDrag) &&
+            crossTableDragRowObj
+          )
+        ) {
+          evnt.preventDefault();
+          return;
+        }
+        const isControlKey = hasControlKey(evnt);
+        const trEl = evnt.currentTarget as HTMLElement;
+        const rowid = trEl.getAttribute('rowid') || '';
+        const rowRest = fullAllDataRowIdData[rowid];
+        if (rowRest) {
+          evnt.preventDefault();
+          const row = rowRest.row;
+          const offsetY = evnt.clientY - trEl.getBoundingClientRect().y;
+          const dragPos = offsetY < trEl.clientHeight / 2 ? 'top' : 'bottom';
+          internalData.prevDragToChild = !!(
+            treeConfig &&
+            transform &&
+            isCrossDrag &&
+            isToChildDrag &&
+            isControlKey
+          );
+          internalData.prevDragRow = row;
+          internalData.prevDragPos = dragPos;
+          // 跨表拖拽
+          if (
+            isCrossTableDrag &&
+            (!treeConfig || isCrossDrag) &&
+            crossTableDragRowObj
+          ) {
+            const { $oldTable, $newTable } = crossTableDragRowObj;
+            if ($oldTable) {
+              const oldTableReactData = $oldTable.reactData;
+              if ($oldTable.xID === $asTable.xID) {
+                if ($newTable) {
+                  $newTable.hideCrossTableRowDropClearStatus();
+                }
+                reactData.isCrossDragRow = false;
+                oldTableReactData.isCrossDragRow = false;
+                crossTableDragRowObj.$newTable = null;
+              } else {
+                if ($newTable && $newTable.xID !== $asTable.xID) {
+                  $newTable.hideCrossTableRowDropClearStatus();
+                }
+                $oldTable.hideCrossTableRowDropClearStatus();
+                oldTableReactData.isCrossDragRow = true;
+                reactData.dragTipText = oldTableReactData.dragTipText;
+                crossTableDragRowObj.$newTable = $asTable;
+                showDropTip(evnt, trEl, null, true, dragPos);
+                return;
+              }
+            }
+          }
+          if (
+            $asTable.eqRow(dragRow, row) ||
+            (isControlKey &&
+              treeConfig &&
+              lazy &&
+              row[hasChildField] &&
+              rowRest &&
+              !rowRest.treeLoaded) ||
+            (!isCrossDrag &&
+              treeConfig &&
+              transform &&
+              (isPeerDrag
+                ? dragRow[parentField] !== row[parentField]
+                : rowRest.level))
+          ) {
+            showDropTip(evnt, trEl, null, false, dragPos);
+            return;
+          }
+          showDropTip(evnt, trEl, null, true, dragPos);
+          dispatchEvent(
+            'row-dragover',
+            {
+              oldRow: dragRow,
+              targetRow: row,
+              dragPos,
+            },
+            evnt,
+          );
+        }
+      },
       handleCellDragMousedownEvent(evnt, params) {
         evnt.stopPropagation();
         const rowDragOpts = computeRowDragOpts.value;
@@ -15088,177 +15679,1180 @@ export const Table = defineComponent<AsTableProps>(
         return Promise.resolve(errRest);
       },
 
-      handleRowDragDragendEvent(evnt) {
-        const { treeConfig } = props;
-        const { fullAllDataRowIdData, prevDragToChild } = internalData;
-        const { dragRow } = reactData;
-        const treeOpts = computeTreeOpts.value;
-        const { lazy } = treeOpts;
-        const hasChildField = treeOpts.hasChildField;
-        const { prevDragRow, prevDragPos } = internalData;
-        const rowDragOpts = computeRowDragOpts.value;
-        const { isCrossTableDrag } = rowDragOpts;
-        // 跨表拖拽
-        if (isCrossTableDrag && crossTableDragRowObj) {
-          const { $newTable } = crossTableDragRowObj;
-          if ($newTable && $newTable.xID !== $asTable.xID) {
-            $newTable.handleCrossTableRowDragInsertEvent(evnt);
-            return;
-          }
-        }
-        if (treeConfig && lazy && prevDragToChild) {
-          // 懒加载
-          const newRowid = getRowid($asTable, prevDragRow);
-          const rowRest = fullAllDataRowIdData[newRowid];
-          if (prevDragRow[hasChildField]) {
-            if (rowRest && rowRest.treeLoaded) {
-              $asTable.handleRowDragSwapEvent(
-                evnt,
-                true,
-                dragRow,
-                prevDragRow,
-                prevDragPos,
-                prevDragToChild,
-              );
-            }
-          } else {
-            $asTable.handleRowDragSwapEvent(
-              evnt,
-              true,
-              dragRow,
-              prevDragRow,
-              prevDragPos,
-              prevDragToChild,
-            );
-          }
-        } else {
-          $asTable.handleRowDragSwapEvent(
-            evnt,
-            true,
-            dragRow,
-            prevDragRow,
-            prevDragPos,
-            prevDragToChild,
-          );
-        }
+      handleHeaderCellDragDragendEvent(evnt) {
+        const { dragCol } = reactData;
+        const { prevDragCol, prevDragPos, prevDragToChild } = internalData;
+        $asTable.handleColDragSwapEvent(
+          evnt,
+          true,
+          dragCol,
+          prevDragCol,
+          prevDragPos,
+          prevDragToChild,
+        );
       },
-      handleRowDragDragoverEvent(evnt) {
-        const { treeConfig } = props;
-        const { fullAllDataRowIdData } = internalData;
-        const { dragRow } = reactData;
-        const treeOpts = computeTreeOpts.value;
-        const { lazy, transform, parentField } = treeOpts;
-        const hasChildField = treeOpts.hasChildField;
-        const rowDragOpts = computeRowDragOpts.value;
-        const { isPeerDrag, isCrossDrag, isToChildDrag, isCrossTableDrag } =
-          rowDragOpts;
-        if (
-          !dragRow &&
-          !(
-            isCrossTableDrag &&
-            (!treeConfig || isCrossDrag) &&
-            crossTableDragRowObj
-          )
-        ) {
+      handleHeaderCellDragDragoverEvent(evnt) {
+        const { dragCol } = reactData;
+        const columnDragOpts = computeColumnDragOpts.value;
+        const { isToChildDrag, isPeerDrag, isCrossDrag } = columnDragOpts;
+        if (!dragCol) {
           evnt.preventDefault();
           return;
         }
         const isControlKey = hasControlKey(evnt);
-        const trEl = evnt.currentTarget as HTMLElement;
-        const rowid = trEl.getAttribute('rowid') || '';
-        const rowRest = fullAllDataRowIdData[rowid];
-        if (rowRest) {
+        const thEl = evnt.currentTarget as HTMLElement;
+        const colid = thEl.getAttribute('colid');
+        const column = $asTable.getColumnById(colid);
+        if (column) {
           evnt.preventDefault();
-          const row = rowRest.row;
-          const offsetY = evnt.clientY - trEl.getBoundingClientRect().y;
-          const dragPos = offsetY < trEl.clientHeight / 2 ? 'top' : 'bottom';
+          const { clientX } = evnt;
+          const offsetX = clientX - thEl.getBoundingClientRect().x;
+          const dragPos = offsetX < thEl.clientWidth / 2 ? 'left' : 'right';
           internalData.prevDragToChild = !!(
-            treeConfig &&
-            transform &&
             isCrossDrag &&
             isToChildDrag &&
             isControlKey
           );
-          internalData.prevDragRow = row;
+          internalData.prevDragCol = column;
           internalData.prevDragPos = dragPos;
-          // 跨表拖拽
           if (
-            isCrossTableDrag &&
-            (!treeConfig || isCrossDrag) &&
-            crossTableDragRowObj
-          ) {
-            const { $oldTable, $newTable } = crossTableDragRowObj;
-            if ($oldTable) {
-              const oldTableReactData = $oldTable.reactData;
-              if ($oldTable.xID === $asTable.xID) {
-                if ($newTable) {
-                  $newTable.hideCrossTableRowDropClearStatus();
-                }
-                reactData.isCrossDragRow = false;
-                oldTableReactData.isCrossDragRow = false;
-                crossTableDragRowObj.$newTable = null;
-              } else {
-                if ($newTable && $newTable.xID !== $asTable.xID) {
-                  $newTable.hideCrossTableRowDropClearStatus();
-                }
-                $oldTable.hideCrossTableRowDropClearStatus();
-                oldTableReactData.isCrossDragRow = true;
-                reactData.dragTipText = oldTableReactData.dragTipText;
-                crossTableDragRowObj.$newTable = $asTable;
-                showDropTip(evnt, trEl, null, true, dragPos);
-                return;
-              }
-            }
-          }
-          if (
-            $asTable.eqRow(dragRow, row) ||
-            (isControlKey &&
-              treeConfig &&
-              lazy &&
-              row[hasChildField] &&
-              rowRest &&
-              !rowRest.treeLoaded) ||
+            column.fixed ||
+            (dragCol && dragCol.id === column.id) ||
             (!isCrossDrag &&
-              treeConfig &&
-              transform &&
               (isPeerDrag
-                ? dragRow[parentField] !== row[parentField]
-                : rowRest.level))
+                ? dragCol.parentId !== column.parentId
+                : column.parentId))
           ) {
-            showDropTip(evnt, trEl, null, false, dragPos);
+            showDropTip(evnt, null, thEl, false, dragPos);
             return;
           }
-          showDropTip(evnt, trEl, null, true, dragPos);
+          showDropTip(evnt, null, thEl, true, dragPos);
           dispatchEvent(
-            'row-dragover',
+            'column-dragover',
             {
-              oldRow: dragRow,
-              targetRow: row,
+              oldColumn: dragCol,
+              targetColumn: column,
               dragPos,
             },
             evnt,
           );
+
+          // 边缘滚动
+          const el = refElem.value;
+          if (!el) {
+            return;
+          }
+          const xHandleEl = refScrollXHandleElem.value;
+          const tableBody = refTableBody.value;
+          const tableBodyElem = tableBody
+            ? (tableBody.$el as HTMLDivElement)
+            : null;
+          const scrollTargetEl = xHandleEl || tableBodyElem;
+          if (scrollTargetEl) {
+            const wrapperRect = el.getBoundingClientRect();
+            const tableWrapperWidth = el.clientWidth;
+            const leftContainerElem = refLeftContainer.value;
+            const leftContainerWidth = leftContainerElem
+              ? leftContainerElem.clientWidth
+              : 0;
+            const rightContainerElem = refRightContainer.value;
+            const rightContainerWidth = rightContainerElem
+              ? rightContainerElem.clientWidth
+              : 0;
+            const srartX = wrapperRect.x + leftContainerWidth;
+            const endX =
+              wrapperRect.x + tableWrapperWidth - rightContainerWidth;
+            const distSize = 28;
+            const startDistSize = clientX - srartX;
+            const endDistSize = endX - clientX;
+            if (startDistSize > 0 && startDistSize <= distSize) {
+              const scrollRatio = Math.floor(
+                tableWrapperWidth / (startDistSize > distSize / 2 ? 240 : 120),
+              );
+              scrollTargetEl.scrollLeft -=
+                scrollRatio * (distSize - startDistSize);
+            } else if (endDistSize > 0 && endDistSize <= distSize) {
+              const scrollRatio = Math.floor(
+                tableWrapperWidth / (endDistSize > distSize / 2 ? 240 : 120),
+              );
+              scrollTargetEl.scrollLeft +=
+                scrollRatio * (distSize - endDistSize);
+            }
+          }
         }
       },
-      handleToggleCheckRowEvent(evnt, params) {
-        const { selectCheckboxMaps } = internalData;
-        const checkboxOpts = computeCheckboxOpts.value;
-        const { checkField, trigger } = checkboxOpts;
-        const { row } = params;
-        if (trigger === 'manual') {
+      handleHeaderCellDragMousedownEvent(evnt, params) {
+        evnt.stopPropagation();
+        const columnDragOpts = computeColumnDragOpts.value;
+        const { trigger, dragStartMethod } = columnDragOpts;
+        const { column } = params;
+        const dragEl = evnt.currentTarget as HTMLElement;
+        const thEl =
+          trigger === 'cell'
+            ? dragEl
+            : (dragEl.parentElement?.parentElement as HTMLElement);
+        clearColDropOrigin();
+        if (dragStartMethod && !dragStartMethod(params)) {
+          thEl.draggable = false;
+          reactData.dragRow = null;
+          reactData.dragCol = null;
+          clearCrossTableDragStatus();
+          hideDropTip();
+          return;
+        }
+        reactData.dragCol = column;
+        reactData.dragRow = null;
+        thEl.draggable = true;
+        clearCrossTableDragStatus();
+        updateColDropOrigin(column);
+        updateColDropTipContent(thEl);
+        dispatchEvent('column-dragstart', params, evnt);
+      },
+      handleHeaderCellDragMouseupEvent() {
+        clearColDropOrigin();
+        hideDropTip();
+        clearCrossTableDragStatus();
+        reactData.dragRow = null;
+        reactData.dragCol = null;
+      },
+
+      handleScrollEvent(evnt, isRollY, isRollX, scrollTop, scrollLeft, params) {
+        const { lastScrollLeft, lastScrollTop } = internalData;
+        const xHandleEl = refScrollXHandleElem.value;
+        const yHandleEl = refScrollYHandleElem.value;
+        if (!xHandleEl || !yHandleEl) {
+          return;
+        }
+        const rowOpts = computeRowOpts.value;
+        const validTip = refValidTooltip.value;
+        const tooltip = refTooltip.value;
+        const bodyHeight = yHandleEl.clientHeight;
+        const bodyWidth = xHandleEl.clientWidth;
+        const scrollHeight = yHandleEl.scrollHeight;
+        const scrollWidth = xHandleEl.scrollWidth;
+        let isTop = false;
+        let isBottom = false;
+        let isLeft = false;
+        let isRight = false;
+        let direction = '';
+        let isTopBoundary = false;
+        let isBottomBoundary = false;
+        let isLeftBoundary = false;
+        let isRightBoundary = false;
+        if (isRollX) {
+          const xThreshold = computeScrollXThreshold.value;
+          isLeft = scrollLeft <= 0;
+          if (!isLeft) {
+            isRight = scrollLeft + bodyWidth >= scrollWidth;
+          }
+          if (scrollLeft > lastScrollLeft) {
+            direction = 'right';
+            if (scrollLeft + bodyWidth >= scrollWidth - xThreshold) {
+              isRightBoundary = true;
+            }
+          } else {
+            direction = 'left';
+            if (scrollLeft <= xThreshold) {
+              isLeftBoundary = true;
+            }
+          }
+          $asTable.checkScrolling();
+          internalData.lastScrollLeft = scrollLeft;
+        }
+        if (isRollY) {
+          const yThreshold = computeScrollYThreshold.value;
+          isTop = scrollTop <= 1;
+          if (!isTop) {
+            isBottom = scrollTop + bodyHeight >= scrollHeight - 1;
+          }
+          if (scrollTop > lastScrollTop) {
+            direction = 'bottom';
+            if (scrollTop + bodyHeight >= scrollHeight - yThreshold) {
+              isBottomBoundary = true;
+            }
+          } else {
+            direction = 'top';
+            if (scrollTop <= yThreshold) {
+              isTopBoundary = true;
+            }
+          }
+          internalData.lastScrollTop = scrollTop;
+        }
+        internalData.lastSTime = Date.now();
+        const evntParams = {
+          source: sourceType,
+          scrollTop,
+          scrollLeft,
+          bodyHeight,
+          bodyWidth,
+          scrollHeight,
+          scrollWidth,
+          isX: isRollX,
+          isY: isRollY,
+          isTop,
+          isBottom,
+          isLeft,
+          isRight,
+          direction,
+          ...params,
+        };
+        updateRowExpandStyle();
+        checkLastSyncScroll(isRollX, isRollY);
+        if (isRollX) {
+          $asTable.closeFilter();
+        }
+        if (rowOpts.isHover) {
+          $asTable.clearHoverRow();
+        }
+        if (validTip && validTip.reactData.visible) {
+          validTip.close();
+        }
+        if (tooltip && tooltip.reactData.visible) {
+          tooltip.close();
+        }
+        if (
+          isBottomBoundary ||
+          isTopBoundary ||
+          isRightBoundary ||
+          isLeftBoundary
+        ) {
+          dispatchEvent('scroll-boundary', evntParams, evnt);
+        }
+        dispatchEvent('scroll', evntParams, evnt);
+      },
+
+      /**
+       * 横向 X 可视渲染事件处理
+       */
+      triggerScrollXEvent() {
+        const virtualXOpts = computeVirtualXOpts.value;
+        if (virtualXOpts.immediate) {
+          loadScrollXData();
+        } else {
+          lazyScrollXData();
+        }
+      },
+      /**
+       * 纵向 Y 可视渲染事件处理
+       */
+      triggerScrollYEvent() {
+        const virtualYOpts = computeVirtualYOpts.value;
+        if (virtualYOpts.immediate) {
+          loadScrollYData();
+        } else {
+          lazyScrollYData();
+        }
+      },
+
+      triggerBodyScrollEvent(evnt, fixedType) {
+        const { scrollYLoad, scrollXLoad } = reactData;
+        const {
+          elemStore,
+          intoRunScroll,
+          lastScrollTop,
+          lastScrollLeft,
+          inWheelScroll,
+          inVirtualScroll,
+          inHeaderScroll,
+          inBodyScroll,
+          scrollRenderType,
+          inFooterScroll,
+        } = internalData;
+        if (
+          inWheelScroll ||
+          inVirtualScroll ||
+          inHeaderScroll ||
+          inFooterScroll
+        ) {
+          return;
+        }
+        const xHandleEl = refScrollXHandleElem.value;
+        const yHandleEl = refScrollYHandleElem.value;
+        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        const rowExpandEl = refRowExpandElem.value;
+        if (intoRunScroll) {
+          return;
+        }
+        if (!bodyScrollElem) {
+          return;
+        }
+        if (!xHandleEl) {
+          return;
+        }
+        if (!yHandleEl) {
+          return;
+        }
+        if (inBodyScroll && scrollRenderType !== fixedType) {
           return;
         }
 
-        let checked = false;
-        checked = checkField
-          ? !get(row, checkField)
-          : !selectCheckboxMaps[getRowid($asTable, row)];
-        if (evnt) {
-          $asTable.triggerCheckRowEvent(evnt, params, checked);
+        let scrollTop = yHandleEl.scrollTop;
+        let scrollLeft = xHandleEl.scrollLeft;
+        if (leftScrollElem && fixedType === 'left') {
+          scrollTop = leftScrollElem.scrollTop;
+        } else if (rightScrollElem && fixedType === 'right') {
+          scrollTop = rightScrollElem.scrollTop;
         } else {
-          $asTable.handleBatchSelectRows([row], checked);
-          $asTable.checkSelectionStatus();
+          scrollTop = bodyScrollElem.scrollTop;
+          scrollLeft = bodyScrollElem.scrollLeft;
         }
+        const isRollX = scrollLeft !== lastScrollLeft;
+        const isRollY = scrollTop !== lastScrollTop;
+        internalData.inBodyScroll = true;
+        internalData.scrollRenderType = fixedType;
+        if (isRollY) {
+          if (fixedType === 'left') {
+            setScrollTop(bodyScrollElem, scrollTop);
+            setScrollTop(rightScrollElem, scrollTop);
+          } else if (fixedType === 'right') {
+            setScrollTop(bodyScrollElem, scrollTop);
+            setScrollTop(leftScrollElem, scrollTop);
+          } else {
+            setScrollTop(leftScrollElem, scrollTop);
+            setScrollTop(rightScrollElem, scrollTop);
+          }
+          setScrollTop(yHandleEl, scrollTop);
+          setScrollTop(rowExpandEl, scrollTop);
+          // TODO syncGanttScrollTop(scrollTop);
+          if (scrollYLoad) {
+            $asTable.triggerScrollYEvent(evnt);
+          }
+        }
+        if (isRollX) {
+          setScrollLeft(xHandleEl, scrollLeft);
+          setScrollLeft(headerScrollElem, scrollLeft);
+          setScrollLeft(footerScrollElem, scrollLeft);
+          if (scrollXLoad) {
+            $asTable.triggerScrollXEvent(evnt);
+          }
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'body',
+            fixed: fixedType,
+          },
+        );
+      },
+      triggerHeaderScrollEvent(evnt, fixedType) {
+        const { scrollXLoad } = reactData;
+        const {
+          elemStore,
+          intoRunScroll,
+          inWheelScroll,
+          inVirtualScroll,
+          inBodyScroll,
+          inFooterScroll,
+        } = internalData;
+        if (
+          inWheelScroll ||
+          inVirtualScroll ||
+          inBodyScroll ||
+          inFooterScroll
+        ) {
+          return;
+        }
+        const yHandleEl = refScrollYHandleElem.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        if (intoRunScroll) {
+          return;
+        }
+        if (!headerScrollElem) {
+          return;
+        }
+        if (!xHandleEl) {
+          return;
+        }
+        if (!yHandleEl) {
+          return;
+        }
+        const scrollTop = yHandleEl.scrollTop;
+        const scrollLeft = headerScrollElem.scrollLeft;
+        const isRollX = true;
+        const isRollY = false;
+        internalData.inHeaderScroll = true;
+        setScrollLeft(xHandleEl, scrollLeft);
+        setScrollLeft(footerScrollElem, scrollLeft);
+        setScrollLeft(bodyScrollElem, scrollLeft);
+        if (scrollXLoad) {
+          $asTable.triggerScrollXEvent(evnt);
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'header',
+            fixed: fixedType,
+          },
+        );
+      },
+      triggerFooterScrollEvent(evnt, fixedType) {
+        const { scrollXLoad } = reactData;
+        const {
+          elemStore,
+          intoRunScroll,
+          inWheelScroll,
+          inVirtualScroll,
+          inHeaderScroll,
+          inBodyScroll,
+        } = internalData;
+        if (
+          inWheelScroll ||
+          inVirtualScroll ||
+          inHeaderScroll ||
+          inBodyScroll
+        ) {
+          return;
+        }
+        const yHandleEl = refScrollYHandleElem.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        if (intoRunScroll) {
+          return;
+        }
+        if (!footerScrollElem) {
+          return;
+        }
+        if (!xHandleEl) {
+          return;
+        }
+        if (!yHandleEl) {
+          return;
+        }
+        const scrollTop = yHandleEl.scrollTop;
+        const scrollLeft = footerScrollElem.scrollLeft;
+        const isRollX = true;
+        const isRollY = false;
+        internalData.inFooterScroll = true;
+        setScrollLeft(xHandleEl, scrollLeft);
+        setScrollLeft(headerScrollElem, scrollLeft);
+        setScrollLeft(bodyScrollElem, scrollLeft);
+        if (scrollXLoad) {
+          $asTable.triggerScrollXEvent(evnt);
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'footer',
+            fixed: fixedType,
+          },
+        );
+      },
+      triggerBodyWheelEvent(evnt) {
+        const { target, deltaY, deltaX, shiftKey } = evnt;
+        if (target && /^textarea$/i.test((target as HTMLElement).tagName)) {
+          return;
+        }
+        // 如果滚轮未移动或者触摸板未变化位置
+        if (!deltaY && !deltaX) {
+          return;
+        }
+
+        const { scrollXLoad, scrollYLoad, overflowX, overflowY, expandColumn } =
+          reactData;
+        const leftFixedWidth = computeLeftFixedWidth.value;
+        const rightFixedWidth = computeRightFixedWidth.value;
+
+        const { elemStore, lastScrollTop, lastScrollLeft } = internalData;
+        const rowOpts = computeRowOpts.value;
+        const scrollbarXOpts = computeScrollbarXOpts.value;
+        const scrollbarYOpts = computeScrollbarYOpts.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const yHandleEl = refScrollYHandleElem.value;
+        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
+        const rowExpandEl = refRowExpandElem.value;
+        if (!bodyScrollElem) {
+          return;
+        }
+
+        const wheelSpeed = getWheelSpeed(internalData.lastSTime);
+        const deltaTop = shiftKey ? 0 : deltaY * wheelSpeed;
+        const deltaLeft = (shiftKey ? deltaX || deltaY : deltaX) * wheelSpeed;
+
+        const currScrollTop = bodyScrollElem.scrollTop;
+        const currScrollLeft = bodyScrollElem.scrollLeft;
+
+        const scrollTop = Math.max(0, currScrollTop + deltaTop);
+        const scrollLeft = Math.max(0, currScrollLeft + deltaLeft);
+        const isRollX = overflowX && scrollLeft !== lastScrollLeft;
+        const isRollY = overflowY && scrollTop !== lastScrollTop;
+
+        // 如果禁用滚动
+        if (isRollX && scrollbarXOpts.visible === 'hidden') {
+          evnt.preventDefault();
+          return;
+        }
+        if (isRollY) {
+          // 如果禁用滚动
+          if (scrollbarYOpts.visible === 'hidden') {
+            evnt.preventDefault();
+            return;
+          }
+          const isTopWheel = deltaTop < 0;
+          // 如果滚动位置已经是顶部或底部，则不需要触发
+          if (
+            isTopWheel
+              ? currScrollTop <= 0
+              : currScrollTop >=
+                bodyScrollElem.scrollHeight - bodyScrollElem.clientHeight
+          ) {
+            return;
+          }
+        }
+
+        // 展开行处理，如果展开行嵌入表格中
+        if ($asParentTable) {
+          if (
+            isRollY &&
+            checkTargetElement(
+              evnt.target,
+              [leftScrollElem, bodyScrollElem, rightScrollElem],
+              evnt.currentTarget,
+            )
+          ) {
+            evnt.stopPropagation();
+            return;
+          }
+          if (
+            isRollX &&
+            checkTargetElement(
+              evnt.target,
+              [headerScrollElem, bodyScrollElem, footerScrollElem],
+              evnt.currentTarget,
+            )
+          ) {
+            evnt.stopPropagation();
+            return;
+          }
+        }
+
+        if (!(isRollX || leftFixedWidth || rightFixedWidth || expandColumn)) {
+          return;
+        }
+
+        if (rowOpts.isHover) {
+          $asTable.clearHoverRow();
+        }
+
+        // 用于鼠标纵向滚轮处理
+        if (isRollX) {
+          evnt.preventDefault();
+          internalData.inWheelScroll = true;
+          wheelScrollLeftTo(scrollLeft, (offsetLeft: number) => {
+            internalData.inWheelScroll = true;
+            const currLeftNum = offsetLeft;
+            setScrollLeft(xHandleEl, currLeftNum);
+            setScrollLeft(bodyScrollElem, currLeftNum);
+            setScrollLeft(headerScrollElem, currLeftNum);
+            setScrollLeft(footerScrollElem, currLeftNum);
+            if (scrollXLoad) {
+              $asTable.triggerScrollXEvent(evnt);
+            }
+            $asTable.handleScrollEvent(
+              evnt,
+              isRollY,
+              isRollX,
+              bodyScrollElem.scrollTop,
+              currLeftNum,
+              {
+                type: 'table',
+                fixed: '',
+              },
+            );
+          });
+        }
+        if (isRollY) {
+          evnt.preventDefault();
+          internalData.inWheelScroll = true;
+          wheelScrollTopTo(scrollTop, (offsetTop: number) => {
+            internalData.inWheelScroll = true;
+            const currTopNum = offsetTop;
+            setScrollTop(yHandleEl, currTopNum);
+            setScrollTop(bodyScrollElem, currTopNum);
+            setScrollTop(leftScrollElem, currTopNum);
+            setScrollTop(rightScrollElem, currTopNum);
+            setScrollTop(rowExpandEl, currTopNum);
+            // TODO syncGanttScrollTop(currTopNum);
+            if (scrollYLoad) {
+              $asTable.triggerScrollYEvent(evnt);
+            }
+            $asTable.handleScrollEvent(
+              evnt,
+              isRollY,
+              isRollX,
+              offsetTop,
+              bodyScrollElem.scrollLeft,
+              {
+                type: 'table',
+                fixed: '',
+              },
+            );
+          });
+        }
+      },
+
+      triggerVirtualScrollXEvent(evnt) {
+        const { scrollXLoad } = reactData;
+        const {
+          elemStore,
+          inWheelScroll,
+          lastScrollTop,
+          inHeaderScroll,
+          inBodyScroll,
+          inFooterScroll,
+        } = internalData;
+        if (inHeaderScroll || inBodyScroll || inFooterScroll) {
+          return;
+        }
+        if (inWheelScroll) {
+          return;
+        }
+        const headerScrollElem = getRefElem(elemStore['main-header-scroll']);
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const footerScrollElem = getRefElem(elemStore['main-footer-scroll']);
+        const yHandleEl = refScrollYHandleElem.value;
+        const wrapperEl = evnt.currentTarget as HTMLDivElement;
+        const { scrollLeft } = wrapperEl;
+        const yBodyEl = yHandleEl || bodyScrollElem;
+        const scrollTop = yBodyEl ? yBodyEl.scrollTop : 0;
+        const isRollX = true;
+        const isRollY = scrollTop !== lastScrollTop;
+
+        internalData.inVirtualScroll = true;
+        setScrollLeft(bodyScrollElem, scrollLeft);
+        setScrollLeft(headerScrollElem, scrollLeft);
+        setScrollLeft(footerScrollElem, scrollLeft);
+        if (scrollXLoad) {
+          $asTable.triggerScrollXEvent(evnt);
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'table',
+            fixed: '',
+          },
+        );
+      },
+      triggerVirtualScrollYEvent(evnt) {
+        const { scrollYLoad } = reactData;
+        const {
+          elemStore,
+          inWheelScroll,
+          lastScrollLeft,
+          inHeaderScroll,
+          inBodyScroll,
+          inFooterScroll,
+        } = internalData;
+        if (inHeaderScroll || inBodyScroll || inFooterScroll) {
+          return;
+        }
+        if (inWheelScroll) {
+          return;
+        }
+        const leftScrollElem = getRefElem(elemStore['left-body-scroll']);
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const rightScrollElem = getRefElem(elemStore['right-body-scroll']);
+        const rowExpandEl = refRowExpandElem.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const wrapperEl = evnt.currentTarget as HTMLDivElement;
+        const { scrollTop } = wrapperEl;
+        const xBodyEl = xHandleEl || bodyScrollElem;
+        const scrollLeft = xBodyEl ? xBodyEl.scrollLeft : 0;
+        const isRollX = scrollLeft !== lastScrollLeft;
+        const isRollY = true;
+        internalData.inVirtualScroll = true;
+        setScrollTop(bodyScrollElem, scrollTop);
+        setScrollTop(leftScrollElem, scrollTop);
+        setScrollTop(rightScrollElem, scrollTop);
+        setScrollTop(rowExpandEl, scrollTop);
+        // TODO syncGanttScrollTop(scrollTop);
+        if (scrollYLoad) {
+          $asTable.triggerScrollYEvent(evnt);
+        }
+        $asTable.handleScrollEvent(
+          evnt,
+          isRollY,
+          isRollX,
+          scrollTop,
+          scrollLeft,
+          {
+            type: 'table',
+            fixed: '',
+          },
+        );
+      },
+
+      /**
+       * 对于树形结构中，可以直接滚动到指定深层节点中
+       * 对于某些特定的场景可能会用到，比如定位到某一节点
+       * @param {Row} row 行对象
+       */
+      scrollToTreeRow(row) {
+        const { treeConfig } = props;
+        const { isRowGroupStatus } = reactData;
+        const { tableFullData } = internalData;
+        const rests: Promise<any>[] = [];
+        if (treeConfig || isRowGroupStatus) {
+          const aggregateOpts = computeAggregateOpts.value;
+          const treeOpts = computeTreeOpts.value;
+          const childrenField = treeOpts.childrenField;
+          const matchObj = findTree(
+            tableFullData,
+            (item) => $asTable.eqRow(item, row),
+            {
+              children: isRowGroupStatus
+                ? aggregateOpts.mapChildrenField
+                : childrenField,
+            },
+          );
+          if (matchObj) {
+            const nodes = matchObj.nodes;
+            nodes.forEach((row, index) => {
+              if (
+                index < nodes.length - 1 &&
+                !$asTable.isTreeExpandByRow(row)
+              ) {
+                rests.push($asTable.setTreeExpand(row, true));
+              }
+            });
+          }
+        }
+        return Promise.all(rests).then(() => rowToVisible($asTable, row));
+      },
+      updateScrollYStatus,
+      // 更新横向 X 可视渲染上下剩余空间大小
+      updateScrollXSpace() {
+        const { scrollXLoad, overflowX, scrollXWidth } = reactData;
+        const { visibleColumn, scrollXStore, elemStore, fullColumnIdData } =
+          internalData;
+        // TODO const $xeGanttView = internalData.xeGanttView
+        const mouseOpts = computeMouseOpts.value;
+        const tableBody = refTableBody.value;
+        const tableBodyElem = tableBody
+          ? (tableBody.$el as HTMLDivElement)
+          : null;
+        if (tableBodyElem) {
+          const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+          const bodyTableElem = getRefElem(elemStore['main-body-table']);
+          const headerTableElem = getRefElem(elemStore['main-header-table']);
+          const footerTableElem = getRefElem(elemStore['main-footer-table']);
+          let xSpaceLeft = 0;
+          const firstColumn = visibleColumn[scrollXStore.startIndex];
+          if (firstColumn) {
+            const colRest =
+              fullColumnIdData[firstColumn.id] ||
+              ({} as AsTableDefines.ColumnCacheItem);
+            xSpaceLeft = colRest.oLeft;
+          }
+
+          const clientWidth = bodyScrollElem ? bodyScrollElem.clientWidth : 0;
+          // 虚拟渲染
+          let isScrollXBig = false;
+          let ySpaceWidth = scrollXWidth;
+          if (scrollXWidth > maxXWidth) {
+            // 触右
+            xSpaceLeft =
+              bodyScrollElem &&
+              bodyTableElem &&
+              bodyScrollElem.scrollLeft + clientWidth >= maxXWidth
+                ? maxXWidth - bodyTableElem.clientWidth
+                : (maxXWidth - clientWidth) *
+                  (xSpaceLeft / (scrollXWidth - clientWidth));
+            ySpaceWidth = maxXWidth;
+            isScrollXBig = true;
+          }
+          if (!(scrollXLoad && overflowX)) {
+            xSpaceLeft = 0;
+          }
+
+          if (headerTableElem) {
+            headerTableElem.style.transform = headerTableElem.getAttribute(
+              'xvm',
+            )
+              ? `translate(${xSpaceLeft}px, 0px)`
+              : '';
+          }
+          if (bodyTableElem) {
+            bodyTableElem.style.transform = `translate(${xSpaceLeft}px, ${reactData.scrollYTop || 0}px)`;
+          }
+          if (footerTableElem) {
+            footerTableElem.style.transform = footerTableElem.getAttribute(
+              'xvm',
+            )
+              ? `translate(${xSpaceLeft}px, 0px)`
+              : '';
+          }
+          const containerList = ['main'];
+          containerList.forEach((name) => {
+            const layoutList = ['header', 'body', 'footer'];
+            layoutList.forEach((layout) => {
+              const xSpaceElem = getRefElem(
+                elemStore[`${name}-${layout}-xSpace`],
+              );
+              if (xSpaceElem) {
+                xSpaceElem.style.width = scrollXLoad ? `${ySpaceWidth}px` : '';
+              }
+            });
+          });
+
+          reactData.scrollXLeft = xSpaceLeft;
+          reactData.scrollXWidth = ySpaceWidth;
+          reactData.isScrollXBig = isScrollXBig;
+
+          const scrollXSpaceEl = refScrollXSpaceElem.value;
+          if (scrollXSpaceEl) {
+            scrollXSpaceEl.style.width = `${ySpaceWidth}px`;
+          }
+
+          calcScrollbar();
+          if (isScrollXBig && mouseOpts.area) {
+            log.error('notProp', ['mouse-config.area']);
+          }
+          // TODO if ($xeGanttView && $xeGanttView.handleUpdateSXSpace) {
+          //   $xeGanttView.handleUpdateSXSpace()
+          // }
+          return nextTick().then(() => {
+            updateStyle();
+          });
+        }
+      },
+      // 更新纵向 Y 可视渲染上下剩余空间大小
+      updateScrollYSpace() {
+        const {
+          isAllOverflow,
+          overflowY,
+          scrollYLoad,
+          scrollYHeight,
+          expandColumn,
+        } = reactData;
+        const {
+          scrollYStore,
+          elemStore,
+          isResizeCellHeight,
+          afterFullData,
+          fullAllDataRowIdData,
+          rowExpandedMaps,
+        } = internalData;
+        const { startIndex } = scrollYStore;
+        const mouseOpts = computeMouseOpts.value;
+        const expandOpts = computeExpandOpts.value;
+        const cellOpts = computeCellOpts.value;
+        const defaultRowHeight = computeDefaultRowHeight.value;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const bodyTableElem = getRefElem(elemStore['main-body-table']);
+        const leftBodyTableElem = getRefElem(elemStore['left-body-table']);
+        const rightbodyTableElem = getRefElem(elemStore['right-body-table']);
+        const containerList = ['main', 'left', 'right'];
+        let ySpaceTop = 0;
+        let sYHeight = scrollYHeight;
+        let isScrollYBig = false;
+        if (scrollYLoad) {
+          const isCustomCellHeight = isResizeCellHeight || cellOpts.height;
+          if (!isCustomCellHeight && !expandColumn && isAllOverflow) {
+            sYHeight = afterFullData.length * defaultRowHeight;
+            if (sYHeight > maxYHeight) {
+              isScrollYBig = true;
+            }
+            ySpaceTop = Math.max(0, startIndex * defaultRowHeight);
+          } else {
+            const firstRow = afterFullData[startIndex];
+            if (firstRow) {
+              let rowid = getRowid($asTable, firstRow);
+              let rowRest =
+                fullAllDataRowIdData[rowid] ||
+                ({} as AsTableDefines.RowCacheItem);
+              ySpaceTop = rowRest.oTop || 0;
+
+              const lastRow = afterFullData[afterFullData.length - 1];
+              rowid = getRowid($asTable, lastRow);
+              rowRest =
+                fullAllDataRowIdData[rowid] ||
+                ({} as AsTableDefines.RowCacheItem);
+              if (rowRest) {
+                const rHeight = getCellRestHeight(
+                  rowRest,
+                  cellOpts,
+                  defaultRowHeight,
+                );
+                // 如果为空时还没计算完数据，保持原高度不变
+                if (rHeight) {
+                  sYHeight = (rowRest.oTop || 0) + rHeight;
+                  // 是否展开行
+                  if (expandColumn && rowExpandedMaps[rowid]) {
+                    sYHeight += rowRest.expandHeight || expandOpts.height || 0;
+                  }
+                }
+              }
+              if (sYHeight > maxYHeight) {
+                isScrollYBig = true;
+              }
+            } else {
+              sYHeight = bodyTableElem ? bodyTableElem.clientHeight : 0;
+            }
+          }
+        } else {
+          if (bodyTableElem) {
+            sYHeight = bodyTableElem.clientHeight;
+          }
+        }
+        const clientHeight = bodyScrollElem ? bodyScrollElem.clientHeight : 0;
+        // 虚拟渲染
+        let ySpaceHeight = sYHeight;
+        let scrollYTop = ySpaceTop;
+        if (isScrollYBig) {
+          // 触底
+          scrollYTop =
+            bodyScrollElem &&
+            bodyTableElem &&
+            bodyScrollElem.scrollTop + clientHeight >= maxYHeight
+              ? maxYHeight - bodyTableElem.clientHeight
+              : (maxYHeight - clientHeight) *
+                (ySpaceTop / (scrollYHeight - clientHeight));
+          ySpaceHeight = maxYHeight;
+        }
+        if (!(scrollYLoad && overflowY)) {
+          scrollYTop = 0;
+        }
+
+        if (leftBodyTableElem) {
+          leftBodyTableElem.style.transform = `translate(0px, ${scrollYTop}px)`;
+        }
+        if (bodyTableElem) {
+          bodyTableElem.style.transform = `translate(${reactData.scrollXLeft || 0}px, ${scrollYTop}px)`;
+        }
+        if (rightbodyTableElem) {
+          rightbodyTableElem.style.transform = `translate(0px, ${scrollYTop}px)`;
+        }
+
+        containerList.forEach((name) => {
+          const layoutList = ['header', 'body', 'footer'];
+          layoutList.forEach((layout) => {
+            const ySpaceElem = getRefElem(
+              elemStore[`${name}-${layout}-ySpace`],
+            );
+            if (ySpaceElem) {
+              ySpaceElem.style.height = ySpaceHeight ? `${ySpaceHeight}px` : '';
+            }
+          });
+        });
+
+        const scrollYSpaceEl = refScrollYSpaceElem.value;
+        if (scrollYSpaceEl) {
+          scrollYSpaceEl.style.height = ySpaceHeight ? `${ySpaceHeight}px` : '';
+        }
+        const rowExpandYSpaceEl = refRowExpandYSpaceElem.value;
+        if (rowExpandYSpaceEl) {
+          rowExpandYSpaceEl.style.height = ySpaceHeight
+            ? `${ySpaceHeight}px`
+            : '';
+        }
+        reactData.scrollYTop = scrollYTop;
+        reactData.scrollYHeight = isScrollYBig ? sYHeight : ySpaceHeight;
+        reactData.isScrollYBig = isScrollYBig;
+
+        calcScrollbar();
+        if (isScrollYBig && mouseOpts.area) {
+          log.error('notProp', ['mouse-config.area']);
+        }
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateSYSpace) {
+        //   $xeGanttView.handleUpdateSYSpace();
+        // }
+        return nextTick().then(() => {
+          return updateStyle();
+        });
+      },
+      updateScrollXData() {
+        const { isAllOverflow } = reactData;
+        handleTableColumn();
+        $asTable.updateScrollXSpace();
+        return nextTick().then(() => {
+          handleTableColumn();
+          $asTable.updateScrollXSpace();
+          if (!isAllOverflow) {
+            $asTable.updateScrollYSpace();
+          }
+        });
+      },
+      updateScrollYData() {
+        $asTable.handleTableData();
+        $asTable.updateScrollYSpace();
+        return nextTick().then(() => {
+          $asTable.handleTableData();
+          $asTable.updateScrollYSpace();
+        });
+      },
+
+      /** 处理固定列的显示状态，修正左右滚动阴影 */
+      checkScrolling() {
+        const { elemStore } = internalData;
+        const bodyScrollElem = getRefElem(elemStore['main-body-scroll']);
+        const leftContainerElem = refLeftContainer.value;
+        const rightContainerElem = refRightContainer.value;
+        const xHandleEl = refScrollXHandleElem.value;
+        const bodtTargetEl = xHandleEl || bodyScrollElem;
+        if (bodtTargetEl) {
+          if (leftContainerElem) {
+            if (bodtTargetEl.scrollLeft > 0) {
+              addClass(leftContainerElem, 'scrolling--middle');
+            } else {
+              removeClass(leftContainerElem, 'scrolling--middle');
+            }
+          }
+          if (rightContainerElem) {
+            if (
+              bodtTargetEl.clientWidth <
+              bodtTargetEl.scrollWidth - Math.ceil(bodtTargetEl.scrollLeft)
+            ) {
+              addClass(rightContainerElem, 'scrolling--middle');
+            } else {
+              removeClass(rightContainerElem, 'scrolling--middle');
+            }
+          }
+        }
+      },
+      handleUpdateAggData() {
+        return loadTableData(internalData.tableSynchData, false, true);
+      },
+      handlePushStack() {
+        const keyboardOpts = computeKeyboardOpts.value;
+        if (!keyboardOpts.isUndoRedo) {
+          return;
+        }
+        const { stackHistoryStore } = internalData;
+        const stackObj = getSnapshotStackData();
+        stackHistoryStore.undoStacks.push(stackObj);
+        stackHistoryStore.redoStacks = [];
+        truncateStackHistory();
+      },
+      handleUndoStackEvent(evnt) {
+        const { stackHistoryStore } = internalData;
+        const { undoStacks, redoStacks } = stackHistoryStore;
+        if (undoStacks.length > 0) {
+          const stackObj = getSnapshotStackData();
+          redoStacks.push(stackObj);
+          handleUpdateSnapshotStackData(undoStacks.pop());
+          if (evnt) {
+            dispatchEvent('undo', {}, evnt);
+          }
+          return nextTick(() => {
+            return { status: true };
+          });
+        }
+        return Promise.resolve({ status: false });
+      },
+      handleRedoStackEvent(evnt) {
+        const { stackHistoryStore } = internalData;
+        const { undoStacks, redoStacks } = stackHistoryStore;
+        if (redoStacks.length > 0) {
+          const stackObj = getSnapshotStackData();
+          undoStacks.push(stackObj);
+          handleUpdateSnapshotStackData(redoStacks.pop());
+          if (evnt) {
+            dispatchEvent('redo', {}, evnt);
+          }
+          return nextTick(() => {
+            return { status: true };
+          });
+        }
+        return Promise.resolve({ status: false });
+      },
+      handleClearStack() {
+        const { stackHistoryStore } = internalData;
+        stackHistoryStore.undoStacks = [];
+        stackHistoryStore.redoStacks = [];
+        return nextTick();
+      },
+      updateZindex() {
+        if (props.zIndex) {
+          internalData.tZindex = props.zIndex;
+        } else if (internalData.tZindex < getLastZIndex()) {
+          internalData.tZindex = nextZIndex();
+        }
+      },
+      handleCheckedCheckboxRow,
+
+      /**
+       * 行 hover 事件
+       */
+      triggerHoverEvent(evnt, { row }) {
+        $asTable.setHoverRow(row);
+      },
+
+      setHoverRow(row) {
+        // TODO const $xeGanttView = internalData.xeGanttView;
+        $asTable.clearHoverRow();
+        const rowid = getRowid($asTable, row);
+        const el = refElem.value;
+        if (el) {
+          arrayEach(
+            el.querySelectorAll(
+              `.${prefixCls.value}-body--row[rowid="${CSS.escape(rowid)}"]`,
+            ),
+            (elem) => addClass(elem, 'row--hover'),
+          );
+        }
+        internalData.hoverRow = row;
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
+        //   $xeGanttView.handleUpdateHoverRow(row);
+        // }
+      },
+
+      clearHoverRow() {
+        // TODO const $xeGanttView = internalData.xeGanttView;
+        const el = refElem.value;
+        if (el) {
+          arrayEach(
+            el.querySelectorAll(`.${prefixCls.value}-body--row.row--hover`),
+            (elem) => removeClass(elem, 'row--hover'),
+          );
+        }
+        internalData.hoverRow = null;
+        // TODO if ($xeGanttView && $xeGanttView.handleUpdateHoverRow) {
+        //   $xeGanttView.handleUpdateHoverRow()
+        // }
+      },
+      findRowIndexOf(list, row) {
+        return row
+          ? findIndexOf(list, (item) => $asTable.eqRow(item, row))
+          : -1;
+      },
+
+      eqRow(row1, row2) {
+        if (row1 && row2) {
+          if (row1 === row2) {
+            return true;
+          }
+          return getRowid($asTable, row1) === getRowid($asTable, row2);
+        }
+        return false;
       },
     };
 
@@ -16092,7 +17686,29 @@ export const Table = defineComponent<AsTableProps>(
       if (value && value.length >= 20_000) {
         log.warn('errLargeData', ['loadData(data), reloadData(data)']);
       }
-      loadTableData(value, false, true);
+      loadTableData(value, false, true).then(() => {
+        const { initStatus } = internalData;
+        const { scrollXLoad, scrollYLoad, expandColumn } = reactData;
+        const expandOpts = computeExpandOpts.value;
+        internalData.inited = true;
+        internalData.initStatus = true;
+        if (!initStatus) {
+          handleLoadDefaults();
+        }
+        // const checkboxOpts = computeCheckboxOpts.value
+        // const checkboxColumn = internalData.tableFullColumn.find(column => column.type === 'checkbox')
+        // if (checkboxColumn && internalData.tableFullData.length > 300 && !checkboxOpts.checkField) {
+        //   log.error('checkProp', ['checkbox-config.checkField'])
+        // }
+        if (
+          (scrollXLoad || scrollYLoad) &&
+          expandColumn &&
+          expandOpts.mode !== 'fixed'
+        ) {
+          log.error('scrollErrProp', ['column.type=expand']);
+        }
+        return $asTable.recalculate();
+      });
     });
 
     /**  两个 watcher 是为了覆盖"同长度但换了顺序/换了元素"和"长度变了"两种情况 */
@@ -16130,6 +17746,227 @@ export const Table = defineComponent<AsTableProps>(
       $asTable.analyColumnWidth();
     });
 
+    watch(
+      () => reactData.upDataFlag,
+      () => {
+        nextTick(() => {
+          $asTable.updateData();
+        });
+      },
+    );
+
+    watch(
+      () => reactData.reColumnFlag,
+      () => {
+        nextTick(() => {
+          $asTable.refreshColumn();
+        });
+      },
+    );
+
+    const reLayoutFlag = ref(0);
+    watch(mergedSize, () => {
+      reLayoutFlag.value++;
+    });
+    watch(
+      () => props.showHeader,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.showFooter,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.showHeaderOverflow,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.showOverflow,
+      () => {
+        updateColumnAllOverflow();
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.showFooterOverflow,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => reactData.overflowX,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => reactData.overflowY,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.height,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => props.maxHeight,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(computeScrollbarXToTop, () => {
+      reLayoutFlag.value++;
+    });
+    watch(computeScrollbarYToLeft, () => {
+      reLayoutFlag.value++;
+    });
+    const { locale: language } = useLocaleContext();
+    watch(
+      () => language.value?.locale,
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => {
+        const scrollbarXOpts = computeScrollbarXOpts.value;
+        return scrollbarXOpts.visible;
+      },
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => {
+        const scrollbarYOpts = computeScrollbarYOpts.value;
+        return scrollbarYOpts.visible;
+      },
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(
+      () => {
+        const cellOpts = computeCellOpts.value;
+        return cellOpts.height;
+      },
+      () => {
+        reLayoutFlag.value++;
+      },
+    );
+    watch(reLayoutFlag, () => {
+      $asTable.recalculate(true);
+    });
+
+    const footFlag = ref(0);
+    watch(
+      () => (props.footerData ? props.footerData.length : -1),
+      () => {
+        footFlag.value++;
+      },
+    );
+    watch(
+      () => props.footerData,
+      () => {
+        footFlag.value++;
+      },
+    );
+    watch(footFlag, () => {
+      internalData.footerFullDataRowData = {};
+      $asTable.updateFooter();
+    });
+
+    watch(
+      () => props.syncResize,
+      (value) => {
+        if (!value) {
+          return;
+        }
+        handleUpdateResize();
+        nextTick(() => {
+          handleUpdateResize();
+          setTimeout(() => handleUpdateResize(), 0);
+        });
+      },
+    );
+
+    const mergeCellFlag = ref(0);
+    watch(
+      () => (props.mergeCells ? props.mergeCells.length : -1),
+      () => {
+        mergeCellFlag.value++;
+      },
+    );
+    watch(
+      () => props.mergeCells,
+      () => {
+        mergeCellFlag.value++;
+      },
+    );
+    watch(mergeCellFlag, () => {
+      handleUpdateMergeBodyCells(props.mergeCells || []);
+    });
+
+    const mergeHeaderItemFlag = ref(0);
+    watch(
+      () => (props.mergeHeaderCells ? props.mergeHeaderCells.length : -1),
+      () => {
+        mergeHeaderItemFlag.value++;
+      },
+    );
+    watch(
+      () => props.mergeHeaderCells,
+      () => {
+        mergeHeaderItemFlag.value++;
+      },
+    );
+    watch(mergeHeaderItemFlag, () => {
+      handleUpdateMergeHeaderCells(props.mergeHeaderCells || []);
+    });
+
+    const mergeFooteCellFlag = ref(0);
+    watch(
+      () => (props.mergeFooterCells ? props.mergeFooterCells.length : -1),
+      () => {
+        mergeFooteCellFlag.value++;
+      },
+    );
+    watch(
+      () => props.mergeFooterCells,
+      () => {
+        mergeFooteCellFlag.value++;
+      },
+    );
+    watch(mergeFooteCellFlag, () => {
+      const mFooterCells = props.mergeFooterCells;
+      handleUpdateMergeFooterCells(mFooterCells || []);
+    });
+
+    watch(computeRowGroupFields, (val) => {
+      handleUpdateRowGroup(val);
+    });
+
+    watch(computeRowField, () => {
+      const { inited, tableFullData } = internalData;
+      // 行主键被改变，重载表格
+      if (inited) {
+        handleKeyField();
+        reactData.tableData = [];
+        nextTick(() => {
+          $asTable.reloadData(tableFullData);
+        });
+      }
+    });
+
     const kfFlag = ref(0);
     watch(
       () => reactData.updateColFlag,
@@ -16150,15 +17987,322 @@ export const Table = defineComponent<AsTableProps>(
       internalData.keepUpdateFieldMaps = kpfMaps;
     });
 
+    watch(computeAggregateMode, () => {
+      if (reactData.isRowGroupStatus) {
+        loadTableData(internalData.tableSynchData, false, true);
+      }
+    });
+
+    // TODO const layoutReFlag = ref(0);
+    // watch(combineTabsResizeFlag, () => {
+    //   layoutReFlag.value++;
+    // });
+    // watch(combineModalResizeFlag, () => {
+    //   layoutReFlag.value++;
+    // });
+    // watch(combineSplitterResizeFlag, () => {
+    //   layoutReFlag.value++;
+    // });
+    // watch(layoutReFlag, () => {
+    //   handleGlobalResizeEvent();
+    // });
+
+    handleKeyField();
+
+    hooks.forEach((options) => {
+      const { setupTable } = options;
+      if (setupTable) {
+        const hookRest = setupTable($asTable);
+        if (hookRest && isObject(hookRest)) {
+          Object.assign($asTable, hookRest);
+        }
+      }
+    });
+
+    $asTable.preventEvent(null, 'created', { $table: $asTable });
+
+    let resizeObserver: ResizeObserver;
+
     onActivated(() => {
       $asTable.recalculate().then(() => $asTable.refreshScroll());
-      // TODO $asTable.preventEvent(null, 'activated', { $table: $asTable })
+      $asTable.preventEvent(null, 'activated', { $table: $asTable });
+    });
+
+    onDeactivated(() => {
+      const { filterStore } = reactData;
+      if (filterStore.visible) {
+        $asTable.clearFilter();
+      }
+      $asTable.closeTooltip();
+      internalData.isActivated = false;
+      $asTable.preventEvent(null, 'deactivated', { $table: $asTable });
     });
 
     onMounted(() => {
+      const {
+        editConfig,
+        exportConfig,
+        importConfig,
+        treeConfig,
+        minHeight,
+        keepSource,
+      } = props;
+      const { scrollXStore, scrollYStore } = internalData;
+      const columnOpts = computeColumnOpts.value;
+      const columnDragOpts = computeColumnDragOpts.value;
+      const aggregateOpts = computeAggregateOpts.value;
       const virtualYOpts = computeVirtualYOpts.value;
+      const editOpts = computeEditOpts.value;
+      const treeOpts = computeTreeOpts.value;
+      const radioOpts = computeRadioOpts.value;
+      const checkboxOpts = computeCheckboxOpts.value;
+      const expandOpts = computeExpandOpts.value;
+      const rowOpts = computeRowOpts.value;
+      const customOpts = computeCustomOpts.value;
+      const mouseOpts = computeMouseOpts.value;
+      const exportOpts = computeExportOpts.value;
+      const importOpts = computeImportOpts.value;
+      const rowDragOpts = computeRowDragOpts.value;
+      const areaOpts = computeAreaOpts.value;
+      const sortOpts = computeSortOpts.value;
+      const filterOpts = computeFilterOpts.value;
+      const { groupFields } = aggregateOpts;
+
+      // TODO if ($xeGantt) {
+      //   const { refClassifyWrapperElem } = $xeGantt.getRefMaps()
+      //   const classifyWrapperEl = refClassifyWrapperElem.value
+      //   if (classifyWrapperEl) {
+      //     internalData.teleportToWrapperElem = classifyWrapperEl
+      //   }
+      // }
+      // if ($xeGGWrapper) {
+      //   const { refPopupContainerElem } = $xeGGWrapper.getRefMaps()
+      //   const popupContainerEl = refPopupContainerElem.value
+      //   if (popupContainerEl) {
+      //     internalData.popupToWrapperElem = popupContainerEl
+      //   }
+      // }
+
+      if (columnOpts.drag || rowOpts.drag || customOpts.allowSort) {
+        initTpImg();
+      }
+
+      if (
+        !rowOpts.keyField &&
+        (checkboxOpts.reserve ||
+          checkboxOpts.checkRowKeys ||
+          radioOpts.reserve ||
+          radioOpts.checkRowKey ||
+          expandOpts.expandRowKeys ||
+          treeOpts.expandRowKeys)
+      ) {
+        log.warn('reqProp', ['row-config.keyField']);
+      }
+      if (
+        editConfig &&
+        !keepSource &&
+        (editOpts.showStatus ||
+          editOpts.showUpdateStatus ||
+          editOpts.showInsertStatus)
+      ) {
+        log.warn('reqSupportProp', [
+          'edit-config.showStatus | showUpdateStatus | showInsertStatus',
+          'keep-source',
+        ]);
+      }
+      if (treeConfig && !treeOpts.transform) {
+        if (sortOpts.isDeep) {
+          log.warn('reqSupportProp', [
+            'transform=false',
+            'sort-config.isDeep=false',
+          ]);
+        }
+        if (filterOpts.isDeep) {
+          log.warn('reqSupportProp', [
+            'transform=false',
+            'filter-config.isDeep=false',
+          ]);
+        }
+      }
+      if (props.showFooter && !(props.footerMethod || props.footerData)) {
+        log.warn('reqProp', ['footer-data | footer-method']);
+      }
+
+      // 检查导入导出类型，如果自定义导入导出方法，则不校验类型
+      if (
+        importConfig &&
+        importOpts.types &&
+        !importOpts.importMethod &&
+        !includeArrays(keys(importOpts._typeMaps), importOpts.types)
+      ) {
+        log.warn('errProp', [
+          `export-config.types=${importOpts.types.join(',')}`,
+          importOpts.types
+            .filter((type) => includes(keys(importOpts._typeMaps), type))
+            .join(',') || keys(importOpts._typeMaps).join(','),
+        ]);
+      }
+      if (
+        exportConfig &&
+        exportOpts.types &&
+        !exportOpts.exportMethod &&
+        !includeArrays(keys(exportOpts._typeMaps), exportOpts.types)
+      ) {
+        log.warn('errProp', [
+          `export-config.types=${exportOpts.types.join(',')}`,
+          exportOpts.types
+            .filter((type) => includes(keys(exportOpts._typeMaps), type))
+            .join(',') || keys(exportOpts._typeMaps).join(','),
+        ]);
+      }
+      if (
+        !props.id &&
+        (props.customConfig ? isEnableConf(customOpts) : customOpts.enabled) &&
+        customOpts.storage
+      ) {
+        log.error('reqProp', ['id']);
+      }
+      if (props.treeConfig && checkboxOpts.range) {
+        log.error('noTree', ['checkbox-config.range']);
+      }
+      if (!$asTable.triggerClAreaMnEvent) {
+        if (props.areaConfig) {
+          log.error('notProp', ['area-config']);
+        }
+        if (props.clipConfig) {
+          log.error('notProp', ['clip-config']);
+        }
+        if (props.fnrConfig) {
+          log.error('notProp', ['fnr-config']);
+        }
+        if (mouseOpts.area) {
+          log.error('notProp', ['mouse-config.area']);
+          return;
+        }
+        if (
+          mouseOpts.area &&
+          areaOpts.selectCellByHeader &&
+          columnOpts.drag &&
+          columnDragOpts.trigger === 'cell'
+        ) {
+          log.error('notSupportProp', [
+            'area-config.selectCellByHeader & column-config.drag',
+            'column-drag-config.trigger=cell',
+            'column-drag-config.trigger=default | area-config.selectCellByHeader=false',
+          ]);
+        }
+        if (mouseOpts.area && props.spanMethod) {
+          log.error('notSupportProp', [
+            'mouse-config.area',
+            'span-method',
+            'merge-cells',
+          ]);
+        }
+      }
+      if (!$asTable.handlePivotTableAggData) {
+        if (customOpts.allowGroup) {
+          log.error('notProp', ['custom-config.allowGroup']);
+          return;
+        }
+        if (customOpts.allowValues) {
+          log.error('notProp', ['custom-config.allowValues']);
+          return;
+        }
+      }
+      if (treeConfig && rowOpts.drag && !treeOpts.transform) {
+        log.error('notSupportProp', [
+          'row-config.drag',
+          'tree-config.transform=false',
+          'tree-config.transform=true',
+        ]);
+      }
+      if (
+        treeConfig &&
+        rowDragOpts.isCrossTableDrag &&
+        !rowDragOpts.isCrossDrag
+      ) {
+        log.error('reqSupportProp', [
+          'tree-config & row-drag-config.isCrossTableDrag',
+          'row-drag-config.isCrossDrag',
+        ]);
+      }
+      if (mouseOpts.area && mouseOpts.selected) {
+        log.error('errConflicts', [
+          'mouse-config.area',
+          'mouse-config.selected',
+        ]);
+      }
+      if (mouseOpts.area && props.treeConfig && !treeOpts.transform) {
+        log.error('notSupportProp', [
+          'mouse-config.area',
+          'tree-config.transform=false',
+          'tree-config.transform=true',
+        ]);
+      }
+      if (
+        props.editConfig &&
+        isEnableConf(editOpts) &&
+        props.editRules &&
+        (minHeight === 0 || minHeight === '0')
+      ) {
+        log.error('reqSupportProp', ['edit-config & edit-rules', 'min-height']);
+      }
+
+      if (treeConfig) {
+        arrayEach(
+          [
+            'rowField',
+            'parentField',
+            'childrenField',
+            'hasChildField',
+            'mapChildrenField',
+          ],
+          (key) => {
+            const val = treeOpts[key as 'rowField'];
+            if (val && val.includes('.')) {
+              log.error('errProp', [
+                `${key}=${val}`,
+                `${key}=${val.split('.', 1)[0]}`,
+              ]);
+            }
+          },
+        );
+      }
+
+      Object.assign(scrollYStore, {
+        startIndex: 0,
+        endIndex: 0,
+        visibleSize: 0,
+      });
+      Object.assign(scrollXStore, {
+        startIndex: 0,
+        endIndex: 0,
+        visibleSize: 0,
+      });
+
+      handleUpdateRowGroup(groupFields);
 
       initData();
+
+      nextTick(() => {
+        if (!props.autoResize) {
+          return;
+        }
+
+        const el = refElem.value;
+        const parentEl = $asTable.getParentElem();
+        resizeObserver = globalResize.create(() => {
+          if (props.autoResize) {
+            handleResizeEvent();
+          }
+        });
+        if (el) {
+          resizeObserver.observe(el);
+        }
+        if (parentEl) {
+          resizeObserver.observe(parentEl);
+        }
+      });
 
       if (virtualYOpts.mode !== 'scroll') {
         const tableViewportEl = refTableViewportElem.value;
@@ -16170,9 +18314,30 @@ export const Table = defineComponent<AsTableProps>(
           );
         }
       }
+
+      globalEvents.on($asTable, 'paste', handleGlobalPasteEvent);
+      globalEvents.on($asTable, 'copy', handleGlobalCopyEvent);
+      globalEvents.on($asTable, 'cut', handleGlobalCutEvent);
+      globalEvents.on($asTable, 'mousedown', handleGlobalMousedownEvent);
+      globalEvents.on($asTable, 'blur', handleGlobalBlurEvent);
+      globalEvents.on($asTable, 'mousewheel', handleGlobalMousewheelEvent);
+      globalEvents.on($asTable, 'keydown', handleGlobalKeydownEvent);
+      globalEvents.on($asTable, 'resize', handleGlobalResizeEvent);
+      globalEvents.on($asTable, 'scroll', handleGlobalScrollEvent);
+      globalEvents.on(
+        $asTable,
+        'contextmenu',
+        $asTable.handleGlobalContextmenuEvent,
+      );
+      $asTable.preventEvent(null, 'mounted', { $table: $asTable });
     });
 
     onBeforeUnmount(() => {
+      const { _sToTime } = internalData;
+      if (_sToTime) {
+        clearTimeout(_sToTime);
+      }
+
       const tableViewportEl = refTableViewportElem.value;
       if (tableViewportEl) {
         tableViewportEl.removeEventListener(
@@ -16180,8 +18345,40 @@ export const Table = defineComponent<AsTableProps>(
           $asTable.triggerBodyWheelEvent,
         );
       }
+
+      internalData.cvCacheMaps = {};
+      internalData.prevDragRow = null;
+      internalData.prevDragCol = null;
+
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+
+      $asTable.closeTooltip();
+      $asTable.closeFilter();
+      if ($asTable.closeMenu) {
+        $asTable.closeMenu();
+      }
+
+      globalEvents.off($asTable, 'paste');
+      globalEvents.off($asTable, 'copy');
+      globalEvents.off($asTable, 'cut');
+      globalEvents.off($asTable, 'mousedown');
+      globalEvents.off($asTable, 'blur');
+      globalEvents.off($asTable, 'mousewheel');
+      globalEvents.off($asTable, 'keydown');
+      globalEvents.off($asTable, 'resize');
+      globalEvents.off($asTable, 'scroll');
+      globalEvents.off($asTable, 'contextmenu');
+
+      $asTable.preventEvent(null, 'beforeUnmount', { $table: $asTable });
+      assign(reactData, createReactData());
+      assign(internalData, createInternalData());
     });
-    handleKeyField();
+
+    onUnmounted(() => {
+      $asTable.preventEvent(null, 'unmounted', { $table: $asTable });
+    });
 
     provide('$asColgroup', null);
     provide('$asTable', $asTable);

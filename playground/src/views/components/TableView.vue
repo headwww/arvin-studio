@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
-import { Column, Table } from '@arvin-studio/ui';
+import { Column, ConfigProvider, Table } from '@arvin-studio/ui';
+import enUS from '@arvin-studio/ui/locale/en_US';
+// 1. 导入语言包（如果 @arvin-studio/ui 的路径不同，请按实际调整）
+import zhCN from '@arvin-studio/ui/locale/zh_CN';
 
 interface RowVO {
   address: string;
@@ -98,28 +101,46 @@ const footerTooltipConfig = reactive<any>({
 });
 
 const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]);
+
+const locale = ref(zhCN); // 响应式的语言包对象
+const currentLang = ref<'en-US' | 'zh-CN'>('zh-CN'); // 语言标识
+// 监听语言标识变化，切换对应的语言包
+watch(currentLang, (lang) => {
+  locale.value = lang === 'zh-CN' ? zhCN : enUS;
+});
+
+// 切换函数，供按钮调用
+const toggleLanguage = () => {
+  currentLang.value = currentLang.value === 'zh-CN' ? 'en-US' : 'zh-CN';
+};
 </script>
 
 <template>
   <div>
-    <Table
-      show-footer
-      :row-config="{ useKey: true, resizable: true, drag: true }"
-      :column-config="{ useKey: true, resizable: true, drag: true }"
-      :footer-data="footerData"
-      :tooltip-config="tooltipConfig"
-      :header-tooltip-config="headerTooltipConfig"
-      :footer-tooltip-config="footerTooltipConfig"
-      show-overflow
-      :data="tableData"
-    >
-      <Column drag-sort field="seq" type="seq" width="70" row-resize />
-      <Column field="name" title="名称" />
-      <Column field="role" title="角色" />
-      <Column field="date" title="Date" />
-      <Column field="rate" title="Rate" />
-      <Column field="address" title="Address" />
-      <Column type="html" field="content" title="Content" width="200" />
-    </Table>
+    <ConfigProvider :locale="locale">
+      <!-- 2. 添加一个简单的切换按钮 -->
+      <button style="margin-bottom: 16px" @click="toggleLanguage">
+        切换语言（当前：{{ currentLang === 'zh-CN' ? '中文' : 'English' }}）
+      </button>
+      <Table
+        show-footer
+        :row-config="{ useKey: true, resizable: true, drag: true }"
+        :column-config="{ useKey: true, resizable: true, drag: true }"
+        :footer-data="footerData"
+        :tooltip-config="tooltipConfig"
+        :header-tooltip-config="headerTooltipConfig"
+        :footer-tooltip-config="footerTooltipConfig"
+        show-overflow
+        :data="tableData"
+      >
+        <Column drag-sort field="seq" type="seq" width="70" row-resize />
+        <Column field="name" title="名称" />
+        <Column field="role" title="角色" />
+        <Column field="date" title="Date" />
+        <Column field="rate" title="Rate" />
+        <Column field="address" title="Address" />
+        <Column type="html" field="content" title="Content" width="200" />
+      </Table>
+    </ConfigProvider>
   </div>
 </template>

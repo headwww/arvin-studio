@@ -110,19 +110,26 @@ declare module '@arvin-studio/core' {
           params: AsGlobalRendererHandles.RenderTableDefaultParams<any>,
         ) => AsComponentStyleType)
       | AsComponentStyleType;
+
     /**
      * 表格 - 默认筛选处理方法，如果同时存在，会被 tableFilterMethod 覆盖
      */
     tableFilterDefaultMethod?(
       params: AsGlobalRendererHandles.TableFilterMethodParams<any>,
     ): boolean;
-
     /**
      * 表格 - 自定义筛选逻辑方法
      */
     tableFilterMethod?(
       params: AsGlobalRendererHandles.TableFilterMethodParams<any>,
     ): boolean;
+
+    /**
+     * 表格 - 自定义筛选还原逻辑方法
+     */
+    tableFilterRecoverMethod?(
+      params: AsGlobalRendererHandles.TableFilterRecoverMethodParams<any>,
+    ): void;
 
     /**
      * 表格 - 列尾单元格对齐方式
@@ -136,6 +143,12 @@ declare module '@arvin-studio/core' {
   }
 
   export namespace AsGlobalRendererHandles {
+    export interface TableFilterRecoverMethodParams<D = any> {
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo;
+      option: AsTableDefines.FilterOption;
+    }
+
     export interface CreateTableFilterOptionsParams<D = any> {
       $table: AsTableConstructor<D>;
       column: AsTableDefines.ColumnInfo<D>;

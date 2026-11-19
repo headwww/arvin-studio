@@ -636,7 +636,6 @@ export const Cell = {
         formatValuesMethod,
         mode,
         showTotal,
-        countFields,
         mapChildrenField,
       } = aggregateOpts;
       const aggData = aggRow.aggData;
@@ -701,10 +700,7 @@ export const Cell = {
             ),
           );
         }
-      } else if (
-        aggFunc === true ||
-        (countFields && countFields.includes(field))
-      ) {
+      } else if (aggFunc === true) {
         cellValue = currAggData ? currAggData.value : childCount;
         ctParams.aggValue = cellValue;
         if (formatValuesMethod) {
