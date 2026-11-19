@@ -43,6 +43,8 @@ export interface ComponentToken {
   cellValidateErrorCellBackgroundColor: string;
   /** 表格校验错误色，也用于待删除行删除线颜色 */
   cellValidateErrorColor: string;
+  /** 负数金额文字色 */
+  cellNegativeColor: string;
   /** 表格校验错误提示（normal 主题）背景色 */
   cellValidateErrorThemeNormalBackgroundColor: string;
   /** 选区背景色 */
@@ -59,8 +61,6 @@ export interface ComponentToken {
   columnHoverCurrentBackgroundColor: string;
   /** 列图标颜色（排序/筛选箭头） */
   columnIconBorderColor: string;
-  /** 拖拽经过时的高亮背景色 */
-  dragOverBackgroundColor: string;
   /** 表格内容字体大小 */
   contentFontSize: number;
   /**  大号表格内容字体大小*/
@@ -71,14 +71,16 @@ export interface ComponentToken {
   currentRowLineHeight: number;
   /** 禁用文字色） */
   disabledColor: string;
+  /** 拖拽经过时的高亮背景色 */
+  dragOverBackgroundColor: string;
   /** 展开行默认内边距 */
   expandPaddingDefault: number;
-  /** 固定列滚动时的阴影颜色 */
-  fixedScrollingBoxShadowColor: string;
   /** 固定左侧列滚动时的阴影 */
   fixedLeftScrollingBoxShadow: string;
   /** 固定右侧列滚动时的阴影 */
   fixedRightScrollingBoxShadow: string;
+  /** 固定列滚动时的阴影颜色 */
+  fixedScrollingBoxShadowColor: string;
   /** 表尾背景 */
   footerBackgroundColor: string;
   /** 表尾文字颜色 */

@@ -141,8 +141,9 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
     colorInfo,
     colorWarning,
     colorError,
-    headerIconColor,
+    columnIconBorderColor,
     dragOverBackgroundColor,
+    cellNegativeColor,
   } = token;
 
   const [, varRef] = genCssVar(asCls, 'table');
@@ -152,6 +153,28 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       display: 'none',
     },
 
+    /* 行高 */
+    [`${componentCls}-vars`]: {
+      height: 0,
+      width: 0,
+      visibility: 'hidden',
+      overflow: 'hidden',
+      userSelect: 'none',
+      pointerEvents: 'none',
+
+      [`${componentCls}-var-large`]: {
+        height: rowHeightLG,
+      },
+
+      [`${componentCls}-var-medium`]: {
+        height: rowHeight,
+      },
+
+      [`${componentCls}-var-small`]: {
+        height: rowHeightSM,
+      },
+    },
+
     /* valid error*/
     [`div.${componentCls}--tooltip-wrapper`]: {
       [`&.${componentCls}--valid-error`]: {
@@ -159,6 +182,16 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         color: cellValidateErrorColor,
         backgroundColor: cellValidateErrorThemeNormalBackgroundColor,
       },
+    },
+
+    /* 打印 iframe */
+    [`as--print-frame`]: {
+      position: 'fixed',
+      bottom: '-100%',
+      left: '-100%',
+      height: 0,
+      width: 0,
+      border: 0,
     },
 
     [`${componentCls}--layout-wrapper`]: {
@@ -355,7 +388,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}-cell--sort-vertical-layout`]: {
         display: 'inline-flex',
         flexDirection: 'column',
-        height: '2.4em',
+        height: '1.8em',
         verticalAlign: 'middle',
 
         [`${componentCls}-sort--asc-btn,
@@ -376,7 +409,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
       [`${componentCls}-sort--asc-btn,
         ${componentCls}-sort--desc-btn`]: {
-        color: headerIconColor,
+        color: columnIconBorderColor,
         cursor: 'pointer',
 
         [`&:hover`]: {
@@ -430,7 +463,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}--scroll-x-handle`]: {
         overflowY: 'hidden',
         overflowX: 'scroll',
-        height: varRef('scrollbar-height', `${scrollbarHeight}px`),
+        height: varRef('scrollbar-height', `${scrollbarHeight}`),
       },
 
       [`${componentCls}--scroll-y-handle, ${componentCls}--scroll-y-wrapper`]: {
@@ -443,7 +476,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}--scroll-y-handle`]: {
         overflowY: 'scroll',
         overflowX: 'hidden',
-        width: varRef('scrollbar-width', `${scrollbarWidth}px`),
+        width: varRef('scrollbar-width', `${scrollbarWidth}`),
         height: '100%',
       },
 
@@ -600,7 +633,6 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
         ${componentCls}-cell-title-suffix-icon,
          ${componentCls}-cell--filter`]: {
         padding: '0.2em',
-        color: headerIconColor,
       },
 
       [`${componentCls}-cell-title-prefix-icon,
@@ -909,7 +941,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       },
       [`${componentCls}--cell-copy-area`]: {
         [`&[half="1"]`]: {
-          backgroundSize: `${cellClipAreaBorderWidth}px 12px, 0 12px, 12px ${cellClipAreaBorderWidth}px, 12px ${cellClipAreaBorderWidth}px`,
+          backgroundSize: `${cellClipAreaBorderWidth} 12px, 0 12px, 12px ${cellClipAreaBorderWidth}, 12px ${cellClipAreaBorderWidth}`,
         },
       },
     },
@@ -925,12 +957,19 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       },
       [`${componentCls}--cell-copy-area`]: {
         [`&[half="1"]`]: {
-          backgroundSize: `0 12px, ${cellClipAreaBorderWidth}px 12px, 12px ${cellClipAreaBorderWidth}px, 12px ${cellClipAreaBorderWidth}px`,
+          backgroundSize: `0 12px, ${cellClipAreaBorderWidth} 12px, 12px ${cellClipAreaBorderWidth}, 12px ${cellClipAreaBorderWidth}`,
         },
       },
       [`${componentCls}-cell--col-resizable`]: {
         right: 'auto',
         left: '-0.3em',
+      },
+    },
+
+    /* 负数显示红色 */
+    [`${componentCls}-cell--label`]: {
+      [`&.is--negative`]: {
+        color: cellNegativeColor,
       },
     },
 
@@ -991,10 +1030,10 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       ].join(', '),
 
       backgroundSize: [
-        `${cellClipAreaBorderWidth}px 12px`,
-        `${cellClipAreaBorderWidth}px 12px`,
-        `12px ${cellClipAreaBorderWidth}px`,
-        `12px ${cellClipAreaBorderWidth}px`,
+        `${cellClipAreaBorderWidth} 12px`,
+        `${cellClipAreaBorderWidth} 12px`,
+        `12px ${cellClipAreaBorderWidth}`,
+        `12px ${cellClipAreaBorderWidth}`,
       ].join(', '),
 
       backgroundPosition: '0 0, 100% 0, 0 0, 0 100%',
@@ -1861,7 +1900,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
           transform: 'translate(-50%, -2px)',
           textAlign: 'left',
           zIndex: 4,
-          padding: `0 ${cellPadding}px`,
+          padding: `0 ${cellPadding}`,
           pointerEvents: 'none',
         },
 
@@ -2049,7 +2088,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
           cursor: 'not-allowed',
         },
       },
-
+      /* 暂无数据*/
       [`${componentCls}--empty-placeholder,
           ${componentCls}--empty-block`]: {
         color: placeholderColor,
@@ -2110,6 +2149,24 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
       [`${componentCls}-cell--wrapper`]: {
         margin: 'auto 0',
+      },
+
+      [`${componentCls}-body--row`]: {
+        [`${componentCls}--column`]: {
+          [`${componentCls}-cell`]: {
+            [`${componentCls}-cell--wrapper`]: {
+              [`& > ${componentCls}-reusekeep-control`]: {
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                opacity: 0,
+                border: 0,
+                padding: 0,
+                outline: 'none',
+              },
+            },
+          },
+        },
       },
 
       /* 校验消息位置*/

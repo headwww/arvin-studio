@@ -143,6 +143,8 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
 
     // 表格校验错误色 / 待删除行删除线
     cellValidateErrorColor: colorError,
+    // 负数金额文字色（vxe 与校验错误同色 #f56c6c）
+    cellNegativeColor: colorError,
     // 校验错误单元格背景（show--valid-bg）
     cellValidateErrorCellBackgroundColor: cellValidateErrorCellBg,
     // 校验错误提示 normal 主题背景

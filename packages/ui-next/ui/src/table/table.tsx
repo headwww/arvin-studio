@@ -17470,9 +17470,9 @@ export const Table = defineComponent<AsTableProps>(
           {/* 隐藏列 */}
           <div class={`${prefixCls.value}-slots`}>{slots.default?.()}</div>
           <div class={`${prefixCls.value}-vars`} ref={refVarElem}>
-            <div class={`${prefixCls.value}-large`}></div>
-            <div class={`${prefixCls.value}-medium`}></div>
-            <div class={`${prefixCls.value}-small`}></div>
+            <div class={`${prefixCls.value}-var-large`}></div>
+            <div class={`${prefixCls.value}-var-medium`}></div>
+            <div class={`${prefixCls.value}-var-small`}></div>
           </div>
           <div class={`${prefixCls.value}--render-wrapper`} key="tw">
             {scrollbarXToTop

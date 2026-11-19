@@ -23,7 +23,6 @@ export default genStyleHooks(
       genSizeBaseTableStyle(tableToken),
       genSizeLargeTableStyle(tableToken),
       genSizeSmallTableStyle(tableToken),
-
       genMediumCellPaddingStyle(tableToken),
       genLargeCellPaddingStyle(tableToken),
       genSmallCellPaddingStyle(tableToken),
