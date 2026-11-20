@@ -39,12 +39,12 @@ export interface ComponentToken {
   cellMainAreaExtensionBackgroundColor: string;
   /** 单元格选区扩展按钮边框色 */
   cellMainAreaExtensionBorderColor: string;
+  /** 负数金额文字色 */
+  cellNegativeColor: string;
   /** 表格校验错误单元格背景色 */
   cellValidateErrorCellBackgroundColor: string;
   /** 表格校验错误色，也用于待删除行删除线颜色 */
   cellValidateErrorColor: string;
-  /** 负数金额文字色 */
-  cellNegativeColor: string;
   /** 表格校验错误提示（normal 主题）背景色 */
   cellValidateErrorThemeNormalBackgroundColor: string;
   /** 选区背景色 */

@@ -547,10 +547,6 @@ export interface AsTablePrivateComputed extends TablePrivateComputed {}
 export type ValueOf<T> = T extends any[] ? T[number] : T[keyof T];
 
 export interface AsTableExtendCellAreaMethods<D = any> {
-  /**
-   * @private
-   */
-  addCellSelectedClass(): void;
 
   /**
    * @private
@@ -569,19 +565,11 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    */
   clearCopyCellArea(): Promise<any>;
   /**
-   * 手动清除单元格激活状态
-   */
-  clearEdit(row?: any): Promise<any>;
-  /**
    * 手动清空筛选条件；如果需要同时触发对应的事件，请使用 clearFilterByEvent
    */
   clearFilter(
     fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): Promise<void>;
-  /**
-   * 手动清除单元格选中状态
-   */
-  clearSelected(): Promise<any>;
 
   /**
    * 手动清除校验
@@ -621,10 +609,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     row: any;
   }): string;
   /**
-   * 用于 edit-config，获取已修改的数据
-   */
-  getUpdateRecords(): D[];
-  /**
    * 内部方法
    * @private
    */
@@ -632,10 +616,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     stackObj: AsTableDefines.HistoryStackObj,
   ): void;
   handleCellMousedownEvent(evnt: any, params: any): void;
-  /**
-   * @private
-   */
-  handleClearEdit(evnt: Event | null, row?: any): Promise<any>;
   /**
    * @private
    */
@@ -668,66 +648,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * @private
    */
   handleCyClAreaEvent(evnt: ClipboardEvent): void;
-  /**
-   * @private
-   */
-  handleEdit(
-    params: {
-      $columnIndex: number;
-      $rowIndex: number;
-      $table: AsTableConstructor<D>;
-      _columnIndex: number;
-      _rowIndex: number;
-      column: AsTableDefines.ColumnInfo;
-      columnIndex: number;
-      row: D;
-      rowIndex: number;
-    },
-    evnt: any,
-    options?: {
-      isClear?: boolean;
-    },
-  ): Promise<any>;
-  /**
-   * @private
-   */
-  handleEdit(
-    params: {
-      $columnIndex: number;
-      $rowIndex: number;
-      $table: AsTableConstructor<D>;
-      _columnIndex: number;
-      _rowIndex: number;
-      column: AsTableDefines.ColumnInfo;
-      columnIndex: number;
-      row: D;
-      rowIndex: number;
-    },
-    evnt: any,
-    options?: {
-      isClear?: boolean;
-    },
-  ): Promise<any>;
-  /**
-   * @private
-   */
-  handleEdit(
-    params: {
-      $columnIndex: number;
-      $rowIndex: number;
-      $table: AsTableConstructor<D>;
-      _columnIndex: number;
-      _rowIndex: number;
-      column: AsTableDefines.ColumnInfo;
-      columnIndex: number;
-      row: D;
-      rowIndex: number;
-    },
-    evnt: any,
-    options?: {
-      isClear?: boolean;
-    },
-  ): Promise<any>;
   /**
    * @private
    */
@@ -779,23 +699,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    */
   handleRowResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
   /**
-   * @private
-   */
-  handleSelected(
-    params: {
-      $columnIndex: number;
-      $rowIndex: number;
-      $table: AsTableConstructor<D>;
-      _columnIndex: number;
-      _rowIndex: number;
-      column: AsTableDefines.ColumnInfo;
-      columnIndex: number;
-      row: D;
-      rowIndex: number;
-    },
-    evnt: Event | null,
-  ): Promise<any>;
-  /**
    * 内部方法
    * @private
    */
@@ -805,28 +708,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   ): any;
   handleUpdateCustomColumn(): void;
   hasCellRules(type: any, row: any, column: AsTableDefines.ColumnInfo): boolean;
-  /**
-   * 往表格插入临时数据，从第一行新增一行或多行新数据
-   */
-  insert(records: any): Promise<{ row: D; rows: D[] }>;
-  /**
-   * 往表格指定行中插入临时数据
-   * 如果 row 为空则从插入到顶部，如果为树结构，则插入到目标节点顶部
-   * 如果 row 为 -1 则从插入到底部，如果为树结构，则插入到目标节点底部
-   * 如果 row 为有效行则插入到该行的位置，如果为树结构，则有插入到效的目标节点该行的位置
-   */
-  insertAt(
-    records: any,
-    targetRowOrRowid?: -1 | any | null,
-  ): Promise<{ row: D; rows: D[] }>;
-
-  /**
-   * 与 insertAt 行为一致，区别就是会插入指定目标的到下一行
-   */
-  insertNextAt(
-    records: any,
-    targetRowOrRowid?: -1 | any | null,
-  ): Promise<{ row: D; rows: D[] }>;
   moveArrowSelected(
     args: any,
     isLeftArrow: boolean,
@@ -861,11 +742,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     evnt: any,
   ): void;
   moveTabSelected(args: any, isLeft: any, evnt: any): void;
-
-  /**
-   * 删除指定行数据，指定 row 或 [row, ...] 删除多条数据，如果为空则删除所有数据
-   */
-  remove(rows?: any | any[]): Promise<{ row: D; rows: D[] }>;
   /**
    * 重置个性化列操作
    * 支持只重置指定的操作（列可视、列宽、冻结列、列顺序）

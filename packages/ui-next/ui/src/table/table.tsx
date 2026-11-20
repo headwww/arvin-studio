@@ -174,6 +174,8 @@ import {
   toTreePathSeq,
 } from './util';
 
+import './module/edit/hook';
+
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';
 const maxXWidth = 5e6;
