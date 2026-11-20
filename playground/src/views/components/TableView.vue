@@ -137,10 +137,20 @@ const toggleLanguage = () => {
         :header-tooltip-config="headerTooltipConfig"
         :footer-tooltip-config="footerTooltipConfig"
         show-overflow
+        :checkbox-config="{
+          labelField: 'name',
+          highlight: true,
+          range: true,
+        }"
         :data="tableData"
       >
         <Column drag-sort field="seq" type="seq" width="70" row-resize />
-        <Column field="name" title="名称" :edit-render="{ autoFocus: 'input' }">
+        <Column
+          type="checkbox"
+          field="name"
+          title="名称"
+          :edit-render="{ autoFocus: 'input' }"
+        >
           <template #edit="{ row }">
             <vxe-input v-model="row.name" />
           </template>

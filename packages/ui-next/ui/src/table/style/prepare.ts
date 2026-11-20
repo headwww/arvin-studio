@@ -94,7 +94,7 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
 
     // 复选框选区
     checkboxRangeBackgroundColor: cellBg,
-    checkboxRangeBorderColor: token.primaryColor!,
+    checkboxRangeBorderColor: colorPrimary,
     checkboxRangeBorderWidth: 1,
 
     // 单元格选区

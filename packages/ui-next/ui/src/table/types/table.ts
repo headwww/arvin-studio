@@ -6228,6 +6228,21 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
 }
 
 export namespace AsTableDefines {
+  export interface ValidatorErrorParams<D = any> {
+    $table: AsTableConstructor<D>;
+    cellValue: any;
+    column: AsTableDefines.ColumnInfo;
+    columnIndex: number;
+    field: string;
+    row: D;
+    rowIndex: number;
+    rule: ValidatorRule<D>;
+    rules: ValidatorRule<D>[];
+  }
+  export interface ValidatorErrorMapParams<D = any> {
+    [key: string]: AsTableDefines.ValidatorErrorParams<D>[];
+  }
+
   interface TableBaseCellParams<D = any> {
     $columnIndex: number;
     $rowIndex: number;
