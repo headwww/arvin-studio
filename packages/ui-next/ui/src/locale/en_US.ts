@@ -24,6 +24,10 @@ const localeValues: Locale = {
     maxFixedCol: 'The maximum number of fixed columns cannot exceed {0}',
     maxGroupCol: 'The maximum number of grouping fields cannot exceed {0}',
     treeDragChild: 'Parents cannot drag to their own children',
+    noTree: 'Tree structure does not support "{0}"',
+    noGroup: 'Data grouping does not support "{0}"',
+    unableInsert:
+      'Unable to insert at the specified position, please check the parameters',
   },
   locale: 'en',
   Pagination,

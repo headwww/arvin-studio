@@ -1357,6 +1357,7 @@ export const Table = defineComponent<AsTableProps>(
 
     const $asTable = {
       xID,
+      prefixCls,
       context,
       props: props as AsTableProps,
       reactData,

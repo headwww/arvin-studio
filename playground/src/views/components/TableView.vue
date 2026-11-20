@@ -123,6 +123,12 @@ const toggleLanguage = () => {
         切换语言（当前：{{ currentLang === 'zh-CN' ? '中文' : 'English' }}）
       </button>
       <Table
+        :edit-config="{
+          trigger: 'click',
+          mode: 'cell',
+          showStatus: true,
+        }"
+        keep-source
         show-footer
         :row-config="{ useKey: true, resizable: true, drag: true }"
         :column-config="{ useKey: true, resizable: true, drag: true }"
@@ -134,7 +140,14 @@ const toggleLanguage = () => {
         :data="tableData"
       >
         <Column drag-sort field="seq" type="seq" width="70" row-resize />
-        <Column field="name" title="名称" />
+        <Column field="name" title="名称" :edit-render="{ autoFocus: 'input' }">
+          <template #edit="{ row }">
+            <vxe-input v-model="row.name" />
+          </template>
+          <template #default="{ row }">
+            <span>{{ row.name }}</span>
+          </template>
+        </Column>
         <Column field="role" title="角色" />
         <Column field="date" title="Date" />
         <Column field="rate" title="Rate" />

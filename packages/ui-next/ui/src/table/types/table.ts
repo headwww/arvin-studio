@@ -37,6 +37,7 @@ export interface AsTableConstructor<D = any> extends AsTableMethods {
   getComputeMaps(): TablePrivateComputed;
   getRefMaps(): TablePrivateRef;
   internalData: TableInternalData<D>;
+  prefixCls: ComputedRef<string>;
   props: AsTableProps;
   reactData: TableReactData;
   renderVN: RenderFunction;
@@ -547,7 +548,6 @@ export interface AsTablePrivateComputed extends TablePrivateComputed {}
 export type ValueOf<T> = T extends any[] ? T[number] : T[keyof T];
 
 export interface AsTableExtendCellAreaMethods<D = any> {
-
   /**
    * @private
    */
@@ -615,7 +615,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   handleCellAreaSnapshotStackData(
     stackObj: AsTableDefines.HistoryStackObj,
   ): void;
-  handleCellMousedownEvent(evnt: any, params: any): void;
   /**
    * @private
    */
@@ -708,14 +707,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   ): any;
   handleUpdateCustomColumn(): void;
   hasCellRules(type: any, row: any, column: AsTableDefines.ColumnInfo): boolean;
-  moveArrowSelected(
-    args: any,
-    isLeftArrow: boolean,
-    isUpArrow: boolean,
-    isRightArrow: boolean,
-    isDwArrow: boolean,
-    evnt: any,
-  ): void;
   /**
    * @private
    */
@@ -727,21 +718,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     operRest: any,
     menuList: any[],
   ): void;
-  moveCurrentColumn(
-    isLeftArrow: boolean,
-    isRightArrow: boolean,
-    evnt: any,
-  ): void;
-  moveCurrentRow(isUpArrow: boolean, isDwArrow: boolean, evnt: any): void;
-  moveEnterSelected(
-    args: any,
-    isLeftArrow: boolean,
-    isUpArrow: boolean,
-    isRightArrow: boolean,
-    isDwArrow: boolean,
-    evnt: any,
-  ): void;
-  moveTabSelected(args: any, isLeft: any, evnt: any): void;
   /**
    * 重置个性化列操作
    * 支持只重置指定的操作（列可视、列宽、冻结列、列顺序）
@@ -6414,6 +6390,14 @@ export namespace AsTableDefines {
     level: number;
     /**
      * @private
+     * 编辑模型
+     */
+    model!: {
+      update?: boolean;
+      value?: any;
+    };
+    /**
+     * @private
      */
     order: AsTablePropTypes.SortOrder;
     /**
@@ -6428,6 +6412,10 @@ export namespace AsTableDefines {
      * @private
      */
     renderAutoWidth: number;
+    /**
+     * @private
+     */
+    renderHeight!: number;
     /**
      * @private
      */

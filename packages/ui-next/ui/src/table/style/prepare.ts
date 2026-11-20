@@ -24,7 +24,6 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
     colorWhite,
     colorFillAlter,
     colorSuccess,
-    colorWarning,
     colorPrimaryBg,
     colorFillTertiary,
     colorPrimaryBgHover,
@@ -139,7 +138,7 @@ export const prepareComponentToken: GetDefaultToken<'Table'> = (token) => {
     // 单元格脏标记
     cellDirtyWidth: 5,
     cellDirtyInsertColor: colorSuccess,
-    cellDirtyUpdateColor: colorWarning,
+    cellDirtyUpdateColor: colorError,
 
     // 表格校验错误色 / 待删除行删除线
     cellValidateErrorColor: colorError,

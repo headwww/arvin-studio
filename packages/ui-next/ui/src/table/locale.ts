@@ -40,4 +40,16 @@ export interface TableLocale {
    */
   sortDesc: VueNode;
   treeDragChild: VueNode;
+  /**
+   * 树结构不支持操作提示，支持 {0} 占位符
+   */
+  noTree?: VueNode;
+  /**
+   * 数据分组后不支持操作提示，支持 {0} 占位符
+   */
+  noGroup?: VueNode;
+  /**
+   * 无法插入到指定位置提示
+   */
+  unableInsert?: VueNode;
 }
