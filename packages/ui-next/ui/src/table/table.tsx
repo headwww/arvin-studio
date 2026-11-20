@@ -176,6 +176,7 @@ import {
 
 import './module/edit/hook';
 import './module/keyboard/hook';
+import './module/validator/hook';
 
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';

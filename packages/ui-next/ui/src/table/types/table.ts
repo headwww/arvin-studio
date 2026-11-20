@@ -234,8 +234,8 @@ export interface TableInternalData<D = any> {
   afterFullData: D[];
   // 列表条件处理后数据集合
   afterFullRowMaps: Record<string, D>;
-
   afterGroupFullData: D[];
+
   afterTreeFullData: D[];
   // 复选框属性，已选中保留的行
   checkboxReserveRowMap: any;
@@ -253,17 +253,17 @@ export interface TableInternalData<D = any> {
   customHeight: number;
   customMaxHeight: number;
   customMinHeight: number;
-
   // 单元格值缓存
   cvCacheMaps: Record<string, any>;
+
   elemStore: {
     [key: string]: null | Ref<ComponentPublicInstance> | Ref<HTMLElement>;
   }; // 内部属性
   footerFullDataRowData: Record<string, AsTableDefines.FooterRowCacheItem>;
   // 全量数据集（包括当前和已删除）
   fullAllDataRowIdData: Record<string, AsTableDefines.RowCacheItem<D>>;
-
   fullCellHeightMaps: Record<string, Record<string, number>>;
+
   fullCellStoreMaps: Record<
     string,
     Record<
@@ -287,27 +287,27 @@ export interface TableInternalData<D = any> {
   // 特殊标识
   inited: boolean;
   initStatus: boolean;
-
   // 已新增的临时行
   insertRowMaps: Record<string, D | null>;
+
   // 滚动属性
   intoRunScroll?: boolean;
   inVirtualScroll?: boolean;
   inWheelScroll?: boolean;
-
   isActivated: boolean;
 
   isCurrDeepKey: boolean;
+
   isResizeCellHeight?: boolean;
   keepUpdateFieldMaps: Record<string, number>;
   keyCtxTimeout?: number | undefined;
   // 最后滚动位置
   lastScrollLeft: number;
-
   lastScrollTop: number;
 
   // 最后滚动时间戳
   lastSTime: number;
+
   lcsRunTime?: number | undefined;
   // 同步滚动
   lcsTimeout?: number | undefined;
@@ -319,12 +319,12 @@ export interface TableInternalData<D = any> {
   lyTimeout?: number | undefined;
   // 已合并单元格数据集合
   mergeBodyCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
-
   mergeBodyColMaps: Record<string, AsTableDefines.MergeCacheCol>;
+
   // 合并单元格的数据
   mergeBodyList: AsTableDefines.MergeItem<D>[];
-
   mergeBodyMaps: Record<string, AsTableDefines.MergeItem>;
+
   mergeBodyRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
   // 已合并表尾数据集合
   mergeFooterCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
@@ -333,20 +333,20 @@ export interface TableInternalData<D = any> {
   mergeFooterList: AsTableDefines.MergeItem<D>[];
   mergeFooterMaps: Record<string, AsTableDefines.MergeItem>;
   mergeFooterRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
-
   // 已合并单元格数据集合
   mergeHeaderCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
+
   mergeHeaderColMaps: Record<string, AsTableDefines.MergeCacheCol>;
   // 合并表头单元格的数据
   mergeHeaderList: AsTableDefines.MergeItem<D>[];
   mergeHeaderMaps: Record<string, AsTableDefines.MergeItem>;
   mergeHeaderRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
-
   // 已标记的对象集
   pendingRowMaps: Record<string, D | null>;
 
   // 上一个拖动的列
   prevDragCol?: AsTableDefines.ColumnInfo | null;
+
   prevDragPos?: '' | 'bottom' | 'left' | 'right' | 'top';
   // 上一个拖动的行
   prevDragRow?: any;
@@ -362,9 +362,9 @@ export interface TableInternalData<D = any> {
   removeRowMaps: Record<string, D | null>;
   // 已展开的行
   rowExpandedMaps: Record<string, D | null>;
-
   // 行数据，已展开保留的行集合
   rowExpandedReserveRowMap: Record<string, D>;
+
   // 懒加载中的展开行
   rowExpandLazyLoadedMaps: Record<string, D | null>;
   // 已展开的分组行
@@ -407,20 +407,20 @@ export interface TableInternalData<D = any> {
   tableFullGroupData: D[];
   // 树的全量数据、条件处理后
   tableFullTreeData: D[];
-
   // 表格高度
   tableHeight: number;
+
   tableSourceData: [];
   tableSynchData: D[];
   // 表格宽度
   tableWidth: number;
-
   // 表体高度
   tBodyHeight: number;
-  teleportToWrapperElem: HTMLElement | null;
 
+  teleportToWrapperElem: HTMLElement | null;
   // 表尾高度
   tFooterHeight: number;
+
   // 表头高度
   tHeaderHeight: number;
   tooltipTimeout: any;
@@ -435,6 +435,8 @@ export interface TableInternalData<D = any> {
   // 树结构数据，不确定状态的集合
   treeIndeterminateRowMaps: Record<string, D>;
   tZindex: number;
+  /** 快速校验时标记是否已经出现校验不通过的单元格 */
+  validRuleErr?: boolean;
   // 渲染所有列
   visibleColumn: AsTableDefines.ColumnInfo<D>[];
   // 数据集（仅可视）
@@ -572,18 +574,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   ): Promise<void>;
 
   /**
-   * 手动清除校验
-   */
-  clearValidate(
-    rows?: any,
-    fieldOrColumn?:
-      | AsColumnPropTypes.Field
-      | AsColumnPropTypes.Field[]
-      | AsTableDefines.ColumnInfo
-      | AsTableDefines.ColumnInfo[],
-  ): Promise<void>;
-
-  /**
    * 手动关闭快捷菜单
    */
   closeMenu(): Promise<any>;
@@ -706,7 +696,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     params: AsTableDefines.SortChangeEventParams<D>,
   ): any;
   handleUpdateCustomColumn(): void;
-  hasCellRules(type: any, row: any, column: AsTableDefines.ColumnInfo): boolean;
   /**
    * @private
    */
@@ -732,7 +721,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
           visible?: boolean;
         },
   ): Promise<void>;
-  showValidTooltip(params: any): void;
   /**
    * 内部方法
    * @private
@@ -747,14 +735,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     evnt: MouseEvent,
     params: AsTableDefines.CellClickEventParams<D>,
   ): void;
-
-  triggerValidate(type: any): Promise<any>;
-  validCellRules(
-    type: any,
-    row: any,
-    column: AsTableDefines.ColumnInfo,
-    val?: any,
-  ): Promise<any>;
 }
 
 export interface TableMethods<
