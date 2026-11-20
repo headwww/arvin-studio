@@ -1,0 +1,249 @@
+import type { App, CSSProperties, SlotsType } from 'vue';
+
+import type { BuildInPlacements, TriggerRef } from '@arvin-studio/headless';
+
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  onBeforeUnmount,
+  shallowRef,
+  Teleport,
+  watch,
+} from 'vue';
+
+import { canUseDom, Trigger } from '@arvin-studio/headless';
+import { clsx } from '@arvin-studio/kit';
+
+import { useConfig } from '../config-provider/context';
+import useStyle from './style';
+
+// 贴边平移留 8px，垂直空间不够时上下翻转
+const overflow = {
+  adjustX: false,
+  adjustY: true,
+  shiftX: 8,
+  shiftY: 8,
+};
+
+// points: [弹层锚点, 目标锚点]；第一项是 popup，第二项是 target
+const builtinPlacements: BuildInPlacements = {
+  bottom: { points: ['tc', 'bc'], offset: [0, 4], overflow },
+  bottomLeft: { points: ['tl', 'bl'], offset: [0, 4], overflow },
+  bottomRight: { points: ['tr', 'br'], offset: [0, 4], overflow },
+  top: { points: ['bc', 'tc'], offset: [0, -4], overflow },
+  topLeft: { points: ['bl', 'tl'], offset: [0, -4], overflow },
+  topRight: { points: ['br', 'tr'], offset: [0, -4], overflow },
+};
+
+export interface PositionPopupProps {
+  arrow?: boolean;
+  contentClassName?: string;
+  contentStyle?: CSSProperties;
+  height?: number;
+  open?: boolean;
+  placement?: string;
+  prefixCls?: string;
+  rootClassName?: string;
+  rootStyle?: CSSProperties;
+  width?: number;
+  /** 文档坐标：getBoundingClientRect() + scrollX */
+  x?: number;
+  /** 文档坐标：getBoundingClientRect() + scrollY */
+  y?: number;
+  zIndex?: number;
+}
+
+export interface PositionPopupEmits {
+  openChange: (open: boolean) => void;
+}
+
+export interface PositionPopupSlots {
+  default: () => any;
+}
+
+const InternalPositionPopup = defineComponent<
+  PositionPopupProps,
+  PositionPopupEmits,
+  string,
+  SlotsType<PositionPopupSlots>
+>(
+  (props, { attrs, slots, emit, expose }) => {
+    const config = useConfig();
+    const prefixCls = computed(() =>
+      config.value.getPrefixCls('position-popup', props.prefixCls),
+    );
+    useStyle(prefixCls);
+
+    const triggerRef = shallowRef<null | TriggerRef>(null);
+    const contentRef = shallowRef<HTMLElement | null>(null);
+
+    const forceAlign = () => triggerRef.value?.forceAlign?.();
+    expose({ forceAlign });
+
+    const align = async () => {
+      if (!props.open) {
+        return;
+      }
+      // 首次打开时 popup 还没挂上，等两帧再对一次
+      await nextTick();
+      await nextTick();
+      forceAlign();
+    };
+
+    watch(
+      () => props.open,
+      (open) => {
+        if (open) {
+          void align();
+        }
+      },
+    );
+
+    watch(
+      [() => props.x, () => props.y, () => props.width, () => props.height],
+      () => {
+        if (props.open) {
+          void align();
+        }
+      },
+    );
+
+    // Trigger 的 useWinClick 依赖真实 trigger，这里 action=[] 不会注册，自己关
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) {
+        return;
+      }
+      const popup = contentRef.value?.parentElement;
+      if (popup?.contains(target)) {
+        return;
+      }
+      emit('openChange', false);
+    };
+
+    watch(
+      () => props.open,
+      (open) => {
+        if (!canUseDom()) {
+          return;
+        }
+        if (open) {
+          document.addEventListener('click', onDocClick);
+        } else {
+          document.removeEventListener('click', onDocClick);
+        }
+      },
+      { immediate: true },
+    );
+
+    // 内容尺寸变化后重新对齐，避免翻转/箭头位置还停在旧尺寸
+    let ro: ResizeObserver | undefined;
+    watch(contentRef, (el) => {
+      ro?.disconnect();
+      if (!el || typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      ro = new ResizeObserver(() => forceAlign());
+      ro.observe(el);
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', onDocClick);
+      ro?.disconnect();
+    });
+
+    // Trigger 会给弹层根节点带上 prefixCls，这里只补业务自己的类名
+    const mergedPopupClassName = computed(() =>
+      clsx(props.rootClassName, attrs.class as any),
+    );
+
+    const mergedPopupStyle = computed<CSSProperties>(() => {
+      const attrStyle = attrs.style;
+      const styleObject =
+        attrStyle && !Array.isArray(attrStyle) && typeof attrStyle === 'object'
+          ? (attrStyle as CSSProperties)
+          : {};
+
+      return {
+        ...props.rootStyle,
+        ...styleObject,
+      };
+    });
+
+    return () => {
+      if (!canUseDom()) {
+        return null;
+      }
+
+      return (
+        <Teleport to="body">
+          <div
+            class="vc-position-popup-anchor-host"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: 0,
+              height: 0,
+              pointerEvents: 'none',
+            }}
+          >
+            <Trigger
+              action={[]}
+              arrow={false}
+              builtinPlacements={builtinPlacements}
+              onOpenChange={(open: boolean) => emit('openChange', open)}
+              popup={() => (
+                <>
+                  {props.arrow && <div class={`${prefixCls.value}-arrow`} />}
+                  <div
+                    class={clsx(
+                      `${prefixCls.value}-content`,
+                      props.contentClassName,
+                    )}
+                    ref={contentRef}
+                    style={props.contentStyle}
+                  >
+                    {slots.default?.()}
+                  </div>
+                </>
+              )}
+              popupClassName={mergedPopupClassName.value}
+              popupMotion={{ name: `${prefixCls.value}-zoom` }}
+              popupPlacement={props.placement}
+              popupStyle={mergedPopupStyle.value}
+              popupVisible={props.open}
+              prefixCls={prefixCls.value}
+              ref={triggerRef}
+              zIndex={props.zIndex}
+            >
+              {/* 业务方不用传子组件，这个透明盒子就是 Trigger 的锚点 */}
+              <span
+                style={{
+                  position: 'absolute',
+                  left: `${props.x}px`,
+                  top: `${props.y}px`,
+                  width: `${props.width}px`,
+                  height: `${props.height}px`,
+                }}
+              />
+            </Trigger>
+          </div>
+        </Teleport>
+      );
+    };
+  },
+  {
+    name: 'AsPositionPopup',
+    inheritAttrs: false,
+  },
+);
+
+const PositionPopup = InternalPositionPopup;
+
+(PositionPopup as any).install = (app: App) => {
+  app.component('AsPositionPopup', PositionPopup);
+};
+
+export default PositionPopup;

@@ -74,6 +74,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'SharedTooltip 共享提示' },
       },
       {
+        path: 'position-popup',
+        name: 'ComponentPositionPopup',
+        component: () => import('../views/components/PositionPopupView.vue'),
+        meta: { title: 'PositionPopup 定位弹层' },
+      },
+      {
         path: 'menu',
         name: 'ComponentMenu',
         component: () => import('../views/components/MenuView.vue'),

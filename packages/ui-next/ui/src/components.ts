@@ -309,6 +309,12 @@ export type {
   PopoverRef,
   PopoverSlots,
 } from './popover';
+export { default as PositionPopup } from './position-popup';
+export type {
+  PositionPopupEmits,
+  PositionPopupProps,
+  PositionPopupSlots,
+} from './position-popup';
 export type { ProgressProps } from './progress';
 export { default as Progress } from './progress/progress';
 export { default as QRCode } from './qrcode';
