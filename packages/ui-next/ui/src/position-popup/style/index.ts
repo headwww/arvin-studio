@@ -34,7 +34,7 @@ const positionPopupZoomOut = new Keyframes('PositionPopupZoomOut', {
 
 const genStyle = (prefixCls: string, token: GlobalToken): CSSObject => {
   const arrowCls = `${prefixCls}-arrow`;
-  const zoomCls = `${prefixCls}-zoom`;
+  const zoomCls = `.${prefixCls}-zoom`;
 
   return {
     [`.${prefixCls}`]: {

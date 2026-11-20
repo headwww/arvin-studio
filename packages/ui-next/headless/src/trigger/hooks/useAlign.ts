@@ -823,14 +823,17 @@ export default function useAlign(
       let offsetY4Bottom =
         popupMirrorRect.bottom - popupRect.y - (nextOffsetY + popupRect.height);
 
+      // unscale 之后 rect 可能带 1e-6 量级的浮点误差（如 164.999996），
+      // 直接 floor 会被压成 164，动画结束重对齐时又变成 165，视觉上跳 1px。
+      // 这里先按 0.001 的精度吃掉误差，再 floor 对齐到整像素。
       if (scaleX === 1) {
-        nextOffsetX = Math.floor(nextOffsetX);
-        offsetX4Right = Math.floor(offsetX4Right);
+        nextOffsetX = Math.floor(nextOffsetX + 1e-3);
+        offsetX4Right = Math.floor(offsetX4Right + 1e-3);
       }
 
       if (scaleY === 1) {
-        nextOffsetY = Math.floor(nextOffsetY);
-        offsetY4Bottom = Math.floor(offsetY4Bottom);
+        nextOffsetY = Math.floor(nextOffsetY + 1e-3);
+        offsetY4Bottom = Math.floor(offsetY4Bottom + 1e-3);
       }
       // Divide by scale (same as React version)
       const nextOffsetInfo = {

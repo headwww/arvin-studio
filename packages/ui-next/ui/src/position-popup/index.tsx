@@ -73,6 +73,8 @@ const InternalPositionPopup = defineComponent<
     const prefixCls = computed(() =>
       config.value.getPrefixCls('position-popup', props.prefixCls),
     );
+    // 对应 style 里的 `${prefixCls}-zoom` 动画类名
+    const popupMotion = computed(() => ({ name: `${prefixCls.value}-zoom` }));
     useStyle(prefixCls);
 
     const triggerRef = shallowRef<null | TriggerRef>(null);
@@ -210,7 +212,7 @@ const InternalPositionPopup = defineComponent<
                 </>
               )}
               popupClassName={mergedPopupClassName.value}
-              popupMotion={{ name: `${prefixCls.value}-zoom` }}
+              popupMotion={popupMotion.value}
               popupPlacement={props.placement}
               popupStyle={mergedPopupStyle.value}
               popupVisible={props.open}
