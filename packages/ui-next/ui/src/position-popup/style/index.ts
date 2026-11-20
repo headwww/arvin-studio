@@ -37,11 +37,15 @@ const genStyle = (prefixCls: string, token: GlobalToken): CSSObject => {
   const zoomCls = `.${prefixCls}-zoom`;
 
   return {
+    // 透明锚点：只负责给 Trigger 提供文档坐标，不参与命中测试
+    [`.${prefixCls}-anchor`]: {
+      position: 'absolute',
+      pointerEvents: 'none',
+    },
+
     [`.${prefixCls}`]: {
       // 必须是 absolute：Trigger 写的是文档坐标，靠它随页面一起滚出视口
       position: 'absolute',
-      // 锚点宿主是 pointer-events: none，弹层自己不打开就点不到里面的内容
-      pointerEvents: 'auto',
       boxSizing: 'border-box',
       minWidth: 160,
       padding: `${token.paddingSM}px ${token.padding}px`,

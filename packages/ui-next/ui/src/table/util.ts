@@ -104,6 +104,7 @@ export function createInternalData(): TableInternalData {
     fullAllDataRowIdData: {},
     // 行数据，已展开保留的行集合
     rowExpandedReserveRowMap: {},
+    popupToWrapperElem: null,
     // 数据集（仅当前）
     fullDataRowIdData: {},
     // 渲染中缓存数据
@@ -309,6 +310,13 @@ export function createReactData(): TableReactData {
       oldSortMaps: {},
       oldFixedMaps: {},
       oldVisibleMaps: {},
+    },
+    // 初始化标识
+    initStore: {
+      filter: false,
+      import: false,
+      export: false,
+      custom: false,
     },
     dragCol: null,
     dragRow: null,

@@ -123,6 +123,13 @@ export interface TableReactData<D = any> {
   // 表尾合计数据
   footerTableData: any[][];
   hasFixedColumn: boolean;
+  // 初始化标识
+  initStore: {
+    custom: boolean;
+    export: boolean;
+    filter: boolean;
+    import: boolean;
+  };
   insertRowFlag: number;
   isAllOverflow: boolean;
   // 复选框属性，是否全选
@@ -227,6 +234,7 @@ export interface TableReactData<D = any> {
 }
 
 export interface TableInternalData<D = any> {
+  _currFilterParams?: any;
   _keyCtx?: any;
   _lastCallTime?: any;
   _lastResizeTime?: any;
@@ -235,8 +243,8 @@ export interface TableInternalData<D = any> {
   // 列表条件处理后数据集合
   afterFullRowMaps: Record<string, D>;
   afterGroupFullData: D[];
-
   afterTreeFullData: D[];
+
   // 复选框属性，已选中保留的行
   checkboxReserveRowMap: any;
   // 收集的列配置（带分组）
@@ -255,15 +263,14 @@ export interface TableInternalData<D = any> {
   customMinHeight: number;
   // 单元格值缓存
   cvCacheMaps: Record<string, any>;
-
   elemStore: {
     [key: string]: null | Ref<ComponentPublicInstance> | Ref<HTMLElement>;
   }; // 内部属性
+
   footerFullDataRowData: Record<string, AsTableDefines.FooterRowCacheItem>;
   // 全量数据集（包括当前和已删除）
   fullAllDataRowIdData: Record<string, AsTableDefines.RowCacheItem<D>>;
   fullCellHeightMaps: Record<string, Record<string, number>>;
-
   fullCellStoreMaps: Record<
     string,
     Record<
@@ -274,6 +281,7 @@ export interface TableInternalData<D = any> {
       }
     >
   >;
+
   fullColumnFieldData: Record<string, AsTableDefines.ColumnCacheItem<D>>;
   fullColumnIdData: Record<string, AsTableDefines.ColumnCacheItem<D>>;
   // 数据集（仅当前）
@@ -289,26 +297,26 @@ export interface TableInternalData<D = any> {
   initStatus: boolean;
   // 已新增的临时行
   insertRowMaps: Record<string, D | null>;
-
   // 滚动属性
   intoRunScroll?: boolean;
+
   inVirtualScroll?: boolean;
   inWheelScroll?: boolean;
   isActivated: boolean;
-
   isCurrDeepKey: boolean;
 
   isResizeCellHeight?: boolean;
+
   keepUpdateFieldMaps: Record<string, number>;
   keyCtxTimeout?: number | undefined;
   // 最后滚动位置
   lastScrollLeft: number;
   lastScrollTop: number;
-
   // 最后滚动时间戳
   lastSTime: number;
 
   lcsRunTime?: number | undefined;
+
   // 同步滚动
   lcsTimeout?: number | undefined;
   // 横向虚拟
@@ -320,12 +328,12 @@ export interface TableInternalData<D = any> {
   // 已合并单元格数据集合
   mergeBodyCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
   mergeBodyColMaps: Record<string, AsTableDefines.MergeCacheCol>;
-
   // 合并单元格的数据
   mergeBodyList: AsTableDefines.MergeItem<D>[];
-  mergeBodyMaps: Record<string, AsTableDefines.MergeItem>;
 
+  mergeBodyMaps: Record<string, AsTableDefines.MergeItem>;
   mergeBodyRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
+
   // 已合并表尾数据集合
   mergeFooterCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
   mergeFooterColMaps: Record<string, AsTableDefines.MergeCacheCol>;
@@ -335,14 +343,16 @@ export interface TableInternalData<D = any> {
   mergeFooterRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
   // 已合并单元格数据集合
   mergeHeaderCellMaps: Record<string, AsTableDefines.MergeCacheItem>;
-
   mergeHeaderColMaps: Record<string, AsTableDefines.MergeCacheCol>;
+
   // 合并表头单元格的数据
   mergeHeaderList: AsTableDefines.MergeItem<D>[];
   mergeHeaderMaps: Record<string, AsTableDefines.MergeItem>;
   mergeHeaderRowMaps: Record<string, AsTableDefines.MergeCacheRow>;
   // 已标记的对象集
   pendingRowMaps: Record<string, D | null>;
+  // 弹层挂载目标（筛选、右键菜单的 Teleport 目标；独立表格为 null）它是 Grid/Gantt 提供给 table 的浮层挂载目标用 Teleport 把筛选面板、右键菜单搬到 grid 根节点；没有时 Teleport 禁用，两个面板就留在 table 根。
+  popupToWrapperElem: HTMLElement | null;
 
   // 上一个拖动的列
   prevDragCol?: AsTableDefines.ColumnInfo | null;
@@ -2617,6 +2627,7 @@ export interface TablePrivateRef {
   refScrollYSpaceElem: Ref<HTMLDivElement | undefined>;
   refScrollYVirtualElem: Ref<HTMLDivElement | undefined>;
   refTableBody: Ref<ComponentPublicInstance>;
+  refTableFilter: Ref<any>;
   refTableFooter: Ref<ComponentPublicInstance>;
   refTableHeader: Ref<ComponentPublicInstance>;
   refTableLeftBody: Ref<ComponentPublicInstance>;

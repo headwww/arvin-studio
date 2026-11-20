@@ -40,6 +40,11 @@ export interface PositionPopupProps {
   arrow?: boolean;
   contentClassName?: string;
   contentStyle?: CSSProperties;
+  /**
+   * Teleport 挂载点，支持选择器、DOM 节点或返回节点的函数；默认 body。
+   * 选择器找不到时回退 body；自定义容器不能有偏移，否则 x/y 会相对它计算。
+   */
+  getContainer?: (() => HTMLElement | null) | HTMLElement | string;
   height?: number;
   open?: boolean;
   placement?: string;
@@ -75,6 +80,22 @@ const InternalPositionPopup = defineComponent<
     );
     // 对应 style 里的 `${prefixCls}-zoom` 动画类名
     const popupMotion = computed(() => ({ name: `${prefixCls.value}-zoom` }));
+    // Teleport 目标：函数形式在每次渲染时解析；选择器找不到时回退 body，
+    // 避免目标节点晚于组件挂载时 Teleport 永久失去 target
+    const teleportTo = computed(() => {
+      const { getContainer } = props;
+      const target =
+        typeof getContainer === 'function' ? getContainer() : getContainer;
+      if (!target) {
+        return 'body';
+      }
+      if (typeof target === 'string') {
+        return target === 'body'
+          ? target
+          : (document.querySelector(target) ?? 'body');
+      }
+      return target;
+    });
     useStyle(prefixCls);
 
     const triggerRef = shallowRef<null | TriggerRef>(null);
@@ -179,59 +200,47 @@ const InternalPositionPopup = defineComponent<
       }
 
       return (
-        <Teleport to="body">
-          <div
-            class="vc-position-popup-anchor-host"
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: 0,
-              height: 0,
-              pointerEvents: 'none',
-            }}
+        <Teleport to={teleportTo.value}>
+          <Trigger
+            action={[]}
+            arrow={false}
+            builtinPlacements={builtinPlacements}
+            onOpenChange={(open: boolean) => emit('openChange', open)}
+            popup={() => (
+              <>
+                {props.arrow && <div class={`${prefixCls.value}-arrow`} />}
+                <div
+                  class={clsx(
+                    `${prefixCls.value}-content`,
+                    props.contentClassName,
+                  )}
+                  ref={contentRef}
+                  style={props.contentStyle}
+                >
+                  {slots.default?.()}
+                </div>
+              </>
+            )}
+            popupClassName={mergedPopupClassName.value}
+            popupMotion={popupMotion.value}
+            popupPlacement={props.placement}
+            popupStyle={mergedPopupStyle.value}
+            popupVisible={props.open}
+            prefixCls={prefixCls.value}
+            ref={triggerRef}
+            zIndex={props.zIndex}
           >
-            <Trigger
-              action={[]}
-              arrow={false}
-              builtinPlacements={builtinPlacements}
-              onOpenChange={(open: boolean) => emit('openChange', open)}
-              popup={() => (
-                <>
-                  {props.arrow && <div class={`${prefixCls.value}-arrow`} />}
-                  <div
-                    class={clsx(
-                      `${prefixCls.value}-content`,
-                      props.contentClassName,
-                    )}
-                    ref={contentRef}
-                    style={props.contentStyle}
-                  >
-                    {slots.default?.()}
-                  </div>
-                </>
-              )}
-              popupClassName={mergedPopupClassName.value}
-              popupMotion={popupMotion.value}
-              popupPlacement={props.placement}
-              popupStyle={mergedPopupStyle.value}
-              popupVisible={props.open}
-              prefixCls={prefixCls.value}
-              ref={triggerRef}
-              zIndex={props.zIndex}
-            >
-              {/* 业务方不用传子组件，这个透明盒子就是 Trigger 的锚点 */}
-              <span
-                style={{
-                  position: 'absolute',
-                  left: `${props.x}px`,
-                  top: `${props.y}px`,
-                  width: `${props.width}px`,
-                  height: `${props.height}px`,
-                }}
-              />
-            </Trigger>
-          </div>
+            {/* 业务方不用传子组件，这个透明盒子就是 Trigger 的锚点 */}
+            <span
+              class={`${prefixCls.value}-anchor`}
+              style={{
+                left: `${props.x}px`,
+                top: `${props.y}px`,
+                width: `${props.width}px`,
+                height: `${props.height}px`,
+              }}
+            />
+          </Trigger>
         </Teleport>
       );
     };

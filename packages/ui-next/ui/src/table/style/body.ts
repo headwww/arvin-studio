@@ -630,8 +630,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
       [`${componentCls}-cell--edit-icon,
         ${componentCls}-cell-title-prefix-icon,
-        ${componentCls}-cell-title-suffix-icon,
-         ${componentCls}-cell--filter`]: {
+        ${componentCls}-cell-title-suffix-icon`]: {
         padding: '0.2em',
       },
 

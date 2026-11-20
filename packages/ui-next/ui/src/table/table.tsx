@@ -133,6 +133,7 @@ import { Cell, formatLocaleText } from './cell';
 import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
+import TableFilterPanelComponent from './module/filter/panel';
 import { getCrossTableDragRowInfo } from './store';
 import useStyle from './style';
 import {
@@ -177,6 +178,7 @@ import {
 import './module/edit/hook';
 import './module/keyboard/hook';
 import './module/validator/hook';
+import './module/filter/hook';
 
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';
@@ -335,6 +337,7 @@ export const Table = defineComponent<AsTableProps>(
     const refTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refCommTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refValidTooltip = ref() as Ref<AsSharedTooltipInstance>;
+    const refTableFilter = ref() as Ref<any>;
 
     const refTableViewportElem = ref<HTMLDivElement>();
     const refTableHeader = ref() as Ref<ComponentPublicInstance>;
@@ -348,6 +351,7 @@ export const Table = defineComponent<AsTableProps>(
     const refTableRightFooter = ref() as Ref<ComponentPublicInstance>;
 
     const refTeleportWrapper = ref<HTMLDivElement>();
+    const refPopupWrapperElem = ref<HTMLDivElement>();
 
     const refLeftContainer = ref() as Ref<HTMLDivElement>;
     const refRightContainer = ref() as Ref<HTMLDivElement>;
@@ -1256,6 +1260,7 @@ export const Table = defineComponent<AsTableProps>(
     const refMaps: AsTablePrivateRef = {
       refElem,
       refTooltip,
+      refTableFilter,
       refValidTooltip,
       refTableHeader,
       refTableBody,
@@ -17370,6 +17375,8 @@ export const Table = defineComponent<AsTableProps>(
         isRowGroupStatus,
         columnStore,
         tooltipStore,
+        initStore,
+        filterStore,
       } = reactData;
       const { teleportToWrapperElem } = internalData;
       const { leftList, rightList } = columnStore;
@@ -17563,6 +17570,18 @@ export const Table = defineComponent<AsTableProps>(
                 }
               </div>
             </Teleport>
+          </div>
+          <div key="tpw">
+            <div ref={refPopupWrapperElem}>
+              {/* 筛选 */}
+              {initStore.filter && (
+                <TableFilterPanelComponent
+                  filterStore={filterStore}
+                  key="tf"
+                  ref={refTableFilter}
+                ></TableFilterPanelComponent>
+              )}
+            </div>
           </div>
           {/** 提示相关 */}
           <div>
