@@ -27,9 +27,8 @@ export default genStyleHooks(
       genMediumCellPaddingStyle(tableToken),
       genLargeCellPaddingStyle(tableToken),
       genSmallCellPaddingStyle(tableToken),
-
-      genBodyStyle(tableToken),
       genFilterStyle(tableToken),
+      genBodyStyle(tableToken),
     ];
   },
   prepareComponentToken,

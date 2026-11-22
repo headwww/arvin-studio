@@ -8,7 +8,7 @@ export function genFilterStyle(token: TableToken): CSSInterpolation {
     iconCls,
     columnIconBorderColor,
     colorText,
-    colorBorderSecondary,
+    borderColor,
   } = token;
 
   return [
@@ -39,9 +39,9 @@ export function genFilterStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}--filter-wrapper`]: {
         [`${componentCls}--filter-footer`]: {
           display: 'flex',
-          gap: '8px',
           padding: '0.6em',
-          borderTop: `1px solid ${colorBorderSecondary}`,
+          justifyContent: 'space-between',
+          borderTop: `1px solid ${borderColor}`,
         },
       },
     },

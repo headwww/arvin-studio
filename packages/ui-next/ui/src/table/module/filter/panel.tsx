@@ -20,12 +20,15 @@ import {
 
 import { isBoolean, uniqueId } from '@arvin-studio/kit';
 
-import { ArvinStudio, Button } from '../../..';
+import { ArvinStudio, Button, Checkbox } from '../../..';
+import { toCssUnit } from '../../../_util/dom';
 import useLog from '../../../_util/logger';
+import { getSlotVNs } from '../../../_util/vn';
 import enUS from '../../../locale/en_US';
 import useLocale from '../../../locale/useLocale';
 import PositionPopup from '../../../position-popup';
-import { isEnableConf } from '../../util';
+import { useToken } from '../../../theme/internal';
+import { formatText, isEnableConf } from '../../util';
 
 const { renderer } = ArvinStudio;
 export default defineComponent({
@@ -53,6 +56,14 @@ export default defineComponent({
     } = $asTable;
 
     const { computeFilterOpts, computeRendererOpts } = getComputeMaps();
+    // useToken() 返回 [theme, realToken, hashId, token, cssVar, zeroRuntime]，这里取下标 4 的 cssVar
+    const cssVar = useToken()[4];
+    // PositionPopup 会 Teleport 到 body，脱离 .as-table 的 CSS 变量作用域，
+    // 这里把表格的 CSS 变量作用域类补到弹层根节点上
+    const themeCls = computed(() => {
+      const cssVarKey = cssVar.value?.key;
+      return cssVarKey ? [cssVarKey, prefixCls.value] : [];
+    });
 
     const refElem = ref<HTMLDivElement>();
 
@@ -77,6 +88,20 @@ export default defineComponent({
       );
     });
 
+    // 全部筛选事件
+    const filterCheckAllEvent = (evnt: Event, value: any) => {
+      const { filterStore } = props;
+      const { column } = filterStore;
+      if (column && column.filters) {
+        column.filters.forEach((option: any) => {
+          option._checked = value;
+          option.checked = value;
+        });
+      }
+      filterStore.isAllSelected = value;
+      filterStore.isIndeterminate = false;
+    };
+
     /** ***********************
      * Publish methods
      *************************/
@@ -92,6 +117,11 @@ export default defineComponent({
       );
     };
 
+    // （单选）筛选发生改变
+    const changeRadioOption = (evnt: Event, checked: boolean, item: any) => {
+      $asTable.handleFilterChangeRadioOption(evnt, checked, item);
+    };
+
     /**
      * 重置筛选
      * 当筛选面板中的重置按钮被按下时触发
@@ -102,10 +132,153 @@ export default defineComponent({
       $asTable.handleFilterResetFilter(evnt, filterStore.column || null);
     };
 
+    // （多选）筛选发生改变
+    const changeMultipleOption = (evnt: Event, checked: boolean, item: any) => {
+      $asTable.handleFilterChangeMultipleOption(evnt, checked, item);
+    };
+
+    // 筛选发生改变
+    const changeOption = (evnt: Event, checked: boolean, item: any) => {
+      $asTable.handleFilterChangeOption(evnt, checked, item);
+    };
+
+    const changeAllOption = (evnt: Event, checked: boolean) => {
+      const { filterStore } = props;
+      const { column } = filterStore;
+      if (column && column.filterMultiple) {
+        filterCheckAllEvent(evnt, checked);
+      } else {
+        resetFilter(evnt);
+      }
+    };
+
+    const filterPanelMethods = {
+      changeRadioOption,
+      changeMultipleOption,
+      changeAllOption,
+      changeOption,
+      confirmFilter,
+      resetFilter,
+    };
+
+    Object.assign($asFilterPanel, filterPanelMethods);
+
     const renderOptions = (
       filterRender: AsColumnPropTypes.FilterRender | null,
       compConf: AsGlobalRendererOptions | null,
-    ) => {};
+    ) => {
+      const { filterStore } = props;
+      const { column, maxHeight } = filterStore;
+      if (!column) {
+        return [];
+      }
+      const { filterMultiple, filters, slots } = column;
+      const filterOptions = (filters || []) as AsTableDefines.FilterOption[];
+      const filterSlot = slots ? slots.filter : null;
+      const params = Object.assign({}, tableInternalData._currFilterParams, {
+        option: filterOptions[0],
+        $panel: $asFilterPanel,
+        $table: $asTable,
+      });
+      const rtFilter = compConf ? compConf.renderTableFilter : null;
+      if (filterSlot) {
+        return (
+          <div
+            class={`${prefixCls.value}--filter-template`}
+            style={
+              maxHeight
+                ? {
+                    maxHeight: toCssUnit(maxHeight),
+                  }
+                : {}
+            }
+          >
+            {$asTable.callSlot(filterSlot, params)}
+          </div>
+        );
+      } else if (filterRender && rtFilter) {
+        return (
+          <div
+            class={`${prefixCls.value}--filter-template`}
+            style={
+              maxHeight
+                ? {
+                    maxHeight: toCssUnit(maxHeight),
+                  }
+                : {}
+            }
+          >
+            {getSlotVNs(rtFilter(filterRender, params))}
+          </div>
+        );
+      }
+      const isAllChecked = filterMultiple
+        ? filterStore.isAllSelected
+        : filterOptions.every((item) => !item._checked);
+      const isAllIndeterminate = filterMultiple && filterStore.isIndeterminate;
+      return [
+        <ul class={`${prefixCls.value}--filter-header`} key="header">
+          <li
+            class={[`${prefixCls.value}--filter-option`]}
+            onClick={(evnt: MouseEvent) => {
+              changeAllOption(evnt, !filterStore.isAllSelected);
+            }}
+            title={String(
+              (filterMultiple
+                ? locale?.value?.allTitle
+                : locale?.value?.allFilter) ?? '',
+            )}
+          >
+            {filterMultiple ? (
+              <Checkbox
+                checked={isAllChecked}
+                indeterminate={isAllIndeterminate}
+                style={{ pointerEvents: 'none' }}
+              />
+            ) : (
+              createCommentVNode()
+            )}
+            <span class={`${prefixCls.value}-checkbox--label`}>
+              {locale?.value?.allFilter}
+            </span>
+          </li>
+        </ul>,
+        <ul
+          class={`${prefixCls.value}--filter-body`}
+          key="body"
+          style={
+            maxHeight
+              ? {
+                  maxHeight: toCssUnit(maxHeight),
+                }
+              : {}
+          }
+        >
+          {filterOptions.map((item, index) => (
+            <li
+              class={[`${prefixCls.value}--filter-option`]}
+              key={index}
+              onClick={(evnt: MouseEvent) => {
+                changeOption(evnt, !item._checked, item);
+              }}
+              title={String(item.label ?? '')}
+            >
+              {filterMultiple ? (
+                <Checkbox
+                  checked={!!item._checked}
+                  style={{ pointerEvents: 'none' }}
+                />
+              ) : (
+                createCommentVNode()
+              )}
+              <span class={`${prefixCls.value}-checkbox--label`}>
+                {formatText(item.label, 1)}
+              </span>
+            </li>
+          ))}
+        </ul>,
+      ];
+    };
 
     const renderFooters = () => {
       const { filterStore } = props;
@@ -137,7 +310,7 @@ export default defineComponent({
       }
       return [
         <div class={`${prefixCls.value}--filter-footer`}>
-          <Button onClick={resetFilter} size="small">
+          <Button onClick={resetFilter} size="small" type="link">
             {resetButtonText || locale?.value?.resetFilter}
           </Button>
           <Button
@@ -173,7 +346,11 @@ export default defineComponent({
       return (
         <PositionPopup
           arrow={false}
-          class={[`${prefixCls.value}--filter-wrapper`, className]}
+          class={[
+            ...themeCls.value,
+            `${prefixCls.value}--filter-wrapper`,
+            className,
+          ]}
           height={filterStore.style?.height}
           open={true}
           placement="bottom"
