@@ -388,13 +388,17 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}-cell--sort-vertical-layout`]: {
         display: 'inline-flex',
         flexDirection: 'column',
-        height: '1.8em',
+        justifyContent: 'center',
+        height: '1.2em',
         verticalAlign: 'middle',
 
         [`${componentCls}-sort--asc-btn,
           ${componentCls}-sort--desc-btn`]: {
-          lineHeight: '12px',
-          fontSize: '12px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '0.6em',
+          lineHeight: 1,
         },
       },
 
