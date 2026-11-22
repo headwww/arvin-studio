@@ -144,10 +144,11 @@ const toggleLanguage = () => {
         }"
         :data="tableData"
       >
-        <Column drag-sort field="seq" type="seq" width="70" row-resize />
+        <Column field="seq" type="seq" width="70" row-resize />
         <Column
           field="name"
           title="名称"
+          sortable
           :filters="[
             { label: 'Test1', value: 'Test1' },
             { label: 'Test2', value: 'Test2' },
@@ -169,10 +170,10 @@ const toggleLanguage = () => {
             <span>{{ row.name }}</span>
           </template>
         </Column>
-        <Column type="checkbox" field="role" title="角色" />
+        <Column sortable type="checkbox" field="role" title="角色" />
         <Column field="date" title="Date" />
         <Column field="rate" title="Rate" />
-        <Column field="address" title="Address" />
+        <Column sort-type="string" sortable field="address" title="Address" />
         <Column type="html" field="content" title="Content" width="200" />
       </Table>
       <Table

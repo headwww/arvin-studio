@@ -1,6 +1,7 @@
 import type { PropType } from 'vue';
 
 import type { AsGlobalRendererOptions } from '@arvin-studio/core';
+import type { CheckboxChangeEvent } from '@arvin-studio/headless';
 
 import type { AsColumnPropTypes } from '../../types/column';
 import type {
@@ -20,7 +21,7 @@ import {
 
 import { isBoolean, uniqueId } from '@arvin-studio/kit';
 
-import { ArvinStudio, Button, Checkbox } from '../../..';
+import { ArvinStudio, Button, Checkbox, CheckboxGroup } from '../../..';
 import { toCssUnit } from '../../../_util/dom';
 import useLog from '../../../_util/logger';
 import { getSlotVNs } from '../../../_util/vn';
@@ -89,7 +90,7 @@ export default defineComponent({
     });
 
     // 全部筛选事件
-    const filterCheckAllEvent = (evnt: Event, value: any) => {
+    const filterCheckAllEvent = (_evnt: Event, value: any) => {
       const { filterStore } = props;
       const { column } = filterStore;
       if (column && column.filters) {
@@ -216,36 +217,81 @@ export default defineComponent({
         ? filterStore.isAllSelected
         : filterOptions.every((item) => !item._checked);
       const isAllIndeterminate = filterMultiple && filterStore.isIndeterminate;
+      // 勾选项以 options 下标作为 value，避免业务 value 为空或重复
+      const checkedIndexes = filterOptions.reduce<number[]>(
+        (indexes, item, index) => {
+          if (item._checked) {
+            indexes.push(index);
+          }
+          return indexes;
+        },
+        [],
+      );
+      // CheckboxGroup 的 change 不带原生事件，这里合成一个事件透传给表格
+      const handleOptionChange = (checkedValue: number[]) => {
+        const evnt = new Event('change');
+        const checkedSet = new Set(checkedValue);
+        if (filterMultiple) {
+          filterOptions.forEach((item, index) => {
+            if (!!item._checked !== checkedSet.has(index)) {
+              changeOption(evnt, checkedSet.has(index), item);
+            }
+          });
+          return;
+        }
+        // 单选：只处理实际发生切换的那一项（选中新项或取消当前项）
+        const checkedIndex = checkedValue.find(
+          (index) => !checkedIndexes.includes(index),
+        );
+        const uncheckedIndex = checkedIndexes.find(
+          (index) => !checkedSet.has(index),
+        );
+        const changedIndex =
+          checkedIndex === undefined ? uncheckedIndex : checkedIndex;
+        if (changedIndex !== undefined) {
+          changeOption(
+            evnt,
+            checkedSet.has(changedIndex),
+            filterOptions[changedIndex],
+          );
+        }
+      };
       return [
-        <ul class={`${prefixCls.value}--filter-header`} key="header">
-          <li
-            class={[`${prefixCls.value}--filter-option`]}
-            onClick={(evnt: MouseEvent) => {
-              changeAllOption(evnt, !filterStore.isAllSelected);
-            }}
-            title={String(
-              (filterMultiple
-                ? locale?.value?.allTitle
-                : locale?.value?.allFilter) ?? '',
-            )}
-          >
-            {filterMultiple ? (
-              <Checkbox
-                checked={isAllChecked}
-                indeterminate={isAllIndeterminate}
-                style={{ pointerEvents: 'none' }}
-              />
-            ) : (
-              createCommentVNode()
-            )}
-            <span class={`${prefixCls.value}-checkbox--label`}>
+        <div class={`${prefixCls.value}--filter-header`} key="header">
+          {filterMultiple ? (
+            <Checkbox
+              checked={isAllChecked}
+              class={`${prefixCls.value}--filter-option`}
+              indeterminate={isAllIndeterminate}
+              onChange={(evnt: CheckboxChangeEvent) => {
+                changeAllOption(evnt.nativeEvent, !!evnt.target.checked);
+              }}
+              title={String(locale?.value?.allTitle ?? '')}
+            >
               {locale?.value?.allFilter}
-            </span>
-          </li>
-        </ul>,
-        <ul
+            </Checkbox>
+          ) : (
+            <div
+              class={`${prefixCls.value}--filter-option`}
+              onClick={(evnt: MouseEvent) => {
+                changeAllOption(evnt, false);
+              }}
+              title={String(locale?.value?.allFilter ?? '')}
+            >
+              {locale?.value?.allFilter}
+            </div>
+          )}
+        </div>,
+        <CheckboxGroup
           class={`${prefixCls.value}--filter-body`}
           key="body"
+          onChange={handleOptionChange}
+          options={filterOptions.map((item, index) => ({
+            class: `${prefixCls.value}--filter-option`,
+            label: formatText(item.label, 1),
+            title: String(item.label ?? ''),
+            value: index,
+          }))}
           style={
             maxHeight
               ? {
@@ -253,30 +299,8 @@ export default defineComponent({
                 }
               : {}
           }
-        >
-          {filterOptions.map((item, index) => (
-            <li
-              class={[`${prefixCls.value}--filter-option`]}
-              key={index}
-              onClick={(evnt: MouseEvent) => {
-                changeOption(evnt, !item._checked, item);
-              }}
-              title={String(item.label ?? '')}
-            >
-              {filterMultiple ? (
-                <Checkbox
-                  checked={!!item._checked}
-                  style={{ pointerEvents: 'none' }}
-                />
-              ) : (
-                createCommentVNode()
-              )}
-              <span class={`${prefixCls.value}-checkbox--label`}>
-                {formatText(item.label, 1)}
-              </span>
-            </li>
-          ))}
-        </ul>,
+          value={checkedIndexes}
+        />,
       ];
     };
 
@@ -351,6 +375,10 @@ export default defineComponent({
             `${prefixCls.value}--filter-wrapper`,
             className,
           ]}
+          contentStyle={{
+            display: 'flex',
+            flexDirection: 'column',
+          }}
           height={filterStore.style?.height}
           open={true}
           placement="bottom"

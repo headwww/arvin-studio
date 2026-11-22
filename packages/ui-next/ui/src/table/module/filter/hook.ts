@@ -1,18 +1,26 @@
+import type { AsColumnPropTypes } from '../../types/column';
 import type { AsTableDefines } from '../../types/table';
 import type { TableFilterMethods, TableFilterPrivateMethods } from './filter';
 
 import { nextTick } from 'vue';
 
+import { clone } from '@arvin-studio/kit';
+
 import { ArvinStudio } from '../../..';
-import { getRefElem, isEnableConf } from '../../util';
+import { triggerEvent } from '../../../_util/dom';
+import {
+  getRefElem,
+  handleFieldOrColumn,
+  isEnableConf,
+  toFilters,
+} from '../../util';
 
 const { hooks, renderer } = ArvinStudio;
 
 hooks.add('tableFilterModule', {
   setupTable($asTable) {
-    const { props, reactData, internalData, prefixCls } = $asTable;
-    const { refTableFilter } = $asTable.getRefMaps();
-    const { computeFilterOpts, computeMouseOpts, computeRendererOpts } =
+    const { reactData, internalData, prefixCls } = $asTable;
+    const { computeFilterOpts, computeRendererOpts } =
       $asTable.getComputeMaps();
 
     const updatePopupStyle = () => {
@@ -108,10 +116,173 @@ hooks.add('tableFilterModule', {
             filterOptions.some((item) => item._checked);
         }
       },
+      confirmFilterEvent(evnt, column) {
+        if (column) {
+          $asTable.handleColumnConfirmFilter(column, evnt);
+        }
+      },
+      handleClearFilter(column) {
+        if (!column) {
+          return;
+        }
+
+        const filterResetMethod = (
+          column as AsTableDefines.ColumnInfo & {
+            filterResetMethod?: AsColumnPropTypes.FilterResetMethod;
+          }
+        ).filterResetMethod;
+        const { filters } = column;
+        if (filters) {
+          const filterOptions = filters as AsTableDefines.FilterOption[];
+          filterOptions.forEach((item) => {
+            item._checked = false;
+            item.checked = false;
+            if (!filterResetMethod) {
+              item.data = clone(item.resetValue, true);
+            }
+          });
+          if (filterResetMethod) {
+            filterResetMethod({
+              options: filterOptions,
+              column,
+              $table: $asTable,
+            });
+          }
+        }
+      },
+      handleColumnConfirmFilter(column, evnt) {
+        const { scrollXLoad: oldScrollXLoad, scrollYLoad: oldScrollYLoad } =
+          reactData;
+        const filterOpts = computeFilterOpts.value;
+        const { field, filters } = column;
+        const filterOptions = filters || [];
+        const values: any[] = [];
+        const datas: any[] = [];
+        filterOptions.forEach((item) => {
+          if (!item.checked) {
+            return;
+          }
+
+          values.push(item.value);
+          datas.push(item.data);
+        });
+        const filterList = $asTable.getCheckedFilters();
+        const params = {
+          $table: $asTable,
+          $event: evnt as Event,
+          column,
+          field,
+          property: field,
+          values,
+          datas,
+          filters: filterList,
+          filterList,
+        };
+        // 如果是服务端筛选，则跳过本地筛选处理
+        if (!filterOpts.remote) {
+          $asTable.handleTableData(true);
+          $asTable.checkSelectionStatus();
+        }
+        if (evnt) {
+          $asTable.dispatchEvent('filter-change', params, evnt);
+        }
+        $asTable.closeFilter();
+        return $asTable
+          .updateFooter()
+          .then(() => {
+            const { scrollXLoad, scrollYLoad } = reactData;
+            if (
+              oldScrollXLoad ||
+              scrollXLoad ||
+              oldScrollYLoad ||
+              scrollYLoad
+            ) {
+              if (oldScrollXLoad || scrollXLoad) {
+                $asTable.updateScrollXSpace();
+              }
+              if (oldScrollYLoad || scrollYLoad) {
+                $asTable.updateScrollYSpace();
+              }
+              return $asTable.refreshScroll();
+            }
+          })
+          .then(() => {
+            $asTable.updateCellAreas();
+            return $asTable.recalculate(true);
+          })
+          .then(() => {
+            // 存在滚动行为未结束情况
+            setTimeout(() => {
+              $asTable.recalculate();
+            }, 50);
+          });
+      },
+      handleFilterChangeMultipleOption(_evnt, checked, item) {
+        item._checked = checked;
+        $asTable.checkFilterOptions();
+      },
+      handleFilterChangeOption(evnt, checked, item) {
+        const { filterStore } = reactData;
+        const { fullColumnIdData } = internalData;
+        const column =
+          filterStore.column ||
+          (item._colId ? fullColumnIdData[item._colId]?.column : null);
+        if (column) {
+          if (column.filterMultiple) {
+            $asTable.handleFilterChangeMultipleOption(evnt, checked, item);
+          } else {
+            $asTable.handleFilterChangeRadioOption(evnt, checked, item);
+          }
+        }
+      },
+      handleFilterChangeRadioOption(evnt, checked, item) {
+        const { filterStore } = reactData;
+        const { column } = filterStore;
+        if (column) {
+          const filterOptions = (column.filters ||
+            []) as AsTableDefines.FilterOption[];
+          filterOptions.forEach((option) => {
+            option._checked = false;
+          });
+          item._checked = checked;
+          $asTable.checkFilterOptions();
+          $asTable.handleFilterConfirmFilter(evnt, column);
+        }
+      },
+      handleFilterConfirmFilter(evnt, column) {
+        if (!column) {
+          return;
+        }
+
+        const filterOptions = (column.filters ||
+          []) as AsTableDefines.FilterOption[];
+        filterOptions.forEach((option) => {
+          option.checked = option._checked;
+        });
+        $asTable.confirmFilterEvent(evnt, column);
+      },
+      handleFilterResetFilter(evnt, column) {
+        if (!column) {
+          return;
+        }
+
+        $asTable.handleClearFilter(column);
+        $asTable.confirmFilterEvent(evnt, column);
+        if (evnt) {
+          $asTable.dispatchEvent('clear-filter', { filterList: [] }, evnt);
+        }
+      },
+      handleFilterStyle() {
+        const { filterStore } = reactData;
+        if (filterStore.visible) {
+          return updatePopupStyle();
+        }
+        return nextTick();
+      },
       handleOpenFilterColumn(
         evnt: MouseEvent,
         btnEl: HTMLDivElement | null,
-        colEl: HTMLDivElement,
+        _colEl: HTMLDivElement,
         column: AsTableDefines.ColumnInfo,
         params: any,
       ) {
@@ -177,6 +348,147 @@ hooks.add('tableFilterModule', {
       },
     };
     const filterMethods: TableFilterMethods = {
+      clearFilter(fieldOrColumn) {
+        const { filterStore } = reactData;
+        const { tableFullColumn } = internalData;
+        const filterOpts = computeFilterOpts.value;
+        let column: AsTableDefines.ColumnInfo | null = null;
+        if (fieldOrColumn) {
+          column = handleFieldOrColumn($asTable, fieldOrColumn);
+          if (column) {
+            $asTable.handleClearFilter(column);
+          }
+        } else {
+          tableFullColumn.forEach((col) => {
+            $asTable.handleClearFilter(col);
+          });
+        }
+        if (!fieldOrColumn || column !== filterStore.column) {
+          Object.assign(filterStore, {
+            isAllSelected: false,
+            isIndeterminate: false,
+            style: null,
+            column: null,
+            visible: false,
+          });
+        }
+        if (!filterOpts.remote) {
+          return $asTable.updateData();
+        }
+        return nextTick();
+      },
+      openFilter(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column && column.filters) {
+          const { elemStore } = internalData;
+          const { fixed, filters } = column;
+          return $asTable.scrollToColumn(column).then(() => {
+            const headerWrapperElem = getRefElem(
+              elemStore[`${fixed || 'main'}-header-wrapper`] ||
+                elemStore['main-header-wrapper'],
+            );
+            if (headerWrapperElem) {
+              const filterBtnElem =
+                headerWrapperElem.querySelector<HTMLElement>(
+                  `.${prefixCls.value}-header--column.${column.id} .${prefixCls.value}-cell--filter`,
+                );
+              if (filterBtnElem) {
+                triggerEvent(filterBtnElem, 'click');
+              } else {
+                const colEl = headerWrapperElem.querySelector<HTMLElement>(
+                  `.${prefixCls.value}-header--column.${column.id}`,
+                );
+                if (colEl) {
+                  const evnt = new Event('click');
+                  const params = {
+                    $table: $asTable,
+                    $event: evnt,
+                    $rowIndex: -1,
+                    column,
+                    columnIndex: $asTable.getColumnIndex(column),
+                    $columnIndex: $asTable.getVMColumnIndex(column),
+                    _columnIndex: $asTable.getVTColumnIndex(column),
+                    firstFilterOption: filters[0] || null,
+                    fixed,
+                    source: 'table',
+                    type: 'header',
+                  };
+                  $asTable.handleOpenFilterColumn(
+                    evnt,
+                    null,
+                    colEl,
+                    column,
+                    params,
+                  );
+                }
+              }
+            }
+          });
+        }
+        return nextTick();
+      },
+      resetFilter(fieldOrColumn) {
+        if (fieldOrColumn) {
+          const column = handleFieldOrColumn($asTable, fieldOrColumn);
+          $asTable.handleFilterResetFilter(null, column);
+        }
+        return nextTick();
+      },
+      resetFilterByEvent(evnt, fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        $asTable.handleFilterResetFilter(evnt, column);
+        return nextTick();
+      },
+      resetFilterPanel() {
+        const { filterStore } = reactData;
+        $asTable.handleFilterResetFilter(null, filterStore.column || null);
+        return nextTick();
+      },
+      resetFilterPanelByEvent(evnt) {
+        const { filterStore } = reactData;
+        $asTable.handleFilterResetFilter(evnt, filterStore.column || null);
+        return nextTick();
+      },
+      saveFilter(fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn || null);
+        $asTable.handleFilterConfirmFilter(null, column);
+        return nextTick();
+      },
+      saveFilterByEvent(evnt, fieldOrColumn) {
+        const column = handleFieldOrColumn($asTable, fieldOrColumn || null);
+        $asTable.handleFilterConfirmFilter(evnt, column);
+        return nextTick();
+      },
+      saveFilterPanel() {
+        const { filterStore } = reactData;
+        $asTable.handleFilterConfirmFilter(null, filterStore.column || null);
+        return nextTick();
+      },
+      saveFilterPanelByEvent(evnt) {
+        const { filterStore } = reactData;
+        $asTable.handleFilterConfirmFilter(evnt, filterStore.column || null);
+        return nextTick();
+      },
+      setFilter(fieldOrColumn, options, update) {
+        const { filterStore } = reactData;
+        const column = handleFieldOrColumn($asTable, fieldOrColumn);
+        if (column && column.filters) {
+          column.filters = toFilters(options || [], column.id);
+          if (update) {
+            return $asTable.handleColumnConfirmFilter(column, null);
+          }
+          if (filterStore.visible) {
+            $asTable.handleFilterOptions(column);
+          }
+        }
+        return nextTick();
+      },
+      updateFilterOptionStatus(item, checked) {
+        const filterOption = item as AsTableDefines.FilterOption;
+        filterOption._checked = checked;
+        filterOption.checked = checked;
+        return nextTick();
+      },
       getCheckedFilters() {
         const { tableFullColumn } = internalData;
         const filterList: AsTableDefines.FilterCheckedParams[] = [];

@@ -393,7 +393,8 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
         [`${componentCls}-sort--asc-btn,
           ${componentCls}-sort--desc-btn`]: {
-          height: '0.6em',
+          lineHeight: '12px',
+          fontSize: '12px',
         },
       },
 
