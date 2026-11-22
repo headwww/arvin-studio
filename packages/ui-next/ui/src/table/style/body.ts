@@ -1316,7 +1316,7 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
       [`${componentCls}-body--row`]: {
         /** 斑马线 */
         '&.row--stripe': {
-          [`&>${componentCls}-body--column `]: {
+          [`& > ${componentCls}-body--column `]: {
             backgroundColor: stripedBackgroundColor,
           },
         },
@@ -1409,6 +1409,23 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
           [`& > ${componentCls}-body--column`]: {
             [`& > ${componentCls}-cell`]: {
               opacity: 0.3,
+            },
+          },
+        },
+
+        /* 复用组件占位 */
+        [`${componentCls}--column`]: {
+          [`${componentCls}-cell`]: {
+            [`${componentCls}-cell--wrapper`]: {
+              [`& > ${componentCls}-reusekeep-control`]: {
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                opacity: 0,
+                border: 0,
+                padding: 0,
+                outline: 'none',
+              },
             },
           },
         },
@@ -2148,24 +2165,6 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
 
       [`${componentCls}-cell--wrapper`]: {
         margin: 'auto 0',
-      },
-
-      [`${componentCls}-body--row`]: {
-        [`${componentCls}--column`]: {
-          [`${componentCls}-cell`]: {
-            [`${componentCls}-cell--wrapper`]: {
-              [`& > ${componentCls}-reusekeep-control`]: {
-                position: 'absolute',
-                width: 0,
-                height: 0,
-                opacity: 0,
-                border: 0,
-                padding: 0,
-                outline: 'none',
-              },
-            },
-          },
-        },
       },
 
       /* 校验消息位置*/

@@ -175,6 +175,78 @@ const toggleLanguage = () => {
         <Column field="address" title="Address" />
         <Column type="html" field="content" title="Content" width="200" />
       </Table>
+      <Table
+        :edit-config="{
+          trigger: 'click',
+          mode: 'cell',
+          showStatus: true,
+        }"
+        :round="true"
+        stripe
+        keep-source
+        show-footer
+        :row-config="{ useKey: true, resizable: true, drag: true }"
+        :column-config="{ useKey: true, resizable: true, drag: true }"
+        :footer-data="footerData"
+        :tooltip-config="tooltipConfig"
+        :header-tooltip-config="headerTooltipConfig"
+        :footer-tooltip-config="footerTooltipConfig"
+        show-overflow
+        :checkbox-config="{
+          labelField: 'name',
+          highlight: true,
+          range: true,
+        }"
+        :data="tableData"
+      >
+        <Column drag-sort field="seq" type="seq" width="70" row-resize />
+        <Column
+          field="name"
+          title="名称"
+          :filters="[
+            { label: 'Test1', value: 'Test1' },
+            { label: 'Test2', value: 'Test2' },
+            { label: 'Test3', value: 'Test3' },
+            { label: 'Test4', value: 'Test4' },
+            { label: 'Test5', value: 'Test5' },
+            { label: 'Test6', value: 'Test6' },
+            { label: 'Test7', value: 'Test7' },
+            { label: 'Test8', value: 'Test8' },
+            { label: 'Test9', value: 'Test9' },
+            { label: 'Test10', value: 'Test10' },
+          ]"
+          :edit-render="{ autoFocus: 'input' }"
+        >
+          <template #edit="{ row }">
+            <vxe-input v-model="row.name" />
+          </template>
+          <template #default="{ row }">
+            <span>{{ row.name }}</span>
+          </template>
+        </Column>
+        <Column type="checkbox" field="role" title="角色" />
+        <Column field="date" title="Date" />
+        <Column field="rate" title="Rate" />
+        <Column field="address" title="Address" />
+        <Column
+          :filters="[
+            { label: 'Test1', value: 'Test1' },
+            { label: 'Test2', value: 'Test2' },
+            { label: 'Test3', value: 'Test3' },
+            { label: 'Test4', value: 'Test4' },
+            { label: 'Test5', value: 'Test5' },
+            { label: 'Test6', value: 'Test6' },
+            { label: 'Test7', value: 'Test7' },
+            { label: 'Test8', value: 'Test8' },
+            { label: 'Test9', value: 'Test9' },
+            { label: 'Test10', value: 'Test10' },
+          ]"
+          type="html"
+          field="content"
+          title="Content"
+          width="200"
+        />
+      </Table>
     </ConfigProvider>
   </div>
 </template>

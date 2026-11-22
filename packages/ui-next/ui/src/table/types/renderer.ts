@@ -112,6 +112,10 @@ declare module '@arvin-studio/core' {
       | AsComponentStyleType;
 
     /**
+     * 表格 - 筛选面板自适应表格高度
+     */
+    tableFilterAutoHeight?: boolean;
+    /**
      * 表格 - 默认筛选处理方法，如果同时存在，会被 tableFilterMethod 覆盖
      */
     tableFilterDefaultMethod?(

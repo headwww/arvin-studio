@@ -7,6 +7,7 @@ import {
   defineComponent,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   shallowRef,
   Teleport,
   watch,
@@ -100,6 +101,17 @@ const InternalPositionPopup = defineComponent<
 
     const triggerRef = shallowRef<null | TriggerRef>(null);
     const contentRef = shallowRef<HTMLElement | null>(null);
+    // 首次打开时组件可能带着 open=true 直接挂载，而 x/y/width/height 往往
+    // 在父组件同一轮更新里才写入。等挂载后的下一轮再让 Trigger 打开，
+    // 否则它第一次对齐会量到 0 尺寸锚点，并把 0 尺寸缓存到动画结束。
+    const popupReady = shallowRef(false);
+    onMounted(() => {
+      void nextTick()
+        .then(() => nextTick())
+        .then(() => {
+          popupReady.value = true;
+        });
+    });
 
     const forceAlign = () => triggerRef.value?.forceAlign?.();
     expose({ forceAlign });
@@ -225,7 +237,7 @@ const InternalPositionPopup = defineComponent<
             popupMotion={popupMotion.value}
             popupPlacement={props.placement}
             popupStyle={mergedPopupStyle.value}
-            popupVisible={props.open}
+            popupVisible={props.open && popupReady.value}
             prefixCls={prefixCls.value}
             ref={triggerRef}
             zIndex={props.zIndex}

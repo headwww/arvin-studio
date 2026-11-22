@@ -5564,10 +5564,6 @@ export namespace AsTablePropTypes {
      * 是否显示筛选按钮图标
      */
     showIcon?: boolean;
-    /**
-     * 是否启用元素挂载
-     */
-    transfer?: boolean;
     zIndex?: number;
   }
 

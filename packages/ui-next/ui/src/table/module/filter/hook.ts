@@ -11,7 +11,7 @@ const { hooks, renderer } = ArvinStudio;
 hooks.add('tableFilterModule', {
   setupTable($asTable) {
     const { props, reactData, internalData, prefixCls } = $asTable;
-    const { refElem, refTableFilter } = $asTable.getRefMaps();
+    const { refTableFilter } = $asTable.getRefMaps();
     const { computeFilterOpts, computeMouseOpts, computeRendererOpts } =
       $asTable.getComputeMaps();
 
@@ -22,10 +22,9 @@ hooks.add('tableFilterModule', {
       if (!column) {
         return nextTick();
       }
-      const tableEl = refElem.value;
       const filterOpts = computeFilterOpts.value;
       const rendererOpts = computeRendererOpts.value;
-      const { maxHeight: customMaxHeight, transfer, zIndex } = filterOpts;
+      const { maxHeight: customMaxHeight, zIndex } = filterOpts;
       const filterRender = column ? column.filterRender : null;
       const compConf =
         filterRender && isEnableConf(filterRender) && filterRender.name
@@ -36,24 +35,6 @@ hooks.add('tableFilterModule', {
       if (!headerScrollElem) {
         return nextTick();
       }
-      const tableFilter = refTableFilter.value;
-      const filterWrapperElem = tableFilter
-        ? (tableFilter.getRefMaps().refElem.value as HTMLDivElement)
-        : null;
-      if (!filterWrapperElem) {
-        return nextTick();
-      }
-      const filterHeadElem = filterWrapperElem.querySelector<HTMLDivElement>(
-        '.vxe-table--filter-header',
-      );
-      const filterFootElem = filterWrapperElem.querySelector<HTMLDivElement>(
-        '.vxe-table--filter-footer',
-      );
-
-      /**
-       * 是否显示筛选按钮图标
-       * 如果不存在图标，则相对单元格居中显示
-       */
       const handleStyle = () => {
         let currEl = targetEl;
         if (!targetEl) {
@@ -63,7 +44,7 @@ hooks.add('tableFilterModule', {
           );
           const colEl = headerWrapperElem
             ? headerWrapperElem.querySelector<HTMLDivElement>(
-                `.vxe-header--column.${column.id}`,
+                `.${prefixCls.value}-header--column.${column.id}`,
               )
             : null;
           if (colEl) {
@@ -73,56 +54,26 @@ hooks.add('tableFilterModule', {
         if (!currEl) {
           return nextTick();
         }
+        const parentWrapperEl = document.documentElement;
+        const targetRect = currEl.getBoundingClientRect();
+        const parentWrapperRect = parentWrapperEl.getBoundingClientRect();
+        const targetLeft = targetRect.left;
+        const targetTop = targetRect.top;
+        const offsetLeft = parentWrapperRect.left;
+        const offsetTop = parentWrapperRect.top;
+        const targetHeight = currEl.offsetHeight;
+        const targetWidth = currEl.offsetWidth;
 
-        const btnRect = currEl.getBoundingClientRect();
-        const tableRect = tableEl.getBoundingClientRect();
-        let left = 0;
-        let top = 0;
-        let maxHeight = 0;
-        let panelStyle: Record<string, number | string> = {};
-        if (transfer) {
-          const ppObj = updatePanelPlacement(currEl, filterWrapperElem, {
-            defaultPlacement: 'bottom',
-            isMinWidth: false,
-            teleportTo: transfer,
-          });
-          panelStyle = ppObj.style;
-        } else {
-          const filterWidth = filterWrapperElem.offsetWidth;
-          // eslint-disable-next-line unicorn/prefer-minimal-ternary
-          const centerWidth = targetEl
-            ? filterWidth / 2
-            : (filterWidth - column.renderWidth) / 2;
-          left = btnRect.left - tableRect.left - centerWidth;
-          top = btnRect.top - tableRect.top + currEl.clientHeight;
-          maxHeight = Math.max(
-            40,
-            tableEl.clientHeight -
-              top -
-              (filterHeadElem ? filterHeadElem.clientHeight : 0) -
-              (filterFootElem ? filterFootElem.clientHeight : 0) -
-              14,
-          );
-          if (left < 1) {
-            left = 1;
-          } else if (left > tableEl.clientWidth - filterWidth - 1) {
-            left = tableEl.clientWidth - filterWidth - 1;
-          }
-          if ($xeGGWrapper) {
-            const wrapperEl = $xeGGWrapper.getRefMaps().refElem.value;
-            if (wrapperEl) {
-              const wrapperRect = wrapperEl.getBoundingClientRect();
-              top += tableRect.top - wrapperRect.top;
-            }
-          }
-          panelStyle = {
-            top: toCssUnit(top),
-            left: toCssUnit(left),
-          };
-        }
+        const panelStyle: Record<string, number | string> = {
+          left: targetLeft - offsetLeft,
+          top: targetTop - offsetTop,
+          height: targetHeight,
+          width: targetWidth,
+        };
         if (zIndex) {
           panelStyle.zIndex = zIndex;
         }
+        let maxHeight = 0;
         filterStore.style = panelStyle;
         // 筛选面板是自适应表格高度
         if (compConf ? !compConf.tableFilterAutoHeight : false) {
@@ -135,12 +86,28 @@ hooks.add('tableFilterModule', {
         // 判断面板不能大于表格高度
         filterStore.maxHeight = maxHeight;
       };
+
       handleStyle();
       return nextTick().then(() => {
         handleStyle();
       });
     };
+
     const filterPrivateMethods: TableFilterPrivateMethods = {
+      checkFilterOptions() {
+        const { filterStore } = reactData;
+        const { column } = filterStore;
+        if (column) {
+          const filterOptions = (column.filters ||
+            []) as AsTableDefines.FilterOption[];
+          filterStore.isAllSelected = filterOptions.every(
+            (item) => item._checked,
+          );
+          filterStore.isIndeterminate =
+            !filterStore.isAllSelected &&
+            filterOptions.some((item) => item._checked);
+        }
+      },
       handleOpenFilterColumn(
         evnt: MouseEvent,
         btnEl: HTMLDivElement | null,
@@ -209,7 +176,37 @@ hooks.add('tableFilterModule', {
         );
       },
     };
-    const filterMethods: TableFilterMethods = {};
+    const filterMethods: TableFilterMethods = {
+      getCheckedFilters() {
+        const { tableFullColumn } = internalData;
+        const filterList: AsTableDefines.FilterCheckedParams[] = [];
+        tableFullColumn.forEach((column) => {
+          const { field, filters } = column;
+          const filterOptions = filters || [];
+          const valueList: any[] = [];
+          const dataList: any[] = [];
+          if (filterOptions) {
+            filterOptions.forEach((item) => {
+              if (!item.checked) {
+                return;
+              }
+
+              valueList.push(item.value);
+              dataList.push(item.data);
+            });
+            if (valueList.length > 0) {
+              filterList.push({
+                column,
+                field,
+                values: valueList,
+                datas: dataList,
+              });
+            }
+          }
+        });
+        return filterList;
+      },
+    };
     return { ...filterMethods, ...filterPrivateMethods };
   },
 });
