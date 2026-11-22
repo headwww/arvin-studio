@@ -6488,6 +6488,7 @@ export namespace AsTableDefines {
     editRender: AsColumnPropTypes.EditRender;
     field: AsColumnPropTypes.Field;
     filterMethod: AsColumnPropTypes.FilterMethod<D>;
+    filterMultiple?: AsColumnPropTypes.FilterMultiple;
     filterRecoverMethod: AsColumnPropTypes.FilterRecoverMethod<D>;
     filterRender: AsColumnPropTypes.FilterRender;
     filters: AsColumnPropTypes.FilterItem[];

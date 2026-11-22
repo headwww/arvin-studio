@@ -16,6 +16,20 @@ declare module '@arvin-studio/core' {
       params: AsGlobalRendererHandles.CreateTableFilterOptionsParams,
     ): AsColumnPropTypes.FilterItem[];
     /**
+     * @deprecated 请使用 tableFilterClassName
+     */
+    filterClassName?:
+      | ((params: any) => AsComponentClassNameType | string)
+      | string;
+
+    /**
+     * @deprecated 请使用 renderTableFilter
+     */
+    renderFilter?(
+      renderOpts: AsColumnPropTypes.FilterRender,
+      renderParams: any,
+    ): AsComponentSlotType | AsComponentSlotType[];
+    /**
      * 表格 - 渲染非编辑状态时，与 renderTableEdit 配合使用
      */
     renderTableCell?(
@@ -30,7 +44,6 @@ declare module '@arvin-studio/core' {
       renderOpts: AsGlobalRendererHandles.RenderTableDefaultOptions,
       renderParams: AsGlobalRendererHandles.RenderTableDefaultParams<any>,
     ): AsComponentSlotType | AsComponentSlotType[];
-
     /**
      * 表格 - 渲染编辑状态单元格
      */
@@ -38,6 +51,7 @@ declare module '@arvin-studio/core' {
       renderOpts: any,
       renderParams: any,
     ): AsComponentSlotType | AsComponentSlotType[];
+
     /**
      * 表格 - 空数据时渲染
      */
@@ -53,12 +67,20 @@ declare module '@arvin-studio/core' {
       renderOpts: AsGlobalRendererHandles.RenderTableEmptyOptions,
       renderParams: AsGlobalRendererHandles.RenderTableEmptyParams,
     ): AsComponentSlotType | AsComponentSlotType[];
+
     /**
      * 表格 - 展开行渲染
      */
     renderTableExpand?(
       renderOpts: AsGlobalRendererHandles.RenderTableExpandOptions,
       renderParams: AsGlobalRendererHandles.RenderTableExpandParams<any>,
+    ): AsComponentSlotType | AsComponentSlotType[];
+    /**
+     * 表格 - 筛选面板内容渲染
+     */
+    renderTableFilter?(
+      renderOpts: AsColumnPropTypes.FilterRender,
+      renderParams: any,
     ): AsComponentSlotType | AsComponentSlotType[];
 
     /**
@@ -75,7 +97,6 @@ declare module '@arvin-studio/core' {
       renderOpts: AsGlobalRendererHandles.RenderTableFooterOptions,
       renderParams: AsGlobalRendererHandles.RenderTableFooterParams<any>,
     ): AsComponentSlotType | AsComponentSlotType[];
-
     /**
      * 表格 - 渲染头部
      */
@@ -83,6 +104,11 @@ declare module '@arvin-studio/core' {
       renderOpts: AsGlobalRendererHandles.RenderTableHeaderOptions,
       renderParams: AsGlobalRendererHandles.RenderTableHeaderParams<any>,
     ): AsComponentSlotType | AsComponentSlotType[];
+    /**
+     * 表格 - 筛选面板是否显示底部按钮
+     */
+    showTableFilterFooter?: boolean;
+
     /**
      * 表格 - 单元格对齐方式
      */
@@ -110,11 +136,16 @@ declare module '@arvin-studio/core' {
           params: AsGlobalRendererHandles.RenderTableDefaultParams<any>,
         ) => AsComponentStyleType)
       | AsComponentStyleType;
-
     /**
      * 表格 - 筛选面板自适应表格高度
      */
     tableFilterAutoHeight?: boolean;
+    /**
+     * 表格 - 筛选面板 className
+     */
+    tableFilterClassName?:
+      | ((params: any) => AsComponentClassNameType | string)
+      | string;
     /**
      * 表格 - 默认筛选处理方法，如果同时存在，会被 tableFilterMethod 覆盖
      */

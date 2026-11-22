@@ -157,6 +157,26 @@ export namespace AsColumnPropTypes {
       | null
       | string;
     /**
+     * 只对 edit-render 启用时有效，自定义编辑组件模板
+     */
+    edit?:
+      | ((
+          params: AsColumnSlotTypes.EditSlotParams<D>,
+        ) => AsComponentSlotType | AsComponentSlotType[])
+      | null
+      | string;
+
+    /**
+     * 只对 filter-render 或 filters 启用时有效，自定义筛选面板内容模板
+     */
+    filter?:
+      | ((
+          params: AsColumnSlotTypes.FilterSlotParams<D>,
+        ) => AsComponentSlotType | AsComponentSlotType[])
+      | null
+      | string;
+
+    /**
      * 只对 floating-filters 和 filter-render 启用时有效，自定义浮动筛选模板
      */
     'floating-filter'?:
@@ -192,7 +212,6 @@ export namespace AsColumnPropTypes {
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
-
     /**
      * 只对 agg-func 开启后有效，自定义分组列聚合数据模板
      */
@@ -209,13 +228,13 @@ export namespace AsColumnPropTypes {
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
+
     groupValues?:
       | ((
           params: AsTableSlotTypes.ColumnGroupValuesSlotParams<D>,
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
-
     /**
      * 自定义表头内容的模板
      * @deprecated 请使用 title 插槽
@@ -226,31 +245,12 @@ export namespace AsColumnPropTypes {
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
-
     /**
      * 只对 tree-config / expand-config 有效，自定义展开图标
      */
     icon?:
       | ((
           params: AsColumnSlotTypes.DefaultSlotParams<D>,
-        ) => AsComponentSlotType | AsComponentSlotType[])
-      | null
-      | string;
-    /**
-     * 自定义排序图标
-     */
-    sort?:
-      | ((
-          params: AsColumnSlotTypes.HeaderSlotParams<D>,
-        ) => AsComponentSlotType | AsComponentSlotType[])
-      | null
-      | string;
-    /**
-     * 只对 edit-render 启用时有效，自定义编辑组件模板
-     */
-    edit?:
-      | ((
-          params: AsColumnSlotTypes.EditSlotParams<D>,
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
@@ -276,6 +276,16 @@ export namespace AsColumnPropTypes {
     rowDragIcon?:
       | ((
           params: AsTableSlotTypes.RowDragIconSlotParams<D>,
+        ) => AsComponentSlotType | AsComponentSlotType[])
+      | null
+      | string;
+
+    /**
+     * 自定义排序图标
+     */
+    sort?:
+      | ((
+          params: AsColumnSlotTypes.HeaderSlotParams<D>,
         ) => AsComponentSlotType | AsComponentSlotType[])
       | null
       | string;
@@ -316,6 +326,14 @@ export namespace AsColumnPropTypes {
     export interface EditSlotParams<
       D = any,
     > extends AsTableDefines.CellRenderBodyParams<D> {}
+
+    export interface FilterSlotParams<D = any> {
+      $panel: any;
+      $table: AsTableConstructor<D>;
+      column: AsTableDefines.ColumnInfo<D>;
+      filterList: AsColumnPropTypes.FilterItem[];
+      option?: AsTableDefines.FilterOption;
+    }
 
     export interface FooterSlotParams<D = any> {
       $columnIndex: number;
@@ -825,13 +843,13 @@ export interface AsColumnProps<D = any> {
    */
   title?: AsColumnPropTypes.Title;
   /**
-   * 标题前缀图标配置项
-   */
-  titlePrefix?: AsColumnPropTypes.TitlePrefix;
-  /**
    * 列头标题帮助图标配置项，`titlePrefix` 的别名
    */
   titleHelp?: AsColumnPropTypes.TitlePrefix;
+  /**
+   * 标题前缀图标配置项
+   */
+  titlePrefix?: AsColumnPropTypes.TitlePrefix;
   /**
    * 标题后缀图标配置项
    */

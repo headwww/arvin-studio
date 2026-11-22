@@ -8,7 +8,7 @@ export function genFilterStyle(token: TableToken): CSSInterpolation {
     iconCls,
     columnIconBorderColor,
     colorText,
-    primaryColor,
+    colorBorderSecondary,
   } = token;
 
   return [
@@ -36,11 +36,12 @@ export function genFilterStyle(token: TableToken): CSSInterpolation {
         },
       },
 
-      '.is--filter-active': {
-        [`${componentCls}-cell--filter`]: {
-          [`${componentCls}-filter--btn`]: {
-            color: primaryColor,
-          },
+      [`${componentCls}--filter-wrapper`]: {
+        [`${componentCls}--filter-footer`]: {
+          display: 'flex',
+          gap: '8px',
+          padding: '0.6em',
+          borderTop: `1px solid ${colorBorderSecondary}`,
         },
       },
     },
