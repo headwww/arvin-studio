@@ -138,7 +138,6 @@ const openImport = () => {
   tableRef.value?.openImport?.();
 };
 
-
 const openCustom = (mode: 'drawer' | 'modal' | 'simple') => {
   customConfig.mode = mode;
   nextTick(() => {
@@ -236,7 +235,6 @@ const handleMenuClick = ({ menu, row, $table }: any) => {
     }
   }
 };
-
 const locale = ref(zhCN); // 响应式的语言包对象
 const currentLang = ref<'en-US' | 'zh-CN'>('zh-CN'); // 语言标识
 // 监听语言标识变化，切换对应的语言包

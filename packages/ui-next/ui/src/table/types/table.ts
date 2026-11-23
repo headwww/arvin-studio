@@ -572,132 +572,7 @@ export interface AsTablePrivateComputed extends TablePrivateComputed {}
  */
 export type ValueOf<T> = T extends any[] ? T[number] : T[keyof T];
 
-export interface AsTableExtendCellAreaMethods<D = any> {
-  /**
-   * 用于 mouse-config.area，用于清除鼠标选择的区域，可以指定清除的区域
-   */
-  clearCellAreas(
-    area?: AsTableExtendCellAreaDefines.MouseCellArea | number,
-  ): Promise<any>;
-
-  /**
-   * 用于 mouse-config.area，手动清除标记为复制粘贴的区域
-   */
-  clearCopyCellArea(): Promise<any>;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  getCellAreaPushStackObj(
-    stackObj: AsTableDefines.HistoryStackObj,
-  ): AsTableDefines.HistoryStackObj;
-  /**
-   * 内部方法
-   * @private
-   */
-  getPivotTableAggregateCellAggValue(params: {
-    $table: AsTableConstructor<D> & AsTablePrivateMethods<D>;
-    column: AsTableDefines.ColumnInfo;
-    row: any;
-  }): string;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleCellAreaSnapshotStackData(
-    stackObj: AsTableDefines.HistoryStackObj,
-  ): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleColResizeCellAreaEvent(evnt: MouseEvent, params: any): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleColResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  handleCutCellAreaEvent(evnt: ClipboardEvent): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleCyClAreaEvent(evnt: ClipboardEvent): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  handleHeaderCellAreaMouseDnEvent(
-    evnt: MouseEvent,
-    params: AsTableDefines.HeaderCellClickEventParams<D>,
-  ): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleKdClAreaEvent(evnt: KeyboardEvent): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  handlePeClAreaEvent(evnt: ClipboardEvent): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handlePivotTableAggData(aggList: AsTableDefines.AggregateRowInfo[]): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  handleRecalculateCellAreaEvent(): any;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleRowResizeCellAreaEvent(evnt: MouseEvent, params: any): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  handleRowResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
-  /**
-   * 内部方法
-   * @private
-   */
-  handleSortEvent(
-    evnt: Event,
-    params: AsTableDefines.SortChangeEventParams<D>,
-  ): any;
-  /**
-   * 内部方法
-   * @private
-   */
-  triggerCellAreaExtendMousedownEvent(evnt: MouseEvent, params: any): void;
-
-  /**
-   * 内部方法
-   * @private
-   */
-  triggerClAreaMnEvent(
-    evnt: MouseEvent,
-    params: AsTableDefines.CellClickEventParams<D>,
-  ): void;
-}
-
-export interface TableMethods<
-  DT = any,
-> extends AsTableExtendCellAreaMethods<DT> {
+export interface TableMethods<DT = any> {
   /**
    * 使表格失去焦点
    */
@@ -1023,11 +898,6 @@ export interface TableMethods<
     fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
   ): AsTableDefines.ColumnInfo | null;
   /**
-   * 已废弃，请使用 getTreeParentRow
-   * @deprecated
-   */
-  getParentRow(rowOrRowid: any): DT | null;
-  /**
    * 获取待删除状态的数据
    */
   getPendingRecords(): DT[];
@@ -1096,16 +966,6 @@ export interface TableMethods<
    * @param row 行对象
    */
   getRowSeq(row: any): number | string;
-  /**
-   * 获取表格的滚动状态
-   * @deprecated
-   */
-  getScroll(): {
-    scrollLeft: number;
-    scrollTop: number;
-    virtualX: boolean;
-    virtualY: boolean;
-  };
   /**
    * 获取表格的滚动数据
    */
@@ -1191,11 +1051,6 @@ export interface TableMethods<
    */
   getVTRowIndex(row: any): number;
   /**
-   * 请使用 isPendingByRow
-   * @deprecated
-   */
-  hasPendingByRow(row: any): boolean;
-  /**
    * 隐藏指定列
    * @param fieldOrColumns 列对象或字段名,支持传多个
    */
@@ -1254,17 +1109,6 @@ export interface TableMethods<
    */
   isCheckedByRadioRowKey(key: null | number | string | undefined): boolean;
   /**
-   * @deprecated 已废弃，请使用 isRowExpandByRow
-   */
-  isExpandByRow(row: any | null): boolean;
-  /**
-   * 已废弃，请使用 isActiveFilterByColumn
-   * @deprecated
-   */
-  isFilter(
-    fieldOrColumn: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
-  ): boolean;
-  /**
    * 用于 type=checkbox，判断复选行数据是否半选
    * @param row 指定行
    */
@@ -1301,16 +1145,6 @@ export interface TableMethods<
    * @param row 指定行
    */
   isRowExpandLoaded(row: any | null): boolean;
-  /**
-   * 已废弃，请使用 isAggregateExpandByRow
-   * @deprecated
-   */
-  isRowGroupExpandByRow(row: any): boolean;
-  /**
-   * 已废弃，请使用 isAggregateRecord
-   * @deprecated
-   */
-  isRowGroupRecord(row: any): boolean;
   /**
    * 判断指定列是否为排序状态，如果为空则判断所有列
    * @param columnOrField 列对象或字段名
@@ -1455,10 +1289,6 @@ export interface TableMethods<
    */
   reloadData(data: any[]): Promise<void>;
   /**
-   * @deprecated 已废弃，请使用 reloadRowExpand
-   */
-  reloadExpandContent(row: any): Promise<void>;
-  /**
    * 修改行数据并恢复到初始状态，比如编辑之后需要修改成未编辑状态
    * @param rows 行对象
    * @param record 新数据
@@ -1470,10 +1300,6 @@ export interface TableMethods<
    * @param row 指定行
    */
   reloadRowExpand(row: any): Promise<void>;
-  /**
-   * @deprecated 已废弃，请使用 reloadTreeExpand
-   */
-  reloadTreeChilds(row: any): Promise<any>;
   /**
    * 重新懒加载树节点，并展开该节点
    * @param rows 指定行
@@ -1512,20 +1338,6 @@ export interface TableMethods<
       | AsTableDefines.MergeOptions<any>
       | AsTableDefines.MergeOptions<any>[],
   ): Promise<AsTableDefines.MergeInfo[]>;
-  /**
-   * 已废弃，被 resetCustom 替换
-   * @deprecated
-   */
-  resetColumn(
-    options?:
-      | boolean
-      | {
-          fixed?: boolean;
-          order?: boolean;
-          resizable?: boolean;
-          visible?: boolean;
-        },
-  ): Promise<void>;
   // /**
   //  * 将表格数据转成原始数据
   //  * 会自动去掉主键等内部属性
@@ -1829,13 +1641,6 @@ export interface TableMethods<
     order?: AsTablePropTypes.SortOrder,
   ): Promise<void>;
   /**
-   * 该方法已废弃！！！
-   * 同步 data 数据；如果用了该方法，那么组件将不再记录增删改的状态，只能自行实现对应逻辑
-   * 对于某些特殊的场景，比如深层树节点元素发生变动时可能会用到
-   * @deprecated
-   */
-  syncData(): Promise<void>;
-  /**
    * 用于 type=checkbox，切换所有行的选中状态
    */
   toggleAllCheckboxRow(): Promise<any>;
@@ -1967,14 +1772,6 @@ export interface TablePrivateMethods<D = any> {
    * @private
    */
   findRowIndexOf(list: any[], row: any): number;
-  /**
-   * 已废弃，被 getCellElement 替换
-   * @deprecated
-   */
-  getCell(
-    row: any,
-    column: AsTableDefines.ColumnInfo,
-  ): HTMLElement | HTMLTableCellElement | null;
   /**
    * @private
    */
@@ -2221,12 +2018,6 @@ export interface TablePrivateMethods<D = any> {
       type: string;
     },
   ): void;
-  /**
-   * 内部方法
-   * use handleBatchSelectRows
-   * @deprecated
-   */
-  handleSelectRow(params: any, value: any, isForce?: boolean): void;
   /**
    * 内部方法
    * @private
@@ -5095,10 +4886,6 @@ export namespace AsTablePropTypes {
      */
     copyMethod?: AsColumnPropTypes.CopyMethod<DT>;
     /**
-     * @deprecated 请使用 isCopyToContent
-     */
-    copyToLabel?: boolean;
-    /**
      * 只对 isColumnIncrement 有效，自定义创建自增列配置的方法
      */
     createColumnsMethod?(params: {
@@ -5180,10 +4967,6 @@ export namespace AsTablePropTypes {
      * 是否启用行自增
      */
     isRowIncrement?: boolean;
-    /**
-     * @deprecated 请使用 trailingNewline
-     */
-    isTrimCopyContent?: boolean;
     /**
      * 重写单元格粘贴赋值的方法
      */
@@ -6165,6 +5948,19 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
 }
 
 export namespace AsTableDefines {
+  export interface FilterCheckedParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+    datas: any[];
+    field: AsColumnPropTypes.Field;
+    values: any[];
+  }
+
+  export interface FilterChangeParams<D = any> extends FilterCheckedParams<D> {
+    filterList: FilterCheckedParams<D>[];
+  }
+  export interface FilterChangeEventParams<D = any>
+    extends FilterChangeParams<D>, TableEventParams<D> {}
+
   export interface ValidatorErrorParams<D = any> {
     $table: AsTableConstructor<D>;
     cellValue: any;
@@ -6937,8 +6733,7 @@ export namespace AsTableDefines {
   }
 
   export interface ExportParamsObj
-    extends AsTablePropTypes.ExportConfig,
-      AsTablePropTypes.PrintConfig {
+    extends AsTablePropTypes.ExportConfig, AsTablePropTypes.PrintConfig {
     mode?: string;
     type?: string;
     types?: string[];

@@ -7906,10 +7906,6 @@ export const Table = defineComponent<AsTableProps>(
         }
         return null;
       },
-      getParentRow(rowOrRowid) {
-        log.warn('delFunc', ['getParentRow', 'getTreeParentRow']);
-        return $asTable.getTreeParentRow(rowOrRowid);
-      },
       /**
        * 根据行的唯一主键获取行
        * @param {String/Number} rowid 行主键
@@ -8065,15 +8061,6 @@ export const Table = defineComponent<AsTableProps>(
           return column.renderWidth;
         }
         return 0;
-      },
-      /**
-       * 手动重置列的显示隐藏、列宽拖动的状态、固定列、排序列；
-       * 如果为 true 则重置所有状态
-       * 如果已关联工具栏，则会同步更新
-       */
-      resetColumn(options) {
-        log.warn('delFunc', ['resetColumn', 'resetCustom']);
-        return $asTable.resetCustom(options);
       },
       /**
        * 刷新列信息
@@ -8753,9 +8740,6 @@ export const Table = defineComponent<AsTableProps>(
         reactData.pendingRowFlag++;
         return nextTick();
       },
-      hasPendingByRow(row) {
-        return $asTable.isPendingByRow(row);
-      },
       isPendingByRow(row) {
         const { pendingRowMaps } = internalData;
         const rowid = getRowid($asTable, row);
@@ -8971,9 +8955,6 @@ export const Table = defineComponent<AsTableProps>(
         }
         return $asTable.getCheckedFilters().length > 0;
       },
-      isFilter(fieldOrColumn) {
-        return $asTable.isActiveFilterByColumn(fieldOrColumn);
-      },
       clearFilterByEvent(evnt, fieldOrColumn) {
         const { filterStore } = reactData;
         const { tableFullColumn } = internalData;
@@ -9092,11 +9073,6 @@ export const Table = defineComponent<AsTableProps>(
             .then(() => handleAsyncRowExpand(row));
         }
         return nextTick();
-      },
-      reloadExpandContent(row) {
-        log.warn('delFunc', ['reloadExpandContent', 'reloadRowExpand']);
-        // 即将废弃
-        return $asTable.reloadRowExpand(row);
       },
       /**
        * 切换展开行
@@ -9220,11 +9196,6 @@ export const Table = defineComponent<AsTableProps>(
         const rowid = getRowid($asTable, row);
         return !!rowExpandedFlag && !!rowExpandedMaps[rowid];
       },
-      isExpandByRow(row) {
-        // 已废弃
-        log.warn('delFunc', ['isExpandByRow', 'isRowExpandByRow']);
-        return $asTable.isRowExpandByRow(row);
-      },
       /**
        * 手动清空展开行状态，数据会恢复成未展开的状态
        */
@@ -9323,17 +9294,6 @@ export const Table = defineComponent<AsTableProps>(
         }
         handleUpdateRowGroup([]);
         return loadTableData(internalData.tableSynchData, false, true);
-      },
-      isRowGroupRecord(row) {
-        log.warn('delFunc', ['isRowGroupRecord', 'isAggregateRecord']);
-        return $asTable.isAggregateRecord(row);
-      },
-      isRowGroupExpandByRow(row) {
-        log.warn('delFunc', [
-          'isRowGroupExpandByRow',
-          'isAggregateExpandByRow',
-        ]);
-        return $asTable.isAggregateExpandByRow(row);
       },
 
       isAggregateRecord(row) {
@@ -9520,11 +9480,6 @@ export const Table = defineComponent<AsTableProps>(
         }
         return nextTick();
       },
-      reloadTreeChilds(row) {
-        log.warn('delFunc', ['reloadTreeChilds', 'reloadTreeExpand']);
-        // 即将废弃
-        return $asTable.reloadTreeExpand(row);
-      },
       /**
        * 切换/展开树节点
        */
@@ -9631,12 +9586,6 @@ export const Table = defineComponent<AsTableProps>(
       clearTreeExpandReserve() {
         internalData.treeExpandedReserveRowMap = {};
         return nextTick();
-      },
-      /**
-       * 获取表格的滚动状态
-       */
-      getScroll() {
-        return $asTable.getScrollData();
       },
       /**
        * 获取表格的滚动数据
