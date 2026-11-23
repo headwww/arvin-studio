@@ -26,6 +26,7 @@ const localeValues: Locale = {
     resizeRowTip: '高：{0} 像素',
     maxFixedCol: '最大固定列的数量不能超过 {0} 个',
     maxGroupCol: '最大分组字段的数量不能超过 {0} 个',
+    menuLoading: '加载中...',
     treeDragChild: '父级不能拖拽到自己的子级中',
     noTree: '树结构不支持 "{0}"',
     noGroup: '数据分组后不支持 "{0}"',

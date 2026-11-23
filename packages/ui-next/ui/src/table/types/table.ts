@@ -235,6 +235,8 @@ export interface TableReactData<D = any> {
 
 export interface TableInternalData<D = any> {
   _currFilterParams?: any;
+  // 当前右键菜单参数
+  _currMenuParams?: any;
   _keyCtx?: any;
   _lastCallTime?: any;
   _lastResizeTime?: any;
@@ -584,11 +586,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   ): Promise<void>;
 
   /**
-   * 手动关闭快捷菜单
-   */
-  closeMenu(): Promise<any>;
-
-  /**
    * 内部方法
    * @private
    */
@@ -651,10 +648,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * @private
    */
   handleFilterStyle(): Promise<any>;
-  /**
-   * @private
-   */
-  handleGlobalContextmenuEvent(evnt: Event): void;
 
   /**
    * 内部方法
@@ -706,17 +699,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     params: AsTableDefines.SortChangeEventParams<D>,
   ): any;
   handleUpdateCustomColumn(): void;
-  /**
-   * @private
-   */
-  moveCtxMenu(
-    evnt: KeyboardEvent,
-    ctxMenuStore: any,
-    property: 'selectChild' | 'selected',
-    hasOper: boolean,
-    operRest: any,
-    menuList: any[],
-  ): void;
   /**
    * 重置个性化列操作
    * 支持只重置指定的操作（列可视、列宽、冻结列、列顺序）
@@ -2633,6 +2615,7 @@ export interface TablePrivateRef {
   refTableLeftBody: Ref<ComponentPublicInstance>;
   refTableLeftFooter: Ref<ComponentPublicInstance>;
   refTableLeftHeader: Ref<ComponentPublicInstance>;
+  refTableMenu: Ref<any>;
   refTableRightBody: Ref<ComponentPublicInstance>;
   refTableRightFooter: Ref<ComponentPublicInstance>;
   refTableRightHeader: Ref<ComponentPublicInstance>;

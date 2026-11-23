@@ -134,6 +134,7 @@ import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
 import TableFilterPanelComponent from './module/filter/panel';
+import TableMenuPanelComponent from './module/menu/panel';
 import { getCrossTableDragRowInfo } from './store';
 import useStyle from './style';
 import {
@@ -179,6 +180,7 @@ import './module/edit/hook';
 import './module/keyboard/hook';
 import './module/validator/hook';
 import './module/filter/hook';
+import './module/menu/hook';
 
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';
@@ -338,6 +340,7 @@ export const Table = defineComponent<AsTableProps>(
     const refCommTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refValidTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refTableFilter = ref() as Ref<any>;
+    const refTableMenu = ref() as Ref<any>;
 
     const refTableViewportElem = ref<HTMLDivElement>();
     const refTableHeader = ref() as Ref<ComponentPublicInstance>;
@@ -1261,6 +1264,7 @@ export const Table = defineComponent<AsTableProps>(
       refElem,
       refTooltip,
       refTableFilter,
+      refTableMenu,
       refValidTooltip,
       refTableHeader,
       refTableBody,
@@ -10330,7 +10334,7 @@ export const Table = defineComponent<AsTableProps>(
      * 全局按下事件处理
      */
     const handleGlobalMousedownEvent = (evnt: MouseEvent) => {
-      const { editStore } = reactData;
+      const { ctxMenuStore, editStore } = reactData;
       const { editRules } = props;
       const el = refElem.value;
       const editOpts = computeEditOpts.value;
@@ -10474,6 +10478,16 @@ export const Table = defineComponent<AsTableProps>(
               }
             });
           }
+        }
+      }
+      // 如果配置了快捷菜单，点击了其他区域则关闭
+      if (ctxMenuStore.visible && $asTable.closeMenu) {
+        const tableMenu = refTableMenu.value;
+        if (
+          tableMenu &&
+          !getEventTargetNode(evnt, tableMenu.getRefMaps().refElem.value).flag
+        ) {
+          $asTable.closeMenu();
         }
       }
       // TODO else if (
@@ -17580,6 +17594,13 @@ export const Table = defineComponent<AsTableProps>(
                   key="tf"
                   ref={refTableFilter}
                 ></TableFilterPanelComponent>
+              )}
+              {/* 右键菜单 */}
+              {computeIsContentMenu.value && (
+                <TableMenuPanelComponent
+                  key="tm"
+                  ref={refTableMenu}
+                ></TableMenuPanelComponent>
               )}
             </div>
           </div>

@@ -29,6 +29,10 @@ export interface TableLocale {
    */
   maxGroupCol: VueNode;
   /**
+   * 菜单加载中提示语
+   */
+  menuLoading: VueNode;
+  /**
    * 数据分组后不支持操作提示，支持 {0} 占位符
    */
   noGroup?: VueNode;

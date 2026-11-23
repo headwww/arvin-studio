@@ -26,6 +26,7 @@ const localeValues: Locale = {
     resizeRowTip: 'Height: {0} pixels',
     maxFixedCol: 'The maximum number of fixed columns cannot exceed {0}',
     maxGroupCol: 'The maximum number of grouping fields cannot exceed {0}',
+    menuLoading: 'Loading...',
     treeDragChild: 'Parents cannot drag to their own children',
     noTree: 'Tree structure does not support "{0}"',
     noGroup: 'Data grouping does not support "{0}"',

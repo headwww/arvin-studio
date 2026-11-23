@@ -149,6 +149,10 @@ export function genBodyStyle(token: TableToken): CSSInterpolation {
   const [, varRef] = genCssVar(asCls, 'table');
 
   return {
+    [`${componentCls}--render-default`]: {
+      position: 'relative',
+    },
+
     [`${componentCls}-slots, ${componentCls}--file-form`]: {
       display: 'none',
     },

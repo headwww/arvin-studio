@@ -1,6 +1,14 @@
 <script lang="ts" setup>
-import { reactive, ref, watch } from 'vue';
+import { h, reactive, ref, watch } from 'vue';
 
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+  ReloadOutlined,
+  SettingOutlined,
+  StopOutlined,
+} from '@arvin-studio/icons';
 import { Column, ConfigProvider, Table } from '@arvin-studio/ui';
 import enUS from '@arvin-studio/ui/locale/en_US';
 // 1. 导入语言包（如果 @arvin-studio/ui 的路径不同，请按实际调整）
@@ -102,6 +110,92 @@ const footerTooltipConfig = reactive<any>({
 
 const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]);
 
+const menuConfig = reactive<any>({
+  header: {
+    options: [
+      [
+        { code: 'header-clear-sort', name: '清除排序' },
+        { code: 'header-clear-filter', name: '清除筛选' },
+      ],
+    ],
+  },
+  body: {
+    options: [
+      [
+        {
+          code: 'body-copy',
+          name: '复制名称',
+          prefixIcon: () => h(CopyOutlined),
+          suffixConfig: { content: '⌘C' },
+        },
+        {
+          code: 'body-remove',
+          name: '删除行',
+          prefixIcon: () => h(DeleteOutlined),
+        },
+      ],
+      [
+        {
+          code: 'body-more',
+          name: '更多操作',
+          prefixIcon: () => h(MoreOutlined),
+          children: [
+            {
+              code: 'body-reload',
+              name: '重新加载',
+              prefixIcon: () => h(ReloadOutlined),
+            },
+            {
+              code: 'body-setting',
+              name: '设置',
+              prefixIcon: () => h(SettingOutlined),
+            },
+          ],
+        },
+      ],
+      [
+        {
+          code: 'body-disabled',
+          name: '禁用项',
+          disabled: true,
+          prefixIcon: () => h(StopOutlined),
+        },
+      ],
+    ],
+  },
+  footer: {
+    options: [[{ code: 'footer-total', name: '合计' }]],
+  },
+});
+
+const handleMenuClick = ({ menu, row, $table }: any) => {
+  switch (menu?.code) {
+    case 'body-copy': {
+      if (row?.name) {
+        void navigator.clipboard?.writeText(String(row.name));
+      }
+      break;
+    }
+    case 'body-remove': {
+      if (row) {
+        tableData.value = tableData.value.filter((item) => item !== row);
+      }
+      break;
+    }
+    case 'header-clear-filter': {
+      $table.clearFilter();
+      break;
+    }
+    case 'header-clear-sort': {
+      $table.clearSort();
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+};
+
 const locale = ref(zhCN); // 响应式的语言包对象
 const currentLang = ref<'en-US' | 'zh-CN'>('zh-CN'); // 语言标识
 // 监听语言标识变化，切换对应的语言包
@@ -136,6 +230,8 @@ const toggleLanguage = () => {
         :tooltip-config="tooltipConfig"
         :header-tooltip-config="headerTooltipConfig"
         :footer-tooltip-config="footerTooltipConfig"
+        :menu-config="menuConfig"
+        @menu-click="handleMenuClick"
         show-overflow
         :checkbox-config="{
           labelField: 'name',
@@ -192,6 +288,8 @@ const toggleLanguage = () => {
         :tooltip-config="tooltipConfig"
         :header-tooltip-config="headerTooltipConfig"
         :footer-tooltip-config="footerTooltipConfig"
+        :menu-config="menuConfig"
+        @menu-click="handleMenuClick"
         show-overflow
         :checkbox-config="{
           labelField: 'name',
