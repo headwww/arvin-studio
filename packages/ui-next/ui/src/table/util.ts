@@ -313,6 +313,32 @@ export function createReactData(): TableReactData {
       oldFixedMaps: {},
       oldVisibleMaps: {},
     },
+    // 导出面板参数
+    exportParams: {},
+    // 导出面板数据
+    exportStore: {
+      columns: [],
+      typeList: [],
+      modeList: [],
+      hasFooter: false,
+      hasMerge: false,
+      hasTree: false,
+      hasRowGroup: false,
+      hasColgroup: false,
+      isPrint: false,
+      visible: false,
+    },
+    // 导入面板参数
+    importParams: {},
+    // 导入面板数据
+    importStore: {
+      file: null,
+      filename: '',
+      type: '',
+      typeList: [],
+      modeList: [],
+      visible: false,
+    },
     // 初始化标识
     initStore: {
       filter: false,

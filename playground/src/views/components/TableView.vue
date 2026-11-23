@@ -123,6 +123,21 @@ const customConfig = reactive<any>({
 });
 
 const tableRef = ref<any>();
+const exportConfig = reactive<any>({
+  types: ['csv', 'txt', 'html', 'xml'],
+});
+const importConfig = reactive<any>({
+  types: ['csv', 'txt'],
+});
+
+const openExport = () => {
+  tableRef.value?.openExport?.();
+};
+
+const openImport = () => {
+  tableRef.value?.openImport?.();
+};
+
 
 const openCustom = (mode: 'drawer' | 'modal' | 'simple') => {
   customConfig.mode = mode;
@@ -246,10 +261,14 @@ const toggleLanguage = () => {
         <button @click="openCustom('simple')">自定义列 · 弹层</button>
         <button @click="openCustom('drawer')">自定义列 · 抽屉</button>
         <button @click="openCustom('modal')">自定义列 · 弹窗</button>
+        <button @click="openExport">导出</button>
+        <button @click="openImport">导入</button>
       </div>
       <Table
         ref="tableRef"
         :custom-config="customConfig"
+        :export-config="exportConfig"
+        :import-config="importConfig"
         :edit-config="{
           trigger: 'click',
           mode: 'cell',

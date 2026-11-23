@@ -120,11 +120,19 @@ export interface TableReactData<D = any> {
   };
   // 展开列信息
   expandColumn: AsTableDefines.ColumnInfo<D> | null | undefined;
+  // 导出面板参数
+  exportParams: AsTableDefines.ExportParamsObj;
+  // 导出面板数据
+  exportStore: AsTableDefines.ExportStoreObj;
   // 当前选中的筛选列
   filterStore: AsTableDefines.FilterStoreObj;
   // 表尾合计数据
   footerTableData: any[][];
   hasFixedColumn: boolean;
+  // 导入面板参数
+  importParams: AsTableDefines.ImportParamsObj;
+  // 导入面板数据
+  importStore: AsTableDefines.ImportStoreObj;
   // 初始化标识
   initStore: {
     custom: boolean;
@@ -566,11 +574,6 @@ export type ValueOf<T> = T extends any[] ? T[number] : T[keyof T];
 
 export interface AsTableExtendCellAreaMethods<D = any> {
   /**
-   * @private
-   */
-  checkFilterOptions(): void;
-
-  /**
    * 用于 mouse-config.area，用于清除鼠标选择的区域，可以指定清除的区域
    */
   clearCellAreas(
@@ -581,12 +584,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * 用于 mouse-config.area，手动清除标记为复制粘贴的区域
    */
   clearCopyCellArea(): Promise<any>;
-  /**
-   * 手动清空筛选条件；如果需要同时触发对应的事件，请使用 clearFilterByEvent
-   */
-  clearFilter(
-    fieldOrColumn?: AsColumnPropTypes.Field | AsTableDefines.ColumnInfo | null,
-  ): Promise<void>;
 
   /**
    * 内部方法
@@ -595,10 +592,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   getCellAreaPushStackObj(
     stackObj: AsTableDefines.HistoryStackObj,
   ): AsTableDefines.HistoryStackObj;
-  /**
-   * 获取当前筛选的所有列信息
-   */
-  getCheckedFilters(): AsTableDefines.FilterCheckedParams<D>[];
   /**
    * 内部方法
    * @private
@@ -616,10 +609,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     stackObj: AsTableDefines.HistoryStackObj,
   ): void;
   /**
-   * @private
-   */
-  handleClearFilter(column: AsTableDefines.ColumnInfo): void;
-  /**
    * 内部方法
    * @private
    */
@@ -631,13 +620,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
   handleColResizeDblclickCellAreaEvent(evnt: MouseEvent, params: any): void;
 
   /**
-   * @private
-   */
-  handleColumnConfirmFilter(
-    column: AsTableDefines.ColumnInfo,
-    evnt: Event | null,
-  ): Promise<any>;
-  /**
    * 内部方法
    * @private
    */
@@ -647,10 +629,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
    * @private
    */
   handleCyClAreaEvent(evnt: ClipboardEvent): void;
-  /**
-   * @private
-   */
-  handleFilterStyle(): Promise<any>;
 
   /**
    * 内部方法
@@ -6956,6 +6934,42 @@ export namespace AsTableDefines {
       | ((params: {}) => AsComponentSlotType | AsComponentSlotType[])
       | string;
     visible?: boolean;
+  }
+
+  export interface ExportParamsObj
+    extends AsTablePropTypes.ExportConfig,
+      AsTablePropTypes.PrintConfig {
+    mode?: string;
+    type?: string;
+    types?: string[];
+    widthMode?: '' | 'auto' | 'default' | 'scale' | null;
+  }
+
+  export interface ExportStoreObj {
+    columns: ColumnInfo[];
+    hasColgroup: boolean;
+    hasFooter: boolean;
+    hasMerge: boolean;
+    hasRowGroup: boolean;
+    hasTree: boolean;
+    isPrint: boolean;
+    modeList: { label: string; value: string }[];
+    typeList: { label: string; value: string }[];
+    visible: boolean;
+  }
+
+  export interface ImportParamsObj extends AsTablePropTypes.ImportConfig {
+    mode?: string;
+    types?: string[];
+  }
+
+  export interface ImportStoreObj {
+    file: File | null;
+    filename: string;
+    modeList: { label: string; value: string }[];
+    type: string;
+    typeList: { label: string; value: string }[];
+    visible: boolean;
   }
 
   export interface FilterStoreObj {

@@ -134,6 +134,8 @@ import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
 import TableCustomPanelComponent from './module/custom/panel';
+import TableExportPanelComponent from './module/export/export-panel';
+import TableImportPanelComponent from './module/export/import-panel';
 import TableFilterPanelComponent from './module/filter/panel';
 import TableMenuPanelComponent from './module/menu/panel';
 import { getCrossTableDragRowInfo } from './store';
@@ -183,6 +185,7 @@ import './module/validator/hook';
 import './module/filter/hook';
 import './module/menu/hook';
 import './module/custom/hook';
+import './module/export/hook';
 
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';
@@ -17405,6 +17408,10 @@ export const Table = defineComponent<AsTableProps>(
         initStore,
         filterStore,
         customStore,
+        exportParams,
+        exportStore,
+        importParams,
+        importStore,
       } = reactData;
       const { teleportToWrapperElem } = internalData;
       const { leftList, rightList } = columnStore;
@@ -17623,6 +17630,23 @@ export const Table = defineComponent<AsTableProps>(
                   key="tc"
                   ref={refTableCustom}
                 ></TableCustomPanelComponent>
+              )}
+              {/* 导出 */}
+              {initStore.export &&
+                (props.exportConfig || props.printConfig) && (
+                  <TableExportPanelComponent
+                    defaultOptions={exportParams}
+                    key="te"
+                    storeData={exportStore}
+                  ></TableExportPanelComponent>
+                )}
+              {/* 导入 */}
+              {initStore.import && props.importConfig && (
+                <TableImportPanelComponent
+                  defaultOptions={importParams}
+                  key="ti"
+                  storeData={importStore}
+                ></TableImportPanelComponent>
               )}
             </div>
           </div>

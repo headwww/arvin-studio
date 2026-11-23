@@ -37,10 +37,55 @@ export interface TableLocale {
   customTitle: VueNode;
   dragTip: VueNode;
   emptyText: VueNode;
+  exportCancel: VueNode;
+  exportColgroup: VueNode;
+  exportColumn: VueNode;
+  exportConfirm: VueNode;
+  exportCurrentColumn: VueNode;
+  exportFilename: VueNode;
+  exportFooter: VueNode;
+  exportHeader: VueNode;
+  exportMerge: VueNode;
+  exportMode: VueNode;
+  exportModeCurrent: VueNode;
+  exportModeEmpty: VueNode;
+  exportModeSelected: VueNode;
+  exportName: VueNode;
+  exportNamePlaceholder: VueNode;
+  exportOpts: VueNode;
+  exportOriginal: VueNode;
+  exportPrint: VueNode;
+  exportPrintTitle: VueNode;
+  exportRowGroupExpand: VueNode;
+  exportSheetName: VueNode;
+  exportSheetNamePlaceholder: VueNode;
+  exportTitle: VueNode;
+  exportTitleOpt: VueNode;
+  exportTreeExpand: VueNode;
+  exportType: VueNode;
+  exportTypeCsv: VueNode;
+  exportTypeHtml: VueNode;
+  exportTypeTxt: VueNode;
+  exportTypeXml: VueNode;
+  exportUseStyle: VueNode;
+  exportWidthMode: VueNode;
   /**
    * 筛选按钮提示语
    */
   filter: VueNode;
+  importCancel: VueNode;
+  importConfirm: VueNode;
+  importFile: VueNode;
+  importMode: VueNode;
+  importModeCovering: VueNode;
+  importModeInsertTop: VueNode;
+  importSelectFile: VueNode;
+  importTitle: VueNode;
+  importType: VueNode;
+  importTypeCsv: VueNode;
+  importTypeHtml: VueNode;
+  importTypeTxt: VueNode;
+  importTypeXml: VueNode;
   /**
    * 加载中提示语
    */
