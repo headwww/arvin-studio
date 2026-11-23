@@ -5272,8 +5272,8 @@ export const Table = defineComponent<AsTableProps>(
       }
       if ($asTable.clearCellAreas && props.mouseConfig) {
         // 开了鼠标框选才有这些方法;
-        $asTable.clearCellAreas(); // TODO 清框选区域
-        $asTable.clearCopyCellArea(); // TODO 清复制区域
+        $asTable.clearCellAreas(); //  清框选区域
+        $asTable.clearCopyCellArea(); //  清复制区域
       }
       $asTable.clearMergeCells(); //  清行合并结果（基于旧的行列位置，必须作废）
       $asTable.clearMergeFooterItems(); // 清表尾合并
@@ -10341,64 +10341,70 @@ export const Table = defineComponent<AsTableProps>(
      * 全局按下事件处理
      */
     const handleGlobalMousedownEvent = (evnt: MouseEvent) => {
-      const { ctxMenuStore, editStore } = reactData;
+      const { ctxMenuStore, customStore, editStore } = reactData;
       const { editRules } = props;
       const el = refElem.value;
       const editOpts = computeEditOpts.value;
       const validOpts = computeValidOpts.value;
       const { actived } = editStore;
       const $validTooltip = refValidTooltip.value;
-      // TODO const tableFilter = refTableFilter.value;
-      // const tableCustom = refTableCustom.value;
-      // const tableMenu = refTableMenu.value;
+      const tableFilter = refTableFilter.value;
+      const tableCustom = refTableCustom.value;
       // 筛选
-      // if (tableFilter) {
-      //   if (getEventTargetNode(evnt, el, 'vxe-cell--filter').flag) {
-      //     // 如果点击了筛选按钮
-      //   } else if (
-      //     getEventTargetNode(evnt, tableFilter.getRefMaps().refElem.value).flag
-      //   ) {
-      //     // 如果点击筛选容器
-      //   } else {
-      //     if (
-      //       !getEventTargetNode(evnt, document.body, 'vxe-table--ignore-clear')
-      //         .flag
-      //     ) {
-      //       $asTable.preventEvent(
-      //         evnt,
-      //         'event.clearFilter',
-      //         internalData._currFilterParams,
-      //         $asTable.closeFilter,
-      //       );
-      //     }
-      //   }
-      // }
-      // // 自定义列
-      // if (tableCustom) {
-      //   if (
-      //     customStore.btnEl === evnt.target ||
-      //     getEventTargetNode(evnt, document.body, 'vxe-toolbar-custom-target')
-      //       .flag
-      //   ) {
-      //     // 如果点击了自定义列按钮
-      //   } else if (
-      //     getEventTargetNode(evnt, tableCustom.getRefMaps().refElem.value).flag
-      //   ) {
-      //     // 如果点击自定义列容器
-      //   } else {
-      //     if (
-      //       !getEventTargetNode(evnt, document.body, 'vxe-table--ignore-clear')
-      //         .flag &&
-      //       customStore.visible &&
-      //       $asTable.closeCustom
-      //     ) {
-      //       $asTable.preventEvent(evnt, 'event.clearCustom', {}, () => {
-      //         $asTable.closeCustom();
-      //         $asTable.dispatchEvent('custom', { type: 'close' }, evnt);
-      //       });
-      //     }
-      //   }
-      // }
+      if (tableFilter) {
+        if (
+          getEventTargetNode(evnt, el, `${prefixCls.value}-cell--filter`).flag
+        ) {
+          // 如果点击了筛选按钮
+        } else if (
+          getEventTargetNode(evnt, tableFilter.getRefMaps().refElem.value).flag
+        ) {
+          // 如果点击筛选容器
+        } else if (
+          !getEventTargetNode(
+            evnt,
+            document.body,
+            `${prefixCls.value}--ignore-clear`,
+          ).flag
+        ) {
+          $asTable.preventEvent(
+            evnt,
+            'event.clearFilter',
+            internalData._currFilterParams,
+            $asTable.closeFilter,
+          );
+        }
+      }
+      // 自定义列
+      if (tableCustom) {
+        if (
+          customStore.btnEl === evnt.target ||
+          getEventTargetNode(
+            evnt,
+            document.body,
+            `${prefixCls.value}-toolbar--custom-target`,
+          ).flag
+        ) {
+          // 如果点击了自定义列按钮
+        } else if (
+          getEventTargetNode(evnt, tableCustom.getRefMaps().refElem.value).flag
+        ) {
+          // 如果点击自定义列容器
+        } else if (
+          !getEventTargetNode(
+            evnt,
+            document.body,
+            `${prefixCls.value}--ignore-clear`,
+          ).flag &&
+          customStore.visible &&
+          $asTable.closeCustom
+        ) {
+          $asTable.preventEvent(evnt, 'event.clearCustom', {}, () => {
+            $asTable.closeCustom();
+            dispatchEvent('custom', { type: 'close' }, evnt);
+          });
+        }
+      }
 
       // 如果已激活了编辑状态
       if (actived.row && editOpts.autoClear !== false) {
@@ -10579,26 +10585,26 @@ export const Table = defineComponent<AsTableProps>(
 
     /** 当页面、表格或任意滚动容器发生滚动时，它会把已经打开的筛选面板和自定义列弹窗重新定位到正确位置。 */
     const reUpdateCustomStyleEvent = (evnt: MouseEvent) => {
-      // const { customStore } = reactData;
-      // const customOpts = computeCustomOpts.value;
-      // const { popupOptions } = customOpts;
-      // const { transfer } = popupOptions || {};
-      // if (transfer && customStore.visible) {
-      //   const tableCustom = refTableCustom.value;
-      //   if (
-      //     tableCustom &&
-      //     $asTable.handleCustomStyle &&
-      //     !checkTargetElement(
-      //       evnt.target,
-      //       [tableCustom.getRefMaps().refElem.value as HTMLDivElement],
-      //       evnt.currentTarget,
-      //     )
-      //   ) {
-      //     $asTable.handleCustomStyle().then(() => {
-      //       $asTable.handleCustomStyle();
-      //     });
-      //   }
-      // }
+      const { customStore } = reactData;
+      const customOpts = computeCustomOpts.value;
+      const { popupOptions } = customOpts;
+      const { transfer } = popupOptions || {};
+      if (transfer && customStore.visible) {
+        const tableCustom = refTableCustom.value;
+        if (
+          tableCustom &&
+          $asTable.handleCustomStyle &&
+          !checkTargetElement(
+            evnt.target,
+            [tableCustom.getRefMaps().refElem.value as HTMLDivElement],
+            evnt.currentTarget,
+          )
+        ) {
+          $asTable.handleCustomStyle().then(() => {
+            $asTable.handleCustomStyle();
+          });
+        }
+      }
     };
 
     const handleGlobalScrollEvent = (evnt: MouseEvent) => {

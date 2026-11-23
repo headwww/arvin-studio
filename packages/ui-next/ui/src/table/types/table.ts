@@ -138,8 +138,8 @@ export interface TableReactData<D = any> {
   isAllSelected: boolean;
   isColLoading: boolean;
   isCrossDragRow: boolean;
-  isCustomStatus: boolean;
   isCustomDragStatus: boolean;
+  isCustomStatus: boolean;
   isDragResize: boolean;
   // 是否使用分组表头
   isGroup: boolean;
@@ -701,21 +701,6 @@ export interface AsTableExtendCellAreaMethods<D = any> {
     evnt: Event,
     params: AsTableDefines.SortChangeEventParams<D>,
   ): any;
-  handleUpdateCustomColumn(): void;
-  /**
-   * 重置个性化列操作
-   * 支持只重置指定的操作（列可视、列宽、冻结列、列顺序）
-   */
-  resetCustom(
-    options?:
-      | boolean
-      | {
-          fixed?: boolean;
-          order?: boolean;
-          resizable?: boolean;
-          visible?: boolean;
-        },
-  ): Promise<void>;
   /**
    * 内部方法
    * @private
@@ -6486,26 +6471,26 @@ export namespace AsTableDefines {
     footerClassName: AsColumnPropTypes.FooterClassName;
     footerFormatter: AsColumnPropTypes.FooterFormatter<D>;
     formatter: AsColumnPropTypes.Formatter<D>;
+    halfVisible?: boolean;
     headerAlign: AsColumnPropTypes.HeaderAlign;
     headerClassName: AsColumnPropTypes.HeaderClassName;
     headerFormatter: AsColumnPropTypes.HeaderFormatter;
+
     maxWidth: AsColumnPropTypes.MaxWidth;
-
     minWidth: AsColumnPropTypes.MinWidth;
-    padding: AsColumnPropTypes.Padding;
 
+    padding: AsColumnPropTypes.Padding;
+    renderAlign?: AsColumnPropTypes.Align;
     /**
      * @private
      */
     renderFixed: AsColumnPropTypes.Fixed;
+    renderFooterAlign?: AsColumnPropTypes.Align;
+    renderHeaderAlign?: AsColumnPropTypes.Align;
     /**
      * @private
      */
     renderVisible: AsColumnPropTypes.Visible;
-    halfVisible?: boolean;
-    renderAlign?: AsColumnPropTypes.Align;
-    renderHeaderAlign?: AsColumnPropTypes.Align;
-    renderFooterAlign?: AsColumnPropTypes.Align;
     resizable: AsColumnPropTypes.Resizable;
     rowGroupNode: AsColumnPropTypes.RowGroupNode;
     rowResize: AsColumnPropTypes.RowResize;

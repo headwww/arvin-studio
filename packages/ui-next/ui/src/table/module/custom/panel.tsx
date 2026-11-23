@@ -58,7 +58,7 @@ export default defineComponent({
       default: () => ({}) as AsTableDefines.AsTableCustomStoreObj,
     },
   },
-  setup(props) {
+  setup(props, context) {
     const $asTable = inject(
       '$asTable',
       {} as AsTableConstructor & AsTableMethods & AsTablePrivateMethods,
@@ -1014,10 +1014,14 @@ export default defineComponent({
             onClose={() => cancelCloseEvent()}
             open={visible.value}
             placement="right"
+            rootClass={`${prefixCls.value}-custom-drawer-wrapper ${prefixCls.value}--ignore-clear`}
             title={locale?.value?.customTitle}
             width={Math.min(880, innerWidth * 0.6)}
           >
-            <div class={`${prefixCls.value}-custom--popup-content`}>
+            <div
+              class={`${prefixCls.value}-custom--popup-content`}
+              ref={refElem}
+            >
               {content}
             </div>
           </Drawer>
@@ -1039,15 +1043,27 @@ export default defineComponent({
           }}
           onCancel={() => cancelCloseEvent()}
           open={visible.value}
+          rootClass={`${prefixCls.value}-custom-modal-wrapper ${prefixCls.value}--ignore-clear`}
           title={locale?.value?.customTitle}
           width={Math.min(1000, innerWidth)}
         >
-          <div class={`${prefixCls.value}-custom--popup-content`}>
+          <div
+            class={`${prefixCls.value}-custom--popup-content`}
+            ref={refElem}
+          >
             {content}
           </div>
         </Modal>
       );
     };
+
+    const refMaps = {
+      refElem,
+    };
+
+    context.expose({
+      getRefMaps: () => refMaps,
+    });
 
     return () => {
       const mode = customOpts.value.mode;
