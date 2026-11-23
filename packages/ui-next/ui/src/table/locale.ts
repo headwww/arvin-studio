@@ -10,6 +10,31 @@ export interface TableLocale {
    * 筛选面板-确认按钮文案
    */
   confirmFilter: VueNode;
+  customAlignCenter: VueNode;
+  customAlignLeft: VueNode;
+  customAlignRight: VueNode;
+  customAll: VueNode;
+  customCancel: VueNode;
+  customClose: VueNode;
+  customColAlign: VueNode;
+  customColFixed: VueNode;
+  customColFooterAlign: VueNode;
+  customColHeaderAlign: VueNode;
+  customColTitle: VueNode;
+  customColVisible: VueNode;
+  customColWidth: VueNode;
+  customConfirm: VueNode;
+  customConfirmRestore: VueNode;
+  customFixedLeft: VueNode;
+  customFixedNone: VueNode;
+  customFixedRight: VueNode;
+  customMoveBottom: VueNode;
+  customMoveDown: VueNode;
+  customMoveTop: VueNode;
+  customMoveUp: VueNode;
+  customRestore: VueNode;
+  customSortTip: VueNode;
+  customTitle: VueNode;
   dragTip: VueNode;
   emptyText: VueNode;
   /**

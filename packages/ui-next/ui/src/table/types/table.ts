@@ -78,6 +78,8 @@ export interface TableReactData<D = any> {
   };
   currColFlag: number;
   // 个性化设置相关的信息
+  // 自定义列信息
+  customColumnList: AsTableDefines.ColumnInfo[];
   customStore: AsTableDefines.AsTableCustomStoreObj;
   dragCol: AsTableDefines.ColumnInfo | null;
   dragRow: any;
@@ -137,6 +139,7 @@ export interface TableReactData<D = any> {
   isColLoading: boolean;
   isCrossDragRow: boolean;
   isCustomStatus: boolean;
+  isCustomDragStatus: boolean;
   isDragResize: boolean;
   // 是否使用分组表头
   isGroup: boolean;
@@ -2609,6 +2612,7 @@ export interface TablePrivateRef {
   refScrollYSpaceElem: Ref<HTMLDivElement | undefined>;
   refScrollYVirtualElem: Ref<HTMLDivElement | undefined>;
   refTableBody: Ref<ComponentPublicInstance>;
+  refTableCustom: Ref<any>;
   refTableFilter: Ref<any>;
   refTableFooter: Ref<ComponentPublicInstance>;
   refTableHeader: Ref<ComponentPublicInstance>;
@@ -6498,6 +6502,10 @@ export namespace AsTableDefines {
      * @private
      */
     renderVisible: AsColumnPropTypes.Visible;
+    halfVisible?: boolean;
+    renderAlign?: AsColumnPropTypes.Align;
+    renderHeaderAlign?: AsColumnPropTypes.Align;
+    renderFooterAlign?: AsColumnPropTypes.Align;
     resizable: AsColumnPropTypes.Resizable;
     rowGroupNode: AsColumnPropTypes.RowGroupNode;
     rowResize: AsColumnPropTypes.RowResize;

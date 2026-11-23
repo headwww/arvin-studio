@@ -7,6 +7,7 @@ import {
   genMediumCellPaddingStyle,
   genSmallCellPaddingStyle,
 } from './body';
+import { genCustomStyle } from './custom';
 import { genFilterStyle } from './filter';
 import { genMenuStyle } from './menu';
 import { prepareComponentToken } from './prepare';
@@ -28,6 +29,7 @@ export default genStyleHooks(
       genMediumCellPaddingStyle(tableToken),
       genLargeCellPaddingStyle(tableToken),
       genSmallCellPaddingStyle(tableToken),
+      genCustomStyle(tableToken),
       genFilterStyle(tableToken),
       genMenuStyle(tableToken),
       genBodyStyle(tableToken),

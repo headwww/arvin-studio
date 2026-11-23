@@ -133,6 +133,7 @@ import { Cell, formatLocaleText } from './cell';
 import { config } from './config';
 import TableFooterComponent from './footer';
 import TableHeaderComponent from './header';
+import TableCustomPanelComponent from './module/custom/panel';
 import TableFilterPanelComponent from './module/filter/panel';
 import TableMenuPanelComponent from './module/menu/panel';
 import { getCrossTableDragRowInfo } from './store';
@@ -181,6 +182,7 @@ import './module/keyboard/hook';
 import './module/validator/hook';
 import './module/filter/hook';
 import './module/menu/hook';
+import './module/custom/hook';
 
 const supportMaxRow = 5e6;
 const customStorageKey = 'AS_CUSTOM_STORE';
@@ -341,6 +343,7 @@ export const Table = defineComponent<AsTableProps>(
     const refValidTooltip = ref() as Ref<AsSharedTooltipInstance>;
     const refTableFilter = ref() as Ref<any>;
     const refTableMenu = ref() as Ref<any>;
+    const refTableCustom = ref() as Ref<any>;
 
     const refTableViewportElem = ref<HTMLDivElement>();
     const refTableHeader = ref() as Ref<ComponentPublicInstance>;
@@ -1265,6 +1268,7 @@ export const Table = defineComponent<AsTableProps>(
       refTooltip,
       refTableFilter,
       refTableMenu,
+      refTableCustom,
       refValidTooltip,
       refTableHeader,
       refTableBody,
@@ -1376,6 +1380,9 @@ export const Table = defineComponent<AsTableProps>(
       getRefMaps: () => refMaps,
       getComputeMaps: () => computeMaps,
     } as unknown as AsTableConstructor & AsTableMethods & AsTablePrivateMethods;
+
+    // 暴露表格实例方法，便于通过 ref 调用 openCustom/openFilter 等 API
+    context.expose($asTable);
 
     const handleKeyField = () => {
       const keyField = computeRowField.value;
@@ -17391,6 +17398,7 @@ export const Table = defineComponent<AsTableProps>(
         tooltipStore,
         initStore,
         filterStore,
+        customStore,
       } = reactData;
       const { teleportToWrapperElem } = internalData;
       const { leftList, rightList } = columnStore;
@@ -17601,6 +17609,14 @@ export const Table = defineComponent<AsTableProps>(
                   key="tm"
                   ref={refTableMenu}
                 ></TableMenuPanelComponent>
+              )}
+              {/* 自定义列 */}
+              {initStore.custom && (
+                <TableCustomPanelComponent
+                  customStore={customStore}
+                  key="tc"
+                  ref={refTableCustom}
+                ></TableCustomPanelComponent>
               )}
             </div>
           </div>

@@ -252,6 +252,7 @@ export function createReactData(): TableReactData {
     isIndeterminate: false,
     isAllOverflow: false,
     isCustomStatus: false,
+    isCustomDragStatus: false,
     isDragResize: false,
     isColLoading: false,
     updateCheckboxFlag: 1,
@@ -297,6 +298,7 @@ export function createReactData(): TableReactData {
     // 展开列信息
     expandColumn: null,
     // 自定义列相关的信息
+    customColumnList: [],
     customStore: {
       btnEl: null,
       isAll: false,

@@ -65,7 +65,7 @@ type AsTableCustomPanelEmits = [];
 
 export interface AsCustomPanel {}
 
-export interface TableCustomMethods<D = any> {
+export interface TableCustomMethods {
   /**
    * 取消个性化列操作
    */
@@ -114,7 +114,7 @@ export interface TableCustomMethods<D = any> {
   toggleCustomAllCheckbox(): Promise<void>;
 }
 
-export interface TableCustomPrivateMethods<D = any> {
+export interface TableCustomPrivateMethods {
   checkCustomStatus(): void;
   customCloseEvent(evnt: Event): void;
   customOpenEvent(evnt: Event): void;
@@ -125,8 +125,8 @@ export interface TableCustomPrivateMethods<D = any> {
 }
 
 declare module '../../types/table' {
-  export interface AsTableMethods<D = any> extends TableCustomMethods<D> {}
+  export interface AsTableMethods<D = any> extends TableCustomMethods {}
   export interface AsTablePrivateMethods<
     D = any,
-  > extends TableCustomPrivateMethods<D> {}
+  > extends TableCustomPrivateMethods {}
 }

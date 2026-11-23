@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, reactive, ref, watch } from 'vue';
+import { h, nextTick, reactive, ref, watch } from 'vue';
 
 import {
   CopyOutlined,
@@ -110,12 +110,34 @@ const footerTooltipConfig = reactive<any>({
 
 const footerData = ref<any>([{ seq: '合计', date: '2020-09-05', rate: 999.8 }]);
 
+const customConfig = reactive<any>({
+  allowAlign: true,
+  allowFixed: true,
+  allowFooterAlign: true,
+  allowHeaderAlign: true,
+  allowResizable: true,
+  allowSort: true,
+  allowVisible: true,
+  mode: 'simple',
+  showFooter: true,
+});
+
+const tableRef = ref<any>();
+
+const openCustom = (mode: 'drawer' | 'modal' | 'simple') => {
+  customConfig.mode = mode;
+  nextTick(() => {
+    tableRef.value?.openCustom?.();
+  });
+};
+
 const menuConfig = reactive<any>({
   header: {
     options: [
       [
         { code: 'header-clear-sort', name: '清除排序' },
         { code: 'header-clear-filter', name: '清除筛选' },
+        { code: 'header-custom', name: '个性化设置' },
       ],
     ],
   },
@@ -190,6 +212,10 @@ const handleMenuClick = ({ menu, row, $table }: any) => {
       $table.clearSort();
       break;
     }
+    case 'header-custom': {
+      $table.openCustom();
+      break;
+    }
     default: {
       break;
     }
@@ -216,7 +242,14 @@ const toggleLanguage = () => {
       <button style="margin-bottom: 16px" @click="toggleLanguage">
         切换语言（当前：{{ currentLang === 'zh-CN' ? '中文' : 'English' }}）
       </button>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px">
+        <button @click="openCustom('simple')">自定义列 · 弹层</button>
+        <button @click="openCustom('drawer')">自定义列 · 抽屉</button>
+        <button @click="openCustom('modal')">自定义列 · 弹窗</button>
+      </div>
       <Table
+        ref="tableRef"
+        :custom-config="customConfig"
         :edit-config="{
           trigger: 'click',
           mode: 'cell',
@@ -273,6 +306,7 @@ const toggleLanguage = () => {
         <Column type="html" field="content" title="Content" width="200" />
       </Table>
       <Table
+        :custom-config="customConfig"
         :edit-config="{
           trigger: 'click',
           mode: 'cell',
