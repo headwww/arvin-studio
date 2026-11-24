@@ -263,6 +263,7 @@ const toggleLanguage = () => {
         <button @click="openImport">导入</button>
       </div>
       <Table
+        height="300"
         ref="tableRef"
         :custom-config="customConfig"
         :export-config="exportConfig"
@@ -272,10 +273,23 @@ const toggleLanguage = () => {
           mode: 'cell',
           showStatus: true,
         }"
+        border="full"
         keep-source
         show-footer
-        :row-config="{ useKey: true, resizable: true, drag: true }"
-        :column-config="{ useKey: true, resizable: true, drag: true }"
+        :row-config="{
+          useKey: true,
+          resizable: true,
+          drag: true,
+          isCurrent: true,
+          isHover: true,
+        }"
+        :column-config="{
+          isCurrent: true,
+          isHover: true,
+          useKey: true,
+          resizable: true,
+          drag: true,
+        }"
         :footer-data="footerData"
         :tooltip-config="tooltipConfig"
         :header-tooltip-config="headerTooltipConfig"
