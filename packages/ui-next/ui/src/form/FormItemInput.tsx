@@ -1,5 +1,5 @@
 import type { VueNode } from '../_util';
-import type { ColProps } from '../grid';
+import type { ColProps } from '../row-col';
 import type { ValidateStatus } from './FormItem';
 import type { ColPropsWithClass } from './FormItemLabel.tsx';
 
@@ -10,7 +10,7 @@ import { clsx, omit } from '@arvin-studio/kit';
 
 import { responsiveArrayReversed } from '../_util/responsiveObserver';
 import { getSlotPropsFnRun } from '../_util/tools';
-import { Col } from '../grid';
+import { Col } from '../row-col';
 import {
   FormItemPrefixContextProvider,
   useFormContext,

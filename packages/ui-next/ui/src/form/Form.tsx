@@ -6,7 +6,7 @@ import type {
 } from '../_util/hooks';
 import type { ComponentBaseProps, Variant } from '../config-provider/context';
 import type { SizeType } from '../config-provider/size-context';
-import type { ColProps } from '../grid';
+import type { ColProps } from '../row-col';
 import type { FormContextProps, FormFieldRegister } from './context';
 import type { FeedbackIcons } from './FormItem';
 import type { FormTooltipProps } from './FormItemLabel';

@@ -13,7 +13,7 @@ import type {
 
 import { unit } from '@arvin-studio/cssinjs';
 
-import { getMediaSize } from '../../grid/style';
+import { getMediaSize } from '../../row-col/style';
 import { genFocusOutline, genFocusStyle, resetComponent } from '../../style';
 import { initFadeMotion, initZoomMotion } from '../../style/motion';
 import { genStyleHooks, mergeToken } from '../../theme/internal';

@@ -196,8 +196,6 @@ export type {
   RuleRender,
   RuleType,
 } from './form';
-export { Col, Row } from './grid';
-export type { ColProps, ColSize, RowProps } from './grid';
 export { default as Image, ImagePreviewGroup } from './image';
 export type {
   ImageEmits,
@@ -335,6 +333,8 @@ export { default as Rate } from './rate';
 export type { RateEmits, RateProps } from './rate';
 export { default as Result } from './result';
 export type { ResultProps, ResultSlots, ResultStatusType } from './result';
+export { Col, Row } from './row-col';
+export type { ColProps, ColSize, RowProps } from './row-col';
 export { default as Scrollbar } from './scrollbar';
 export type {
   AsScrollbarComponent,
@@ -345,8 +345,8 @@ export type {
   AsScrollbarEvents,
   AsScrollbarInstance,
   AsScrollbarMethods,
-  AsScrollbarPropTypes,
   AsScrollbarProps,
+  AsScrollbarPropTypes,
   AsScrollbarSlots,
 } from './scrollbar';
 export { default as Segmented } from './segmented';
@@ -363,17 +363,6 @@ export type {
   SelectSlots,
   SelectValue,
 } from './select';
-export { default as SharedTooltip } from './tooltip/SharedTooltip';
-export type {
-  AsSharedTooltipComponent,
-  AsSharedTooltipConstructor,
-  AsSharedTooltipEmits,
-  AsSharedTooltipEventProps,
-  AsSharedTooltipInstance,
-  AsSharedTooltipMethods,
-  AsSharedTooltipProps,
-  AsSharedTooltipSlots,
-} from './tooltip/shared-tooltip';
 export {
   default as Skeleton,
   SkeletonAvatar,
@@ -438,6 +427,17 @@ export type {
   TooltipRef,
   TooltipSlots,
 } from './tooltip';
+export type {
+  AsSharedTooltipComponent,
+  AsSharedTooltipConstructor,
+  AsSharedTooltipEmits,
+  AsSharedTooltipEventProps,
+  AsSharedTooltipInstance,
+  AsSharedTooltipMethods,
+  AsSharedTooltipProps,
+  AsSharedTooltipSlots,
+} from './tooltip/shared-tooltip';
+export { default as SharedTooltip } from './tooltip/SharedTooltip';
 export { default as Tour } from './tour';
 export type {
   TourEmits,

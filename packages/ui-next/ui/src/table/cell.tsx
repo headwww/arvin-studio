@@ -857,7 +857,7 @@ export const Cell = {
           >
             {renderIconVNode(
               isExpand ? iconOpen : iconClose,
-              isExpand ? DownOutlined : RightOutlined,
+              isExpand ? CaretDownOutlined : CaretRightOutlined,
             )}
           </span>
         ) : (

@@ -15,24 +15,24 @@ import { genCssVar } from '../../theme/util/genStyleUtils';
 // biome-ignore lint/suspicious/noEmptyInterface: ComponentToken need to be empty by default
 export interface ComponentToken {}
 
-interface GridRowToken extends FullToken<'Grid'> {
+interface RowColRowToken extends FullToken<'RowCol'> {
   //
 }
 
-interface GridColToken extends FullToken<'Grid'> {
+interface RowColColToken extends FullToken<'RowCol'> {
   /**
    * @desc 网格列数
-   * @descEN Number of grid columns
+   * @descEN Number of RowCol columns
    */
-  gridColumns: number;
+  RowColColumns: number;
 }
 
 // ============================== Row-Shared ==============================
-const genGridRowStyle: GenerateStyle<GridRowToken, CSSObject> = (token) => {
+const genRowColRowStyle: GenerateStyle<RowColRowToken, CSSObject> = (token) => {
   const { componentCls } = token;
 
   return {
-    // Grid system
+    // RowCol system
     [componentCls]: {
       display: 'flex',
       flexFlow: 'row wrap',
@@ -91,11 +91,11 @@ const genGridRowStyle: GenerateStyle<GridRowToken, CSSObject> = (token) => {
 };
 
 // ============================== Col-Shared ==============================
-const genGridColStyle: GenerateStyle<GridColToken, CSSObject> = (token) => {
+const genRowColColStyle: GenerateStyle<RowColColToken, CSSObject> = (token) => {
   const { componentCls } = token;
 
   return {
-    // Grid system
+    // RowCol system
     [componentCls]: {
       position: 'relative',
       maxWidth: '100%',
@@ -105,101 +105,101 @@ const genGridColStyle: GenerateStyle<GridColToken, CSSObject> = (token) => {
   };
 };
 
-function genLoopGridColumnsStyle(
-  token: GridColToken,
+function genLoopRowColColumnsStyle(
+  token: RowColColToken,
   sizeCls: string,
 ): CSSObject {
-  const { componentCls, gridColumns, asCls } = token;
+  const { componentCls, RowColColumns, asCls } = token;
 
-  const [gridVarName, gridVarRef] = genCssVar(asCls, 'grid');
+  const [RowColVarName, RowColVarRef] = genCssVar(asCls, 'RowCol');
   const [, colVarRef] = genCssVar(asCls, 'col');
 
-  const gridColumnsStyle: CSSObject = {};
-  for (let i = gridColumns; i >= 0; i--) {
+  const RowColColumnsStyle: CSSObject = {};
+  for (let i = RowColColumns; i >= 0; i--) {
     if (i === 0) {
-      gridColumnsStyle[`${componentCls}${sizeCls}-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-${i}`] = {
         display: 'none',
       };
-      gridColumnsStyle[`${componentCls}-push-${i}`] = {
+      RowColColumnsStyle[`${componentCls}-push-${i}`] = {
         insetInlineStart: 'auto',
       };
-      gridColumnsStyle[`${componentCls}-pull-${i}`] = {
+      RowColColumnsStyle[`${componentCls}-pull-${i}`] = {
         insetInlineEnd: 'auto',
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-push-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-push-${i}`] = {
         insetInlineStart: 'auto',
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-pull-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-pull-${i}`] = {
         insetInlineEnd: 'auto',
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-offset-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-offset-${i}`] = {
         marginInlineStart: 0,
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-order-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-order-${i}`] = {
         order: 0,
       };
     } else {
-      gridColumnsStyle[`${componentCls}${sizeCls}-${i}`] = [
+      RowColColumnsStyle[`${componentCls}${sizeCls}-${i}`] = [
         // Form set `display: flex` on Col which will override `display: block`.
         // Let's get it from css variable to support override.
         {
-          [gridVarName('display')]: 'block',
+          [RowColVarName('display')]: 'block',
           // Fallback to display if variable not support
           display: 'block',
         },
         {
-          display: gridVarRef('display'),
-          flex: `0 0 ${(i / gridColumns) * 100}%`,
-          maxWidth: `${(i / gridColumns) * 100}%`,
+          display: RowColVarRef('display'),
+          flex: `0 0 ${(i / RowColColumns) * 100}%`,
+          maxWidth: `${(i / RowColColumns) * 100}%`,
         },
       ];
-      gridColumnsStyle[`${componentCls}${sizeCls}-push-${i}`] = {
-        insetInlineStart: `${(i / gridColumns) * 100}%`,
+      RowColColumnsStyle[`${componentCls}${sizeCls}-push-${i}`] = {
+        insetInlineStart: `${(i / RowColColumns) * 100}%`,
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-pull-${i}`] = {
-        insetInlineEnd: `${(i / gridColumns) * 100}%`,
+      RowColColumnsStyle[`${componentCls}${sizeCls}-pull-${i}`] = {
+        insetInlineEnd: `${(i / RowColColumns) * 100}%`,
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-offset-${i}`] = {
-        marginInlineStart: `${(i / gridColumns) * 100}%`,
+      RowColColumnsStyle[`${componentCls}${sizeCls}-offset-${i}`] = {
+        marginInlineStart: `${(i / RowColColumns) * 100}%`,
       };
-      gridColumnsStyle[`${componentCls}${sizeCls}-order-${i}`] = {
+      RowColColumnsStyle[`${componentCls}${sizeCls}-order-${i}`] = {
         order: i,
       };
     }
   }
 
   // Flex CSS Var
-  gridColumnsStyle[`${componentCls}${sizeCls}-flex`] = {
+  RowColColumnsStyle[`${componentCls}${sizeCls}-flex`] = {
     flex: colVarRef(`${sizeCls.replace(/-/, '')}-flex`),
   };
 
-  return gridColumnsStyle;
+  return RowColColumnsStyle;
 }
 
-function genGridStyle(token: GridColToken, sizeCls: string): CSSObject {
-  return genLoopGridColumnsStyle(token, sizeCls);
+function genRowColStyle(token: RowColColToken, sizeCls: string): CSSObject {
+  return genLoopRowColColumnsStyle(token, sizeCls);
 }
 
-function genGridMediaStyle(
-  token: GridColToken,
+function genRowColMediaStyle(
+  token: RowColColToken,
   screenSize: number,
   sizeCls: string,
 ): CSSObject {
   return {
     [`@media (min-width: ${unit(screenSize)})`]: {
-      ...genGridStyle(token, sizeCls),
+      ...genRowColStyle(token, sizeCls),
     },
   };
 }
 
-export const prepareRowComponentToken: GetDefaultToken<'Grid'> = () => ({});
+export const prepareRowComponentToken: GetDefaultToken<'RowCol'> = () => ({});
 
-export const prepareColComponentToken: GetDefaultToken<'Grid'> = () => ({});
+export const prepareColComponentToken: GetDefaultToken<'RowCol'> = () => ({});
 
 // ============================== Export ==============================
 export const useRowStyle = genStyleHooks(
-  'Grid',
-  genGridRowStyle,
+  'RowCol',
+  genRowColRowStyle,
   prepareRowComponentToken,
 );
 
@@ -218,19 +218,22 @@ export function getMediaSize(token: AliasToken) {
 }
 
 export const useColStyle = genStyleHooks(
-  'Grid',
+  'RowCol',
   (token) => {
-    const gridToken: GridColToken = mergeToken<GridColToken>(token, {
-      gridColumns: 24, // Row is divided into 24 parts in Grid
+    const RowColToken: RowColColToken = mergeToken<RowColColToken>(token, {
+      RowColColumns: 24, // Row is divided into 24 parts in RowCol
     });
-    const gridMediaSizesMap: Record<string, number> = getMediaSize(gridToken);
-    delete gridMediaSizesMap.xs;
+    const RowColMediaSizesMap: Record<string, number> =
+      getMediaSize(RowColToken);
+    delete RowColMediaSizesMap.xs;
     return [
-      genGridColStyle(gridToken),
-      genGridStyle(gridToken, ''),
-      genGridStyle(gridToken, '-xs'),
-      Object.entries(gridMediaSizesMap)
-        .map(([key, value]) => genGridMediaStyle(gridToken, value!, `-${key}`))
+      genRowColColStyle(RowColToken),
+      genRowColStyle(RowColToken, ''),
+      genRowColStyle(RowColToken, '-xs'),
+      Object.entries(RowColMediaSizesMap)
+        .map(([key, value]) =>
+          genRowColMediaStyle(RowColToken, value!, `-${key}`),
+        )
         .reduce<CSSObject>((pre, cur) => ({ ...pre, ...cur }), {}),
     ];
   },

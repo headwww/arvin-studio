@@ -9,7 +9,7 @@ import { clsx } from '@arvin-studio/kit';
 
 import { getAttrStyleAndClass } from '../../_util/hooks';
 import isNonNullable from '../../_util/isNonNullable';
-import { Row } from '../../grid';
+import { Row } from '../../row-col';
 import { NoStyleItemContextProvider, useFormContext } from '../context';
 import FormItemInput from '../FormItemInput';
 import FormItemLabel from '../FormItemLabel';

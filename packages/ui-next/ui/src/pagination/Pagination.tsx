@@ -38,7 +38,7 @@ import { devUseWarning, isDev } from '../_util/warning';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
 import useVariant from '../form/hooks/useVariant';
-import useBreakpoint from '../grid/hooks/useBreakpoint';
+import useBreakpoint from '../row-col/hooks/useBreakpoint';
 import useLocale from '../locale/useLocale';
 import Select from '../select';
 import { useToken } from '../theme/internal';

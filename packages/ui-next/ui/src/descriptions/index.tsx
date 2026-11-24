@@ -28,7 +28,7 @@ import { resolveSlotsNode } from '../_util/vnode';
 import { devUseWarning, isDev } from '../_util/warning';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
-import useBreakpoint from '../grid/hooks/useBreakpoint';
+import useBreakpoint from '../row-col/hooks/useBreakpoint';
 import DEFAULT_COLUMN_MAP from './constant';
 import { useDescriptionsProvider } from './DescriptionsContext';
 import useItems from './hooks/useItems';
