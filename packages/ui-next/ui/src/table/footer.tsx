@@ -30,7 +30,7 @@ const renderType = 'footer';
 const { renderer } = ArvinStudio;
 
 export default defineComponent({
-  name: 'AsTableHeader',
+  name: 'AsTableFooter',
   props: {
     prefixCls: {
       type: String,
@@ -541,10 +541,10 @@ export default defineComponent({
                     />
                   );
                 })}
-                <tfoot ref={refFooterTFoot}>
-                  {renderHeads(isOptimizeMode, renderColumnList)}
-                </tfoot>
               </colgroup>
+              <tfoot ref={refFooterTFoot}>
+                {renderHeads(isOptimizeMode, renderColumnList)}
+              </tfoot>
             </table>
           </div>
         </div>

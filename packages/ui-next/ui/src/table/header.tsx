@@ -863,7 +863,7 @@ export default defineComponent({
             </table>
             {mouseConfig && mouseOpts.area ? (
               <div class={`${prefixCls}--cell-area`} xid={xID}>
-                <span class={`${prefixCls}--cell--main-area`}></span>
+                <span class={`${prefixCls}--cell-main-area`}></span>
                 <span class={`${prefixCls}--cell-clip-area`}></span>
                 <span class={`${prefixCls}--cell-extend-area`}></span>
                 <span class={`${prefixCls}--cell-multi-area`}></span>

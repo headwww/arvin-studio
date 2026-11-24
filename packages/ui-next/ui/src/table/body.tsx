@@ -1273,7 +1273,7 @@ export default defineComponent<BodyProps>(
             <div class={`${prefixCls}--checkbox-range`}></div>
             {mouseConfig && mouseOpts.area ? (
               <div class={`${prefixCls}--cell-area`} xid={xID}>
-                <span class={`${prefixCls}--cell--main-area`}>
+                <span class={`${prefixCls}--cell-main-area`}>
                   {mouseOpts.extension ? (
                     <span
                       class={`${prefixCls}--cell-main-area-btn`}
