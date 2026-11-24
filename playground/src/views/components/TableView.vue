@@ -205,8 +205,6 @@ const menuConfig = reactive<any>({
 });
 
 const handleMenuClick = ({ menu, row, $table }: any) => {
-  console.log(row);
-
   switch (menu?.code) {
     case 'body-copy': {
       if (row?.name) {
@@ -249,9 +247,7 @@ const toggleLanguage = () => {
   currentLang.value = currentLang.value === 'zh-CN' ? 'en-US' : 'zh-CN';
 };
 
-function onClick({ key }: any) {
-  console.log(key);
-}
+const asTable = ref();
 </script>
 
 <template>
@@ -269,8 +265,8 @@ function onClick({ key }: any) {
         <button @click="openImport">导入</button>
       </div>
       <Table
+        ref="asTable"
         height="300"
-        ref="tableRef"
         :custom-config="customConfig"
         :export-config="exportConfig"
         :import-config="importConfig"

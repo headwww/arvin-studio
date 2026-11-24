@@ -31,6 +31,11 @@ import type {
   AsComponentStyleType,
 } from './common';
 
+export type AsTableInstance<D = any> = ComponentPublicInstance<
+  AsTableProps<D>,
+  AsTableConstructor<D>
+>;
+
 export interface AsTableConstructor<D = any> extends AsTableMethods {
   // TODO 类型
   asGantt: any;
