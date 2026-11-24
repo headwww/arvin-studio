@@ -184,7 +184,7 @@ hooks.add('tableFilterModule', {
           $asTable.checkSelectionStatus();
         }
         if (evnt) {
-          $asTable.dispatchEvent('filter-change', params, evnt);
+          $asTable.dispatchEvent('filterChange', params, evnt);
         }
         $asTable.closeFilter();
         return $asTable
@@ -269,7 +269,7 @@ hooks.add('tableFilterModule', {
         $asTable.handleClearFilter(column);
         $asTable.confirmFilterEvent(evnt, column);
         if (evnt) {
-          $asTable.dispatchEvent('clear-filter', { filterList: [] }, evnt);
+          $asTable.dispatchEvent('clearFilter', { filterList: [] }, evnt);
         }
       },
       handleFilterStyle() {
@@ -301,7 +301,7 @@ hooks.add('tableFilterModule', {
           updatePopupStyle();
         });
         $asTable.dispatchEvent(
-          'filter-visible',
+          'filterVisible',
           {
             column,
             field: column.field,

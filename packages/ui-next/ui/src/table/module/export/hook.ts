@@ -35,7 +35,7 @@ const defaultFilterExportColumn = (column: AsTableDefines.ColumnInfo) => {
 
 const toBooleanValue = (val: boolean) => (val ? 'TRUE' : 'FALSE');
 
-const toStringValue = (val: any) => (val == null ? '' : `${val}`);
+const toStringValue = (val: any) => (val === null ? '' : `${val}`);
 
 const escapeHtml = (val: string) =>
   val
@@ -68,6 +68,7 @@ const getCsvCellTypeLabel = (val: any) => {
 
 const toTxtCellLabel = (val: any) => toStringValue(val).replaceAll('\t', ' ');
 
+// oxlint-disable-next-line no-unused-vars
 const getConvertColumns = (columns: AsTableDefines.ColumnInfo[]) => {
   const rest: AsTableDefines.ColumnInfo[] = [];
   columns.forEach((column) => {
@@ -179,38 +180,40 @@ export default function tableExportModule() {
                 column,
                 options: opts,
               });
-            } else switch (column.type) {
- case 'checkbox': {
-              cellValue = toBooleanValue(
-                $asTable.isCheckedByCheckboxRow(row),
-              );
-            
- break;
- }
- case 'radio': {
-              cellValue = toBooleanValue($asTable.isCheckedByRadioRow(row));
-            
- break;
- }
- case 'seq': {
-              cellValue = getSeq(rowIndex);
-            
- break;
- }
- default: { if (opts.original) {
-              cellValue = getCellValue(row, column);
-            } else {
-              cellValue = $asTable.getCellLabel(row, column);
-              if (column.type === 'html') {
-                if (!htmlCellElem.current) {
-                  htmlCellElem.current = document.createElement('div');
+            } else
+              switch (column.type) {
+                case 'checkbox': {
+                  cellValue = toBooleanValue(
+                    $asTable.isCheckedByCheckboxRow(row),
+                  );
+
+                  break;
                 }
-                htmlCellElem.current.innerHTML = `${cellValue}`;
-                cellValue = htmlCellElem.current.innerText.trim();
+                case 'radio': {
+                  cellValue = toBooleanValue($asTable.isCheckedByRadioRow(row));
+
+                  break;
+                }
+                case 'seq': {
+                  cellValue = getSeq(rowIndex);
+
+                  break;
+                }
+                default: {
+                  if (opts.original) {
+                    cellValue = getCellValue(row, column);
+                  } else {
+                    cellValue = $asTable.getCellLabel(row, column);
+                    if (column.type === 'html') {
+                      if (!htmlCellElem.current) {
+                        htmlCellElem.current = document.createElement('div');
+                      }
+                      htmlCellElem.current.innerHTML = `${cellValue}`;
+                      cellValue = htmlCellElem.current.innerText.trim();
+                    }
+                  }
+                }
               }
-            }
- }
- }
             item[column.id] = toStringValue(cellValue);
           });
           return item;
@@ -219,7 +222,13 @@ export default function tableExportModule() {
           const rest: any[] = [];
           eachTree(
             datas,
-            (row: any, rowIndex: number, _items: any[], _path: any[], parentRow: any) => {
+            (
+              row: any,
+              rowIndex: number,
+              _items: any[],
+              _path: any[],
+              parentRow: any,
+            ) => {
               if (
                 opts.isTreeAllExpanded ||
                 !parentRow ||
@@ -328,9 +337,7 @@ export default function tableExportModule() {
               ? 'is--scale-width'
               : 'is--default-width';
         const html: string[] = [];
-        html.push(
-          `<table class="as-table ${borderClass} ${widthClass}">`,
-        );
+        html.push(`<table class="as-table ${borderClass} ${widthClass}">`);
         if (colsWidth(columns)) {
           html.push('<colgroup>');
           colsWidth(columns)!.forEach((width: number) => {
@@ -347,20 +354,28 @@ export default function tableExportModule() {
               }</th></tr>`,
             );
           }
-          (colgroups.length > 0 ? colgroups : [columns]).forEach((cols: any[]) => {
-            html.push('<tr>');
-            cols.forEach((column: any) => {
-              if (column.colSpan === 0) {
-                return;
-              }
-              const rowspan = column.rowSpan && column.rowSpan > 1 ? ` rowspan="${column.rowSpan}"` : '';
-              const colspan = column.colSpan && column.colSpan > 1 ? ` colspan="${column.colSpan}"` : '';
-              html.push(
-                `<th class="col--${column.align || 'left'}"${rowspan}${colspan}><div>${escapeHtml(getHeaderTitle(column))}</div></th>`,
-              );
-            });
-            html.push('</tr>');
-          });
+          (colgroups.length > 0 ? colgroups : [columns]).forEach(
+            (cols: any[]) => {
+              html.push('<tr>');
+              cols.forEach((column: any) => {
+                if (column.colSpan === 0) {
+                  return;
+                }
+                const rowspan =
+                  column.rowSpan && column.rowSpan > 1
+                    ? ` rowspan="${column.rowSpan}"`
+                    : '';
+                const colspan =
+                  column.colSpan && column.colSpan > 1
+                    ? ` colspan="${column.colSpan}"`
+                    : '';
+                html.push(
+                  `<th class="col--${column.align || 'left'}"${rowspan}${colspan}><div>${escapeHtml(getHeaderTitle(column))}</div></th>`,
+                );
+              });
+              html.push('</tr>');
+            },
+          );
           html.push('</thead>');
         }
         html.push('<tbody>');
@@ -462,6 +477,7 @@ export default function tableExportModule() {
             setTimeout(() => URL.revokeObjectURL(url), 1000);
             resolve({ status: true });
           } catch (error) {
+            // oxlint-disable-next-line prefer-promise-reject-errors
             reject({ status: false, error });
           }
         });
@@ -484,6 +500,7 @@ export default function tableExportModule() {
               const files = [...(input.files || [])];
               input.remove();
               if (files.length === 0) {
+                // oxlint-disable-next-line prefer-promise-reject-errors
                 reject({ status: false });
                 return;
               }
@@ -692,11 +709,11 @@ export default function tableExportModule() {
         const importOpts = computeImportOpts.value;
         const opts = { ...importOpts, ...options };
         const type =
-          opts.type ||
-          (file.name.split('.').pop() || '').toLowerCase();
+          opts.type || (file.name.split('.').pop() || '').toLowerCase();
         const content = await file.text();
         const rows = parseRows(content, type);
         if (rows.length === 0) {
+          // oxlint-disable-next-line no-throw-literal
           throw { status: false, msg: 'empty' };
         }
         const columns = getColumns();
@@ -722,20 +739,26 @@ export default function tableExportModule() {
             $table: $asTable,
           });
           if (rest === false) {
+            // oxlint-disable-next-line no-throw-literal
             throw { status: false, msg: 'before prevent' };
           }
         }
         const created = await $asTable.createData(records);
         const mode = opts.mode || 'insertTop';
-        ($asTable as any).preventEvent(null, 'event.import', { options: opts }, () => {
-          if (mode === 'covering') {
-            return $asTable.reloadData(created);
-          }
-          return $asTable.reloadData([
-            ...created,
-            ...(internalData.afterFullData || []),
-          ]);
-        });
+        ($asTable as any).preventEvent(
+          null,
+          'event.import',
+          { options: opts },
+          () => {
+            if (mode === 'covering') {
+              return $asTable.reloadData(created);
+            }
+            return $asTable.reloadData([
+              ...created,
+              ...(internalData.afterFullData || []),
+            ]);
+          },
+        );
         if (opts.afterImportMethod) {
           opts.afterImportMethod({
             status: true,
@@ -765,12 +788,10 @@ export default function tableExportModule() {
           }),
           { children: 'children' },
         ) as any[];
-        const typeList = (opts.types || keys(exportOpts._typeMaps || {}) || [
-          'csv',
-          'txt',
-          'html',
-          'xml',
-        ]).map((value: string) => ({
+        const typeList = (
+          opts.types ||
+          keys(exportOpts._typeMaps || {}) || ['csv', 'txt', 'html', 'xml']
+        ).map((value: string) => ({
           value,
           label: t(
             `exportType${value.charAt(0).toUpperCase()}${value.slice(1)}`,
@@ -783,9 +804,9 @@ export default function tableExportModule() {
             label:
               typeof value === 'string'
                 ? t(
-                  `exportMode${value.charAt(0).toUpperCase()}${value.slice(1)}`,
-                  value,
-                )
+                    `exportMode${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+                    value,
+                  )
                 : value.label,
           }),
         );
@@ -878,7 +899,9 @@ export default function tableExportModule() {
           customCols = searchTree(
             collectColumn,
             (column: AsTableDefines.ColumnInfo) => {
-              const isColGroup = !!(column.children && column.children.length > 0);
+              const isColGroup = !!(
+                column.children && column.children.length > 0
+              );
               if (opts.columns) {
                 return handleFilterColumns(opts, column, opts.columns);
               }
@@ -927,6 +950,7 @@ export default function tableExportModule() {
         }
         if (!includes(keys(exportOpts._typeMaps || { csv: 1 }), type)) {
           const params = { status: false, msg: 'type error' };
+          // oxlint-disable-next-line prefer-promise-reject-errors
           return Promise.reject(params);
         }
         if (opts.beforeExportMethod && !opts.print) {
@@ -935,6 +959,7 @@ export default function tableExportModule() {
             $table: $asTable,
           });
           if (rest === false) {
+            // oxlint-disable-next-line prefer-promise-reject-errors
             return Promise.reject({ status: false, msg: 'before prevent' });
           }
         }
@@ -950,7 +975,11 @@ export default function tableExportModule() {
         }
         if (opts.dataFilterMethod) {
           data = data.filter((row: any, rowIndex: number) =>
-            opts.dataFilterMethod({ $table: $asTable, row, $rowIndex: rowIndex }),
+            opts.dataFilterMethod({
+              $table: $asTable,
+              row,
+              $rowIndex: rowIndex,
+            }),
           );
         }
         const bodyData = getBodyLabelData(opts, cols, data);
@@ -1005,7 +1034,9 @@ export default function tableExportModule() {
             if (!win) {
               return { status: false, msg: 'print window blocked' };
             }
-            win.document.write(createHtmlPage({ ...opts, sheetName: title }, finalHtml));
+            win.document.write(
+              createHtmlPage({ ...opts, sheetName: title }, finalHtml),
+            );
             win.document.close();
             win.focus();
             win.print();
@@ -1019,9 +1050,11 @@ export default function tableExportModule() {
         return print({
           ...printOpts,
           ...options,
-        }).catch(() => undefined).then((res: any) => {
-          return { html: res?.content || '' };
-        });
+        })
+          .catch(() => undefined)
+          .then((res: any) => {
+            return { html: res?.content || '' };
+          });
       };
 
       const closeExport = () => {
@@ -1053,18 +1086,18 @@ export default function tableExportModule() {
           (value: string) => ({
             value,
             label: t(
-                `importType${value.charAt(0).toUpperCase()}${value.slice(1)}`,
-                value.toUpperCase(),
-              ),
+              `importType${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+              value.toUpperCase(),
+            ),
           }),
         );
         const modeList = (opts.modes || ['insertTop', 'covering']).map(
           (value: string) => ({
             value,
             label: t(
-                `importMode${value.charAt(0).toUpperCase()}${value.slice(1)}`,
-                value,
-              ),
+              `importMode${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+              value,
+            ),
           }),
         );
         Object.assign(reactData.importStore, {
@@ -1081,8 +1114,10 @@ export default function tableExportModule() {
         reactData.initStore.import = true;
       };
 
-      const importByFile = (file: File, options?: AsTablePropTypes.ImportConfig) =>
-        handleImport(file, options || {});
+      const importByFile = (
+        file: File,
+        options?: AsTablePropTypes.ImportConfig,
+      ) => handleImport(file, options || {});
 
       const importData = (options?: AsTablePropTypes.ImportConfig) =>
         readFile({ types: ['csv', 'txt', 'html', 'xml'] }).then((params) =>
@@ -1108,6 +1143,6 @@ export default function tableExportModule() {
       return exportMethods;
     },
   });
-};
+}
 
 tableExportModule();

@@ -11,6 +11,8 @@ import type {
   AsTableSlotTypes,
 } from './table';
 
+export type AsColumnEmits = [];
+
 export namespace AsColumnPropTypes {
   export type Params = any;
   export type Padding = boolean;
@@ -877,6 +879,94 @@ export interface AsColumnProps<D = any> {
   width?: AsColumnPropTypes.Width;
 }
 
+export interface AsColumnSlots<D = any> {
+  /**
+   * 只对 type=checkbox 有效，自定义复选框模板
+   */
+  checkbox?: (params: AsColumnSlotTypes.CheckboxSlotParams<D>) => any;
+  /**
+   * 只对 column-config.drag 开启后有效，自定义列拖拽按钮图标
+   */
+  'column-drag-icon'?: (
+    params: AsTableSlotTypes.ColumnDragIconSlotParams<D>,
+  ) => any;
+  columnDragIcon?: (
+    params: AsTableSlotTypes.ColumnDragIconSlotParams<D>,
+  ) => any;
+  /**
+   * 只对 type=expand 有效，自定义展开后的内容模板
+   */
+  content?: (params: AsColumnSlotTypes.ContentSlotParams<D>) => any;
+  /**
+   * 自定义显示内容模板
+   */
+  default?: (params: AsColumnSlotTypes.DefaultSlotParams<D>) => any;
+  /**
+   * 只对 edit-render 启用时有效，自定义可编辑组件模板
+   */
+  edit?: (params: AsColumnSlotTypes.EditSlotParams<D>) => any;
+  /**
+   * 只对 filter-render 启用时有效，自定义筛选模板
+   */
+  filter?: (params: AsColumnSlotTypes.FilterSlotParams<D>) => any;
+  /**
+   * 只对 floating-filters 和 filter-render 启用时有效，自定义浮动筛选模板
+   */
+  'floating-filter'?: (
+    params: AsColumnSlotTypes.FloatingFilterSlotParams<D>,
+  ) => any;
+  floatingFilter?: (
+    params: AsColumnSlotTypes.FloatingFilterSlotParams<D>,
+  ) => any;
+  /**
+   * 自定义表尾内容的模板
+   */
+  footer?: (params: AsColumnSlotTypes.FooterSlotParams<D>) => any;
+  /**
+   * 只对 aggregate-config 开启后有效，自定义分组列内容模板
+   */
+  'group-content'?: (
+    params: AsTableSlotTypes.ColumnGroupContentSlotParams<D>,
+  ) => any;
+  /**
+   * 只对 agg-func 开启后有效，自定义分组列聚合数据模板
+   */
+  'group-values'?: (
+    params: AsTableSlotTypes.ColumnGroupValuesSlotParams<D>,
+  ) => any;
+  groupContent?: (
+    params: AsTableSlotTypes.ColumnGroupContentSlotParams<D>,
+  ) => any;
+  groupValues?: (
+    params: AsTableSlotTypes.ColumnGroupValuesSlotParams<D>,
+  ) => any;
+  /**
+   * 自定义表头内容的模板
+   */
+  header?: (params: AsColumnSlotTypes.HeaderSlotParams<D>) => any;
+  /**
+   * 只对 type=radio 有效，自定义单选框模板
+   */
+  radio?: (params: AsColumnSlotTypes.RadioSlotParams<D>) => any;
+  /**
+   * 只对 row-config.drag 开启后有效，自定义行拖拽按钮图标
+   */
+  'row-drag-icon'?: (params: AsTableSlotTypes.RowDragIconSlotParams<D>) => any;
+  rowDragIcon?: (params: AsTableSlotTypes.RowDragIconSlotParams<D>) => any;
+  /**
+   * 只对 sortable 有效，自定义标题模板
+   */
+  sort?: (params: AsColumnSlotTypes.SortSlotParams<D>) => any;
+  /**
+   * 自定义标题模板
+   */
+  title?: (params: AsColumnSlotTypes.TitleSlotParams<D>) => any;
+  /**
+   * 只对 edit-render 启用时有效，自定义展示错误校验模板
+   */
+  valid?: (params: AsColumnSlotTypes.ValidSlotParams<D>) => any;
+}
+
 export namespace AsColumnDefines {
   export interface CellFormatterParams<D = any> {
     $table: AsTableConstructor<D> & AsTablePrivateMethods<D>;
@@ -921,9 +1011,59 @@ export namespace AsColumnDefines {
 }
 
 export namespace AsColumnSlotTypes {
+  export interface FilterSlotParams<D = any> {
+    $columnIndex: number;
+    $panel: any;
+    $rowIndex: number;
+    [key: symbol]: D;
+    column: AsTableDefines.ColumnInfo & {
+      filters: AsTableDefines.FilterOption[];
+    };
+    columnIndex: number;
+    option: AsColumnPropTypes.FilterItem;
+  }
+  export interface FloatingFilterSlotParams<
+    D = any,
+  > extends AsTableDefines.CellFloatingFilterParams<D> {}
+
+  export interface EditSlotParams<
+    D = any,
+  > extends AsTableDefines.CellRenderBodyParams<D> {}
+
+  export interface FooterSlotParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    _columnIndex: number;
+    column: AsTableDefines.ColumnInfo;
+    columnIndex: number;
+    data: D[][];
+    items: any[];
+    row: D;
+    rowIndex: number;
+  }
+
+  export interface HeaderSlotParams<
+    D = any,
+  > extends AsTableDefines.CellRenderHeaderParams<D> {}
+  export interface TitleSlotParams<D = any> extends HeaderSlotParams<D> {}
+  export interface SortSlotParams<D = any> extends HeaderSlotParams<D> {}
+
+  export interface ContentSlotParams<
+    D = any,
+  > extends AsTableDefines.CellRenderBodyParams<D> {}
+
   export interface DefaultSlotParams<
     D = any,
   > extends AsTableDefines.CellRenderBodyParams<D> {}
+
+  export interface CheckboxSlotParams<D = any> extends DefaultSlotParams<D> {
+    checked: boolean;
+    indeterminate: boolean;
+  }
+  export interface RadioSlotParams<D = any> extends DefaultSlotParams<D> {
+    checked: boolean;
+  }
+  export interface IconSlotParams<D = any> extends DefaultSlotParams<D> {}
 
   export interface ValidSlotParams<D = any> extends DefaultSlotParams<D> {
     content: string;

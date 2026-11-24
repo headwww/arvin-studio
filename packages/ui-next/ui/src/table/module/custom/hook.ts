@@ -3,10 +3,7 @@ import type {
   AsTableDefines,
   AsTablePrivateMethods,
 } from '../../types/table';
-import type {
-  TableCustomMethods,
-  TableCustomPrivateMethods,
-} from './custom';
+import type { TableCustomMethods, TableCustomPrivateMethods } from './custom';
 
 import { nextTick } from 'vue';
 
@@ -52,16 +49,13 @@ export default hooks.add('tableCustomModule', {
             bottom: tableRect.top + 40,
           };
       const top = Math.max(2, btnRect.bottom - tableRect.top + 2);
-      const popupMaxHeight =
-        Number(popupOptions?.maxHeight ?? 360) || 360;
+      const popupMaxHeight = Number(popupOptions?.maxHeight ?? 360) || 360;
       const maxHeight = Math.max(120, rootElem.clientHeight - top - 8);
       const style: Record<string, any> = {
         top: toCssUnit(top),
         maxHeight: toCssUnit(Math.min(popupMaxHeight, maxHeight)),
       };
-      if (
-        ['bottom-right', 'right', 'top-right'].includes(placement ?? '')
-      ) {
+      if (['bottom-right', 'right', 'top-right'].includes(placement ?? '')) {
         style.right = '2px';
       } else {
         style.left = toCssUnit(Math.max(0, btnRect.left - tableRect.left));
@@ -157,9 +151,11 @@ export default hooks.add('tableCustomModule', {
       const { customColumnList } = reactData;
       if (isDirectly) {
         eachTree(customColumnList, (column) => {
-          if (!(allowResizable &&
-            column.renderVisible) || (column.children && column.children.length > 0)) {
-          	return;
+          if (
+            !(allowResizable && column.renderVisible) ||
+            (column.children && column.children.length > 0)
+          ) {
+            return;
           }
 
           const width = Number.parseFloat(`${column.renderWidth || 0}`) || 0;
@@ -366,34 +362,34 @@ export default hooks.add('tableCustomModule', {
         if (customStore.visible) {
           closeCustom();
           emitCustomEvent('close', evnt);
-          $asTable.dispatchEvent('custom-close', {}, evnt);
+          $asTable.dispatchEvent('customClose', {}, evnt);
         } else {
           customStore.btnEl = evnt.target as HTMLDivElement;
           openCustom();
           emitCustomEvent('open', evnt);
-          $asTable.dispatchEvent('custom-open', {}, evnt);
+          $asTable.dispatchEvent('customOpen', {}, evnt);
         }
       },
       customOpenEvent(evnt: Event) {
         if (customStore.visible) {
-        	return;
+          return;
         }
 
         customStore.activeBtn = true;
         customStore.btnEl = evnt.target as HTMLDivElement;
         openCustom();
         emitCustomEvent('open', evnt);
-        $asTable.dispatchEvent('custom-open', {}, evnt);
+        $asTable.dispatchEvent('customOpen', {}, evnt);
       },
       customCloseEvent(evnt: Event) {
         if (!customStore.visible) {
-        	return;
+          return;
         }
 
         customStore.activeBtn = false;
         closeCustom();
         emitCustomEvent('close', evnt);
-        $asTable.dispatchEvent('custom-close', {}, evnt);
+        $asTable.dispatchEvent('customClose', {}, evnt);
       },
     };
 

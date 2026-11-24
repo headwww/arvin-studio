@@ -16,6 +16,10 @@ import type {
   AsSharedTooltipPropTypes,
 } from '../../tooltip/shared-tooltip';
 import type {
+  AsTableExtendCellAreaDefines,
+  AsTableExtendCellAreaEmits,
+} from '../module/extend-cell-area/extend-cell-area';
+import type {
   AsColumnProps,
   AsColumnPropTypes,
   AsColumnSlotTypes,
@@ -26,7 +30,6 @@ import type {
   AsComponentSlotType,
   AsComponentStyleType,
 } from './common';
-import type { AsTableExtendCellAreaDefines } from './extend-cell-area';
 
 export interface AsTableConstructor<D = any> extends AsTableMethods {
   // TODO 类型
@@ -5589,7 +5592,8 @@ export namespace AsTablePropTypes {
   }) => void | { colspan: number; rowspan: number };
 }
 
-export interface AsTableProps<D = any> extends ComponentBaseProps {
+export interface AsTableProps<D = any>
+  extends AsTableEventProps<D>, ComponentBaseProps {
   /**
    * 聚合函数计算精度配置项
    */
@@ -5948,6 +5952,538 @@ export interface AsTableProps<D = any> extends ComponentBaseProps {
 }
 
 export namespace AsTableDefines {
+  interface TableEventParams<D = any> extends AsComponentEventParams {
+    $table: AsTableConstructor<D>;
+  }
+
+  interface TableBaseHeaderCellParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    column: ColumnInfo;
+    columnIndex: number;
+    source: string;
+    type: string;
+  }
+
+  interface TableBaseCellParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    cell: any;
+    column: ColumnInfo;
+    columnIndex: number;
+    row: D;
+    rowIndex: number;
+    source: string;
+    type: string;
+  }
+
+  interface TableBaseFooterCellParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    [key: symbol]: D;
+    column: ColumnInfo;
+    columnIndex: number;
+    source: string;
+    type: string;
+  }
+  export interface ReadyEventParams<D = any> extends TableEventParams<D> {}
+  export interface InitRenderedEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    visibleColumn: ColumnInfo[];
+    visibleData: D;
+  }
+  export interface DataRenderedEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    isReload: boolean;
+    visibleColumn: ColumnInfo[];
+    visibleData: D;
+  }
+
+  export interface KeydownStartParams {}
+  export interface KeydownStartEventParams<D = any>
+    extends KeydownStartParams, TableEventParams<D> {}
+
+  export interface KeydownParams {}
+  export interface KeydownEventParams<D = any>
+    extends KeydownParams, TableEventParams<D> {}
+
+  export interface KeydownEndParams {}
+  export interface KeydownEndEventParams<D = any>
+    extends KeydownEndParams, TableEventParams<D> {}
+
+  export interface PasteParams {}
+  export interface PasteEventParams<D = any>
+    extends PasteParams, TableEventParams<D> {}
+
+  export interface CopyParams {}
+  export interface CopyEventParams<D = any>
+    extends CopyParams, TableEventParams<D> {}
+
+  export interface CutParams {}
+  export interface CutEventParams<D = any>
+    extends CutParams, TableEventParams<D> {}
+
+  export interface UndoEventParams<D = any> {
+    [key: symbol]: D;
+  }
+  export interface RedoEventParams<D = any> {
+    [key: symbol]: D;
+  }
+
+  export interface ContextMenuEventParams<
+    D = any,
+  > extends TableEventParams<D> {}
+
+  export interface ColumnsChangeEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    visibleColgroups: ColumnInfo[][];
+    visibleColumn: ColumnInfo[];
+  }
+
+  export interface DataChangeEventParams<D = any> extends TableEventParams<D> {
+    visibleColumn: ColumnInfo[];
+    visibleData: D[];
+  }
+
+  export interface FooterDataChangeEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    footerData: D[];
+    visibleColumn: ColumnInfo[];
+  }
+
+  export interface CurrentRowChangeParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    newValue: any;
+    oldValue: any;
+    selected: boolean;
+  }
+  export interface CurrentRowChangeEventParams<D = any>
+    extends CurrentRowChangeParams<D>, TableEventParams<D> {}
+
+  export interface CurrentRowDisabledEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    row: any;
+  }
+
+  export interface CurrentColumnChangeParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    newValue: ColumnInfo | null;
+    oldValue: ColumnInfo | null;
+    selected: boolean;
+  }
+  export interface CurrentColumnChangeEventParams<D = any>
+    extends CurrentColumnChangeParams<D>, TableEventParams<D> {}
+
+  export interface CurrentColumnDisabledEventParams<
+    D = any,
+  > extends TableEventParams<D> {
+    column: ColumnInfo;
+  }
+
+  export interface RadioChangeParams<D = any> extends TableBaseCellParams<D> {
+    newValue: any;
+    oldValue: any;
+    selected: boolean;
+  }
+  export interface RadioChangeEventParams<D = any>
+    extends RadioChangeParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxChangeParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    checked: boolean;
+    indeterminates: D[];
+    /**
+     * 已选数据
+     */
+    records: D[];
+    /**
+     * 已保留数据
+     */
+    reserves: D[];
+  }
+  export interface CheckboxChangeEventParams<D = any>
+    extends CheckboxChangeParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxAllParams<D = any> extends CheckboxChangeParams<D> {}
+  export interface CheckboxAllEventParams<D = any>
+    extends CheckboxAllParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxRangeStartParams<D = any> {
+    /**
+     * 已选数据
+     */
+    records: D[];
+    /**
+     * 已保留数据
+     */
+    reserves: D[];
+  }
+  export interface CheckboxRangeStartEventParams<D = any>
+    extends CheckboxRangeStartParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxRangeChangeParams<
+    D = any,
+  > extends CheckboxRangeStartParams<D> {}
+  export interface CheckboxRangeChangeEventParams<D = any>
+    extends CheckboxRangeChangeParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxRangeEndParams<
+    D = any,
+  > extends CheckboxRangeStartParams<D> {}
+
+  export interface CheckboxRangeEndEventParams<D = any>
+    extends CheckboxRangeEndParams<D>, TableEventParams<D> {}
+
+  export interface CheckboxRangeSelectParams<D = any> {
+    rangeRecords: D[];
+  }
+  export interface CheckboxRangeSelectEventParams<D = any>
+    extends CheckboxRangeSelectParams<D>, TableEventParams<D> {}
+
+  export interface CellClickParams<D = any> extends TableBaseCellParams<D> {
+    triggerCheckbox: boolean;
+    triggerExpandNode: boolean;
+    triggerRadio: boolean;
+    triggerTreeNode: boolean;
+  }
+  export interface CellClickEventParams<D = any>
+    extends CellClickParams<D>, TableEventParams<D> {}
+
+  export interface CellDblclickParams<D = any>
+    extends CellClickParams<D>, TableEventParams<D> {}
+  export interface CellDblclickEventParams<D = any>
+    extends CellDblclickParams<D>, TableEventParams<D> {}
+
+  export interface CellMenuParams<D = any> extends TableBaseCellParams<D> {}
+  export interface CellMenuEventParams<D = any>
+    extends CellMenuParams<D>, TableEventParams<D> {}
+
+  export interface CellMouseenterParams<
+    D = any,
+  > extends TableBaseCellParams<D> {}
+  export interface CellMouseenterEventParams<D = any>
+    extends CellMouseenterParams<D>, TableEventParams<D> {}
+
+  export interface CellMouseleaveParams<
+    D = any,
+  > extends TableBaseCellParams<D> {}
+  export interface CellMouseleaveEventParams<D = any>
+    extends CellMouseleaveParams<D>, TableEventParams<D> {}
+
+  export interface CellDeleteValueParams<D = any> {
+    activeArea: AsTableExtendCellAreaDefines.MouseActiveCellArea<D>;
+    cellAreas: AsTableExtendCellAreaDefines.MouseCellArea<D>[];
+    column: AsTableDefines.ColumnInfo;
+    columnIndex: number;
+    row: D;
+    rowIndex: number;
+  }
+  export interface CellDeleteValueEventParams<D = any>
+    extends CellDeleteValueParams<D>, TableEventParams<D> {}
+
+  export interface HeaderCellClickParams<
+    D = any,
+  > extends TableBaseHeaderCellParams<D> {
+    triggerFilter: boolean;
+    triggerResizable: boolean;
+    triggerSort: boolean;
+  }
+  export interface HeaderCellClickEventParams<D = any>
+    extends HeaderCellClickParams<D>, TableEventParams<D> {}
+
+  export interface HeaderCellDblclickParams<
+    D = any,
+  > extends TableBaseHeaderCellParams<D> {}
+  export interface HeaderCellDblclickEventParams<D = any>
+    extends HeaderCellDblclickParams<D>, TableEventParams<D> {}
+
+  export interface HeaderCellMenuParams<
+    D = any,
+  > extends TableBaseHeaderCellParams<D> {}
+  export interface HeaderCellMenuEventParams<D = any>
+    extends HeaderCellMenuParams<D>, TableEventParams<D> {}
+
+  export interface FooterCellClickParams<
+    D = any,
+  > extends TableBaseFooterCellParams<D> {}
+  export interface FooterCellClickEventParams<D = any>
+    extends FooterCellClickParams<D>, TableEventParams<D> {}
+
+  export interface FooterCellDblclickParams<
+    D = any,
+  > extends TableBaseFooterCellParams<D> {}
+  export interface FooterCellDblclickEventParams<D = any>
+    extends FooterCellDblclickParams<D>, TableEventParams<D> {}
+
+  export interface FooterCellMenuParams<
+    D = any,
+  > extends TableBaseFooterCellParams<D> {}
+  export interface FooterCellMenuEventParams<D = any>
+    extends FooterCellMenuParams<D>, TableEventParams<D> {}
+
+  export interface SortCheckedParams<D = any> {
+    [key: symbol]: D;
+    column: AsTableDefines.ColumnInfo;
+    field: AsColumnPropTypes.Field;
+    order: AsTablePropTypes.SortOrder;
+    sortTime: number;
+  }
+  export interface SortChangeParams<D = any> extends SortCheckedParams<D> {
+    sortList: SortCheckedParams[];
+  }
+  export interface SortChangeEventParams<D = any>
+    extends SortChangeParams<D>, TableEventParams<D> {}
+  export interface ClearSortEventParams<D = any>
+    extends SortChangeParams<D>, TableEventParams<D> {}
+  export interface ClearAllSortEventParams<D = any>
+    extends SortChangeParams<D>, TableEventParams<D> {}
+
+  export interface FilterCheckedParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+    datas: any[];
+    field: AsColumnPropTypes.Field;
+    /**
+     *已废弃， 请使用 field
+     * @deprecated
+     */
+    property: AsColumnPropTypes.Field;
+    values: any[];
+  }
+  export interface FilterChangeParams<D = any> extends FilterCheckedParams<D> {
+    filterList: FilterCheckedParams<D>[];
+  }
+  export interface FilterChangeEventParams<D = any>
+    extends FilterChangeParams<D>, TableEventParams<D> {}
+  export interface ClearFilterEventParams<D = any>
+    extends FilterChangeParams<D>, TableEventParams<D> {}
+  export interface ClearAllFilterEventParams<D = any>
+    extends FilterChangeParams<D>, TableEventParams<D> {}
+
+  export interface FilterVisibleParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+    field: AsColumnPropTypes.Field;
+    filterList: FilterCheckedParams<D>[];
+    /**
+     *已废弃， 请使用 field
+     * @deprecated
+     */
+    property: AsColumnPropTypes.Field;
+    visible: boolean;
+  }
+  export interface FilterVisibleEventParams<D = any>
+    extends FilterVisibleParams<D>, TableEventParams<D> {}
+
+  export interface ResizableChangeParams<
+    D = any,
+  > extends TableBaseHeaderCellParams<D> {}
+  export interface ResizableChangeEventParams<D = any>
+    extends ResizableChangeParams<D>, TableEventParams<D> {
+    resizeWidth: number;
+  }
+
+  export interface ToggleRowGroupExpandEventParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    expanded: boolean;
+  }
+
+  export interface ToggleRowExpandParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    expanded: boolean;
+  }
+  export interface ToggleRowExpandEventParams<D = any>
+    extends TableEventParams<D>, ToggleRowExpandParams {}
+
+  export interface ToggleTreeExpandParams<
+    D = any,
+  > extends TableBaseCellParams<D> {
+    expanded: boolean;
+  }
+  export interface ToggleTreeExpandEventParams<D = any>
+    extends TableEventParams<D>, ToggleTreeExpandParams<D> {}
+
+  export interface MenuClickParams<D = any> extends TableBaseCellParams<D> {
+    menu: AsTableDefines.MenuChildOption | AsTableDefines.MenuFirstOption;
+    type: string;
+  }
+  export interface MenuClickEventParams<D = any>
+    extends MenuClickParams<D>, TableEventParams<D> {}
+
+  export interface EditClosedParams<D = any> extends TableBaseCellParams<D> {}
+  export interface EditClosedEventParams<D = any>
+    extends EditClosedParams<D>, TableEventParams<D> {}
+
+  export interface EditActivatedParams<
+    D = any,
+  > extends TableBaseCellParams<D> {}
+  export interface EditActivatedEventParams<D = any>
+    extends EditActivatedParams<D>, TableEventParams<D> {}
+
+  export interface EditDisabledParams<D = any> extends TableBaseCellParams<D> {}
+  export interface EditDisabledEventParams<D = any>
+    extends EditDisabledParams<D>, TableEventParams<D> {}
+
+  export interface ValidErrorParams<D = any> extends TableBaseCellParams<D> {
+    rule: any;
+  }
+  export interface ValidErrorEventParams<D = any>
+    extends TableEventParams<D>, ValidErrorParams<D> {}
+
+  export interface ScrollParams {
+    bodyHeight: number;
+    bodyWidth: number;
+    direction: 'bottom' | 'left' | 'right' | 'top';
+    isBottom: boolean;
+    isLeft: boolean;
+    isRight: boolean;
+    isTop: boolean;
+    isX: boolean;
+    isY: boolean;
+    scrollHeight: number;
+    scrollLeft: number;
+    scrollTop: number;
+    scrollWidth: number;
+    type: string;
+  }
+  export interface ScrollEventParams<D = any>
+    extends ScrollParams, TableEventParams<D> {
+    target: HTMLDivElement;
+  }
+  export interface ScrollBoundaryEventParams<
+    D = any,
+  > extends ScrollEventParams<D> {}
+
+  export type CustomType =
+    | ''
+    | 'cancel'
+    | 'close'
+    | 'confirm'
+    | 'open'
+    | 'reset';
+
+  export interface CustomParams {
+    type: CustomType;
+  }
+  export interface CustomEventParams<D = any>
+    extends CustomParams, TableEventParams<D> {}
+
+  export interface CustomOpenEventParams<D = any> extends TableEventParams<D> {}
+  export interface CustomCloseEventParams<
+    D = any,
+  > extends TableEventParams<D> {}
+  export interface CustomCancelEventParams<
+    D = any,
+  > extends TableEventParams<D> {}
+  export interface CustomResetEventParams<
+    D = any,
+  > extends TableEventParams<D> {}
+  export interface CustomConfirmEventParams<
+    D = any,
+  > extends TableEventParams<D> {}
+
+  export interface RowDragstartEventParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+    row: D;
+  }
+
+  export interface RowDragoverEventParams<D = any> {
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+    targetRow: D;
+  }
+
+  export interface RowDragendEventParams<D = any> {
+    _index: {
+      newIndex: number;
+      oldIndex: number;
+    };
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    dragToChild: boolean;
+    newRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+  }
+
+  export interface RowRemoveDragendEventParams<D = any> {
+    row: D;
+  }
+
+  export interface RowInsertDragendEventParams<D = any> {
+    dragPos: 'bottom' | 'top';
+    dragRow: D;
+    dragToChild: boolean;
+    newRow: D;
+    offsetIndex: 0 | 1;
+    oldRow: D;
+  }
+
+  export interface RowDragToChildMethod<
+    D = any,
+  > extends RowDragendEventParams<D> {}
+
+  export interface ColumnDragstartEventParams<D = any> {
+    column: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragoverEventParams<D = any> {
+    dragColumn: AsTableDefines.ColumnInfo;
+    dragPos: 'left' | 'right';
+    offsetIndex: 0 | 1;
+    oldColumn: AsTableDefines.ColumnInfo;
+    targetColumn: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragendEventParams<D = any> {
+    _index: {
+      newIndex: number;
+      oldIndex: number;
+    };
+    dragColumn: AsTableDefines.ColumnInfo;
+    dragPos: 'left' | 'right';
+    dragToChild: boolean;
+    newColumn: AsTableDefines.ColumnInfo;
+    offsetIndex: 0 | 1;
+    oldColumn: AsTableDefines.ColumnInfo;
+  }
+
+  export interface ColumnDragToChildMethod<
+    D = any,
+  > extends ColumnDragendEventParams<D> {}
+
+  export interface EnterAppendRowEventParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    _columnIndex: number;
+    _rowIndex: number;
+    column: AsTableDefines.ColumnInfo;
+    columnIndex: number;
+    row: D;
+    rowIndex: number;
+  }
+
+  export interface TabAppendRowEventParams<D = any> {
+    $columnIndex: number;
+    $rowIndex: number;
+    _columnIndex: number;
+    _rowIndex: number;
+    column: AsTableDefines.ColumnInfo;
+    columnIndex: number;
+    row: D;
+    rowIndex: number;
+  }
+
   export interface FilterCheckedParams<D = any> {
     column: AsTableDefines.ColumnInfo;
     datas: any[];
@@ -6454,13 +6990,6 @@ export namespace AsTableDefines {
     value: any;
   }
 
-  export interface SortCheckedParams<D = any> {
-    column: AsTableDefines.ColumnInfo<D>;
-    field: AsColumnPropTypes.Field;
-    order: AsTablePropTypes.SortOrder;
-    sortTime: number;
-  }
-
   export interface HeaderColCacheItem {
     formatObj?: RowCacheFormatObj;
   }
@@ -6912,6 +7441,32 @@ export namespace AsTableDefines {
 }
 
 export namespace AsTableSlotTypes {
+  export interface HeaderTooltipSlotParams<D = any> {
+    // TODO $gantt: null | undefined | AsGanttConstructor;
+    // TODO $grid: null | undefined | AsGridConstructor<D>;
+    $table: AsTableConstructor<D>;
+    column: AsTableDefines.ColumnInfo;
+    tooltipContent: string;
+  }
+  export interface TooltipSlotParams<D = any> {
+    // TODO $gantt: null | undefined | AsGanttConstructor;
+    // TODO $grid: null | undefined | AsGridConstructor<D>;
+    $table: AsTableConstructor<D>;
+    column: AsTableDefines.ColumnInfo;
+    row: D;
+    tooltipContent: string;
+  }
+  export interface FooterTooltipSlotParams<D = any> {
+    // TODO $gantt: null | undefined | AsGanttConstructor;
+    // TODO $grid: null | undefined | AsGridConstructor<D>;
+    $table: AsTableConstructor<D>;
+    column: AsTableDefines.ColumnInfo;
+    row: D;
+    tooltipContent: string;
+  }
+  export interface EmptySlotParams<D = any> extends BaseSlotParams<D> {}
+  export interface LoadingSlotParams<D = any> extends BaseSlotParams<D> {}
+
   export interface DefaultSlotParams {}
 
   export interface BaseSlotParams<D = any> {
@@ -6947,94 +7502,557 @@ export namespace AsTableSlotTypes {
   }
 }
 
+export interface AsTableSlots<D = any> {
+  /**
+   * 只对 column-config.drag 开启后有效，自定义列拖拽按钮图标
+   */
+  'column-drag-icon'?: (
+    params: AsTableSlotTypes.ColumnDragIconSlotParams<D>,
+  ) => any;
+
+  columnDragIcon?: (
+    params: AsTableSlotTypes.ColumnDragIconSlotParams<D>,
+  ) => any;
+  default: () => any;
+
+  /**
+   * 自定义空数据时显示模板
+   */
+  empty?(params: AsTableSlotTypes.EmptySlotParams<D>): any;
+  /**
+   * 用于 show-footer-overflow=tooltip，自定义表尾单元格提示内容模板
+   */
+  'footer-tooltip'?: (
+    params: AsTableSlotTypes.FooterTooltipSlotParams<D>,
+  ) => any;
+
+  footerTooltip?: (params: AsTableSlotTypes.FooterTooltipSlotParams<D>) => any;
+  /**
+   * 用于 show-header-overflow=tooltip，自定义表头单元格提示内容模板
+   */
+  'header-tooltip'?: (
+    params: AsTableSlotTypes.HeaderTooltipSlotParams<D>,
+  ) => any;
+
+  headerTooltip?: (params: AsTableSlotTypes.HeaderTooltipSlotParams<D>) => any;
+  /**
+   * 自定义加载中模板
+   */
+  loading?(params: AsTableSlotTypes.LoadingSlotParams<D>): any;
+  /**
+   * 只对 row-config.drag 开启后有效，自定义行拖拽按钮图标
+   */
+  'row-drag-icon'?: (params: AsTableSlotTypes.RowDragIconSlotParams<D>) => any;
+  rowDragIcon?: (params: AsTableSlotTypes.RowDragIconSlotParams<D>) => any;
+  /**
+   * 用于 show-overflow=tooltip，自定义单元格提示内容模板
+   */
+  tooltip?: (params: AsTableSlotTypes.TooltipSlotParams<D>) => any;
+}
 export type AsTableEmits = [
   'ready',
-  'init-rendered',
-  'data-rendered',
+  'initRendered',
+  'dataRendered',
 
-  'update:data',
-  'keydown-start',
+  'update:data', // ← 保留，Vue 的 v-model:data 约定
+  'keydownStart',
   'keydown',
-  'keydown-end',
+  'keydownEnd',
   'paste',
   'copy',
   'cut',
   'undo',
   'redo',
-  'context-menu',
+  'contextMenu',
 
-  'columns-change',
-  'data-change',
-  'footer-data-change',
+  'columnsChange',
+  'dataChange',
+  'footerDataChange',
 
-  'current-row-change',
-  'current-row-disabled',
-  'current-column-change',
-  'current-column-disabled',
-  'radio-change',
-  'checkbox-change',
-  'checkbox-all',
-  'checkbox-range-start',
-  'checkbox-range-change',
-  'checkbox-range-end',
-  'checkbox-range-select',
-  'cell-click',
-  'cell-dblclick',
-  'cell-menu',
-  'cell-mouseenter',
-  'cell-mouseleave',
-  'cell-selected',
-  'cell-delete-value',
-  'cell-backspace-value',
-  'header-cell-click',
-  'header-cell-dblclick',
-  'header-cell-menu',
-  'footer-cell-click',
-  'footer-cell-dblclick',
-  'footer-cell-menu',
-  'clear-merge',
-  'sort-change',
-  'clear-sort',
-  'clear-all-sort',
-  'filter-change',
-  'filter-visible',
-  'clear-filter',
-  'clear-all-filter',
+  'currentRowChange',
+  'currentRowDisabled',
+  'currentColumnChange',
+  'currentColumnDisabled',
+  'radioChange',
+  'checkboxChange',
+  'checkboxAll',
+  'checkboxRangeStart',
+  'checkboxRangeChange',
+  'checkboxRangeEnd',
+  'checkboxRangeSelect',
+  'cellClick',
+  'cellDblclick',
+  'cellMenu',
+  'cellMouseenter',
+  'cellMouseleave',
+  'cellSelected',
+  'clearCellAreaSelection',
+  'cellDeleteValue',
+  'cellBackspaceValue',
+  'headerCellClick',
+  'headerCellDblclick',
+  'headerCellMenu',
+  'footerCellClick',
+  'footerCellDblclick',
+  'footerCellMenu',
+  'clearMerge',
+  'sortChange',
+  'clearSort',
+  'clearAllSort',
+  'filterChange',
+  'filterVisible',
+  'clearFilter',
+  'clearAllFilter',
 
-  'column-resizable-change',
-  'row-resizable-change',
-  'toggle-row-group-expand',
-  'toggle-row-expand',
-  'toggle-tree-expand',
-  'menu-click',
-  'edit-closed',
-  'row-dragstart',
-  'row-dragover',
-  'row-dragend',
-  'row-remove-dragend',
-  'row-insert-dragend',
-  'column-dragstart',
-  'column-dragover',
-  'column-dragend',
-  'enter-append-row',
-  'tab-append-row',
+  'columnResizableChange',
+  'rowResizableChange',
+  'toggleRowGroupExpand',
+  'toggleRowExpand',
+  'toggleTreeExpand',
+  'menuClick',
+  'editClosed',
+  'rowDragstart',
+  'rowDragover',
+  'rowDragend',
+  'rowRemoveDragend',
+  'rowInsertDragend',
+  'columnDragstart',
+  'columnDragover',
+  'columnDragend',
+  'enterAppendRow',
+  'tabAppendRow',
 
-  'edit-activated',
-  'edit-disabled',
-  'valid-error',
+  'editActivated',
+  'editDisabled',
+  'validError',
   'scroll',
-  'scroll-boundary',
+  'scrollBoundary',
   'custom',
-  'custom-open',
-  'custom-close',
-  'custom-cancel',
-  'custom-reset',
-  'custom-confirm',
-  'custom-visible-change',
-  'custom-visible-all',
-  'custom-fixed-change',
-  'custom-sort-change',
-  'custom-align-change',
-  'custom-header-align-change',
-  'custom-footer-align-change',
+  'customOpen',
+  'customClose',
+  'customCancel',
+  'customReset',
+  'customConfirm',
+  'customVisibleChange',
+  'customVisibleAll',
+  'customFixedChange',
+  'customSortChange',
+  'customAlignChange',
+  'customHeaderAlignChange',
+  'customFooterAlignChange',
+  ...AsTableExtendCellAreaEmits,
 ];
+
+export interface AsTableEventProps<D = any> {
+  onCellBackspaceValue?: AsTableEvents.CellBackspaceValue<D>;
+  onCellClick?: AsTableEvents.CellClick<D>;
+  onCellDblclick?: AsTableEvents.CellDblclick<D>;
+  onCellDeleteValue?: AsTableEvents.CellDeleteValue<D>;
+  onCellMenu?: AsTableEvents.CellMenu<D>;
+  onCellMouseenter?: AsTableEvents.CellMouseenter<D>;
+  onCellMouseleave?: AsTableEvents.CellMouseleave<D>;
+  onCellSelected?: AsTableEvents.CellSelected<D>;
+  onCheckboxAll?: AsTableEvents.CheckboxAll<D>;
+  onCheckboxChange?: AsTableEvents.CheckboxChange<D>;
+  onCheckboxRangeChange?: AsTableEvents.CheckboxRangeChange<D>;
+  onCheckboxRangeEnd?: AsTableEvents.CheckboxRangeEnd<D>;
+  onCheckboxRangeSelect?: AsTableEvents.CheckboxRangeSelect<D>;
+  onCheckboxRangeStart?: AsTableEvents.CheckboxRangeStart<D>;
+  onClearAllFilter?: AsTableEvents.ClearAllFilter<D>;
+  onClearAllSort?: AsTableEvents.ClearAllSort<D>;
+  onClearFilter?: AsTableEvents.ClearFilter<D>;
+  onClearSort?: AsTableEvents.ClearSort<D>;
+  onColumnDragend?: AsTableEvents.ColumnDragend<D>;
+  onColumnDragover?: AsTableEvents.ColumnDragover<D>;
+  onColumnDragstart?: AsTableEvents.ColumnDragstart<D>;
+  onColumnsChange?: AsTableEvents.ColumnsChange<D>;
+  onContextMenu?: AsTableEvents.ContextMenu<D>;
+  onCopy?: AsTableEvents.Copy<D>;
+  onCurrentColumnChange?: AsTableEvents.CurrentColumnChange<D>;
+  onCurrentColumnDisabled?: AsTableEvents.CurrentColumnDisabled<D>;
+  onCurrentRowChange?: AsTableEvents.CurrentRowChange<D>;
+  onCurrentRowDisabled?: AsTableEvents.CurrentRowDisabled<D>;
+  onCustom?: AsTableEvents.Custom<D>;
+  onCustomCancel?: AsTableEvents.CustomCancel<D>;
+  onCustomClose?: AsTableEvents.CustomClose<D>;
+  onCustomConfirm?: AsTableEvents.CustomConfirm<D>;
+  onCustomFixedChange?: AsTableEvents.CustomFixedChange<D>;
+  onCustomOpen?: AsTableEvents.CustomOpen<D>;
+  onCustomReset?: AsTableEvents.CustomReset<D>;
+  onCustomVisibleAll?: AsTableEvents.CustomVisibleAll<D>;
+  onCustomVisibleChange?: AsTableEvents.CustomVisibleChange<D>;
+  onCut?: AsTableEvents.Cut<D>;
+  onDataChange?: AsTableEvents.DataChange<D>;
+  onDataRendered?: AsTableEvents.DataRendered<D>;
+  onEditActivated?: AsTableEvents.EditActivated<D>;
+  onEditClosed?: AsTableEvents.EditClosed<D>;
+  onEditDisabled?: AsTableEvents.EditDisabled<D>;
+  onEnterAppendRow?: AsTableEvents.EnterAppendRow<D>;
+  onFilterChange?: AsTableEvents.FilterChange<D>;
+  onFilterVisible?: AsTableEvents.FilterVisible<D>;
+  onFooterCellClick?: AsTableEvents.FooterCellClick<D>;
+  onFooterCellDblclick?: AsTableEvents.FooterCellDblclick<D>;
+  onFooterCellMenu?: AsTableEvents.FooterCellMenu<D>;
+  onFooterDataChange?: AsTableEvents.FooterDataChange<D>;
+  onHeaderCellClick?: AsTableEvents.HeaderCellClick<D>;
+  onHeaderCellDblclick?: AsTableEvents.HeaderCellDblclick<D>;
+  onHeaderCellMenu?: AsTableEvents.HeaderCellMenu<D>;
+  onInitRendered?: AsTableEvents.InitRendered<D>;
+  onKeydown?: AsTableEvents.Keydown<D>;
+  onKeydownEnd?: AsTableEvents.KeydownEnd<D>;
+  onKeydownStart?: AsTableEvents.KeydownStart<D>;
+  onMenuClick?: AsTableEvents.MenuClick<D>;
+  onPaste?: AsTableEvents.Paste<D>;
+  onRadioChange?: AsTableEvents.RadioChange<D>;
+  onReady?: AsTableEvents.Ready<D>;
+  onRedo?: AsTableEvents.Redo<D>;
+  onResizableChange?: AsTableEvents.ResizableChange<D>;
+  onRowDragend?: AsTableEvents.RowDragend<D>;
+  onRowDragover?: AsTableEvents.RowDragover<D>;
+  onRowDragstart?: AsTableEvents.RowDragstart<D>;
+  onRowInsertDragend?: AsTableEvents.RowInsertDragend<D>;
+  onRowRemoveDragend?: AsTableEvents.RowRemoveDragend<D>;
+  onRowResizableChange?: AsTableEvents.RowResizableChange<D>;
+  onScroll?: AsTableEvents.Scroll<D>;
+  onScrollBoundary?: AsTableEvents.ScrollBoundary<D>;
+  onSortChange?: AsTableEvents.SortChange<D>;
+  onTabAppendRow?: AsTableEvents.TabAppendRow<D>;
+  onToggleRowExpand?: AsTableEvents.ToggleRowExpand<D>;
+  onToggleRowGroupExpand?: AsTableEvents.ToggleRowGroupExpand<D>;
+  onToggleTreeExpand?: AsTableEvents.ToggleTreeExpand<D>;
+  onUndo?: AsTableEvents.Undo<D>;
+  'onUpdate:data'?: (value: D[]) => void;
+  onValidError?: AsTableEvents.ValidError<D>;
+}
+
+export interface AsTableListeners<D = any> {
+  cellBackspaceValue?: AsTableEvents.CellBackspaceValue<D>;
+  cellClick?: AsTableEvents.CellClick<D>;
+  cellDblclick?: AsTableEvents.CellDblclick<D>;
+  cellDeleteValue?: AsTableEvents.CellDeleteValue<D>;
+  cellMenu?: AsTableEvents.CellMenu<D>;
+  cellMouseenter?: AsTableEvents.CellMouseenter<D>;
+  cellMouseleave?: AsTableEvents.CellMouseleave<D>;
+  cellSelected?: AsTableEvents.CellSelected<D>;
+  checkboxAll?: AsTableEvents.CheckboxAll<D>;
+  checkboxChange?: AsTableEvents.CheckboxChange<D>;
+  checkboxRangeChange?: AsTableEvents.CheckboxRangeChange<D>;
+  checkboxRangeEnd?: AsTableEvents.CheckboxRangeEnd<D>;
+  checkboxRangeSelect?: AsTableEvents.CheckboxRangeSelect<D>;
+  checkboxRangeStart?: AsTableEvents.CheckboxRangeStart<D>;
+  clearAllFilter?: AsTableEvents.ClearAllFilter<D>;
+  clearAllSort?: AsTableEvents.ClearAllSort<D>;
+  clearFilter?: AsTableEvents.ClearFilter<D>;
+  clearMerge?: (params: any) => any;
+  clearSort?: AsTableEvents.ClearSort<D>;
+  columnDragend?: AsTableEvents.ColumnDragend<D>;
+  columnDragover?: AsTableEvents.ColumnDragover<D>;
+  columnDragstart?: AsTableEvents.ColumnDragstart<D>;
+  columnResizableChange?: (params: any) => any;
+  columnsChange?: AsTableEvents.ColumnsChange<D>;
+  contextMenu?: AsTableEvents.ContextMenu<D>;
+  copy?: AsTableEvents.Copy<D>;
+  currentColumnChange?: AsTableEvents.CurrentColumnChange<D>;
+  currentColumnDisabled?: AsTableEvents.CurrentColumnDisabled<D>;
+  currentRowChange?: AsTableEvents.CurrentRowChange<D>;
+  currentRowDisabled?: AsTableEvents.CurrentRowDisabled<D>;
+  /**
+   * 如果与工具栏关联，在个性化设置按钮被手动点击后会触发该事件
+   */
+  custom?: AsTableEvents.Custom<D>;
+  customAlignChange?: (params: any) => any;
+  customCancel?: AsTableEvents.CustomCancel<D>;
+  customClose?: AsTableEvents.CustomClose<D>;
+  customConfirm?: AsTableEvents.CustomConfirm<D>;
+  customFixedChange?: AsTableEvents.CustomFixedChange<D>;
+  customFooterAlignChange?: (params: any) => any;
+  customHeaderAlignChange?: (params: any) => any;
+  customOpen?: AsTableEvents.CustomOpen<D>;
+  customReset?: AsTableEvents.CustomReset<D>;
+  customSortChange?: (params: any) => any;
+  customVisibleAll?: AsTableEvents.CustomVisibleAll<D>;
+  customVisibleChange?: AsTableEvents.CustomVisibleChange<D>;
+  cut?: AsTableEvents.Cut<D>;
+  dataChange?: AsTableEvents.DataChange<D>;
+  dataRendered?: AsTableEvents.DataRendered<D>;
+  editActivated?: AsTableEvents.EditActivated<D>;
+  editClosed?: AsTableEvents.EditClosed<D>;
+  editDisabled?: AsTableEvents.EditDisabled<D>;
+  enterAppendRow?: AsTableEvents.EnterAppendRow<D>;
+  filterChange?: AsTableEvents.FilterChange<D>;
+  filterVisible?: AsTableEvents.FilterVisible<D>;
+  footerCellClick?: AsTableEvents.FooterCellClick<D>;
+  footerCellDblclick?: AsTableEvents.FooterCellDblclick<D>;
+  footerCellMenu?: AsTableEvents.FooterCellMenu<D>;
+  footerDataChange?: AsTableEvents.FooterDataChange<D>;
+  headerCellClick?: AsTableEvents.HeaderCellClick<D>;
+  headerCellDblclick?: AsTableEvents.HeaderCellDblclick<D>;
+  headerCellMenu?: AsTableEvents.HeaderCellMenu<D>;
+  initRendered?: AsTableEvents.InitRendered<D>;
+  /**
+   * 当表格被激活且键盘被按下时会触发的事件
+   */
+  keydown?: AsTableEvents.Keydown<D>;
+  /**
+   * 当表格被激活且键盘被按下结束时会触发的事件
+   */
+  keydownEnd?: AsTableEvents.KeydownEnd<D>;
+  /**
+   * 当表格被激活且键盘被按下开始时会触发的事件
+   */
+  keydownStart?: AsTableEvents.KeydownStart<D>;
+  menuClick?: AsTableEvents.MenuClick<D>;
+  paste?: AsTableEvents.Paste<D>;
+  radioChange?: AsTableEvents.RadioChange<D>;
+  ready?: AsTableEvents.Ready<D>;
+  redo?: AsTableEvents.Redo<D>;
+  resizableChange?: AsTableEvents.ResizableChange<D>;
+  rowDragend?: AsTableEvents.RowDragend<D>;
+  rowDragover?: AsTableEvents.RowDragover<D>;
+  rowDragstart?: AsTableEvents.RowDragstart<D>;
+  rowInsertDragend?: AsTableEvents.RowInsertDragend<D>;
+  rowRemoveDragend?: AsTableEvents.RowRemoveDragend<D>;
+  rowResizableChange?: AsTableEvents.RowResizableChange<D>;
+  /**
+   * 表格滚动时会触发该事件
+   */
+  scroll?: AsTableEvents.Scroll<D>;
+  scrollBoundary?: AsTableEvents.ScrollBoundary<D>;
+  sortChange?: AsTableEvents.SortChange<D>;
+  tabAppendRow?: AsTableEvents.TabAppendRow<D>;
+  toggleRowExpand?: AsTableEvents.ToggleRowExpand<D>;
+  toggleRowGroupExpand?: AsTableEvents.ToggleRowGroupExpand<D>;
+  toggleTreeExpand?: AsTableEvents.ToggleTreeExpand<D>;
+  undo?: AsTableEvents.Undo<D>;
+  'update:data'?: (value: D[]) => void;
+  /**
+   * 只对 edit-rules 配置时有效，当数据校验不通过时会触发该事件
+   */
+  validError?: AsTableEvents.ValidError<D>;
+}
+
+export namespace AsTableEvents {
+  export type Ready<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ReadyEventParams<D>,
+  ) => void;
+  export type InitRendered<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.InitRenderedEventParams<D>,
+  ) => void;
+  export type DataRendered<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.DataRenderedEventParams<D>,
+  ) => void;
+  export type KeydownStart<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.KeydownStartEventParams<D>,
+  ) => void;
+  export type Keydown<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.KeydownEventParams<D>,
+  ) => void;
+  export type KeydownEnd<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.KeydownEndEventParams<D>,
+  ) => void;
+  export type Paste<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.PasteEventParams<D>,
+  ) => void;
+  export type Copy<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CopyEventParams<D>,
+  ) => void;
+  export type Cut<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CutEventParams<D>,
+  ) => void;
+  export type Undo<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.UndoEventParams<D>,
+  ) => void;
+  export type Redo<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RedoEventParams<D>,
+  ) => void;
+  export type ContextMenu<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ContextMenuEventParams<D>,
+  ) => void;
+  export type ColumnsChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ColumnsChangeEventParams<D>,
+  ) => void;
+  export type DataChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.DataChangeEventParams<D>,
+  ) => void;
+  export type FooterDataChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FooterDataChangeEventParams<D>,
+  ) => void;
+  export type CurrentRowChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CurrentRowChangeEventParams<D>,
+  ) => void;
+  export type CurrentRowDisabled<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CurrentRowDisabledEventParams<D>,
+  ) => void;
+  export type CurrentColumnChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CurrentColumnChangeEventParams<D>,
+  ) => void;
+  export type CurrentColumnDisabled<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CurrentColumnDisabledEventParams<D>,
+  ) => void;
+  export type RadioChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RadioChangeEventParams<D>,
+  ) => void;
+  export type CheckboxChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxChangeEventParams<D>,
+  ) => void;
+  export type CheckboxAll<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxAllEventParams<D>,
+  ) => void;
+  export type CheckboxRangeStart<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxRangeStartEventParams<D>,
+  ) => void;
+  export type CheckboxRangeChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxRangeChangeEventParams<D>,
+  ) => void;
+  export type CheckboxRangeEnd<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxRangeEndEventParams<D>,
+  ) => void;
+  export type CheckboxRangeSelect<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CheckboxRangeSelectEventParams<D>,
+  ) => void;
+  export type CellClick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellClickEventParams<D>,
+  ) => void;
+  export type CellDblclick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellDblclickEventParams<D>,
+  ) => void;
+  export type CellMenu<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellMenuEventParams<D>,
+  ) => void;
+  export type CellMouseenter<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellMouseenterEventParams<D>,
+  ) => void;
+  export type CellMouseleave<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellMouseleaveEventParams<D>,
+  ) => void;
+  export type CellDeleteValue<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CellDeleteValueEventParams<D>,
+  ) => void;
+  export type HeaderCellClick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.HeaderCellClickEventParams<D>,
+  ) => void;
+  export type HeaderCellDblclick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.HeaderCellDblclickEventParams<D>,
+  ) => void;
+  export type HeaderCellMenu<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.HeaderCellMenuEventParams<D>,
+  ) => void;
+  export type FooterCellClick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FooterCellClickEventParams<D>,
+  ) => void;
+  export type FooterCellDblclick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FooterCellDblclickEventParams<D>,
+  ) => void;
+  export type FooterCellMenu<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FooterCellMenuEventParams<D>,
+  ) => void;
+  export type SortChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.SortChangeEventParams<D>,
+  ) => void;
+  export type ClearSort<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ClearSortEventParams<D>,
+  ) => void;
+  export type ClearAllSort<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ClearAllSortEventParams<D>,
+  ) => void;
+  export type FilterChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FilterChangeEventParams<D>,
+  ) => void;
+  export type ClearFilter<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ClearFilterEventParams<D>,
+  ) => void;
+  export type ClearAllFilter<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ClearAllFilterEventParams<D>,
+  ) => void;
+  export type FilterVisible<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.FilterVisibleEventParams<D>,
+  ) => void;
+
+  export type CellBackspaceValue<D = any> = (params: any & { __d?: D }) => any;
+  export type CellSelected<D = any> = (params: any & { __d?: D }) => any;
+  export type CustomFixedChange<D = any> = (params: any & { __d?: D }) => any;
+  export type CustomVisibleAll<D = any> = (params: any & { __d?: D }) => any;
+  export type CustomVisibleChange<D = any> = (params: any & { __d?: D }) => any;
+  export type RowResizableChange<D = any> = (params: any & { __d?: D }) => any;
+  export type ResizableChange<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ResizableChangeEventParams<D>,
+  ) => void;
+  export type ToggleRowGroupExpand<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ToggleRowGroupExpandEventParams<D>,
+  ) => void;
+  export type ToggleRowExpand<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ToggleRowExpandEventParams<D>,
+  ) => void;
+  export type ToggleTreeExpand<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ToggleTreeExpandEventParams<D>,
+  ) => void;
+  export type MenuClick<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.MenuClickEventParams<D>,
+  ) => void;
+  export type EditClosed<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.EditClosedEventParams<D>,
+  ) => void;
+  export type EditActivated<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.EditActivatedEventParams<D>,
+  ) => void;
+  export type EditDisabled<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.EditDisabledEventParams<D>,
+  ) => void;
+  export type ValidError<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ValidErrorEventParams<D>,
+  ) => void;
+  export type Scroll<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ScrollEventParams<D>,
+  ) => void;
+  export type ScrollBoundary<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ScrollBoundaryEventParams<D>,
+  ) => void;
+  export type Custom<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomEventParams<D>,
+  ) => void;
+  export type CustomOpen<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomOpenEventParams<D>,
+  ) => void;
+  export type CustomClose<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomCloseEventParams<D>,
+  ) => void;
+  export type CustomCancel<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomCancelEventParams<D>,
+  ) => void;
+  export type CustomReset<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomResetEventParams<D>,
+  ) => void;
+  export type CustomConfirm<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.CustomConfirmEventParams<D>,
+  ) => void;
+  export type RowDragstart<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RowDragstartEventParams<D>,
+  ) => void;
+  export type RowDragover<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RowDragoverEventParams<D>,
+  ) => void;
+  export type RowDragend<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RowDragendEventParams<D>,
+  ) => void;
+  export type RowRemoveDragend<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RowRemoveDragendEventParams<D>,
+  ) => void;
+  export type RowInsertDragend<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.RowInsertDragendEventParams<D>,
+  ) => void;
+  export type ColumnDragstart<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ColumnDragstartEventParams<D>,
+  ) => void;
+  export type ColumnDragover<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ColumnDragoverEventParams<D>,
+  ) => void;
+  export type ColumnDragend<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.ColumnDragendEventParams<D>,
+  ) => void;
+  export type EnterAppendRow<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.EnterAppendRowEventParams<D>,
+  ) => void;
+  export type TabAppendRow<D = AsTablePropTypes.Row> = (
+    params: AsTableDefines.TabAppendRowEventParams<D>,
+  ) => void;
+}

@@ -1,4 +1,4 @@
-import type { ComponentPublicInstance, Ref } from 'vue';
+import type { ComponentPublicInstance, Ref, SlotsType } from 'vue';
 
 import type { AsSharedTooltipInstance } from '..';
 import type { AsColumnPropTypes } from './types/column';
@@ -7,12 +7,14 @@ import type {
   AsTableConstructor,
   AsTableDefines,
   AsTableEmits,
+  AsTableListeners,
   AsTableMethods,
   AsTablePrivateComputed,
   AsTablePrivateMethods,
   AsTablePrivateRef,
   AsTableProps,
   AsTablePropTypes,
+  AsTableSlots,
   TableMethods,
   TablePrivateMethods,
   ValueOf,
@@ -216,12 +218,16 @@ let crossTableDragRowObj: null | {
   $oldTable: AsTableConstructor & AsTablePrivateMethods;
 } = null;
 
-export const Table = defineComponent<AsTableProps>(
+export const Table = defineComponent<
+  AsTableProps,
+  AsTableListeners,
+  string,
+  SlotsType<AsTableSlots>
+>(
   (props = defaults, context) => {
     const { slots, emit } = context;
     const log = useLog('Table');
     const [locale] = useLocale('Table', enUS.Table);
-
     const {
       prefixCls,
       rootPrefixCls,
@@ -5331,7 +5337,7 @@ export const Table = defineComponent<AsTableProps>(
           handleReserveStatus();
           $asTable.checkSelectionStatus();
           $asTable.dispatchEvent(
-            'data-change',
+            'dataChange',
             {
               visibleColumn: internalData.visibleColumn,
               visibleData: internalData.afterFullData,
@@ -5402,7 +5408,7 @@ export const Table = defineComponent<AsTableProps>(
           }).then(() => {
             if (initStatus) {
               dispatchEvent(
-                'data-rendered',
+                'dataRendered',
                 {
                   isReload,
                   visibleColumn: internalData.visibleColumn,
@@ -5412,7 +5418,7 @@ export const Table = defineComponent<AsTableProps>(
               );
             } else {
               dispatchEvent(
-                'init-rendered',
+                'initRendered',
                 {
                   visibleColumn: internalData.visibleColumn,
                   visibleData: internalData.afterFullData,
@@ -6051,7 +6057,7 @@ export const Table = defineComponent<AsTableProps>(
       handleCheckedAllCheckboxRow(value);
       if (evnt) {
         dispatchEvent(
-          'checkbox-all',
+          'checkboxAll',
           {
             records: () => $asTable.getCheckboxRecords(),
             reserves: () => $asTable.getCheckboxReserveRecords(),
@@ -6261,7 +6267,7 @@ export const Table = defineComponent<AsTableProps>(
       evnt: Event | null,
     ) => {
       emit(
-        type,
+        type as any,
         createEvent(
           evnt,
           {
@@ -6305,7 +6311,7 @@ export const Table = defineComponent<AsTableProps>(
         $asTable.refreshScroll().then(() => {
           $asTable.updateCellAreas();
         });
-        $asTable.dispatchEvent('column-resizable-change', params, evnt);
+        $asTable.dispatchEvent('rowResizableChange', params, evnt);
         setTimeout(() => {
           $asTable.recalculate(true);
         }, 300);
@@ -6318,7 +6324,7 @@ export const Table = defineComponent<AsTableProps>(
         $asTable.refreshScroll().then(() => {
           $asTable.updateCellAreas();
         });
-        $asTable.dispatchEvent('row-resizable-change', params, evnt);
+        $asTable.dispatchEvent('rowResizableChange', params, evnt);
         setTimeout(() => {
           $asTable.recalculate(true);
         }, 300);
@@ -8872,7 +8878,7 @@ export const Table = defineComponent<AsTableProps>(
               cols: sortCols,
               sortList: [],
             };
-            dispatchEvent('clear-all-sort', params, evnt);
+            dispatchEvent('clearAllSort', params, evnt);
           }
         }
         return nextTick().then(() => {
@@ -8929,7 +8935,7 @@ export const Table = defineComponent<AsTableProps>(
         if (visible) {
           const field = column ? column.field : null;
           dispatchEvent(
-            'filter-visible',
+            'filterVisible',
             {
               column,
               property: field,
@@ -9020,8 +9026,8 @@ export const Table = defineComponent<AsTableProps>(
             filters: filterList,
             filterList,
           };
-          $asTable.dispatchEvent('filter-change', params, evnt);
-          $asTable.dispatchEvent('clear-filter', params, evnt);
+          $asTable.dispatchEvent('filterChange', params, evnt);
+          $asTable.dispatchEvent('clearFilter', params, evnt);
         }
 
         if (multiple && filterCols.length > 0) {
@@ -9031,7 +9037,7 @@ export const Table = defineComponent<AsTableProps>(
             cols: filterCols,
             filterList: [],
           };
-          dispatchEvent('clear-all-filter', params, evnt);
+          dispatchEvent('clearAllFilter', params, evnt);
         }
 
         return nextTick();
@@ -9835,7 +9841,7 @@ export const Table = defineComponent<AsTableProps>(
         $asTable.clearFooterFormatterCache();
         $asTable.handleUpdateFooterMerge();
         $asTable.dispatchEvent(
-          'footer-data-change',
+          'footerDataChange',
           {
             visibleColumn: internalData.visibleColumn,
             footData,
@@ -10488,7 +10494,7 @@ export const Table = defineComponent<AsTableProps>(
       //       $asTable.preventEvent(evnt, 'event.clearAreas', {}, () => {
       //         $asTable.clearCellAreas();
       //         $asTable.clearCopyCellArea();
-      //         dispatchEvent('clear-cell-area-selection', { cellAreas }, evnt);
+      //         dispatchEvent('clearCellAreaSelection', { cellAreas }, evnt);
       //       });
       //     }
       //   }
@@ -10589,7 +10595,7 @@ export const Table = defineComponent<AsTableProps>(
       const isEsc = globalEvents.hasKey(evnt, GLOBAL_EVENT_KEYS.ESCAPE);
       if (isEsc) {
         $asTable.preventEvent(evnt, 'event.keydown', null, () => {
-          dispatchEvent('keydown-start', {}, evnt);
+          dispatchEvent('keydownStart', {}, evnt);
           if (
             keyboardConfig &&
             mouseConfig &&
@@ -10619,13 +10625,13 @@ export const Table = defineComponent<AsTableProps>(
             }
           }
           dispatchEvent('keydown', {}, evnt);
-          dispatchEvent('keydown-end', {}, evnt);
+          dispatchEvent('keydownEnd', {}, evnt);
         });
       }
     };
 
     const contextMenuEvent = (evnt: MouseEvent) => {
-      dispatchEvent('context-menu', {}, evnt);
+      dispatchEvent('contextMenu', {}, evnt);
     };
 
     /**
@@ -10878,7 +10884,7 @@ export const Table = defineComponent<AsTableProps>(
                                 );
                               });
                             $asTable.dispatchEvent(
-                              'tab-append-row',
+                              'tabAppendRow',
                               ttrParams,
                               evnt,
                             );
@@ -10925,7 +10931,7 @@ export const Table = defineComponent<AsTableProps>(
                             );
                           });
                           $asTable.dispatchEvent(
-                            'enter-append-row',
+                            'enterAppendRow',
                             etrParams,
                             evnt,
                           );
@@ -11031,7 +11037,7 @@ export const Table = defineComponent<AsTableProps>(
                           evnt,
                         );
                       });
-                      $asTable.dispatchEvent('tab-append-row', ttrParams, evnt);
+                      $asTable.dispatchEvent('tabAppendRow', ttrParams, evnt);
                       return;
                     }
                   }
@@ -11078,7 +11084,7 @@ export const Table = defineComponent<AsTableProps>(
                 }
                 // 如果按下 del 键，更新表尾数据
                 $asTable.updateFooter();
-                dispatchEvent('cell-delete-value', params, evnt);
+                dispatchEvent('cellDeleteValue', params, evnt);
               }
             }
           } else if (
@@ -11118,7 +11124,7 @@ export const Table = defineComponent<AsTableProps>(
                       isClear: true,
                     });
                   }
-                  dispatchEvent('cell-backspace-value', params, evnt);
+                  dispatchEvent('cellBackspaceValue', params, evnt);
                 }
               }
             }
@@ -13475,7 +13481,7 @@ export const Table = defineComponent<AsTableProps>(
         //   ganttReactData.activeBarRowid = null;
         // }
         dispatchEvent(
-          'header-cell-click',
+          'headerCellClick',
           Object.assign(
             { triggerResizable, triggerSort, triggerFilter, cell },
             params,
@@ -13492,7 +13498,7 @@ export const Table = defineComponent<AsTableProps>(
       },
       triggerHeaderCellDblclickEvent(evnt, params) {
         dispatchEvent(
-          'header-cell-dblclick',
+          'headerCellDblclick',
           Object.assign({ cell: evnt.currentTarget }, params),
           evnt,
         );
@@ -13689,7 +13695,7 @@ export const Table = defineComponent<AsTableProps>(
         //   const ganttReactData = $xeGantt.reactData;
         //   ganttReactData.activeBarRowid = null;
         // }
-        dispatchEvent('cell-click', params, evnt);
+        dispatchEvent('cellClick', params, evnt);
       },
 
       /**
@@ -13727,7 +13733,7 @@ export const Table = defineComponent<AsTableProps>(
               .catch((error) => error);
           }
         }
-        dispatchEvent('cell-dblclick', params, evnt);
+        dispatchEvent('cellDblclick', params, evnt);
       },
       triggerFooterCellClickEvent(evnt, params) {
         const cell = evnt.currentTarget as HTMLDivElement;
@@ -13736,12 +13742,12 @@ export const Table = defineComponent<AsTableProps>(
         //   const ganttReactData = $xeGantt.reactData
         //   ganttReactData.activeBarRowid = null
         // }
-        $asTable.dispatchEvent('footer-cell-click', params, evnt);
+        $asTable.dispatchEvent('footerCellClick', params, evnt);
       },
       triggerFooterCellDblclickEvent(evnt, params) {
         const cell = evnt.currentTarget as HTMLDivElement;
         params = Object.assign({ cell }, params);
-        $asTable.dispatchEvent('footer-cell-dblclick', params, evnt);
+        $asTable.dispatchEvent('footerCellDblclick', params, evnt);
       },
       handleToggleCheckRowEvent(evnt, params) {
         const { selectCheckboxMaps } = internalData;
@@ -13966,7 +13972,7 @@ export const Table = defineComponent<AsTableProps>(
                 handleCheckedCheckboxRow(rangeRows, true, false);
               });
               dispatchEvent(
-                'checkbox-range-select',
+                'checkboxRangeSelect',
                 Object.assign({ rangeRecords: rangeRows }, params),
                 evnt,
               );
@@ -13978,7 +13984,7 @@ export const Table = defineComponent<AsTableProps>(
           $asTable.handleBatchSelectRows([row], checked);
           $asTable.checkSelectionStatus();
           dispatchEvent(
-            'checkbox-change',
+            'checkboxChange',
             Object.assign(
               {
                 records: () => $asTable.getCheckboxRecords(),
@@ -14039,7 +14045,7 @@ export const Table = defineComponent<AsTableProps>(
           }
           if (isChange) {
             dispatchEvent(
-              'radio-change',
+              'radioChange',
               { oldValue, newValue, selected: !!newValue, ...params },
               evnt,
             );
@@ -14076,13 +14082,13 @@ export const Table = defineComponent<AsTableProps>(
           }
           if (isChange) {
             dispatchEvent(
-              'current-column-change',
+              'currentColumnChange',
               { oldValue, newValue, selected: !!newValue, ...params },
               evnt,
             );
           }
         } else {
-          dispatchEvent('current-column-disabled', params, evnt);
+          dispatchEvent('currentColumnDisabled', params, evnt);
         }
       },
       triggerCurrentRowEvent(evnt, params) {
@@ -14115,13 +14121,13 @@ export const Table = defineComponent<AsTableProps>(
           }
           if (isChange) {
             dispatchEvent(
-              'current-row-change',
+              'currentRowChange',
               { oldValue, newValue, selected: !!newValue, ...params },
               evnt,
             );
           }
         } else {
-          dispatchEvent('current-row-disabled', params, evnt);
+          dispatchEvent('currentRowDisabled', params, evnt);
         }
       },
       /**
@@ -14148,7 +14154,7 @@ export const Table = defineComponent<AsTableProps>(
             : -1;
           $asTable.setRowExpand(row, expanded);
           dispatchEvent(
-            'toggle-row-expand',
+            'toggleRowExpand',
             {
               expanded,
               column: expandColumn,
@@ -14180,7 +14186,7 @@ export const Table = defineComponent<AsTableProps>(
         const $columnIndex = $asTable.getVMColumnIndex(column);
         $asTable.setRowGroupExpand(row, expanded);
         dispatchEvent(
-          'toggle-row-group-expand',
+          'toggleRowGroupExpand',
           { expanded, column, columnIndex, $columnIndex, row },
           evnt,
         );
@@ -14214,7 +14220,7 @@ export const Table = defineComponent<AsTableProps>(
             }
           });
           dispatchEvent(
-            'toggle-tree-expand',
+            'toggleTreeExpand',
             { expanded, column, columnIndex, $columnIndex, row },
             evnt,
           );
@@ -14239,9 +14245,9 @@ export const Table = defineComponent<AsTableProps>(
             $asTable.handleSortEvent(evnt, params);
           }
           if (!order) {
-            dispatchEvent('clear-sort', params, evnt);
+            dispatchEvent('clearSort', params, evnt);
           }
-          dispatchEvent('sort-change', params, evnt);
+          dispatchEvent('sortChange', params, evnt);
         }
       },
       /**
@@ -14654,7 +14660,7 @@ export const Table = defineComponent<AsTableProps>(
 
               if (evnt) {
                 dispatchEvent(
-                  'row-dragend',
+                  'rowDragend',
                   {
                     oldRow: dragRow,
                     newRow: prevDragRow,
@@ -14863,7 +14869,7 @@ export const Table = defineComponent<AsTableProps>(
               moveRowAnimateToTb(dtTrList, dragRowHeight);
             });
             dispatchEvent(
-              'row-remove-dragend',
+              'rowRemoveDragend',
               {
                 row: dragRow,
               },
@@ -15000,7 +15006,7 @@ export const Table = defineComponent<AsTableProps>(
                 }
               }
               dispatchEvent(
-                'row-insert-dragend',
+                'rowInsertDragend',
                 {
                   oldRow,
                   newRow: prevDragRow,
@@ -15211,7 +15217,7 @@ export const Table = defineComponent<AsTableProps>(
           }
           showDropTip(evnt, trEl, null, true, dragPos);
           dispatchEvent(
-            'row-dragover',
+            'rowDragover',
             {
               oldRow: dragRow,
               targetRow: row,
@@ -15251,7 +15257,7 @@ export const Table = defineComponent<AsTableProps>(
         trEl.draggable = true;
         updateRowDropOrigin(row);
         updateRowDropTipContent(tdEl);
-        dispatchEvent('row-dragstart', params, evnt);
+        dispatchEvent('rowDragstart', params, evnt);
       },
       handleCellDragMouseupEvent() {
         clearDragStatus();
@@ -15504,7 +15510,7 @@ export const Table = defineComponent<AsTableProps>(
 
               if (evnt) {
                 dispatchEvent(
-                  'column-dragend',
+                  'columnDragend',
                   {
                     oldColumn: dragColumn,
                     newColumn,
@@ -15717,7 +15723,7 @@ export const Table = defineComponent<AsTableProps>(
           }
           showDropTip(evnt, null, thEl, true, dragPos);
           dispatchEvent(
-            'column-dragover',
+            'columnDragover',
             {
               oldColumn: dragCol,
               targetColumn: column,
@@ -15795,7 +15801,7 @@ export const Table = defineComponent<AsTableProps>(
         clearCrossTableDragStatus();
         updateColDropOrigin(column);
         updateColDropTipContent(thEl);
-        dispatchEvent('column-dragstart', params, evnt);
+        dispatchEvent('columnDragstart', params, evnt);
       },
       handleHeaderCellDragMouseupEvent() {
         clearColDropOrigin();
@@ -15905,7 +15911,7 @@ export const Table = defineComponent<AsTableProps>(
           isRightBoundary ||
           isLeftBoundary
         ) {
-          dispatchEvent('scroll-boundary', evntParams, evnt);
+          dispatchEvent('scrollBoundary', evntParams, evnt);
         }
         dispatchEvent('scroll', evntParams, evnt);
       },
@@ -17647,7 +17653,7 @@ export const Table = defineComponent<AsTableProps>(
                                   $table: $asTable,
                                   // TODO $grid: $xeGrid,
                                   // $gantt: $xeGantt,
-                                })}
+                                } as any)}
                               </div>
                             );
                           }
@@ -18427,5 +18433,6 @@ export const Table = defineComponent<AsTableProps>(
   },
   {
     name: 'AsTable',
+    inheritAttrs: false,
   },
 );

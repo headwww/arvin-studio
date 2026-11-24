@@ -80,5 +80,6 @@ export default defineComponent<AsColumnProps>(
   },
   {
     name: 'AsColgroup',
+    inheritAttrs: false,
   },
 );

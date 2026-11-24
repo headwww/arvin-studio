@@ -86,6 +86,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'Menu 导航菜单' },
       },
       {
+        path: 'dropdown',
+        name: 'ComponentDropdown',
+        component: () => import('../views/components/DropdownView.vue'),
+        meta: { title: 'Dropdown 下拉菜单' },
+      },
+      {
         path: 'vxetable',
         name: 'VxeTable',
         component: () => import('../views/components/VxeTableView.vue'),

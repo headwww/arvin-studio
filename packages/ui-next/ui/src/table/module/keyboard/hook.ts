@@ -168,7 +168,7 @@ hooks.add('tableKeyboardModule', {
         evnt: MouseEvent,
       ) => {
         $asTable.dispatchEvent(
-          `checkbox-range-${type}` as any,
+          `checkboxRange${type.charAt(0).toUpperCase()}${type.slice(1)}` as any,
           {
             records: () => $asTable.getCheckboxRecords(),
             reserves: () => $asTable.getCheckboxReserveRecords(),

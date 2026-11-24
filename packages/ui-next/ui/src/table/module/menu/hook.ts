@@ -288,7 +288,7 @@ hooks.add('tableMenuModule', {
               const cell = columnTargetNode.targetElem as HTMLElement;
               const columnNodeRest = $asTable.getColumnNode(cell);
               const column = columnNodeRest ? columnNodeRest.item : null;
-              let typePrefix = `${layout}-`;
+              let typePrefix = layout === 'body' ? '' : layout;
               if (column) {
                 Object.assign(params, {
                   column,
@@ -307,10 +307,9 @@ hooks.add('tableMenuModule', {
                   params.rowIndex = $asTable.getRowIndex(row);
                 }
               }
-              const eventType = `${typePrefix}cell-menu` as
-                | 'cell-menu'
-                | 'footer-cell-menu'
-                | 'header-cell-menu';
+              const eventType = (
+                typePrefix ? `${typePrefix}CellMenu` : 'cellMenu'
+              ) as 'cellMenu' | 'footerCellMenu' | 'headerCellMenu';
               handleOpenMenuEvent(evnt, layout, params);
               $asTable.dispatchEvent(eventType, params, evnt);
               return;
@@ -425,7 +424,7 @@ hooks.add('tableMenuModule', {
         if (tmMethod) {
           tmMethod(params, evnt);
         }
-        $asTable.dispatchEvent('menu-click', params, evnt);
+        $asTable.dispatchEvent('menuClick', params, evnt);
         menuMethods.closeMenu();
       },
     });

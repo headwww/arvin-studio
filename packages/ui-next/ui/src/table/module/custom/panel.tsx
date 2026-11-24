@@ -173,11 +173,7 @@ export default defineComponent({
       }
       handleOptionCheck(column);
       $asTable.checkCustomStatus();
-      $asTable.dispatchEvent(
-        'custom-visible-change',
-        { column, checked },
-        evnt,
-      );
+      $asTable.dispatchEvent('customVisibleChange', { column, checked }, evnt);
     };
 
     const changeColumnWidth = (column: ColumnInfo) => {
@@ -214,7 +210,7 @@ export default defineComponent({
         $asTable.saveCustomStore('update:fixed');
       }
       $asTable.dispatchEvent(
-        'custom-fixed-change',
+        'customFixedChange',
         { column, fixed: targetFixed },
         evnt,
       );
@@ -251,34 +247,34 @@ export default defineComponent({
     const allOptionEvent = (evnt: Event) => {
       const checked = !customStore.isAll;
       $asTable.toggleCustomAllCheckbox();
-      $asTable.dispatchEvent('custom-visible-all', { checked }, evnt);
+      $asTable.dispatchEvent('customVisibleAll', { checked }, evnt);
     };
 
     const confirmCustomEvent = (evnt?: Event) => {
       reactData.isCustomStatus = true;
       $asTable.saveCustom();
       $asTable.closeCustom();
-      $asTable.dispatchEvent('custom-confirm', {}, evnt as Event);
-      $asTable.dispatchEvent('custom-close', {}, evnt as Event);
+      $asTable.dispatchEvent('customConfirm', {}, evnt as Event);
+      $asTable.dispatchEvent('customClose', {}, evnt as Event);
     };
 
     const cancelCustomEvent = (evnt?: Event) => {
       $asTable.cancelCustom();
       $asTable.closeCustom();
-      $asTable.dispatchEvent('custom-cancel', {}, evnt as Event);
-      $asTable.dispatchEvent('custom-close', {}, evnt as Event);
+      $asTable.dispatchEvent('customCancel', {}, evnt as Event);
+      $asTable.dispatchEvent('customClose', {}, evnt as Event);
     };
 
     const cancelCloseEvent = (evnt?: Event) => {
       $asTable.closeCustom();
-      $asTable.dispatchEvent('custom-close', {}, evnt as Event);
+      $asTable.dispatchEvent('customClose', {}, evnt as Event);
     };
 
     const handleResetCustomEvent = () => {
       void $asTable.resetCustom(true).then(() => {
         $asTable.closeCustom();
-        $asTable.dispatchEvent('custom-reset', {}, undefined as any);
-        $asTable.dispatchEvent('custom-close', {}, undefined as any);
+        $asTable.dispatchEvent('customReset', {}, undefined as any);
+        $asTable.dispatchEvent('customClose', {}, undefined as any);
       });
     };
 
@@ -911,41 +907,39 @@ export default defineComponent({
                     )}
                     {opts.allowFixed && (
                       <td>
-                        <div
-                          class={`${prefixCls.value}-custom--fixed-option`}
-                        >
-                        <Button
-                          class={{
-                            'is--active': column.renderFixed === 'left',
-                          }}
-                          disabled={
-                            disabled ||
-                            (isMaxFixedColumn.value &&
-                              column.renderFixed !== 'left')
-                          }
-                          icon={<PushpinOutlined />}
-                          onClick={(evnt: MouseEvent) =>
-                            changeFixedOption(column, 'left', evnt)
-                          }
-                          size="small"
-                          type="text"
-                        />
-                        <Button
-                          class={{
-                            'is--active': column.renderFixed === 'right',
-                          }}
-                          disabled={
-                            disabled ||
-                            (isMaxFixedColumn.value &&
-                              column.renderFixed !== 'right')
-                          }
-                          icon={<PushpinOutlined rotate={270} />}
-                          onClick={(evnt: MouseEvent) =>
-                            changeFixedOption(column, 'right', evnt)
-                          }
-                          size="small"
-                          type="text"
-                        />
+                        <div class={`${prefixCls.value}-custom--fixed-option`}>
+                          <Button
+                            class={{
+                              'is--active': column.renderFixed === 'left',
+                            }}
+                            disabled={
+                              disabled ||
+                              (isMaxFixedColumn.value &&
+                                column.renderFixed !== 'left')
+                            }
+                            icon={<PushpinOutlined />}
+                            onClick={(evnt: MouseEvent) =>
+                              changeFixedOption(column, 'left', evnt)
+                            }
+                            size="small"
+                            type="text"
+                          />
+                          <Button
+                            class={{
+                              'is--active': column.renderFixed === 'right',
+                            }}
+                            disabled={
+                              disabled ||
+                              (isMaxFixedColumn.value &&
+                                column.renderFixed !== 'right')
+                            }
+                            icon={<PushpinOutlined rotate={270} />}
+                            onClick={(evnt: MouseEvent) =>
+                              changeFixedOption(column, 'right', evnt)
+                            }
+                            size="small"
+                            type="text"
+                          />
                         </div>
                       </td>
                     )}
@@ -957,7 +951,7 @@ export default defineComponent({
                               column,
                               'align',
                               'renderAlign',
-                              'custom-align-change',
+                              'customAlignChange',
                             )}
                       </td>
                     )}
@@ -967,7 +961,7 @@ export default defineComponent({
                           column,
                           'headerAlign',
                           'renderHeaderAlign',
-                          'custom-header-align-change',
+                          'customHeaderAlignChange',
                         )}
                       </td>
                     )}
@@ -977,7 +971,7 @@ export default defineComponent({
                           column,
                           'footerAlign',
                           'renderFooterAlign',
-                          'custom-footer-align-change',
+                          'customFooterAlignChange',
                         )}
                       </td>
                     )}
@@ -1035,9 +1029,7 @@ export default defineComponent({
           }}
           centered
           destroyOnHidden
-          footer={
-            opts.showFooter ? () => renderPopupActions() : () => null
-          }
+          footer={opts.showFooter ? () => renderPopupActions() : () => null}
           mask={{
             closable: false,
           }}
@@ -1047,10 +1039,7 @@ export default defineComponent({
           title={locale?.value?.customTitle}
           width={Math.min(1000, innerWidth)}
         >
-          <div
-            class={`${prefixCls.value}-custom--popup-content`}
-            ref={refElem}
-          >
+          <div class={`${prefixCls.value}-custom--popup-content`} ref={refElem}>
             {content}
           </div>
         </Modal>

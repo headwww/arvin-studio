@@ -1,4 +1,10 @@
-import type { AsColumnProps } from './types/column';
+import type { SlotsType } from 'vue';
+
+import type {
+  AsColumnEmits,
+  AsColumnProps,
+  AsColumnSlots,
+} from './types/column';
 import type { AsTableConstructor, AsTablePrivateMethods } from './types/table';
 import type { ASColumnInstance } from './util';
 
@@ -17,7 +23,12 @@ import useLocale from '../locale/useLocale';
 import { Cell } from './cell';
 import { assembleColumn, destroyColumn, watchColumn } from './util';
 
-export default defineComponent<AsColumnProps>(
+export default defineComponent<
+  AsColumnProps,
+  AsColumnEmits,
+  string,
+  SlotsType<AsColumnSlots>
+>(
   (props, { slots }) => {
     const refElem = ref<HTMLDivElement>();
     const $asTable = inject<
@@ -64,5 +75,6 @@ export default defineComponent<AsColumnProps>(
   },
   {
     name: 'AsColumn',
+    inheritAttrs: false,
   },
 );

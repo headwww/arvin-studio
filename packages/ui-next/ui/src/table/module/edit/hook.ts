@@ -610,7 +610,7 @@ hooks.add('tableEditModule', {
         actived.row = null;
         actived.column = null;
         $asTable.dispatchEvent(
-          'edit-closed',
+          'editClosed',
           {
             row,
             rowIndex: $asTable.getRowIndex(row),
@@ -667,7 +667,7 @@ hooks.add('tableEditModule', {
           (mode === 'cell' ? actived.column !== column : false)
         ) {
           // 判断是否禁用编辑
-          let type: 'edit-activated' | 'edit-disabled' = 'edit-disabled';
+          let type: 'editActivated' | 'editDisabled' = 'editDisabled';
           if (
             !beforeEditMethod ||
             beforeEditMethod({
@@ -686,7 +686,7 @@ hooks.add('tableEditModule', {
             if (actived.column) {
               handleClearEdit(evnt);
             }
-            type = 'edit-activated';
+            type = 'editActivated';
             column.renderHeight = cell.offsetHeight;
             actived.args = editParams;
             actived.row = row;
@@ -1398,7 +1398,7 @@ hooks.add('tableEditModule', {
               }, 0);
             }
             if (evnt) {
-              $asTable.dispatchEvent('cell-selected', params, evnt);
+              $asTable.dispatchEvent('cellSelected', params, evnt);
             }
           }
           return nextTick();

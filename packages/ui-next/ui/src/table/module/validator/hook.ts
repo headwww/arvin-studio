@@ -193,7 +193,7 @@ hooks.add('tableValidatorModule', {
       return new Promise((resolve) => {
         const validOpts = computeValidOpts.value;
         if (validOpts.autoPos === false) {
-          $asTable.dispatchEvent('valid-error', params, null);
+          $asTable.dispatchEvent('validError', params, null);
           resolve();
           return;
         }
@@ -689,7 +689,7 @@ hooks.add('tableValidatorModule', {
                   rule,
                 },
               });
-        $asTable.dispatchEvent('valid-error', params, null);
+        $asTable.dispatchEvent('validError', params, null);
         if (
           validTip &&
           (validOpts.message === 'tooltip' ||

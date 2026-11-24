@@ -205,6 +205,8 @@ const menuConfig = reactive<any>({
 });
 
 const handleMenuClick = ({ menu, row, $table }: any) => {
+  console.log(row);
+
   switch (menu?.code) {
     case 'body-copy': {
       if (row?.name) {
@@ -246,6 +248,10 @@ watch(currentLang, (lang) => {
 const toggleLanguage = () => {
   currentLang.value = currentLang.value === 'zh-CN' ? 'en-US' : 'zh-CN';
 };
+
+function onClick({ key }: any) {
+  console.log(key);
+}
 </script>
 
 <template>
@@ -410,6 +416,19 @@ const toggleLanguage = () => {
           title="Content"
           width="200"
         />
+      </Table>
+
+      <Table
+        :aggregate-config="{
+          groupFields: ['role'],
+        }"
+        :data="tableData"
+      >
+        <Column field="name" title="Name" min-width="300" row-group-node />
+        <Column field="role" title="Role" />
+        <Column field="sex" title="Sex" />
+        <Column field="age" title="Age" />
+        <Column field="address" title="Address" />
       </Table>
     </ConfigProvider>
   </div>

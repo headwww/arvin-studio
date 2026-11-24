@@ -385,7 +385,7 @@ export default defineComponent<BodyProps>(
             }
           }
           $asTable.dispatchEvent(
-            'cell-mouseenter',
+            'cellMouseenter',
             Object.assign({ cell: evnt.currentTarget }, cellParams),
             evnt,
           );
@@ -398,7 +398,7 @@ export default defineComponent<BodyProps>(
             $asTable.handleTargetLeaveEvent(evnt);
           }
           $asTable.dispatchEvent(
-            'cell-mouseleave',
+            'cellMouseleave',
             Object.assign({ cell: evnt.currentTarget }, cellParams),
             evnt,
           );

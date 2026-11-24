@@ -110,7 +110,7 @@ export default defineComponent({
       headerColumn.value = spanColumns;
       nextTick(() => {
         $asTable.dispatchEvent(
-          'columns-change',
+          'columnsChange',
           { visibleColgroups, collectColumn, visibleColumn },
           null,
         );
