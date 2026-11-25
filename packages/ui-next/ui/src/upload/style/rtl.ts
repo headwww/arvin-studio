@@ -1,4 +1,4 @@
-import type { CSSObject } from '@antdv-next/cssinjs';
+import type { CSSObject } from '@arvin-studio/cssinjs';
 
 import type { UploadToken } from '.';
 import type { GenerateStyle } from '../../theme/internal';

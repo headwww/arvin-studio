@@ -1,6 +1,6 @@
-import type { DrawerProps as VcDrawerProps } from '@v-c/drawer';
-
 import type { CSSProperties } from 'vue';
+
+import type { DrawerProps as VcDrawerProps } from '@arvin-studio/headless';
 
 import type { DrawerProps } from '.';
 import type { VueNode } from '../_util';

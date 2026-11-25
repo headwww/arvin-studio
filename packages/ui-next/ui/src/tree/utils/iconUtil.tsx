@@ -1,5 +1,5 @@
 import type { VueNode } from '../../_util';
-import type { AntTreeNodeProps, SwitcherIcon, TreeLeafIcon } from '../Tree';
+import type { AsTreeNodeProps, SwitcherIcon, TreeLeafIcon } from '../Tree';
 
 import { createVNode, defineComponent, isVNode } from 'vue';
 
@@ -18,7 +18,7 @@ interface SwitcherIconProps {
   showLine?: boolean | { showLeafIcon: boolean | TreeLeafIcon };
   switcherIcon?: SwitcherIcon;
   switcherLoadingIcon?: VueNode;
-  treeNodeProps: AntTreeNodeProps;
+  treeNodeProps: AsTreeNodeProps;
 }
 
 const SwitcherIconCom = defineComponent<SwitcherIconProps>(
