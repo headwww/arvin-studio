@@ -55,7 +55,6 @@ export function cloneElement<T, U>(
 
   // cloneVNode内部是合并属性，这里改成覆盖属性
   node.props = (override ? { ...node.props, ...nodeProps } : node.props) as any;
-  console.warn(typeof node.props.class !== 'object', 'class must be string');
   return node;
 }
 

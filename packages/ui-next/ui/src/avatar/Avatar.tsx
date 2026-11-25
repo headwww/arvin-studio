@@ -24,7 +24,7 @@ import { getSlotPropsFnRun } from '../_util/tools';
 import { useComponentBaseConfig } from '../config-provider/context';
 import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
 import { useSize } from '../config-provider/hooks/useSize';
-import useBreakpoint from '../row-col/hooks/useBreakpoint';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
 import { useAvatarContext } from './AvatarContext';
 import useStyle from './style';
 

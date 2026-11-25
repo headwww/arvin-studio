@@ -1,8 +1,4 @@
 import type {
-  AsGridConstructor,
-  AsGridPrivateMethods,
-} from '../../grid/types/grid';
-import type {
   AsTableConstructor,
   AsTableMethods,
   AsTablePrivateMethods,
@@ -11,9 +7,6 @@ import type {
 declare module '@arvin-studio/core' {
   export namespace AsGlobalHooksHandles {
     export interface HookOptions {
-      setupGrid?(
-        $grid: AsGridConstructor & AsGridPrivateMethods,
-      ): Record<string, any> | void;
       setupTable?(
         $table: AsTableConstructor &
           AsTableMethods &

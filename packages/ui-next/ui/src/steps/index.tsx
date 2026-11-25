@@ -22,7 +22,7 @@ import Wave from '../_util/wave';
 import { TARGET_CLS } from '../_util/wave/interface';
 import { useComponentBaseConfig } from '../config-provider/context';
 import { useSize } from '../config-provider/hooks/useSize';
-import useBreakpoint from '../row-col/hooks/useBreakpoint';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
 import { genCssVar } from '../theme/util/genStyleUtils';
 import Tooltip from '../tooltip';
 import { useInternalContext } from './context';

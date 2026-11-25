@@ -6,7 +6,7 @@ import type {
 } from '../_util/hooks';
 import type { Breakpoint } from '../_util/responsiveObserver';
 import type { ComponentBaseProps } from '../config-provider/context';
-import type { RowProps } from '../row-col';
+import type { RowProps } from '../grid';
 import type { ItemHeightData } from './hooks/usePositions';
 import type { MasonryItemType } from './MasonryItem';
 
@@ -39,8 +39,8 @@ import { responsiveArray } from '../_util/responsiveObserver';
 import { toPropsRefs } from '../_util/tools';
 import { useComponentBaseConfig } from '../config-provider/context';
 import useCSSVarCls from '../config-provider/hooks/useCSSVarCls';
-import useBreakpoint from '../row-col/hooks/useBreakpoint';
-import useGutter from '../row-col/hooks/useGutter';
+import useBreakpoint from '../grid/hooks/useBreakpoint';
+import useGutter from '../grid/hooks/useGutter';
 import { genCssVar } from '../theme/util/genStyleUtils';
 import useDelay from './hooks/useDelay';
 import usePositions from './hooks/usePositions';

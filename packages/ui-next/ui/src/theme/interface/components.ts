@@ -43,7 +43,6 @@ import type { ComponentToken as QRCodeComponentToken } from '../../qrcode/style'
 import type { ComponentToken as RadioComponentToken } from '../../radio/style';
 import type { ComponentToken as RateComponentToken } from '../../rate/style';
 import type { ComponentToken as ResultComponentToken } from '../../result/style';
-import type { ComponentToken as RowColComponentToken } from '../../row-col/style';
 import type { ComponentToken as ScrollbarComponentToken } from '../../scrollbar/style';
 import type { ComponentToken as SegmentedComponentToken } from '../../segmented/style';
 import type { ComponentToken as SelectComponentToken } from '../../select/style';
@@ -112,7 +111,6 @@ export interface ComponentTokenMap {
   Radio?: RadioComponentToken;
   Rate?: RateComponentToken;
   Result?: ResultComponentToken;
-  RowCol?: RowColComponentToken;
   Scrollbar?: ScrollbarComponentToken;
   Segmented?: SegmentedComponentToken;
   Select?: SelectComponentToken;

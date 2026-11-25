@@ -6255,11 +6255,6 @@ export namespace AsTableDefines {
     column: AsTableDefines.ColumnInfo;
     datas: any[];
     field: AsColumnPropTypes.Field;
-    /**
-     *已废弃， 请使用 field
-     * @deprecated
-     */
-    property: AsColumnPropTypes.Field;
     values: any[];
   }
   export interface FilterChangeParams<D = any> extends FilterCheckedParams<D> {

@@ -54,6 +54,7 @@ import type {
   StatisticConfig,
   StepsConfig,
   SwitchStyleConfig,
+  TableConfig,
   TabsConfig,
   TagConfig,
   TextAreaConfig,
@@ -154,6 +155,7 @@ export interface ConfigProviderProps {
   statistic?: StatisticConfig;
   steps?: StepsConfig;
   switch?: SwitchStyleConfig;
+  table?: TableConfig;
   tabs?: TabsConfig;
   tag?: TagConfig;
   textArea?: TextAreaConfig;

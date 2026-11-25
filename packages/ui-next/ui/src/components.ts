@@ -196,6 +196,8 @@ export type {
   RuleRender,
   RuleType,
 } from './form';
+export { Col, Row } from './grid';
+export type { ColProps, ColSize, RowProps } from './grid';
 export { default as Image, ImagePreviewGroup } from './image';
 export type {
   ImageEmits,
@@ -333,8 +335,6 @@ export { default as Rate } from './rate';
 export type { RateEmits, RateProps } from './rate';
 export { default as Result } from './result';
 export type { ResultProps, ResultSlots, ResultStatusType } from './result';
-export { Col, Row } from './row-col';
-export type { ColProps, ColSize, RowProps } from './row-col';
 export { default as Scrollbar } from './scrollbar';
 export type {
   AsScrollbarComponent,
@@ -392,7 +392,6 @@ export type {
   SwitchSlots,
 } from './switch';
 export { Colgroup, Column, default as Table } from './table';
-export { default as Grid } from './grid';
 export { TabPane, default as Tabs } from './tabs';
 export type {
   TabPaneProps,

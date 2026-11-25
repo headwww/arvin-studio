@@ -1,5 +1,5 @@
 import type { VueNode } from '../_util';
-import type { ColProps } from '../row-col';
+import type { ColProps } from '../grid';
 import type { TooltipProps } from '../tooltip';
 import type { RequiredMark } from './Form';
 import type { FormLabelAlign } from './interface';
@@ -11,7 +11,7 @@ import { clsx, omit } from '@arvin-studio/kit';
 
 import convertToTooltipProps from '../_util/convertToTooltipProps';
 import { getSlotPropsFnRun } from '../_util/tools';
-import { Col } from '../row-col';
+import { Col } from '../grid';
 import defaultLocale from '../locale/en_US';
 import useLocale from '../locale/useLocale';
 import Tooltip from '../tooltip';
