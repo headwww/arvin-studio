@@ -392,6 +392,7 @@ export type {
   SwitchSlots,
 } from './switch';
 export { Colgroup, Column, default as Table } from './table';
+export { default as Grid } from './grid';
 export { TabPane, default as Tabs } from './tabs';
 export type {
   TabPaneProps,

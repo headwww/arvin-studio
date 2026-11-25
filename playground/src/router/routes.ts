@@ -56,6 +56,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'Table 表格' },
       },
       {
+        path: 'grid',
+        name: 'ComponentGrid',
+        component: () => import('../views/components/GridView.vue'),
+        meta: { title: 'Grid 数据表格' },
+      },
+      {
         path: 'button',
         name: 'ComponentButton',
         component: () => import('../views/components/ButtonView.vue'),

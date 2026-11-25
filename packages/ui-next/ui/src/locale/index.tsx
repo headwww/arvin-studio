@@ -12,7 +12,14 @@ import type { TourLocale } from '../tour';
 import type { TransferLocale } from '../transfer';
 import type { UploadLocale } from '../upload/interface.ts';
 
-import { computed, defineComponent, inject, provide, ref } from 'vue';
+import {
+  computed,
+  defineComponent,
+  getCurrentInstance,
+  inject,
+  provide,
+  ref,
+} from 'vue';
 
 export type LocaleContextProps = Locale & { exist?: boolean };
 
@@ -100,6 +107,12 @@ export const LocaleProvider = defineComponent<LocaleProviderProps>(
 );
 
 export function useLocaleContext() {
+  // 没有组件实例时（如 loadColumn 在渲染流程之外构建列实例）不做注入，避免 inject 警告
+  if (!getCurrentInstance()) {
+    return {
+      locale: ref(undefined),
+    } as unknown as LocaleContext;
+  }
   return inject(LocaleContextKey, {
     locale: ref(undefined),
   } as unknown as LocaleContext);

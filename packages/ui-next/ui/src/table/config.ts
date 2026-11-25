@@ -149,9 +149,9 @@ export const config = {
       padding: true,
       placement: 'left',
       rowField: 'id',
-      parentField: '_X_ROW_PARENT_KEY',
-      childrenField: '_X_ROW_CHILDREN',
-      mapChildrenField: '_X_ROW_CHILD_LIST',
+      parentField: '_AS_ROW_PARENT_KEY',
+      childrenField: '_AS_ROW_CHILDREN',
+      mapChildrenField: '_AS_ROW_CHILD_LIST',
       indent: 20,
       showIcon: true,
       maxGroupSize: 4,
@@ -256,42 +256,8 @@ export const config = {
     },
   },
   grid: {
-    // size: null,
-    // zoomConfig: {
-    //   escRestore: true
-    // },
-    formConfig: {
-      enabled: true,
-    },
     pagerConfig: {
       enabled: true,
-      // perfect: false
-    },
-    toolbarConfig: {
-      enabled: true,
-      // perfect: false
-    },
-    proxyConfig: {
-      enabled: true,
-      autoLoad: true,
-      showLoading: true,
-      showResponseMsg: true,
-      showActionMsg: true,
-      response: {
-        list: 'list',
-        result: 'result',
-        total: 'page.total',
-        footerData: 'footerData',
-        message: 'message',
-      },
-      // beforeItem: null,
-      // beforeColumn: null,
-      // beforeQuery: null,
-      // afterQuery: null,
-      // beforeDelete: null,
-      // afterDelete: null,
-      // beforeSave: null,
-      // afterSave: null
     },
   },
 };

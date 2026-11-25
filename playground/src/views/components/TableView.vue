@@ -205,6 +205,8 @@ const menuConfig = reactive<any>({
 });
 
 const handleMenuClick = ({ menu, row, $table }: any) => {
+  console.log(asTable.value?.getCheckboxRecords());
+
   switch (menu?.code) {
     case 'body-copy': {
       if (row?.name) {

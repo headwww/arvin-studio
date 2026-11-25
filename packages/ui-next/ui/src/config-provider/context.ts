@@ -29,6 +29,7 @@ import type { EmptyProps } from '../empty';
 import type { FlexProps } from '../flex';
 import type { FloatButtonGroupProps, FloatButtonProps } from '../float-button';
 import type { FormProps } from '../form/Form';
+import type { AsGridProps } from '../grid/types/grid';
 import type { ImageProps } from '../image/index';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -564,8 +565,8 @@ export type ProgressConfig = ComponentStyleConfig &
 export type TableConfig = ComponentStyleConfig &
   Pick<
     AsTableProps,
-    | 'aggregateConfig'
     | 'aggregateAccuracyConfig'
+    | 'aggregateConfig'
     | 'areaConfig'
     | 'cellConfig'
     | 'checkboxConfig'
@@ -594,8 +595,8 @@ export type TableConfig = ComponentStyleConfig &
     | 'loadingConfig'
     | 'menuConfig'
     | 'minHeight'
-    | 'printConfig'
     | 'mouseConfig'
+    | 'printConfig'
     | 'radioConfig'
     | 'rendererConfig'
     | 'resizableConfig'
@@ -613,6 +614,9 @@ export type TableConfig = ComponentStyleConfig &
     | 'virtualXConfig'
     | 'virtualYConfig'
   >;
+
+export type GridConfig = ComponentStyleConfig &
+  Pick<AsGridProps, 'pagerConfig' | 'zoomConfig'>;
 
 export interface ConfigComponentProps {
   alert?: AlertConfig;
@@ -641,6 +645,7 @@ export interface ConfigComponentProps {
   floatButton?: FloatButtonConfig;
   floatButtonGroup?: FloatButtonGroupConfig;
   form?: FormConfig;
+  grid?: GridConfig;
   image?: ImageConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;

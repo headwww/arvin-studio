@@ -7973,12 +7973,21 @@ export namespace AsTableEvents {
     params: AsTableDefines.FilterVisibleEventParams<D>,
   ) => void;
 
-  export type CellBackspaceValue<D = any> = (params: any & { __d?: D }) => any;
-  export type CellSelected<D = any> = (params: any & { __d?: D }) => any;
-  export type CustomFixedChange<D = any> = (params: any & { __d?: D }) => any;
-  export type CustomVisibleAll<D = any> = (params: any & { __d?: D }) => any;
-  export type CustomVisibleChange<D = any> = (params: any & { __d?: D }) => any;
-  export type RowResizableChange<D = any> = (params: any & { __d?: D }) => any;
+  export type CellBackspaceValue<D = any> = (
+    params: D,
+    evnt: KeyboardEvent,
+  ) => any;
+  export type CellSelected<D = any> = (params: D, evnt: Event) => any;
+  export type CustomFixedChange<D = any> = (params: D, evnt: MouseEvent) => any;
+  export type CustomVisibleAll<D = any> = (params: D, evnt: MouseEvent) => any;
+  export type CustomVisibleChange<D = any> = (
+    params: D,
+    evnt: MouseEvent,
+  ) => any;
+  export type RowResizableChange<D = any> = (
+    params: D,
+    evnt: MouseEvent,
+  ) => void;
   export type ResizableChange<D = AsTablePropTypes.Row> = (
     params: AsTableDefines.ResizableChangeEventParams<D>,
   ) => void;
