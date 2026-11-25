@@ -268,7 +268,6 @@ declare module '@arvin-studio/core' {
     }
     export interface RenderTableCellParams<D = any> {
       $columnIndex: number;
-      // TODO $grid: AsGridConstructor<D> | null | undefined;
       $rowIndex: number;
       $table: AsTableConstructor<D>;
       column: AsTableDefines.ColumnInfo<D>;

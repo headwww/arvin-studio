@@ -45,9 +45,8 @@ export class ColumnInfo {
   ) {
     const log = useLog('Table');
     const tableProps = $asTable.props;
-    const $asGrid = $asTable.asGrid;
     const $asGantt = $asTable.asGantt;
-    const $asGGWrapper = $asGrid || $asGantt;
+    const $asGGWrapper = $asGantt;
 
     const {
       type,
@@ -279,7 +278,6 @@ export class ColumnInfo {
       if (proxyOpts.beforeColumn) {
         proxyOpts.beforeColumn({
           $table: $asTable,
-          $grid: $asGrid,
           $gantt: $asGantt,
           column: this as unknown as AsTableDefines.ColumnInfo,
         });

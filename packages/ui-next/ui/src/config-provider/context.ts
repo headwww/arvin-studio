@@ -29,7 +29,6 @@ import type { EmptyProps } from '../empty';
 import type { FlexProps } from '../flex';
 import type { FloatButtonGroupProps, FloatButtonProps } from '../float-button';
 import type { FormProps } from '../form/Form';
-import type { AsGridProps } from '../grid/types/grid';
 import type { ImageProps } from '../image/index';
 import type { InputNumberProps } from '../input-number';
 import type { InputProps } from '../input/Input';
@@ -615,9 +614,6 @@ export type TableConfig = ComponentStyleConfig &
     | 'virtualYConfig'
   >;
 
-export type GridConfig = ComponentStyleConfig &
-  Pick<AsGridProps, 'pagerConfig' | 'zoomConfig'>;
-
 export interface ConfigComponentProps {
   alert?: AlertConfig;
   anchor?: AnchorStyleConfig;
@@ -645,7 +641,6 @@ export interface ConfigComponentProps {
   floatButton?: FloatButtonConfig;
   floatButtonGroup?: FloatButtonGroupConfig;
   form?: FormConfig;
-  grid?: GridConfig;
   image?: ImageConfig;
   input?: InputConfig;
   inputNumber?: InputNumberConfig;

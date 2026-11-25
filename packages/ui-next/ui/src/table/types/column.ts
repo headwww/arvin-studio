@@ -976,7 +976,6 @@ export namespace AsColumnDefines {
   }
 
   export interface CellCopyParams<D = any> {
-    // TODO $grid: AsGridConstructor<D> | null | undefined;
     $table: AsTableConstructor<D> & AsTablePrivateMethods<D>;
     cellValue: any;
     column: AsTableDefines.ColumnInfo<D>;
@@ -985,7 +984,6 @@ export namespace AsColumnDefines {
   }
 
   export interface CellCutParams<D = any> {
-    // TODO $grid: AsGridConstructor<D> | null | undefined;
     $table: AsTableConstructor<D> & AsTablePrivateMethods<D>;
     cellValue: any;
     clipData: {
@@ -997,7 +995,6 @@ export namespace AsColumnDefines {
   }
 
   export interface CellPasteParams<D = any> {
-    // TODO $grid: AsGridConstructor<D> | null | undefined;
     $table: AsTableConstructor<D> & AsTablePrivateMethods<D>;
     cellValue: any;
     clipData: {

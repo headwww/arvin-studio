@@ -335,8 +335,7 @@ export default defineComponent<BodyProps>(
       const tdAttrs: any = { colid };
       const cellParams = {
         $table: $asTable,
-        // TODO $grid: $xeGrid,
-        // $gantt: $xeGantt,
+        // TODO $gantt: $xeGantt,
         isEdit: false,
         seq,
         rowid,
@@ -1018,8 +1017,7 @@ export default defineComponent<BodyProps>(
             }
             const expandParams: AsTableDefines.CellRenderDataParams = {
               $table: $asTable,
-              // TODO $grid: $xeGrid,
-              // $gantt: $xeGantt,
+              // TODO $gantt: $xeGantt,
               prefixCls,
               seq,
               column: expandColumn as AsTableDefines.ColumnInfo,
@@ -1198,7 +1196,7 @@ export default defineComponent<BodyProps>(
       const emptySlot = slots ? slots.empty : null;
       const emptyParams = {
         $table: $asTable,
-        // TODO $grid: $asGrid, $gantt: $asGantt
+        // TODO $gantt: $asGantt
       };
       if (emptySlot) {
         emptyContent = $asTable.callSlot(emptySlot, emptyParams);

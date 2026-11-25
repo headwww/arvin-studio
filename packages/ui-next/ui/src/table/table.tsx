@@ -398,7 +398,7 @@ export const Table = defineComponent<
       const { id } = props;
       if (id) {
         if (isFunction(id)) {
-          // TODO return `${id({ $table: $asTable, $grid: $asGrid, $gantt: $xeGantt }) || ''}`
+          // TODO return `${id({ $table: $asTable, $gantt: $xeGantt }) || ''}`
           return `${id({ $table: $asTable }) || ''}`;
         }
         return `${id}`;
@@ -6272,7 +6272,7 @@ export const Table = defineComponent<
           evnt,
           {
             $table: $asTable,
-            // TODO , $grid: $xeGrid, $gantt: $xeGantt
+            // TODO  $gantt: $xeGantt
           },
           params,
         ),
@@ -9832,8 +9832,7 @@ export const Table = defineComponent<
                   columns: visibleColumn,
                   data: afterFullData,
                   $table: $asTable,
-                  // TODO $grid: $xeGrid,
-                  // $gantt: $xeGantt,
+                  // TODO  $gantt: $xeGantt,
                 })
               : [];
         }
@@ -11068,8 +11067,7 @@ export const Table = defineComponent<
                 column: selectColumn as AsTableDefines.ColumnInfo,
                 columnIndex: $asTable.getColumnIndex(selectColumn),
                 $table: $asTable,
-                // TODO $grid: $xeGrid,
-                // $gantt: $xeGantt,
+                // TODO  $gantt: $xeGantt,
               };
               // 是否被禁用
               if (!beforeEditMethod || beforeEditMethod(params)) {
@@ -11112,8 +11110,7 @@ export const Table = defineComponent<
                   $columnIndex: $asTable.getVMColumnIndex(selectColumn),
                   _columnIndex: $asTable.getVTColumnIndex(selectColumn),
                   $table: $asTable,
-                  // TODO $grid: $xeGrid,
-                  // $gantt: $xeGantt,
+                  // TODO $gantt: $xeGantt,
                 };
                 // 是否被禁用
                 if (!beforeEditMethod || beforeEditMethod(params)) {
@@ -11149,8 +11146,7 @@ export const Table = defineComponent<
                 rowIndex: $asTable.getRowIndex(parentRow),
                 $rowIndex: $asTable.getVMRowIndex(parentRow),
                 $table: $asTable,
-                // TODO $grid: $xeGrid,
-                // $gantt: $xeGantt,
+                // TODO  $gantt: $xeGantt,
               };
               $asTable
                 .setTreeExpand(parentRow, false)
@@ -11211,8 +11207,7 @@ export const Table = defineComponent<
                 $columnIndex: $asTable.getVMColumnIndex(selectColumn),
                 _columnIndex: $asTable.getVTColumnIndex(selectColumn),
                 $table: $asTable,
-                // TODO $grid: $xeGrid,
-                // $gantt: $xeGantt,
+                // TODO  $gantt: $xeGantt,
               };
               if (!beforeEditMethod || beforeEditMethod(params)) {
                 if (editMethod) {
@@ -12815,8 +12810,7 @@ export const Table = defineComponent<
             Object.assign(
               {
                 $table: $asTable,
-                // TODO $grid: $xeGrid,
-                // gantt: $xeGantt,
+                // TODO  gantt: $xeGantt,
                 $event: evnt,
               },
               args,
@@ -16938,7 +16932,7 @@ export const Table = defineComponent<
       const emptySlot = slots.empty;
       const emptyParams = {
         $table: $asTable,
-        // TODO $grid: $asGrid, gantt: $asGantt
+        // TODO gantt: $asGantt
       };
       if (emptySlot) {
         return emptySlot(emptyParams);
@@ -17109,8 +17103,7 @@ export const Table = defineComponent<
           }
           const expandParams: AsTableDefines.CellRenderDataParams = {
             $table: $asTable,
-            // TODO $grid: $xeGrid,
-            // $gantt: $xeGantt,
+            // TODO  $gantt: $xeGantt,
             seq,
             column: expandColumn,
             columnIndex,
@@ -17651,8 +17644,7 @@ export const Table = defineComponent<
                                   column,
                                   tooltipContent,
                                   $table: $asTable,
-                                  // TODO $grid: $xeGrid,
-                                  // $gantt: $xeGantt,
+                                  // TODO $gantt: $xeGantt,
                                 } as any)}
                               </div>
                             );
@@ -17665,8 +17657,7 @@ export const Table = defineComponent<
                                   column,
                                   tooltipContent,
                                   $table: $asTable,
-                                  // TODO $grid: $xeGrid,
-                                  // $gantt: $xeGantt,
+                                  // TODO  $gantt: $xeGantt,
                                 })}
                               </div>
                             );
@@ -17679,8 +17670,7 @@ export const Table = defineComponent<
                                   column,
                                   tooltipContent,
                                   $table: $asTable,
-                                  // TODO $grid: $xeGrid,
-                                  // $gantt: $xeGantt,
+                                  // TODO $gantt: $xeGantt,
                                 })}
                               </div>
                             );
@@ -18436,6 +18426,3 @@ export const Table = defineComponent<
     inheritAttrs: false,
   },
 );
-
- 
-

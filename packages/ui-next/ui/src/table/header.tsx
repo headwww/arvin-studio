@@ -252,8 +252,7 @@ export default defineComponent({
           $table: AsTableConstructor & AsTablePrivateMethods;
         } = {
           $table: $asTable,
-          // TODO  $grid: $xeGrid,
-          // $gantt: $xeGantt,
+          // TODO   $gantt: $xeGantt,
           rowIndex: _rowIndex,
           _rowIndex,
           $rowIndex: _rowIndex,

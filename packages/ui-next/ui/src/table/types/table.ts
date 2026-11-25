@@ -39,8 +39,6 @@ export type AsTableInstance<D = any> = ComponentPublicInstance<
 export interface AsTableConstructor<D = any> extends AsTableMethods {
   // TODO 类型
   asGantt: any;
-  // TODO 类型
-  asGrid: any;
   context: SetupContext<AsTableEmits>;
   getComputeMaps(): TablePrivateComputed;
   getRefMaps(): TablePrivateRef;
@@ -2451,7 +2449,6 @@ export namespace AsTablePropTypes {
   export type ID<D = any> =
     | ((params: {
         // TODO $gantt: null | undefined | AsGanttConstructor;
-        // TODO $grid: null | undefined | AsGridConstructor<D>;
         $table: AsTableConstructor<D>;
       }) => null | number | string)
     | string;
@@ -2468,7 +2465,6 @@ export namespace AsTablePropTypes {
 
   export type FooterMethod<D = any> = (params: {
     // TODO $gantt: null | undefined | AsGanttConstructor<D>;
-    // $grid: null | undefined | AsGridConstructor<D>;
     $table: AsTableConstructor<D>;
     columns: AsTableDefines.ColumnInfo[];
     data: D[];
@@ -3311,7 +3307,6 @@ export namespace AsTablePropTypes {
      * 单元格选取的方法，返回是否允许被选取
      */
     selectedMethod?(params: {
-      // TODO $grid: AsGridConstructor<D> | null | undefined;
       $table: AsTableConstructor<D>;
       column: AsTableDefines.ColumnInfo;
       row: D;
@@ -3393,7 +3388,6 @@ export namespace AsTablePropTypes {
      * 只对 isEdit=true 有效，用于重写编辑单元格方法
      */
     editMethod?(params: {
-      // TODO $grid: AsGridConstructor<D> | null | undefined;
       $table: AsTableConstructor<D>;
       column: AsTableDefines.ColumnInfo;
       columnIndex: number;
@@ -3816,7 +3810,6 @@ export namespace AsTablePropTypes {
     columnFilterMethod?(params: {
       $columnIndex: number;
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       column: AsTableDefines.ColumnInfo;
     }): boolean;
@@ -3833,7 +3826,6 @@ export namespace AsTablePropTypes {
      */
     dataFilterMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $rowIndex: number;
       $table: AsTableConstructor;
       row: any;
@@ -3856,7 +3848,6 @@ export namespace AsTablePropTypes {
     filename?:
       | ((params: {
           // TODO $gantt: AsGanttConstructor | null | undefined;
-          // TODO $grid: AsGridConstructor | null | undefined;
           $table: AsTableConstructor;
           options: ExportOpts;
         }) => string)
@@ -3866,7 +3857,6 @@ export namespace AsTablePropTypes {
      */
     footerFilterMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $rowIndex: number;
       $table: AsTableConstructor;
       items: any[];
@@ -3982,7 +3972,6 @@ export namespace AsTablePropTypes {
     sheetName?:
       | ((params: {
           // TODO $gantt: AsGanttConstructor | null | undefined;
-          // TODO $grid: AsGridConstructor | null | undefined;
           $table: AsTableConstructor;
           options: ExportOpts;
         }) => string)
@@ -4106,7 +4095,6 @@ export namespace AsTablePropTypes {
      */
     afterExportMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       options: ExportHandleOptions;
       status: boolean;
@@ -4116,7 +4104,6 @@ export namespace AsTablePropTypes {
      */
     beforeExportMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       options: ExportHandleOptions;
     }): boolean;
@@ -4125,7 +4112,6 @@ export namespace AsTablePropTypes {
      */
     exportMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       options: ExportHandleOptions;
     }): Promise<any>;
@@ -4187,7 +4173,6 @@ export namespace AsTablePropTypes {
      */
     afterPrintMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       html: string;
       options: PrintHandleOptions;
@@ -4197,7 +4182,6 @@ export namespace AsTablePropTypes {
      */
     beforePrintMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       html: string;
 
@@ -4212,7 +4196,6 @@ export namespace AsTablePropTypes {
      */
     printMethod?(params: {
       // TODO $gantt: AsGanttConstructor | null | undefined;
-      // TODO $grid: AsGridConstructor | null | undefined;
       $table: AsTableConstructor;
       html: string;
 
@@ -4240,7 +4223,6 @@ export namespace AsTablePropTypes {
      */
     afterEditMethod?(params: {
       // TODO $gantt: AsGanttConstructor<DT> | null | undefined;
-      // $grid: AsGridConstructor<DT> | null | undefined;
       $table: AsTableConstructor<DT> & AsTablePrivateMethods;
       column: AsTableDefines.ColumnInfo;
       columnIndex: number;
@@ -4264,7 +4246,6 @@ export namespace AsTablePropTypes {
      */
     beforeEditMethod?(params: {
       // TODO $gantt: AsGanttConstructor<DT> | null | undefined;
-      // $grid: AsGridConstructor<DT> | null | undefined;
       $table: AsTableConstructor<DT> & AsTablePrivateMethods;
       column: AsTableDefines.ColumnInfo;
       columnIndex: number;
@@ -6549,7 +6530,6 @@ export namespace AsTableDefines {
 
   export interface CustomSlotParams {
     $table: AsTableConstructor;
-    // TODO $grid: AsGridConstructor | null | undefined
     columns: AsTableDefines.ColumnInfo[];
     isAllChecked: boolean;
     isAllIndeterminate: boolean;
@@ -6854,7 +6834,6 @@ export namespace AsTableDefines {
   export interface CellFloatingFilterParams<D = any> {
     $columnIndex: number;
     // TODO $gantt: AsGanttConstructor | null | undefined;
-    // $grid: AsGridConstructor | null | undefined;
     $table: AsTableConstructor<D>;
     _columnIndex: number;
     column: ColumnInfo;
@@ -6870,7 +6849,6 @@ export namespace AsTableDefines {
   export interface CellRenderBodyParams<D = any> {
     $columnIndex: number;
     // TODO $gantt: null | undefined | AsGanttConstructor;
-    // TODO $grid: null | undefined | AsGridConstructor;
     $rowIndex: number;
     $table: AsTableConstructor<D>;
     _columnIndex: number;
@@ -6893,7 +6871,6 @@ export namespace AsTableDefines {
   export interface CellRenderFooterParams<D = any> {
     $columnIndex: number;
     // TODO $gantt: AsGanttConstructor | null | undefined;
-    // $grid: AsGridConstructor | null | undefined;
     $rowIndex: number;
     $table: AsTableConstructor<D>;
     _columnIndex: number;
@@ -6925,7 +6902,6 @@ export namespace AsTableDefines {
   export interface CellRenderHeaderParams<D = any> {
     $columnIndex: number;
     // TODO $gantt: null | undefined | AsGanttConstructor;
-    // TODO $grid: null | undefined | AsGridConstructor;
     $rowIndex: number;
     $table: AsTableConstructor<D>;
     _columnIndex: number;
@@ -7173,7 +7149,6 @@ export namespace AsTableDefines {
   }
 
   export interface RuleValidatorParams<D = any> {
-    // TODO $grid: AsGridConstructor<D> | null | undefined;
     $table: AsTableConstructor<D>;
     cellValue: any;
     column: AsTableDefines.ColumnInfo<D>;
@@ -7443,14 +7418,12 @@ export namespace AsTableDefines {
 export namespace AsTableSlotTypes {
   export interface HeaderTooltipSlotParams<D = any> {
     // TODO $gantt: null | undefined | AsGanttConstructor;
-    // TODO $grid: null | undefined | AsGridConstructor<D>;
     $table: AsTableConstructor<D>;
     column: AsTableDefines.ColumnInfo;
     tooltipContent: string;
   }
   export interface TooltipSlotParams<D = any> {
     // TODO $gantt: null | undefined | AsGanttConstructor;
-    // TODO $grid: null | undefined | AsGridConstructor<D>;
     $table: AsTableConstructor<D>;
     column: AsTableDefines.ColumnInfo;
     row: D;
@@ -7458,7 +7431,6 @@ export namespace AsTableSlotTypes {
   }
   export interface FooterTooltipSlotParams<D = any> {
     // TODO $gantt: null | undefined | AsGanttConstructor;
-    // TODO $grid: null | undefined | AsGridConstructor<D>;
     $table: AsTableConstructor<D>;
     column: AsTableDefines.ColumnInfo;
     row: D;
@@ -7471,7 +7443,6 @@ export namespace AsTableSlotTypes {
 
   export interface BaseSlotParams<D = any> {
     $table: AsTableConstructor<D>;
-    // TODO $grid: AsGridConstructor<D> | null | undefined
   }
   export interface RowDragIconSlotParams<D = any> extends BaseSlotParams<D> {
     column: AsTableDefines.ColumnInfo;
