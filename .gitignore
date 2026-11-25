@@ -67,3 +67,6 @@ vite.config.ts.*
 skills-lock.json
 .atomcode
 datalog
+.tmp-cdp
+.pnpm-store
+.dsh-tmp

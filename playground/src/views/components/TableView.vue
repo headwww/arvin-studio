@@ -122,7 +122,6 @@ const customConfig = reactive<any>({
   showFooter: true,
 });
 
-const tableRef = ref<any>();
 const exportConfig = reactive<any>({
   types: ['csv', 'txt', 'html', 'xml'],
 });
@@ -131,17 +130,17 @@ const importConfig = reactive<any>({
 });
 
 const openExport = () => {
-  tableRef.value?.openExport?.();
+  asTable.value?.openExport?.();
 };
 
 const openImport = () => {
-  tableRef.value?.openImport?.();
+  asTable.value?.openImport?.();
 };
 
 const openCustom = (mode: 'drawer' | 'modal' | 'simple') => {
   customConfig.mode = mode;
   nextTick(() => {
-    tableRef.value?.openCustom?.();
+    asTable.value?.openCustom?.();
   });
 };
 
