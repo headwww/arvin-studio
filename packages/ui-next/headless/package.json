@@ -24,7 +24,9 @@
     "package.json"
   ],
   "scripts": {
-    "build": "vite build && tsdown --config ./tsdown.dts.config.ts && node ./scripts/postbuild.mjs",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [],

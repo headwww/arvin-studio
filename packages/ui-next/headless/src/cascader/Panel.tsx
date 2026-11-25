@@ -45,8 +45,7 @@ export type PickType =
 export type PanelProps<
   OptionType extends DefaultOptionType = DefaultOptionType,
   ValueField extends keyof OptionType = keyof OptionType,
-  Multiple extends any | boolean = false,
-  // @ts-expect-error this
+  Multiple extends boolean = false,
 > = Pick<CascaderProps<OptionType, ValueField, Multiple>, PickType>;
 
 function noop() {}

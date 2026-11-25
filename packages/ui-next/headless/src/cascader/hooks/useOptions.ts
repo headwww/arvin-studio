@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 
-import type { DefaultOptionType } from '..';
 import type {
+  DefaultOptionType,
   InternalFieldNames,
   LegacyKey,
   SingleValueType,
