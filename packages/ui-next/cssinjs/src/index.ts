@@ -15,6 +15,7 @@ export const _experimental = {
 export * from './cssinjs-utils';
 
 export * from './cssinjs-utils';
+export { default as extractStyle } from './extractStyle';
 export {
   getComputedToken,
   default as useCacheToken,
@@ -26,6 +27,7 @@ export {
   default as useStyleRegister,
 } from './hooks/useStyleRegister';
 export { default as Keyframes } from './Keyframes';
+
 export {
   legacyNotSelectorLinter,
   type Linter,
@@ -33,7 +35,6 @@ export {
   NaNLinter,
   parentSelectorLinter,
 } from './linters';
-
 export { collectStyleText, setStyleCollector } from './ssr/styleCollector';
 export {
   createCache,
@@ -43,6 +44,7 @@ export {
   useStyleContext,
   useStyleContextProvide,
 } from './StyleContext';
+
 export {
   type AbstractCalculator,
   createTheme,
@@ -51,8 +53,8 @@ export {
   Theme,
   type TokenType,
 } from './theme';
-
 export { default as autoPrefixTransformer } from './transformers/autoPrefix';
 export { type Transformer } from './transformers/interface';
 export { default as legacyLogicalPropertiesTransformer } from './transformers/legacyLogicalProperties';
+
 export { default as px2remTransformer } from './transformers/px2rem';
