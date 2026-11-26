@@ -20,10 +20,12 @@ export interface DescriptionsContextProps {
 const DescriptionsContext: InjectionKey<Ref<DescriptionsContextProps>> = Symbol(
   'DescriptionsContext',
 );
-export function useDescriptionsProvider(props: Ref<DescriptionsContextProps>) {
+export function useDescriptionsProvider(
+  props: Ref<DescriptionsContextProps>,
+): void {
   provide(DescriptionsContext, props);
 }
 
-export function useDescriptionsCtx() {
+export function useDescriptionsCtx(): Ref<DescriptionsContextProps> {
   return inject(DescriptionsContext, ref<DescriptionsContextProps>({}));
 }

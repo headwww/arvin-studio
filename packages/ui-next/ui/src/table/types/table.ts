@@ -6615,7 +6615,7 @@ export namespace AsTableDefines {
     slots?: AsColumnPropTypes.Slots<D>;
   }
 
-  export class PrivateColumnInfo<D = any> {
+  export declare class PrivateColumnInfo<D = any> {
     /**
      * @private
      */
@@ -6656,7 +6656,7 @@ export namespace AsTableDefines {
      * @private
      * 编辑模型
      */
-    model!: {
+    model: {
       update?: boolean;
       value?: any;
     };
@@ -6679,7 +6679,7 @@ export namespace AsTableDefines {
     /**
      * @private
      */
-    renderHeight!: number;
+    renderHeight: number;
     /**
      * @private
      */
@@ -6727,7 +6727,7 @@ export namespace AsTableDefines {
   /**
    * 列对象
    */
-  export class ColumnInfo<D = any> extends PrivateColumnInfo<D> {
+  export declare class ColumnInfo<D = any> extends PrivateColumnInfo<D> {
     aggFunc: AsColumnPropTypes.AggFunc;
     align: AsColumnPropTypes.Align;
     /**

@@ -729,13 +729,13 @@ const Select = defineComponent<
 
 (Select as any).install = (app: App) => {
   app.component(Select.name, Select);
-  app.component('AsSelectOption', Option as any);
+  app.component('AsSelectOption', SelectOption as any);
   app.component('AsSelectOptGroup', SelectOptGroup as any);
 };
 
 (Select as any).SECRET_COMBOBOX_MODE_DO_NOT_USE =
   SECRET_COMBOBOX_MODE_DO_NOT_USE;
-(Select as any).Option = Option;
+(Select as any).Option = SelectOption;
 (Select as any).OptGroup = SelectOptGroup;
 export default Select;
 

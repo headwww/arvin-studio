@@ -3,35 +3,178 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./dist/*": {
+      "types": [
+        "./dist/*.d.ts",
+        "./dist/*/index.d.ts"
+      ],
+      "import": [
+        "./dist/*.js",
+        "./dist/*/index.js"
+      ],
+      "default": [
+        "./dist/*.js",
+        "./dist/*/index.js"
+      ]
+    },
+    "./dist/locale/*": {
+      "types": "./dist/locale/*.d.ts",
+      "import": "./dist/locale/*.js",
+      "default": "./dist/locale/*.js"
+    },
     "./locale/*": {
-      "types": "./src/locale/*.d.ts",
-      "import": "./src/locale/*.ts",
-      "default": "./src/locale/*.ts"
-    }
+      "types": "./dist/locale/*.d.ts",
+      "import": "./dist/locale/*.js",
+      "default": "./dist/locale/*.js"
+    },
+    "./date-picker/*": {
+      "types": [
+        "./dist/date-picker/*.d.ts",
+        "./dist/date-picker/*/index.d.ts"
+      ],
+      "import": [
+        "./dist/date-picker/*.js",
+        "./dist/date-picker/*/index.js"
+      ],
+      "default": [
+        "./dist/date-picker/*.js",
+        "./dist/date-picker/*/index.js"
+      ]
+    },
+    "./date-picker/locale/*": {
+      "types": "./dist/date-picker/locale/*.d.ts",
+      "import": "./dist/date-picker/locale/*.js",
+      "default": "./dist/date-picker/locale/*.js"
+    },
+    "./time-picker/*": {
+      "types": [
+        "./dist/time-picker/*.d.ts",
+        "./dist/time-picker/*/index.d.ts"
+      ],
+      "import": [
+        "./dist/time-picker/*.js",
+        "./dist/time-picker/*/index.js"
+      ],
+      "default": [
+        "./dist/time-picker/*.js",
+        "./dist/time-picker/*/index.js"
+      ]
+    },
+    "./time-picker/locale/*": {
+      "types": "./dist/date-picker/locale/*.d.ts",
+      "import": "./dist/date-picker/locale/*.js",
+      "default": "./dist/date-picker/locale/*.js"
+    },
+    "./date-picker/generate": {
+      "types": "./dist/date-picker/generate/index.d.ts",
+      "import": "./dist/date-picker/generate/index.js",
+      "default": "./dist/date-picker/generate/index.js"
+    },
+    "./date-picker/generate/*": {
+      "types": [
+        "./dist/date-picker/generate/*.d.ts",
+        "./dist/date-picker/generate/*/index.d.ts"
+      ],
+      "import": [
+        "./dist/date-picker/generate/*.js",
+        "./dist/date-picker/generate/*/index.js"
+      ],
+      "default": [
+        "./dist/date-picker/generate/*.js",
+        "./dist/date-picker/generate/*/index.js"
+      ]
+    },
+    "./global.d.ts": "./global.d.ts",
+    "./global": "./global.d.ts",
+    "./config-provider": {
+      "types": "./dist/config-provider/index.d.ts",
+      "import": "./dist/config-provider/index.js",
+      "default": "./dist/config-provider/index.js"
+    },
+    "./config-provider/context": {
+      "types": "./dist/config-provider/context.d.ts",
+      "import": "./dist/config-provider/context.js",
+      "default": "./dist/config-provider/context.js"
+    },
+    "./config-provider/DisabledContext": {
+      "types": "./dist/config-provider/DisabledContext.d.ts",
+      "import": "./dist/config-provider/DisabledContext.js",
+      "default": "./dist/config-provider/DisabledContext.js"
+    },
+    "./config-provider/hooks/useSize": {
+      "types": "./dist/config-provider/hooks/useSize.d.ts",
+      "import": "./dist/config-provider/hooks/useSize.js",
+      "default": "./dist/config-provider/hooks/useSize.js"
+    },
+    "./config-provider/hooks/useCSSVarCls": {
+      "types": "./dist/config-provider/hooks/useCSSVarCls.d.ts",
+      "import": "./dist/config-provider/hooks/useCSSVarCls.js",
+      "default": "./dist/config-provider/hooks/useCSSVarCls.js"
+    },
+    "./theme/internal": {
+      "types": "./dist/theme/internal.d.ts",
+      "import": "./dist/theme/internal.js",
+      "default": "./dist/theme/internal.js"
+    },
+    "./theme/interface/components": {
+      "types": "./dist/theme/interface/components.d.ts",
+      "import": "./dist/theme/interface/components.js",
+      "default": "./dist/theme/interface/components.js"
+    },
+    "./dist/reset.css": "./dist/reset.css",
+    "./dist/as.css": "./dist/as.css",
+    "./dist/as-with-locales.js": "./dist/as-with-locales.js",
+    "./dist/as-with-locales.esm.js": "./dist/as-with-locales.esm.js",
+    "./dist/as.esm.js": "./dist/as.esm.js",
+    "./dist/as.js": "./dist/as.js",
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify": "publint && attw --pack .",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/throttle-debounce": "catalog:",
-    "vue": "catalog:"
+    "vue": "catalog:",
+    "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "vite-plugin-tsx-resolve-types": "^1.0.1"
   },
   "dependencies": {
+    "@arvin-studio/core": "workspace:*",
     "@arvin-studio/cssinjs": "workspace:*",
     "@arvin-studio/headless": "workspace:*",
     "@arvin-studio/icons": "workspace:*",
-    "@arvin-studio/core": "workspace:*",
     "@arvin-studio/kit": "workspace:*",
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
     "dom-zindex": "catalog:",
     "scroll-into-view-if-needed": "catalog:",
     "throttle-debounce": "catalog:"
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
