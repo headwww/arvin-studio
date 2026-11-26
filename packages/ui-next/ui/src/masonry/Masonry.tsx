@@ -387,7 +387,7 @@ const Masonry = defineComponent<
                     ref={createElementRef((element) => {
                       // vue >=3.5.39 no longer re-invokes function refs reactively,
                       // so resolve-and-store must tolerate the element ref not being
-                      // ready yet (retry on nextTick). sync antdv-next#623 pattern.
+                      // ready yet (retry on nextTick). sync arvin-studio#623 pattern.
                       setItemRef(itemKey, element as any);
                     })}
                     style={{

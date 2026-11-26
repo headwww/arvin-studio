@@ -198,7 +198,7 @@ export interface ThemeConfig {
    * @example
    * ```tsx
    * import { ConfigProvider } from 'antd';
-   * import 'antdv-next/dist/antd.css';
+   * import 'arvin-studio/dist/antd.css';
    *
    * const Demo = () => (
    *   <ConfigProvider theme={{ zeroRuntime: true }}>

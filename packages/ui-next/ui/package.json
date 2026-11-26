@@ -6,14 +6,14 @@
   "main": "./dist/index.js",
   "sideEffects": [
     "./dist/reset.css",
-    "./dist/as.css",
-    "./dist/as-with-locales.js",
-    "./dist/as-with-locales.esm.js",
-    "./dist/as.esm.js",
-    "./dist/as.js"
+    "./dist/as_ui.css",
+    "./dist/as_ui-with-locales.js",
+    "./dist/as_ui-with-locales.esm.js",
+    "./dist/as_ui.esm.js",
+    "./dist/as_ui.js"
   ],
-  "unpkg": "./dist/as-with-locales.js",
-  "jsdelivr": "./dist/as-with-locales.js",
+  "unpkg": "./dist/as_ui-with-locales.js",
+  "jsdelivr": "./dist/as_ui-with-locales.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -144,17 +144,17 @@
       "default": "./dist/theme/interface/components.js"
     },
     "./dist/reset.css": "./dist/reset.css",
-    "./dist/as.css": "./dist/as.css",
-    "./dist/as-with-locales.js": {
+    "./dist/as_ui.css": "./dist/as_ui.css",
+    "./dist/as_ui-with-locales.js": {
       "types": "./dist/index.with-locales.d.ts",
-      "default": "./dist/as-with-locales.js"
+      "default": "./dist/as_ui-with-locales.js"
     },
-    "./dist/as-with-locales.esm.js": {
+    "./dist/as_ui-with-locales.esm.js": {
       "types": "./dist/index.with-locales.d.ts",
-      "default": "./dist/as-with-locales.esm.js"
+      "default": "./dist/as_ui-with-locales.esm.js"
     },
-    "./dist/as.esm.js": "./dist/as.esm.js",
-    "./dist/as.js": "./dist/as.js",
+    "./dist/as_ui.esm.js": "./dist/as_ui.esm.js",
+    "./dist/as_ui.js": "./dist/as_ui.js",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -169,6 +169,7 @@
     "build:full-esm": "vite build --config ./vite.esm.config.ts",
     "build:umd": "vite build",
     "dev": "tsdown --watch",
+    "build:style": "cross-env NODE_ENV=production tsx ./scripts/vite-ssr-run.ts ./scripts/style/build-style.ts buildStyle",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify": "publint && attw --pack .",
     "prepublishOnly": "pnpm run build:all"

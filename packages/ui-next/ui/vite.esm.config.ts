@@ -26,8 +26,8 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: 'src/index.ts',
-      name: 'as',
-      fileName: () => 'as.esm.js',
+      name: 'as_ui',
+      fileName: () => 'as_ui.esm.js',
       formats: ['es'],
     },
   },

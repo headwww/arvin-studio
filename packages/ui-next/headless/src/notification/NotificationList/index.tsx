@@ -31,7 +31,7 @@ import Content from './Content';
 
 /**
  * Map Vue's TransitionGroup enter/leave class hooks onto the rc-motion
- * style class names that antdv-next 6.4.0 notification styles target
+ * style class names that arvin-studio 6.4.0 notification styles target
  * (-enter-start / -enter-active / -leave-start / -leave-active).
  *
  * The shared @v-c/util getTransitionGroupProps puts -leave-active in the
@@ -313,7 +313,7 @@ const NotificationList = defineComponent<NotificationListProps>(
               // resolving the exposed `nativeElement` inline would read null on the
               // first render and record a 0 height — making the notices stack on top
               // of each other. `createElementRef` retries once the element resolves.
-              // sync antdv-next#623 pattern
+              // sync arvin-studio#623 pattern
               ref={createElementRef<HTMLDivElement>(
                 (node) => {
                   setNodeSize(strKey, node ?? null);

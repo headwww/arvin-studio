@@ -26,8 +26,8 @@ export default defineConfig(() => {
         external: isUmd ? ['vue', /^dayjs/] : ['vue'],
         output: {
           entryFileNames: isUmd
-            ? 'as-with-locales.js'
-            : 'as-with-locales.esm.js',
+            ? 'as_ui-with-locales.js'
+            : 'as_ui-with-locales.esm.js',
           exports: 'named',
           ...(isUmd && {
             globals: {
@@ -48,9 +48,9 @@ export default defineConfig(() => {
       lib: {
         entry: 'src/index.with-locales.ts',
         formats: [format],
-        ...(isUmd && { name: 'as' }),
+        ...(isUmd && { name: 'as_ui' }),
         fileName: () =>
-          isUmd ? 'as-with-locales.js' : 'as-with-locales.esm.js',
+          isUmd ? 'as_ui-with-locales.js' : 'as_ui-with-locales.esm.js',
       },
     },
   } as UserConfig;

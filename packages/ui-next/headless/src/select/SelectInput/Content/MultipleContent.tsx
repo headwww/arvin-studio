@@ -92,7 +92,7 @@ const MultipleContent = defineComponent<SharedContentProps>(
     const inputValue = computed(() =>
       showSearch.value ? computedSearchValue.value || '' : '',
     );
-    // fix https://github.com/antdv-next/antdv-next/issues/529 的连锁问题，当达到 maxCount 时，仍能输入与antd表现不一致
+    // fix https://github.com/arvin-studio/arvin-studio/issues/529 的连锁问题，当达到 maxCount 时，仍能输入与antd表现不一致
     const inputEditable = computed(
       () => showSearch.value && !disabled.value && !reachedMaxCount.value,
     );

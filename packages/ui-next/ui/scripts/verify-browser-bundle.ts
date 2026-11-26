@@ -12,10 +12,10 @@ const distDir = path.resolve(__dirname, '../dist');
 // defined` and the whole bundle fails to load (#666). `typeof process` guards
 // are fine — they short-circuit to "undefined" in the browser.
 const BROWSER_BUNDLES = [
-  'as.js',
-  'as.esm.js',
-  'as-with-locales.js',
-  'as-with-locales.esm.js',
+  'as_ui.js',
+  'as_ui.esm.js',
+  'as_ui-with-locales.js',
+  'as_ui-with-locales.esm.js',
 ];
 
 function findUnguardedProcess(code: string): number[] {

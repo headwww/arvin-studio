@@ -169,7 +169,7 @@ const UniqueProvider = defineComponent<UniqueProviderProps>(
       // Same as Trigger's onPrepare: on the first open the appear hook fires
       // before `setPopupRef` can resolve Popup's exposed element, so seed
       // `popupEle` from the transition element to keep the prepare-time
-      // align working (https://github.com/antdv-next/antdv-next/issues/623).
+      // align working (https://github.com/arvin-studio/arvin-studio/issues/623).
       if (element && !popupEle.value) {
         popupEle.value = element as HTMLDivElement;
       }

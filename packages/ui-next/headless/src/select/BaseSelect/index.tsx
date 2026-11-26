@@ -472,7 +472,7 @@ export const BaseSelect = defineComponent<BaseSelectProps>(
     // If mode isn't tags, press enter is not meaningful when you can't see any option
     const onInternalSearchSubmit = (searchText: string) => {
       const { maxCount } = props;
-      // fix https://github.com/antdv-next/antdv-next/issues/529
+      // fix https://github.com/arvin-studio/arvin-studio/issues/529
       if (
         multiple.value &&
         isValidCount(maxCount) &&
@@ -540,7 +540,7 @@ export const BaseSelect = defineComponent<BaseSelectProps>(
       // before that. This keeps the Enter key that opens the dropdown from
       // being forwarded to OptionList (which would instantly select the
       // active option and close the dropdown again).
-      // see https://github.com/antdv-next/antdv-next/issues/594
+      // see https://github.com/arvin-studio/arvin-studio/issues/594
       const wasOpen =
         (event as any)._select_open_before === undefined
           ? mergedOpen.value

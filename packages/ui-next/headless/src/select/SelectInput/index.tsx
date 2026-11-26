@@ -149,7 +149,7 @@ const SelectInput = defineComponent<SelectInputProps>(
       // was open BEFORE this keydown. Otherwise the Enter key that opens the
       // dropdown would immediately be forwarded to OptionList and select the
       // active option, closing the dropdown again.
-      // see https://github.com/antdv-next/antdv-next/issues/594
+      // see https://github.com/arvin-studio/arvin-studio/issues/594
       if ((event as any)._select_open_before === undefined) {
         (event as any)._select_open_before = triggerOpen.value;
       }
@@ -296,7 +296,7 @@ const SelectInput = defineComponent<SelectInputProps>(
       // custom root component branch above. They MUST be excluded here since
       // Vue's `mergeProps` would merge a spread handler and an explicit one
       // into an array, invoking the same handler twice per event.
-      // see https://github.com/antdv-next/antdv-next/issues/594
+      // see https://github.com/arvin-studio/arvin-studio/issues/594
       const divProps = omit(domProps as any, [
         'onFocus',
         'onBlur',

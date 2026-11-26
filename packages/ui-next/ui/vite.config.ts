@@ -34,8 +34,8 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: 'src/index.ts',
-      name: 'as',
-      fileName: () => 'as.js',
+      name: 'as_ui',
+      fileName: () => 'as_ui.js',
       formats: ['umd'],
     },
   },
