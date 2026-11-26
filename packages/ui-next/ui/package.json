@@ -4,11 +4,26 @@
   "description": "",
   "type": "module",
   "main": "./dist/index.js",
+  "sideEffects": [
+    "./dist/reset.css",
+    "./dist/as.css",
+    "./dist/as-with-locales.js",
+    "./dist/as-with-locales.esm.js",
+    "./dist/as.esm.js",
+    "./dist/as.js"
+  ],
+  "unpkg": "./dist/as-with-locales.js",
+  "jsdelivr": "./dist/as-with-locales.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./with-locales": {
+      "types": "./dist/index.with-locales.d.ts",
+      "import": "./dist/index.with-locales.js",
+      "default": "./dist/index.with-locales.js"
     },
     "./dist/*": {
       "types": [
@@ -130,27 +145,46 @@
     },
     "./dist/reset.css": "./dist/reset.css",
     "./dist/as.css": "./dist/as.css",
-    "./dist/as-with-locales.js": "./dist/as-with-locales.js",
-    "./dist/as-with-locales.esm.js": "./dist/as-with-locales.esm.js",
+    "./dist/as-with-locales.js": {
+      "types": "./dist/index.with-locales.d.ts",
+      "default": "./dist/as-with-locales.js"
+    },
+    "./dist/as-with-locales.esm.js": {
+      "types": "./dist/index.with-locales.d.ts",
+      "default": "./dist/as-with-locales.esm.js"
+    },
     "./dist/as.esm.js": "./dist/as.esm.js",
     "./dist/as.js": "./dist/as.js",
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "run-s build:esm build:vite:parallel build:verify",
+    "build:verify": "tsx ./scripts/verify-browser-bundle.ts",
+    "build:esm": "tsdown",
+    "build:with-locales": "run-p build:with-locales:esm build:with-locales:umd",
+    "build:with-locales:esm": "cross-env WITH_LOCALES_FORMAT=es vite build --config ./vite.with-locales.config.ts",
+    "build:with-locales:umd": "cross-env WITH_LOCALES_FORMAT=umd vite build --config ./vite.with-locales.config.ts",
+    "build:all": "pnpm run build && pnpm run build:with-locales",
+    "build:vite:parallel": "run-p build:umd build:full-esm build:with-locales",
+    "build:full-esm": "vite build --config ./vite.esm.config.ts",
+    "build:umd": "vite build",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify": "publint && attw --pack .",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build:all"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/throttle-debounce": "catalog:",
-    "vue": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
-    "vite-plugin-tsx-resolve-types": "^1.0.1"
+    "cross-env": "catalog:",
+    "npm-run-all": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-tsx-resolve-types": "^1.0.1",
+    "vue": "catalog:"
   },
   "dependencies": {
     "@arvin-studio/core": "workspace:*",

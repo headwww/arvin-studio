@@ -1,3 +1,5 @@
+import type { Plugin } from 'vue';
+
 import type { Locale } from './locale';
 
 import as from '.';
@@ -28,6 +30,6 @@ export const locales: Record<string, Locale> = Object.fromEntries(
 const asWithLocales = {
   ...as,
   locales,
-};
+} as Plugin & { locales: Record<string, Locale> };
 
 export default asWithLocales;
