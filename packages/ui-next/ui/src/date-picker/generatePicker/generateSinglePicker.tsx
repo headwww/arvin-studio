@@ -11,7 +11,10 @@ import type { GenericTimePickerProps, PickerProps } from './interface';
 
 import { computed, defineComponent, shallowRef } from 'vue';
 
-import { getTransitionName, Picker } from '@arvin-studio/headless';
+import {
+  getTransitionName,
+  SinglePicker as Picker,
+} from '@arvin-studio/headless';
 import { clsx, omit } from '@arvin-studio/kit';
 
 import { ContextIsolator } from '../../_util/ContextIsolator';
