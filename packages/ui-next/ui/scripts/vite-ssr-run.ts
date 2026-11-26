@@ -20,6 +20,11 @@ async function run() {
   }
 
   const baseConfig = defineConfig({
+    define: {
+      CSSINJS_STATISTIC: JSON.stringify(
+        process.env.CSSINJS_STATISTIC || 'undefined',
+      ),
+    },
     plugins: [
       tsxResolveTypes({
         defaultPropsToUndefined: ['Boolean'],
