@@ -35,5 +35,8 @@
   },
   "dependencies": {
     "@arvin-studio/kit": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
   }
 }
