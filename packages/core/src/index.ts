@@ -4,6 +4,8 @@ import { hooks } from './hooks';
 import { interceptor } from './interceptor';
 import { renderer } from './renderer';
 import { globalResize } from './resize';
+import { scrollbarUtils } from './scrollbar-utils';
+import { useFns } from './useFns';
 
 export const ArvinStudio = {
   renderer,
@@ -14,6 +16,8 @@ export const ArvinStudio = {
   interceptor,
   GLOBAL_EVENT_KEYS,
   createEvent,
+  useFns,
+  scrollbarUtils,
 };
 
 export default ArvinStudio;
@@ -24,3 +28,5 @@ export * from './hooks';
 export * from './interceptor';
 export * from './renderer';
 export * from './resize';
+export * from './scrollbar-utils';
+export * from './useFns';
